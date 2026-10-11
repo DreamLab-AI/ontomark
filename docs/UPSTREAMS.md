@@ -11,7 +11,9 @@ Ontomark builds on the work of these upstream developers. Their licences remain 
 ## Current crate releases
 
 The packages published from source `340b8a0d3e5828dd3959dd115e7a0e67268de5f5`
-are `whelk-el` 0.1.1, `ontomark-reason` 0.1.1 and `ontomark-compile` 0.1.3.
+are `whelk-el` 0.1.1, `ontomark-reason` 0.1.1 and the initial `ontomark-compile` 0.1.2.
+The current compiler is 0.1.3, published from `49c632591c0afbbfc533602bee0da55e7ff10b3e`;
+0.1.2 is yanked because of the subsequently reproduced Unicode privacy defect.
 The reasoner requires Whelk 0.1.1 or later; the compiler requires reasoner 0.1.1
 or later. These minimums select the package carrying the corrected upstream
 attribution and preserved Scala BSD notice. Parser, model and NGG1 remain at
@@ -201,7 +203,7 @@ The standalone plugin at `93b6a05` locks the following direct build/test tools. 
 | @types/tern | 0.23.9 | `MIT` | [Upstream](https://github.com/DefinitelyTyped/DefinitelyTyped) |
 | @vitest/mocker | 5.0.3 | `MIT` | [Upstream](https://github.com/vitest-dev/vitest) |
 | @vitest/spy | 5.0.3 | `MIT` | [Upstream](https://github.com/vitest-dev/vitest) |
-| assertion-error | 2.0.1 | `MIT` | [Upstream](git@github.com:chaijs/assertion-error) |
+| assertion-error | 2.0.1 | `MIT` | [Upstream](https://github.com/chaijs/assertion-error) |
 | chai | 6.3.0 | `MIT` | [Upstream](https://github.com/chaijs/chai) |
 | crelt | 1.0.7 | `MIT` | [Upstream](https://code.haverbeke.berlin/marijn/crelt) |
 | detect-libc | 2.1.2 | `Apache-2.0` | [Upstream](git://github.com/lovell/detect-libc) |
@@ -225,17 +227,17 @@ The standalone plugin at `93b6a05` locks the following direct build/test tools. 
 | lightningcss-win32-x64-msvc | 1.33.0 | `MPL-2.0` | [Upstream](https://github.com/parcel-bundler/lightningcss) |
 | magic-string | 1.4.3 | `MIT` | [Upstream](https://github.com/Rich-Harris/magic-string) |
 | moment | 2.29.4 | `MIT` | [Upstream](https://github.com/moment/moment) |
-| nanoid | 3.3.20 | `MIT` | [Upstream](ai/nanoid) |
+| nanoid | 3.3.20 | `MIT` | [Upstream](https://github.com/ai/nanoid) |
 | obsidian | 1.13.1 | `MIT` | [Upstream](https://github.com/obsidianmd/obsidian-api) |
 | obug | 2.2.1 | `MIT` | [Upstream](https://github.com/sxzz/obug) |
-| picocolors | 1.1.1 | `ISC` | [Upstream](alexeyraspopov/picocolors) |
-| picomatch | 4.0.7 | `MIT` | [Upstream](micromatch/picomatch) |
-| postcss | 8.5.29 | `MIT` | [Upstream](postcss/postcss) |
+| picocolors | 1.1.1 | `ISC` | [Upstream](https://github.com/alexeyraspopov/picocolors) |
+| picomatch | 4.0.7 | `MIT` | [Upstream](https://github.com/micromatch/picomatch) |
+| postcss | 8.5.29 | `MIT` | [Upstream](https://github.com/postcss/postcss) |
 | rolldown | 1.2.13 | `MIT` | [Upstream](https://github.com/rolldown/rolldown) |
-| source-map-js | 1.2.2 | `BSD-3-Clause` | [Upstream](7rulnik/source-map-js) |
-| std-env | 4.3.0 | `MIT` | [Upstream](unjs/std-env) |
+| source-map-js | 1.2.2 | `BSD-3-Clause` | [Upstream](https://github.com/7rulnik/source-map-js) |
+| std-env | 4.3.0 | `MIT` | [Upstream](https://github.com/unjs/std-env) |
 | style-mod | 4.1.4 | `MIT` | [Upstream](https://code.haverbeke.berlin/marijn/style-mod) |
-| tinybench | 6.2.2 | `MIT` | [Upstream](tinylibs/tinybench) |
+| tinybench | 6.2.2 | `MIT` | [Upstream](https://github.com/tinylibs/tinybench) |
 | tinyexec | 1.3.1 | `MIT` | [Upstream](https://github.com/tinylibs/tinyexec) |
 | tinyglobby | 0.2.17 | `MIT` | [Upstream](https://github.com/SuperchupuDev/tinyglobby) |
 | typescript | 6.0.3 | `Apache-2.0` | [Upstream](https://github.com/microsoft/TypeScript) |

@@ -443,7 +443,7 @@ the Codex evidence audit applies to the Phase 2 removals, not to this inventory.
 
 ## 12. Release continuation: 2026-10-11
 
-The recovered core is implemented and tested. Its native legacy adapter delegates to `ontomark-reason`, with zero differences against the complete committed corpus over 32 artefact lines and 12 command outputs. The opt-in typed projection is published in `ontomark-compile` 0.1.2. It does not apply a corpus-wide vocabulary/schema migration to legacy CLI callers.
+The recovered core is implemented and tested. Its native legacy adapter delegates to `ontomark-reason`, with zero differences against the complete committed corpus over 32 artefact lines and 12 command outputs. The opt-in typed projection is published in `ontomark-compile` 0.1.3; its initial 0.1.2 release is yanked after correcting Unicode private-name filtering. It does not apply a corpus-wide vocabulary/schema migration to legacy CLI callers.
 
 - **visionGraph producer**: main consumes the checksum-pinned `v0.1.0-rc.1` Linux CLI, after 17 publishing contracts and a successful deployment.
 - **NGG1**: the reusable codec is `ontomark-ngg1` 0.1.0. Published `vowl-wasm` 0.2.0 exposes the browser compatibility API and preserves physics/layout ownership. visionGraph deletes its independent JavaScript encoder/decoder and uses the immutable GitHub browser bundle because npm trusted-publisher authentication remains unresolved.

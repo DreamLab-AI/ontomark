@@ -4,6 +4,10 @@ Compiler 0.1.1 publishes the strict C3 marker and shared scaffold/prose reader
 types. Compiler 0.1.2 adds the optional `model-projection` feature and moves the
 native class adapter onto the shared supported-profile reasoner.
 
+Use compiler 0.1.3 for this API: it corrects Unicode private-name case comparison
+in public literals. The initial 0.1.2 release is yanked; existing pinned callers
+must upgrade to receive that privacy correction.
+
 Readers that only need `bundle` should keep `default-features = false`. In-memory
 consumers add `features = ["model-projection"]`, build a normative `Model` through
 their injected model profile, then call `projection::project_model` with an
