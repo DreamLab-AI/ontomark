@@ -24,6 +24,9 @@ implementation.
 Features: `parallel` partitions independent components on Rayon; `horned-owl`
 adds a native-only adapter. Neither feature is required for the portable core.
 
-The inherited MIT licence and attribution are in `LICENSE-WHELK` and `NOTICE`.
+The Scala Whelk upstream, by Jim Balhoff and contributors, uses BSD-3-Clause;
+its notice is preserved in `LICENSE-WHELK-BSD`. The Rust port, by Björn
+(`b-gehrke`) and contributors, uses MIT; its notice is preserved in
+`LICENSE-WHELK`. See `NOTICE` for the repositories and pinned source revision.
 Changes in this package are licensed under MIT OR Apache-2.0; see `LICENSE-MIT`
-and `LICENSE-APACHE`.
+and `LICENSE-APACHE`. These project terms do not replace the upstream notices.

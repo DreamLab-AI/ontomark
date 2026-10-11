@@ -1,8 +1,12 @@
-// whelk-el is derived from whelk-rs (https://github.com/jjohare/whelk-rs, rev
-// 79a1ee2), itself a Rust port of Whelk (https://github.com/balhoff/whelk).
-// Copyright (c) 2022 The Authors (Jim Balhoff and the whelk-rs contributors),
-// MIT licence: see LICENSE-WHELK and NOTICE. Changes in this crate are under
-// MIT OR Apache-2.0.
+// SPDX-License-Identifier: (MIT OR Apache-2.0) AND MIT AND BSD-3-Clause
+// Derived from Björn (b-gehrke) and contributors' MIT-licensed whelk-rs,
+// through https://github.com/jjohare/whelk-rs at revision
+// 79a1ee21789add5a66faa0ec1a830c32dba9b539.
+// Rust port copyright (c) 2022 The Authors: see LICENSE-WHELK.
+// Scala Whelk by Jim Balhoff and contributors is BSD-3-Clause:
+// https://github.com/INCATools/whelk (formerly balhoff/whelk).
+// Its copyright (c) 2017, The authors is preserved in LICENSE-WHELK-BSD.
+// Changes in this crate are MIT OR Apache-2.0; see NOTICE for the lineage.
 
 //! An OWL 2 EL reasoner: Whelk's saturation rules, portable to
 //! `wasm32-unknown-unknown`, with no I/O, no clocks and no threads in the
