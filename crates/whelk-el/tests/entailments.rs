@@ -401,3 +401,58 @@ fn parallel_classification_equals_sequential() {
     let axioms = mixed_fixture();
     assert_eq!(whelk_el::classify_parallel(&axioms), classify(&axioms));
 }
+
+/// Cross-vendor audit counterexample: a chain whose two super-properties are
+/// equivalent roles must survive composition pruning.
+#[test]
+fn a_chain_into_equivalent_roles_survives_pruning() {
+    let axioms = vec![
+        ElAxiom::PropertyChain {
+            chain: vec![iri("r"), iri("s")],
+            sup: iri("t"),
+        },
+        ElAxiom::PropertyChain {
+            chain: vec![iri("r"), iri("s")],
+            sup: iri("u"),
+        },
+        ElAxiom::SubPropertyOf {
+            sub: iri("t"),
+            sup: iri("u"),
+        },
+        ElAxiom::SubPropertyOf {
+            sub: iri("u"),
+            sup: iri("t"),
+        },
+        ElAxiom::SubClassOf {
+            sub: named("A"),
+            sup: some("r", named("B")),
+        },
+        ElAxiom::SubClassOf {
+            sub: named("B"),
+            sup: some("s", named("C")),
+        },
+        ElAxiom::SubClassOf {
+            sub: some("t", named("C")),
+            sup: named("D"),
+        },
+    ];
+    assert!(entails(&classify(&axioms), "A", "D"));
+}
+
+/// Cross-vendor audit counterexample: `⊥ ⊑ B` joins every unsatisfiable
+/// class to `B`, so it must not be split into its own component.
+#[test]
+fn nothing_on_the_left_forces_one_component() {
+    let axioms = vec![
+        ElAxiom::SubClassOf {
+            sub: named("A"),
+            sup: ClassExpr::Nothing,
+        },
+        ElAxiom::SubClassOf {
+            sub: ClassExpr::Nothing,
+            sup: named("B"),
+        },
+    ];
+    assert_eq!(components(&axioms).len(), 1);
+    assert!(entails(&classify(&axioms), "A", "B"));
+}

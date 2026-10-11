@@ -67,6 +67,18 @@ impl ClassExpr {
         }
     }
 
+    /// `true` when the expression denotes `owl:Nothing` (including an
+    /// intersection with `owl:Nothing`).
+    #[must_use]
+    pub fn is_nothing(&self) -> bool {
+        match self {
+            ClassExpr::Nothing => true,
+            ClassExpr::Named(iri) => iri == BOTTOM,
+            ClassExpr::And(operands) => operands.iter().any(ClassExpr::is_nothing),
+            _ => false,
+        }
+    }
+
     /// Call `f` on every class, property and individual IRI mentioned, other
     /// than `owl:Thing` and `owl:Nothing`.
     pub fn for_each_entity<'a>(&'a self, f: &mut impl FnMut(&'a str)) {
@@ -205,12 +217,14 @@ impl ElAxiom {
         }
     }
 
-    /// `true` when the axiom puts `owl:Thing` on the left of an inclusion
-    /// (`⊤ ⊑ C`, or an equivalence with `⊤`), which constrains every class.
+    /// `true` when the axiom relates classes that share no entity: `owl:Thing`
+    /// on the left of an inclusion (`⊤ ⊑ C`, or an equivalence with `⊤`)
+    /// reaches every class, and `owl:Nothing` on the left (`⊥ ⊑ C`) reaches
+    /// every unsatisfiable class.
     #[must_use]
     pub fn constrains_everything(&self) -> bool {
         match self {
-            ElAxiom::SubClassOf { sub, .. } => sub.is_thing(),
+            ElAxiom::SubClassOf { sub, .. } => sub.is_thing() || sub.is_nothing(),
             ElAxiom::EquivalentClasses(cs) => cs.iter().any(ClassExpr::is_thing),
             _ => false,
         }

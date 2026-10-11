@@ -136,11 +136,22 @@ impl Session {
 
     /// The source changed: begin a new generation, cancel the job for the
     /// previous one, and return the ticket for the new job.
+    ///
+    /// # Panics
+    /// After `u64::MAX` generations, rather than reuse a generation number.
     pub fn begin(&mut self) -> Ticket {
         if let Some(previous) = self.live.take() {
             previous.cancel();
         }
-        self.generation = Generation(self.generation.0 + 1);
+        // A wrapped counter could make an old outcome current again; 2^64
+        // generations cannot be reached in practice, so exhaustion is a panic
+        // rather than a silent reuse.
+        self.generation = Generation(
+            self.generation
+                .0
+                .checked_add(1)
+                .expect("generation counter exhausted"),
+        );
         let cancel = CancelToken::new();
         self.live = Some(cancel.clone());
         Ticket {

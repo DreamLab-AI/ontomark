@@ -2,7 +2,7 @@
 //! concept language.
 //!
 //! Ported from `whelk-rs` `src/whelk/reasoner.rs`. The rules, their indexes and
-//! their join orders are unchanged. Four things differ:
+//! their join orders are unchanged. Five things differ:
 //!
 //! * the work loop is a resumable [`Saturation`], so a host can run it in
 //!   bounded slices, observe progress and abandon it (no clocks or threads in
@@ -10,6 +10,9 @@
 //! * `index_role_compositions` grouped chains with `Itertools::group_by` over a
 //!   hash set, which only groups *adjacent* items, so a chain `r ∘ s` with two
 //!   super-properties could lose one; it now groups with a map;
+//! * `index_role_compositions` pruned a composition whenever another with a
+//!   distinct super-role existed, so equivalent roles pruned each other;
+//!   it now prunes only strictly more general ones;
 //! * `rule_bottom_left` tested the subclass instead of the superclass for
 //!   `⊥`, so unsatisfiability did not propagate back along an existing link;
 //! * the disjunction, complement and self-restriction rules are gone with
@@ -949,12 +952,17 @@ fn index_role_compositions(
             }
         }
     }
-    // Drop a composition when a more specific one with the same pair exists:
-    // the saturation derives the super-role link from the sub-role link.
+    // Drop a composition when a strictly more specific one with the same pair
+    // exists: the saturation derives the super-role link from the sub-role
+    // link. Upstream dropped on any distinct super-role, so two equivalent
+    // roles (t ⊑ u, u ⊑ t) removed each other and the chain was lost.
     let mut hier_comps_remove: HashSet<RoleTriple> = HashSet::new();
     for (r1, r2, s) in &hier_comps_tuples {
         if let Some(super_ss) = hier.get(s) {
-            for super_s in super_ss.iter().filter(|super_s| *super_s != s) {
+            let strictly_above = |super_s: &&Rc<Role>| {
+                *super_s != s && hier.get(*super_s).is_none_or(|ss| !ss.contains(s))
+            };
+            for super_s in super_ss.iter().filter(strictly_above) {
                 let candidate = (Rc::clone(r1), Rc::clone(r2), Rc::clone(super_s));
                 if hier_comps_tuples.contains(&candidate) {
                     hier_comps_remove.insert(candidate);

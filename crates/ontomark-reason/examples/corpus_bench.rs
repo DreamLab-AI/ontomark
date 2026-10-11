@@ -248,7 +248,7 @@ fn main() {
         let t_check = t.elapsed();
         let el: Vec<whelk_el::ElAxiom> = report.accepted.into_iter().map(|(_, a)| a).collect();
         let t = Instant::now();
-        let el = ontomark_reason::classify::apply_policy(el, ExistentialPolicy::Relevant);
+        let (el, _) = ontomark_reason::classify::apply_policy(el, ExistentialPolicy::Relevant);
         let t_policy = t.elapsed();
         let t = Instant::now();
         let translated = whelk_el::translate(&el);

@@ -86,9 +86,9 @@ pub fn classify(axioms: &[ElAxiom]) -> Vec<(String, String)> {
 ///
 /// Saturating each group separately entails exactly what saturating all of
 /// them entails: EL rules only combine premises that share a concept or role.
-/// The one exception is an axiom that puts `owl:Thing` on the left
-/// ([`ElAxiom::constrains_everything`]), which reaches every class; its
-/// presence yields a single group.
+/// The exceptions are axioms with `owl:Thing` or `owl:Nothing` on the left
+/// ([`ElAxiom::constrains_everything`]), which reach every class or every
+/// unsatisfiable class; their presence yields a single group.
 #[must_use]
 pub fn components(axioms: &[ElAxiom]) -> Vec<Vec<usize>> {
     if axioms.iter().any(ElAxiom::constrains_everything) {

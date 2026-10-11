@@ -29,15 +29,17 @@ pub enum ExistentialPolicy {
     /// Saturate every axiom. Complete.
     #[default]
     All,
-    /// Drop `C ⊑ ∃R.D` axioms (with a named `C` and no `owl:Nothing` in the
-    /// filler) whose properties cannot reach any left-position restriction.
+    /// Drop the existential conjuncts `∃R.D` of `C ⊑ …` (named `C`, no
+    /// `owl:Nothing` on the right) whose properties cannot reach any
+    /// left-position restriction; other conjuncts are kept, and `C` and the
+    /// classes in a dropped filler stay declared.
     ///
     /// Named subsumptions between satisfiable classes are the same as under
     /// [`ExistentialPolicy::All`]. Unsatisfiability is not carried back from an
     /// unsatisfiable filler `D` to `C` through a dropped axiom; `D` itself is
     /// still reported, so a clash is never hidden, only its derived
     /// casualties. [`Classification::existentials_dropped`] counts the
-    /// dropped axioms.
+    /// dropped conjuncts.
     Relevant,
 }
 
@@ -91,7 +93,7 @@ pub struct Classification {
     pub refusals: Vec<Refusal>,
     /// Named classes classified (excluding `owl:Thing` and `owl:Nothing`).
     pub classes: usize,
-    /// Superclass-position existential axioms dropped by the policy.
+    /// Superclass-position existential conjuncts dropped by the policy.
     pub existentials_dropped: usize,
     /// Saturation steps taken.
     pub steps: u64,
@@ -204,10 +206,8 @@ impl Prepared {
                 _ => {}
             }
         }
-        let mut el: Vec<ElAxiom> = report.accepted.into_iter().map(|(_, a)| a).collect();
-        let before = el.len();
-        el = apply_policy(el, options.existentials);
-        let existentials_dropped = before - el.len();
+        let el: Vec<ElAxiom> = report.accepted.into_iter().map(|(_, a)| a).collect();
+        let (el, existentials_dropped) = apply_policy(el, options.existentials);
         Prepared {
             saturation: Saturation::new(&whelk_el::translate(&el)),
             options,
@@ -355,41 +355,47 @@ fn mentions_nothing(c: &ClassExpr) -> bool {
     }
 }
 
-/// A superclass-position existential `Named ⊑ (… ∃R.D …)`: its properties.
-fn droppable(axiom: &ElAxiom) -> Option<BTreeSet<String>> {
-    match axiom {
-        ElAxiom::SubClassOf {
-            sub: ClassExpr::Named(_),
-            sup,
-        } if !mentions_nothing(sup) => {
-            let mut ps = BTreeSet::new();
-            properties_in(sup, &mut ps);
-            (!ps.is_empty()).then_some(ps)
-        }
-        _ => None,
-    }
-}
-
-/// Filter checked axioms by `policy`: unchanged for
+/// Filter checked axioms by `policy`, returning the axioms to saturate and
+/// the number of existential conjuncts dropped: unchanged for
 /// [`ExistentialPolicy::All`]; see [`ExistentialPolicy::Relevant`] for the
 /// other.
 #[must_use]
-pub fn apply_policy(axioms: Vec<ElAxiom>, policy: ExistentialPolicy) -> Vec<ElAxiom> {
+pub fn apply_policy(axioms: Vec<ElAxiom>, policy: ExistentialPolicy) -> (Vec<ElAxiom>, usize) {
     match policy {
-        ExistentialPolicy::All => axioms,
+        ExistentialPolicy::All => (axioms, 0),
         ExistentialPolicy::Relevant => relevant_only(axioms),
     }
 }
 
-/// [`ExistentialPolicy::Relevant`]: keep every axiom except superclass-position
-/// existentials none of whose properties is relevant.
+fn conjuncts(c: ClassExpr, out: &mut Vec<ClassExpr>) {
+    match c {
+        ClassExpr::And(ops) => ops.into_iter().for_each(|o| conjuncts(o, out)),
+        other => out.push(other),
+    }
+}
+
+fn named_classes_in(c: &ClassExpr, out: &mut Vec<String>) {
+    match c {
+        ClassExpr::Named(iri) if iri != TOP && iri != BOTTOM => out.push(iri.clone()),
+        ClassExpr::And(ops) => ops.iter().for_each(|o| named_classes_in(o, out)),
+        ClassExpr::Some { filler, .. } => named_classes_in(filler, out),
+        _ => {}
+    }
+}
+
+/// [`ExistentialPolicy::Relevant`]: in `Named ⊑ C₁ ⊓ … ⊓ Cₙ` (no `owl:Nothing`
+/// anywhere on the right), drop each conjunct `∃R.D` none of whose properties
+/// is relevant, keeping the other conjuncts. The subject and every named class
+/// in a dropped filler are declared instead, so they are still classified,
+/// as they would be under [`ExistentialPolicy::All`] (where a link target is
+/// initialised).
 ///
 /// A property is relevant when it occurs in a left-position restriction (a
 /// GCI's subclass, any operand of an equivalence or disjointness, a domain,
 /// an assertion), or reaches a relevant property through sub-property
 /// inclusions, a chain or transitivity, in either direction (the
 /// super-property direction is a safety margin, as in the estate reasoner).
-fn relevant_only(axioms: Vec<ElAxiom>) -> Vec<ElAxiom> {
+fn relevant_only(axioms: Vec<ElAxiom>) -> (Vec<ElAxiom>, usize) {
     let mut relevant: BTreeSet<String> = BTreeSet::new();
     // Property graph edges, undirected: sub/super, chain member/super.
     let mut edges: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
@@ -431,11 +437,51 @@ fn relevant_only(axioms: Vec<ElAxiom>) -> Vec<ElAxiom> {
             }
         }
     }
-    axioms
-        .into_iter()
-        .filter(|axiom| match droppable(axiom) {
-            Some(ps) => ps.iter().any(|p| relevant.contains(p)),
-            None => true,
-        })
-        .collect()
+    let irrelevant = |c: &ClassExpr| -> bool {
+        let mut ps = BTreeSet::new();
+        properties_in(c, &mut ps);
+        matches!(c, ClassExpr::Some { .. }) && ps.iter().all(|p| !relevant.contains(p))
+    };
+    let mut out = Vec::with_capacity(axioms.len());
+    let mut dropped = 0;
+    for axiom in axioms {
+        match axiom {
+            ElAxiom::SubClassOf {
+                sub: ClassExpr::Named(subject),
+                sup,
+            } if !mentions_nothing(&sup) => {
+                let mut parts = Vec::new();
+                conjuncts(sup, &mut parts);
+                let (gone, kept): (Vec<ClassExpr>, Vec<ClassExpr>) =
+                    parts.into_iter().partition(irrelevant);
+                if gone.is_empty() {
+                    out.push(ElAxiom::SubClassOf {
+                        sub: ClassExpr::Named(subject),
+                        sup: rejoin(kept),
+                    });
+                    continue;
+                }
+                dropped += gone.len();
+                let mut declared = vec![subject.clone()];
+                gone.iter().for_each(|g| named_classes_in(g, &mut declared));
+                out.extend(declared.into_iter().map(ElAxiom::DeclareClass));
+                if !kept.is_empty() {
+                    out.push(ElAxiom::SubClassOf {
+                        sub: ClassExpr::Named(subject),
+                        sup: rejoin(kept),
+                    });
+                }
+            }
+            other => out.push(other),
+        }
+    }
+    (out, dropped)
+}
+
+fn rejoin(mut kept: Vec<ClassExpr>) -> ClassExpr {
+    if kept.len() == 1 {
+        kept.pop().unwrap_or(ClassExpr::Thing)
+    } else {
+        ClassExpr::And(kept)
+    }
 }
