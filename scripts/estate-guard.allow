@@ -1,0 +1,23 @@
+# estate-guard allow-list: <repo>/<glob><TAB><reason>
+# Every exemption names why the match is not residue. Historical records keep the
+# words they were written with; current instructions, code and pins are never exempt.
+project/docs/adr/**	decision records are historical; superseded ADRs keep their original wording
+project/docs/archive/**	archived documentation
+project/docs/engineering/vault-migration-coverage-*	dated coverage report of a retired command
+project/crates/vault/tests/golden/**	immutable golden fixtures (crates/vault/tests/golden/README.md)
+visionGraph/docs/adr/**	decision records are historical
+visionGraph/docs/migration-2026-09-22/**	dated migration record
+visionGraph/docs/PUBLICATION-contract.md	self-declared historical closeout (line 4)
+visionGraph/planning/**/evidence/**	dated research evidence
+vowl-wasm/CHANGELOG.md	release history
+vowl-wasm/docs/adr/**	decision records are historical
+loom/docs/design/ADR-*	decision records are historical
+loom/docs/research/**	dated research evidence
+loom/uplift-results/**	dated evaluation output
+agentbox/docs/adr/**	decision records are historical
+agentbox/docs/estate-closeout/**	dated closeout record
+agentbox/CHANGELOG.md	release history
+VisionFlow/docs/adr/**	decision records are historical
+VisionFlow/docs/estate-closeout/**	dated closeout record
+VisionFlow/docs/estate-review/**	dated review record
+knowledgeGraph/archive/**	logseq-era archive
