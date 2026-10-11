@@ -25,7 +25,14 @@ been removed yet, and no ontomark crate has reached parity: every crate under `c
 | Loom | `loom/` | `2f8866622bc230c8e3985cdb7f51ca4bbd67f259` | 2 (untracked local settings) | |
 | Agentbox | `agentbox/` | `4f25bd01a9c209c9f5295d26328b7ec7d0f992bb` | 0 | |
 | VisionFlow | `VisionFlow/` | `33ece3856b6f8f37d3379b512bb19bb9cb9d80a0` | 2 (untracked review ledger) | estate diagram corpus |
-| knowledgeGraph | `knowledgeGraph/` | `4ed9ac159daf402b4fb252ce559dbeb894a8d91e` | 0 | **not in the WP-D brief**; carries a fourth NGG1 copy (§4.4, decision D3) |
+| knowledgeGraph | `knowledgeGraph/` | `4ed9ac159daf402b4fb252ce559dbeb894a8d91e` | 0 | **not in the WP-D brief**; fourth NGG1 copy and a vowl-wasm 0.1.1 tarball pin (decision D3) |
+| WasmVOWL (standalone) | `WasmVOWL/` | last commit 2026-09-07 | — | **not in the WP-D brief**; vowl-wasm 0.1.1 tarball pin at `modern/package.json:19`, no NGG1 code (decision D3) |
+
+An estate-wide sweep of `/home/devuser/workspace/*` (excluding `node_modules`, `target`, `archive`, `dist`) for vowl-wasm manifest
+dependencies, NGG1 magic (`NGG1_MAGIC`, `0x3147474E`, `b"NGG1"`), `vault-core`/`crates/vault` path dependencies and `VisionClaw/<sha>` pins
+found nothing beyond the repos above. The other hits are VisionClaw worktrees and clones (`wt/*`, `project2..5`, `.ab-notes`), the cargo
+registry cache, and `project4` (the archived `jjohare/logseq` tree with the old `rust-wasm` copy of vowl-wasm). `dreamlab-ai-website` has no
+vowl-wasm or NGG1 dependency; its only match was an npm integrity hash.
 
 Method: six read-only Haiku `Explore` census passes (VisionClaw vault crates; the rest of VisionClaw; visionGraph; vowl-wasm and Loom;
 Agentbox and VisionFlow; VisionClaw docs), then a specialist pass. LOC is `wc -l`. Test counts are `grep -c '#\[test\]'` / `it(` /
@@ -36,11 +43,23 @@ Agentbox and VisionFlow; VisionClaw docs), then a specialist pass. LOC is `wc -l
 ### Licence boundary (precondition for every extraction)
 
 `project/crates/vault-core/Cargo.toml:7` and `project/crates/vault/Cargo.toml:7` declare `AGPL-3.0-only`, as does every
-`visionclaw-*` crate except `visionclaw-tri-layout` and `visionclaw-xr-presence` (MIT). `git log --format=%an -- crates/vault-core crates/vault`
-shows only the owner's agents (22 "Claude Code", 1 "Dream Machine"), so the owner is the sole rights holder and may relicense the extracted code
-as MIT OR Apache-2.0. Non-negotiable 5 bars only solid-pod and sidestr descendants (`vault/src/nostr.rs`, 659 LOC, and governance posting).
-**Decision D1:** the owner records the relicensing grant for extracted `vault-core`/`vault` code (NOTICE plus a line in ADR-2014) before any
-ontomark crate publishes. Until then, extracted code must not be pushed to a public remote.
+`visionclaw-*` crate except `visionclaw-tri-layout` and `visionclaw-xr-presence` (MIT). Lineage, as far as git shows it:
+- `git shortlog -sne HEAD -- crates/vault crates/vault-core` gives 23 commits from "Claude Code" and 1 from "Dream Machine".
+- `git log --follow` on `frontmatter.rs`, `page.rs`, `whelk.rs`, `ngg1.rs` and `turtle.rs` adds no other author. Those files first appear on
+  2026-09-22 in `f9720fbcb` and `0c195f760`.
+- Five build modules say they are ports of the Python pipeline. `gate.rs:1`, `build/turtle.rs:1`, `build/webvowl.rs:1` and
+  `build/graph_tiers.rs:1` each name their source (`pipeline/gate.py`, `jsonld_to_turtle.py`, `jsonld_to_webvowl.py`, `emit_graph_tiers.py`).
+- That pipeline is `AGPL-3.0-or-later` (`knowledgeGraph/LICENSING.md:18`). Its history in `jjohare/logseq` shows 23 commits from "Claude Code"
+  and 3 from the owner.
+- No solid-pod or sidestr derivation marker appears in either crate outside `nostr.rs`.
+
+The evidence therefore points to the owner as the sole rights holder, able to relicense the extracted code as MIT OR Apache-2.0. Git cannot
+prove that, so it is **for the owner to confirm**. Non-negotiable 5 bars only solid-pod and sidestr descendants: `vault/src/nostr.rs`
+(659 LOC) and governance posting.
+
+**Decision D1:** the owner confirms provenance and records a relicensing grant for code extracted from `vault-core`, `vault` and the
+`pipeline/*.py` lineage. The grant goes in ontomark `NOTICE` plus a line in ADR-2014, and must exist before any ontomark crate publishes.
+Until then, extracted code must not be pushed to a public remote.
 
 ## 2. Responsibility map and removal gates
 
@@ -56,6 +75,34 @@ ontomark crate publishes. Until then, extracted code must not be pushed to a pub
 | A | Attribution constants and roster | `profiles/estate` attribution roster, consumed by `ontomark-compile` | EXP-02 and EXP-04; per-class `prov:wasAttributedTo` identical on the golden corpus and on the full build |
 | C | RDF compile (Turtle, JSON-LD, SHACL, WebVOWL JSON) | `ontomark-compile` | EXP-02, 04, 05, 09; `vault/tests/golden_parity.rs` (15) |
 | CLI | the `vault build/validate/gate/conflicts/repair` door | `ontomark-cli` (`ontomark` binary) | `vault/tests/build_cli.rs`; byte-identical `site-data/` tree from `vault build --vault all` versus `ontomark build` at the same visionGraph sha |
+
+### 2.1 CLI compatibility contract (widens WP-C's drop-in scope)
+
+WP-C's stated acceptance covers `vault build/validate/gate/conflicts`. The estate actually invokes the verbs and flags below. publish.yml
+cannot switch to `ontomark` until every row in its group exists with the same flags, JSON shape and exit codes (0 ok, 1 findings,
+2 refusal or usage). The agentbox callers cannot switch until their rows exist too, whether in `ontomark` or in the governance adapter (D4).
+
+| Verb and flags | Callers |
+|---|---|
+| `validate --vault all` (text report; exit status gates) | visionGraph `publish.yml:160`; `CLAUDE.md:19` |
+| `validate --vault all --json` | `finalise.sh:22` |
+| `validate --strict --json` | agentbox `elevation-stage.js:200`; `ontology-augment.sh:487` (`report validate --json`) |
+| `build --vault all --out site-data --publish-out quartz/content --with-markdown-mirror --stats`; output layout incl. `<out>/publish/` when `--publish-out` is absent (`publish.yml:195-200`) | `publish.yml:188-193` |
+| `build --vault all --out <dir> --json`; `build --stats` | `finalise.sh:39`; `CLAUDE.md:48` |
+| `--repo <path> build --vault knowledge --out <dir>` (global `--repo`) | VisionClaw `ontology-publish.yml:172-174` |
+| `build --with-rvdb` (named in Loom's error text) | Loom `artifact.rs:184`, `docs/published-generation-reload.md:99-101` |
+| `repair bodies --vault all --check`; `repair bodies --vault knowledge --check`; `repair bodies --vault all` (fix mode) | `publish.yml:226`; `CLAUDE.md:20`; `finalise.sh:40` |
+| `conflicts --vault knowledge`; `conflicts --vault all --json`; `conflicts --severity all` | `CLAUDE.md:22`; `finalise.sh:23`; `docs/source-repair-plan-2026-09-22.md:37` |
+| `gate --tier full --vault all [--json]` | `CLAUDE.md:24`; `finalise.sh:20,24` |
+| `--version` | `publish.yml:170`; agentbox `entrypoint-unified.sh:1130-1169` |
+| `find --query <q> --limit N --json`; `find --query <q> --type Class --limit N --json`; bare-array JSON (`ontology-augment.sh:385`) | `ontology-apply.js:221`; `submit-proposals.mjs:94`; `ontology-augment.sh:384,408,421` |
+| `retrieve <id…> --expand is-a=N,requires=N,enables=N,part-of=N --max-documents N --json`; `retrieve <id> --json` | `ontology-augment.sh:398-400,415` |
+| `tree <iri> --depth 1 --json` | `ontology-augment.sh:454` |
+| `edit <page> --set k=v… --expect <expectation> --json` | `ontology-apply.js:419-424` |
+| `create <file> --expect docs=1 --set …` | `ontology-apply.js:478`; `space-corpus/src/main.rs:210` |
+| `apply <file> --expect docs=1 --set 'verified+={…}'` | `ontology-apply.js:668` |
+| `propose <iri> --level L --hypothesis H [--diff D] [--title T] [--dry-run] --json` (posts to the forum: AGPL, D4) | `ontology-propose.js:239-245`; `submit-proposals.mjs:162`; `ontology-augment.sh:498` |
+| `panel publish` (AGPL, D4) | VisionClaw `main.rs:63` (no estate caller found) |
 
 Dispositions used below: **DELETE** (superseded; removed in Phase 2), **REPIN** (consumer stays; dependency or invocation changes),
 **ADAPT** (code stays in its repo but calls ontomark instead of its own logic), **RETAIN** (not a duplicate: a serving, physics,
@@ -101,7 +148,7 @@ Dependency closure: whelk git `79a1ee2`, horned-owl 1.2.0, oxttl/oxrdf (tests on
 | VC-15 | `crates/vault/src/whelk.rs:505` `reason`, `:514` `reason_capped`, `:432` `RELEVANT_TRANSITIVE_CAP`, `:742` `inferred_turtle`; native timing `:647,:667,:677,:682` | 1329 | R C | Whelk wrapper over horned-owl; inferred TTL | 20 + 4 integration files | whelk-el + ontomark-reason | DELETE |
 | VC-16 | `crates/vault/src/closure.rs:87` `compute`, `:26` `INHERITED_RELATION_CAP` | 349 | R | navigation closure (distinct from OWL entailment; ADR-2137 §3) | 8 | ontomark-reason (closure as a named projection) | DELETE |
 | VC-17 | `crates/vault/src/build/ngg1.rs:39-66` constants, `:113` `build_csr`, `:150` `pack`, `:328` `force_layout`, `:438` `bake_positions` | 716 | N | **the only NGG1 encoder in Rust** | 16 | ontomark-compile `ngg1` | DELETE |
-| VC-18 | `crates/vault/src/build/graph_tiers.rs:87` `CATEGORY_ORDER` (**48 rows**), `:44` `PIPELINE_VERSION`, `:49` `ATTRIBUTED_TO`, `:51` `ATTRIBUTED_LABEL`, `:52` `CORPUS_NATURE`, `:54` `NGM_NS_BASE` | 1297 | T I A | tier model, overview, bridges | 22 | ontomark-compile + profiles/estate | DELETE (see D2) |
+| VC-18 | `crates/vault/src/build/graph_tiers.rs:87` `CATEGORY_ORDER` (53; position = NGG1 category id), `:44` `PIPELINE_VERSION`, `:49` `ATTRIBUTED_TO`, `:51` `ATTRIBUTED_LABEL`, `:52` `CORPUS_NATURE`, `:54` `NGM_NS_BASE` | 1297 | T I A | tier model, overview, bridges | 22 | ontomark-compile + profiles/estate | DELETE |
 | VC-19 | `crates/vault/src/build/turtle.rs:37-55` `VC/NGM/NGMI/ONTOLOGY_IRI/VERSION_INFO`, `:65` `MATURITY_LEVELS`, `:209` `build_graph_attributed`, `:326` RELATION_KEYS loop, IRI prefixing `:824-849` | 1740 | C I A | Turtle emitter (ADR-2015 defects 3, 5) | 31 | ontomark-compile | DELETE |
 | VC-20 | `crates/vault/src/build/webvowl.rs:39-41` base IRIs, `:67` `remap_iri`, `:92` `build` | 427 | C I | WebVOWL JSON | 11 | ontomark-compile | DELETE |
 | VC-21 | `crates/vault/src/build/attribution.rs:24` `Roster`, `:31` `discover` (reads `ontology/attribution.yaml`), `:84` `resolve` | 111 | A | generator roster | 1 | profiles/estate roster | DELETE |
@@ -123,14 +170,14 @@ Dependency closure: whelk git `79a1ee2`, horned-owl 1.2.0, oxttl/oxrdf (tests on
 | Id | path:line | LOC | Resp | What | Consumers | Tests | Replaced by | Disp |
 |---|---|---|---|---|---|---|---|---|
 | VC-40 | `crates/visionclaw-domain/src/vault/mod.rs:278` `parse`, `:288` `split`, `:378,:393` frontmatter, `:197` `to_frontmatter_yaml`, `:308` `render_page` | 1222 | P W | **second parser and writer** (the module doc and ADR-2096 call it the single entry point; ADR-2113 says `vault-core`) | `github_sync_service.rs:1723,2070`; `file_service.rs:766-786`; `knowledge_graph_parser.rs:146`; `decision_elevation.rs:322,365`; `ontology_mutation_service.rs:100,495,532`; `elevation_actor.rs:566,722`; `src/bin/load_ontology.rs:96` | 44 inline; `visionclaw-domain/tests/vault_fixtures.rs` 5; `tests/vault_gate_test.rs` 18 | ontomark-parse | DELETE; callers REPIN |
-| VC-41 | `src/services/ontology_enrichment_service.rs:151` `extract_frontmatter` | 289 | P | hand-rolled `key: value` reader | `:69` | 2 | ontomark-parse | DELETE |
+| VC-41 | `src/services/ontology_enrichment_service.rs:151` `extract_frontmatter` | 289 | P | hand-rolled `key: value` reader | `:69` (service constructed only in `src/test_helpers.rs:270`) | 2 | ontomark-parse | DELETE |
 | VC-42 | `src/services/page_parser.rs:26,:30` `urn:ngm:` constants, `:66` wrapper | 430 | I P | wrapper over vault-core plus duplicate namespace constants | `load_ontology.rs`, `github_sync_service.rs` | 10 | ontomark-parse + model | REPIN |
 | VC-43 | `src/services/ontology_mutation_service.rs:51` `generate_vault_markdown`, `:754` `generate_term_id` (legacy prefix map `:756-760`), `:792` `check_consistency` | 1276 | W T V | page generation and patch; second Whelk consistency gate | `:341` | 4 | ontomark-parse patch + ontomark-reason | ADAPT |
 | VC-44 | `src/services/decision_elevation.rs:261` draft page, `:139` `slugify`, `:200` generator `process:visionclaw/{ver}` | 1015 | W I A | decision page writer, Unicode slug, generator stamp | `decision_elevation_actor.rs:325,605` | 14 | ontomark-parse + model; generator via profile | ADAPT |
 | VC-45 | `src/actors/elevation_actor.rs:510` `draft_class_page`, `:481` `slugify` (copy of VC-44), `:791` disjointness gate | 2553 | W I V | class draft writer and gate | internal | 30 | ontomark-parse + model + reason | ADAPT |
 | VC-46 | `crates/visionclaw-adapters/src/whelk_inference_engine.rs:73`, `:319` `check_axiom_set` | 906 | R | **second Whelk adapter** (horned-owl translation `:15-20`) | `src/main.rs:531`; `github_sync_service.rs:199,226,3024`; `elevation_actor.rs:881-885`; `ontology_mutation_service.rs:797`; `decision_service.rs:406,641` | 13 + `tests/inference/{classification,consistency,explanation}_tests.rs` | ontomark-reason behind the `InferenceEngine` port | DELETE impl; port REPIN |
 | VC-47 | `crates/visionclaw-ontology/src/reasoning/custom_reasoner.rs:60` `compute_transitive_closure`, `:224` `is_subclass_of` | 433 | R | hand-rolled closure | `ontology_pipeline_service.rs:242`; `ontology_reasoning_service.rs:153` | 5 + `tests/integration/{semantic_physics_integration,pipeline}_test.rs` | ontomark-reason closure projection | DELETE (D5) |
-| VC-48 | `src/services/ontology_reasoner.rs:72` `precompute_transitive_closure`, `:131` `get_ancestors` | 578 | R | third closure store; **no production caller of `:72` or `:131`** | `ontology_enrichment_service.rs:11`; `test_helpers.rs:260` | 3 | none needed | DELETE (dead) |
+| VC-48 | `src/services/ontology_reasoner.rs:72` `precompute_transitive_closure`, `:131` `get_ancestors` | 578 | R | third closure store; **test-only**: its sole user `OntologyEnrichmentService` (VC-41) is constructed only in `src/test_helpers.rs:270` | `ontology_enrichment_service.rs:11`; `test_helpers.rs:260` | 3 | none needed | DELETE (dead) |
 | VC-49 | `src/services/inferred_edge_materialiser.rs:98,:181` | 446 | R | transitive reduction to immediate parents | not traced to production | 14 | ontomark-reason (asserted/inferred split) | DECIDE (D5) |
 | VC-50 | `crates/visionclaw-ontology/src/open_world.rs:163` ancestors, `:451` version IRI from Turtle, `:541` hand-rolled Turtle tokenizer, `:37-47` graph IRIs | 1354 | R C I | open-world query over a supplied closure | `ontology_query_service.rs:22,125-201` | 22 | ontomark-compile reader + model | ADAPT |
 | VC-51 | `crates/visionclaw-ontology/src/services/owl_validator.rs:357`, `:797` `validate_domain_range` | 1262 | V | OWL validation that enforces domain/range, contrary to ADR-2126/2128 (validation never infers) | `ontology/services/mod.rs:7`; `tests/ontology_actor_integration_test.rs:39` | 8 | ontomark-compile validation | DELETE |
@@ -159,14 +206,14 @@ compose or supervisord file invokes it.
 
 ### 4.1 Producer and package pins
 
-| Id | path:line | Value | Consumers | Replaced by | Disp |
-|---|---|---|---|---|---|
-| VG-P1 | `.github/workflows/publish.yml:50` `VAULT_GIT_REV` | `1044b0722e6166c8936caec7aacf0ed4c9f7647b` | checkout `:110-116`, cache key `:130`, build `:133-146`, summary `:494` | `ONTOMARK_RELEASE_TAG` downloading the released `ontomark` binary, plus a pinned-tag source fallback from the same release; VisionClaw checkout removed | REPIN |
-| VG-P2 | `.github/workflows/publish.yml:43-45` | `VAULT_RELEASE_REPO=DreamLab-AI/VisionClaw`, `VAULT_RELEASE_TAG=''`, `VAULT_ASSET=vault-x86_64-unknown-linux-gnu` | `:83-97` | ontomark release repo, tag and asset | REPIN |
-| VG-P3 | `publishing-tools/WasmVOWL/modern/package.json:20`; lock `package-lock.json:595-599` | `@dreamlab-ai/vowl-wasm` `0.1.2` exact, registry integrity | `src/workers/physics.worker.ts:99,101`; `vite.config.ts:22` | vowl-wasm release that re-exports ontomark NGG1 | REPIN |
-| VG-P4 | `scripts/space-corpus/Cargo.toml:18` | `vault-core = { path = "../../../project/crates/vault-core" }` (sibling path, no sha; `Cargo.lock:710` has no source) | `scripts/space-corpus/src/main.rs:20` | `ontomark-parse`/`ontomark-model` by version | REPIN |
-| VG-P5 | unversioned `vault` on PATH: `scripts/space-corpus/src/main.rs:210,:528`; `transcripts/test_weekly_ingest.py:96`; `planning/space-science-and-geo-sensing/research/tooling/finalise.sh:20-40`; `docs/migration-2026-09-22/proposals/regenerate.sh:10,41` | — | — | `ontomark` CLI (governance verbs per D4) | REPIN |
-| VG-P6 | `publishing-tools/WasmVOWL/scripts/check-versions.sh:38` | reads `publishing-tools/WasmVOWL/Cargo.toml`, which does not exist | — | delete or point at the vowl-wasm pin | DELETE |
+| Id | path:line | Value | Consumers | Tests | Replaced by | Disp |
+|---|---|---|---|---|---|---|
+| VG-P1 | `.github/workflows/publish.yml:50` `VAULT_GIT_REV` | `1044b0722e6166c8936caec7aacf0ed4c9f7647b` | checkout `:110-116`, cache key `:130`, build `:133-146`, summary `:494` | none (CI only) | `ONTOMARK_RELEASE_TAG` downloading the released `ontomark` binary, plus a pinned-tag source fallback from the same release; VisionClaw checkout removed | REPIN |
+| VG-P2 | `.github/workflows/publish.yml:43-45` | `VAULT_RELEASE_REPO=DreamLab-AI/VisionClaw`, `VAULT_RELEASE_TAG=''`, `VAULT_ASSET=vault-x86_64-unknown-linux-gnu` | `:83-97` | none (CI only) | ontomark release repo, tag and asset | REPIN |
+| VG-P3 | `publishing-tools/WasmVOWL/modern/package.json:20`; lock `package-lock.json:595-599` | `@dreamlab-ai/vowl-wasm` `0.1.2` exact, registry integrity | `src/workers/physics.worker.ts:99,101`; `vite.config.ts:22` | modern `vitest run` does not load the WASM binary; none exercise the pinned package | vowl-wasm release that re-exports ontomark NGG1 | REPIN |
+| VG-P4 | `scripts/space-corpus/Cargo.toml:18` | `vault-core = { path = "../../../project/crates/vault-core" }` (sibling path, no sha; `Cargo.lock:710` has no source) | `scripts/space-corpus/src/main.rs:20` | space-corpus `#[test]` 4 | `ontomark-parse`/`ontomark-model` by version | REPIN |
+| VG-P5 | unversioned `vault` on PATH: `scripts/space-corpus/src/main.rs:210,:528`; `transcripts/test_weekly_ingest.py:96`; `planning/space-science-and-geo-sensing/research/tooling/finalise.sh:20-40`; `docs/migration-2026-09-22/proposals/regenerate.sh:10,41` | — | `transcripts/test_weekly_ingest.py` 23 (skips when `vault` is absent, `:96`) | — | `ontomark` CLI (governance verbs per D4) | REPIN |
+| VG-P6 | `publishing-tools/WasmVOWL/scripts/check-versions.sh:38` | reads `publishing-tools/WasmVOWL/Cargo.toml`, which does not exist | — | none | delete or point at the vowl-wasm pin | DELETE |
 
 ### 4.2 Explorer (TypeScript)
 
@@ -216,7 +263,7 @@ Frozen JS API (keep): `init`, `version` (`src/lib.rs:170,181`); `WebVowl` method
 
 | Id | path:line | LOC | Resp | What | Tests | Replaced by | Disp |
 |---|---|---|---|---|---|---|---|
-| VW-01 | `src/ngg1.rs:19-49` constants, `:128` `Ngg1::parse` and accessors `:217-324` | 499 | N | second NGG1 decoder (Rust); cites a `FORMAT-NGG1.md` absent from this repo (`:3`) | 9 + `tests/ngg1_explorer_test.rs` 4 | `pub use ontomark_compile::ngg1` behind the unchanged `vowl_wasm::ngg1` path and `NggExplorer` API | DELETE body, keep re-export |
+| VW-01 | `src/ngg1.rs:19-49` constants, `:128` `Ngg1::parse` and accessors `:217-324` | 499 | N | second NGG1 decoder (Rust); cites a `FORMAT-NGG1.md` absent from this repo (`:3`) | 9 + `tests/ngg1_explorer_test.rs` 4 | `pub use` of a dependency-light NGG1 codec (its own crate or a no-default-features `ontomark-compile` module) behind the unchanged `vowl_wasm::ngg1` path and `NggExplorer` API. The published bundle (232,052 B, README.md:191) must not gain reasoner, RDF or YAML dependencies: a bundle-size check joins the gate | DELETE body, keep re-export |
 | VW-02 | `src/ontology/markdown_parser.rs:56` `parse`, `:149`, `:171` `build_full_iri` | 386 | P I | Markdown ontology-block parser (feature `markdown-ontology`, **not in the published bundle**) | 5 + `tests/markdown_parser_test.rs` 10 | ontomark-parse (behind the same feature) or retire `parseMarkdownOntology` | DECIDE (D8) |
 | VW-03 | `src/ontology/mod.rs:216` `Domain` enum, `:244` `from_prefix`, `:269` `base_uri` | 403 | T I | domain enum with base URIs | 4 | profiles/estate registry | DELETE |
 | VW-04 | `src/ontology/owl2_validator.rs` | 790 | V | OWL 2 validator (feature `markdown-ontology`) | 14 + `tests/owl2_validation_test.rs` 10 | ontomark-compile validation | DECIDE (D8) |
@@ -244,13 +291,13 @@ Loom consumes artefacts and never parses Markdown (no YAML or Markdown crate in 
 
 ### 7.1 Pins
 
-| Id | path:line | Value | Replaced by | Disp |
-|---|---|---|---|---|
-| AB-P1 | `flake.nix:41-42` `vaultSrc` | `github:DreamLab-AI/VisionClaw/3213e314f82491f338660c79b77332da6610ed9c` (**differs from publish.yml's `1044b0722`**) | `ontomarkSrc` input at the released tag | REPIN |
-| AB-P2 | `flake.lock:263-277` | rev `3213e314…`, narHash `sha256-FP99FAX3…` | relocked | REPIN |
-| AB-P3 | `lib/vault.nix:75` lockfile, `:77` whelk outputHash, `:80` `buildAndTestSubdir = "crates/vault"`, `:85` `doCheck = true`; licence note `:58` | — | `lib/ontomark.nix` building `ontomark-cli` from its own lock; keep `doCheck` | REPIN |
-| AB-P4 | `flake.nix:924-930` (`vaultCliActive`), `:1944-1945`, `:2002-2005` symlink `/opt/agentbox/bin/vault` | — | bake `ontomark`, keep a `vault` symlink for the transition window (ADR-2136 §1) | REPIN |
-| AB-P5 | `config/entrypoint-unified.sh:1130-1169` Phase 5d(ii) `vault --version` gate | — | probe `ontomark --version` (and the adapter, per D4) | REPIN |
+| Id | path:line | Value | Tests | Replaced by | Disp |
+|---|---|---|---|---|---|
+| AB-P1 | `flake.nix:41-42` `vaultSrc` | `github:DreamLab-AI/VisionClaw/3213e314f82491f338660c79b77332da6610ed9c` (**differs from publish.yml's `1044b0722`**) | none (no flake `checks`) | `ontomarkSrc` input at the released tag | REPIN |
+| AB-P2 | `flake.lock:263-277` | rev `3213e314…`, narHash `sha256-FP99FAX3…` | none | relocked | REPIN |
+| AB-P3 | `lib/vault.nix:75` lockfile, `:77` whelk outputHash, `:80` `buildAndTestSubdir = "crates/vault"`, `:85` `doCheck = true`; licence note `:58` | — | the derivation runs the vault crate suite (`doCheck = true`) | `lib/ontomark.nix` building `ontomark-cli` from its own lock; keep `doCheck` | REPIN |
+| AB-P4 | `flake.nix:924-930` (`vaultCliActive`), `:1944-1945`, `:2002-2005` symlink `/opt/agentbox/bin/vault` | — | none | bake `ontomark`, keep a `vault` symlink for the transition window (ADR-2136 §1) | REPIN |
+| AB-P5 | `config/entrypoint-unified.sh:1130-1169` Phase 5d(ii) `vault --version` gate | — | boot gate only | probe `ontomark --version` (and the adapter, per D4) | REPIN |
 
 No vowl-wasm pin in agentbox. No flake `checks` attribute for vault. `package.json:10` `test:vault` globs `mcp/servers/lib/__tests__/*.test.js`,
 a directory that does not exist (DELETE or fix).
@@ -266,14 +313,14 @@ are the compatibility contract (ADR-2136 verification).
 
 ### 7.3 Duplicate semantics
 
-| Id | path:line | Lang | Resp | What | Replaced by | Disp |
-|---|---|---|---|---|---|---|
-| AB-01 | `management-api/lib/ontology-apply.js:320` frontmatter regex, `:176` `slugify` (reused `ontology-propose.js:173`, `elevation-stage.js:136`) | JS | P I | parse and slug | `ontomark` CLI JSON (`retrieve`, `slug`) | DELETE |
-| AB-02 | `management-api/lib/ontology-propose.js:64,:173-177`; `skills/podcast-knowledge-ingest/submit-proposals.mjs:100` | JS | I | `urn:ngm:class:` minting | CLI-reported IRI | DELETE |
-| AB-03 | `management-api/lib/elevation-stage.js:136-174` page writer, `:80-94` relation resolution | JS | W | page writer | `ontomark create` (guarded) | DELETE |
-| AB-04 | `management-api/lib/kg-proposal-extractor.js:156-181` | JS | P | is-subclass-of extraction | CLI JSON | DELETE |
-| AB-05 | `mcp/servers/lib/ontology-index-build.js:49-56,126-127`; `mcp/servers/lib/ontology-local.js:104-327` (self-described interim, `:4-20`) | JS | P V | JSON-LD class index and dangling-link check | `ontomark` CLI (`find`, `validate`) | DELETE |
-| AB-06 | `services/podcast-ingest/src/common/yaml_scalar.rs:33`; `src/promote/working_page.rs:56` | Rust | W | frontmatter scalar quoting and page writer | `ontomark-parse` crate dependency | REPIN |
+| Id | path:line | Lang | Resp | What | Tests | Replaced by | Disp |
+|---|---|---|---|---|---|---|---|
+| AB-01 | `management-api/lib/ontology-apply.js:320` frontmatter regex, `:176` `slugify` (reused `ontology-propose.js:173`, `elevation-stage.js:136`) | JS | P I | parse and slug | `management-api/tests/ontology-apply.test.js` 67, `ontology-propose-vault.test.js` 14, `elevation-stage.test.js` 14 | `ontomark` CLI JSON (`retrieve`, `slug`) | DELETE |
+| AB-02 | `management-api/lib/ontology-propose.js:64,:173-177`; `skills/podcast-knowledge-ingest/submit-proposals.mjs:100` | JS | I | `urn:ngm:class:` minting | `ontology-propose-vault.test.js` 14; `tests/sovereign/ontology-propose.test.js` | CLI-reported IRI | DELETE |
+| AB-03 | `management-api/lib/elevation-stage.js:136-174` page writer, `:80-94` relation resolution | JS | W | page writer | `elevation-stage.test.js` 14 | `ontomark create` (guarded) | DELETE |
+| AB-04 | `management-api/lib/kg-proposal-extractor.js:156-181` | JS | P | is-subclass-of extraction | `tests/sovereign/kg-proposal-extractor.test.js` 18 | CLI JSON | DELETE |
+| AB-05 | `mcp/servers/lib/ontology-index-build.js:49-56,126-127`; `mcp/servers/lib/ontology-local.js:104-327` (self-described interim, `:4-20`) | JS | P V | JSON-LD class index and dangling-link check | none (`package.json:10` `test:vault` globs a missing dir); `tests/config/vault-consumer-fallback.test.mjs` touches the loader | `ontomark` CLI (`find`, `validate`) | DELETE |
+| AB-06 | `services/podcast-ingest/src/common/yaml_scalar.rs:33`; `src/promote/working_page.rs:56` | Rust | W | frontmatter scalar quoting and page writer | `yaml_scalar.rs` 7, `working_page.rs` 4 | `ontomark-parse` crate dependency | REPIN |
 
 `management-api/lib/bc20-provenance-bridge.js:137` mints `urn:visionclaw:concept:` (VisionClaw's own identifier scheme, not ontology identity): RETAIN.
 `ontology/{decision-layer,code-harness}.{ttl,ofn}` are a separate agentbox ontology: RETAIN.
@@ -283,10 +330,10 @@ are the compatibility contract (ADR-2136 verification).
 | # | Decision | Recommendation | Blocks |
 |---|---|---|---|
 | D1 | Relicensing grant for code extracted from AGPL `vault-core`/`vault` into MIT OR Apache-2.0 crates | Owner records the grant in ontomark `NOTICE` and ADR-2014 now. The owner is the sole author per `git log`. `nostr.rs` and governance posting stay AGPL | any public push or crates.io publish |
-| D2 | NGG1 category table: `graph_tiers.rs:87` has 48 rows; `consistency.rs:62` has 53. The missing five are `bc-governance-and-regulation`, `positioning-navigation-and-timing`, `sc-standards-and-interop`, `spacecraft-guidance-navigation-and-control`, `spacecraft-power-and-thermal-control`, so classes under them get `CATEGORY_NONE` in tiers | Byte parity (EXP-02/09) reproduces the 48-row table as `ngg1-v1` in the profile. The fix ships as a versioned profile bump with new golden tiers, not as a silent byte change | WP-C golden capture |
-| D3 | knowledgeGraph (`explorer/modern/src/lib/ngg1.ts`, `explorer/FORMAT-NGG1.md`, `scope.ts`, vowl-wasm pinned to the `v0.1.1` GitHub tarball at `explorer/modern/package.json:20`) is outside the brief but is a fourth NGG1 implementation | Bring it into WP-D, or archive the explorer, since visionGraph's copy is the shipping one (VisionFlow VG-06 documents the drift) | EXP-10 completeness |
+| D2 | *Withdrawn.* The first census pass counted 48 rows in `graph_tiers.rs:87` because rustfmt wraps five long tuples across lines. A recount gives 53, the same set as `consistency.rs:62` but in a different order. Only `CATEGORY_ORDER`'s order is semantic (NGG1 category id). `CATEGORY_SLUGS` is used for membership only (collected into a `BTreeSet` at `turtle.rs:243-247`), and set equality is already guarded by the test at `graph_tiers.rs:1303-1304` | The profile holds **one** ordered registry; the id order is `CATEGORY_ORDER`'s. Golden `python/graph/overview.json` encodes the legacy 34, and `golden_parity.rs:508-509,545-556` truncates to 34 and asserts 53, so space-category tiers are covered only by those assertions and the full-corpus tier diff | — |
+| D3 | Two repos outside the brief carry duplicates. **knowledgeGraph** has `explorer/modern/src/lib/ngg1.ts`, `explorer/FORMAT-NGG1.md` and `scope.ts`, with vowl-wasm pinned to the `v0.1.1` GitHub tarball at `explorer/modern/package.json:20`: a fourth NGG1 implementation. **WasmVOWL** (standalone, last commit 2026-09-07) pins the same `v0.1.1` tarball at `modern/package.json:19` | Bring both into WP-D, or archive both explorers, since visionGraph's copy is the one that ships (VisionFlow VG-06 documents the drift). Either way their pins leave 0.1.1 or the repos are archived | EXP-10 completeness |
 | D4 | The `vault` binary is AGPL only because of `nostr.rs`. `ontomark-cli` is a drop-in for build, validate, gate, conflicts and repair. The governance verbs (propose, apply, panel publish) post to the forum | Keep a thin AGPL `vault` adapter in VisionClaw that depends on ontomark crates and owns only the governance verbs. agentbox bakes both `ontomark` and that adapter; `vault <non-governance verb>` execs `ontomark`. find, retrieve, tree, edit and create move to `ontomark` | AB-P4, VC-32, agentbox callers |
-| D5 | VisionClaw server reasoners VC-47 and VC-49 feed physics and the inferred-edge view | Delete VC-47 and VC-48 (VC-48 is dead). Rewrite VC-49 as a projection over ontomark-reason's inferred set, keeping physics constraints as an explicit projection (ADR-2137 §3) | WP-B parity |
+| D5 | VisionClaw server reasoners VC-47 and VC-49 feed physics and the inferred-edge view | Delete VC-47, and VC-48 with VC-41 (test-only). Rewrite VC-49 as a projection over ontomark-reason's inferred set, keeping physics constraints as an explicit projection (ADR-2137 §3) | WP-B parity |
 | D6 | Explorer TS: NGG1 codec (VG-01) and display markdown (VG-08) | Decode and ego-encode through vowl-wasm (re-exporting ontomark). TS keeps typed views over generated constants. VG-08 stays as display-only until ontomark-wasm ships a body view | spec-plugin and spec-compile coordination |
 | D7 | Corpus-maintenance Python (VG-21 to VG-27, VG-30) is glue, so the Rust-first rule applies | Port lint, plan and apply into `ontomark` subcommands driven by `ontology/collision-*.yaml` (the CLAUDE.md gate then runs `ontomark lint collisions`). Delete one-offs (VG-25, VG-26). `weekly_ingest.py` keeps its PyYAML I/O but writes through `ontomark create` | WP-C CLI scope |
 | D8 | vowl-wasm `markdown-ontology` feature (VW-02, VW-04) is unpublished but public Rust API | Re-implement the feature over ontomark-parse and ontomark-compile. If no consumer exists, deprecate it in 0.2 with a CHANGELOG note; the JS bundle API is unaffected | vowl-wasm release |
@@ -301,7 +348,7 @@ touched repo, never on main, and is reported to team-lead with the diff summary 
 |---|---|---|---|
 | 1 | `ontomark/parse` | VisionClaw VC-01, 02, 07, 08, 13, 40, 41, 42, 57, 58; visionGraph VG-P4, VG-20; agentbox AB-01, 04, 06 | EXP-03; vault-core inline and `real_vocabulary`; `vault_fixtures.rs`, `tests/vault_gate_test.rs`; `cargo test --workspace` in VisionClaw; space-corpus tests; agentbox management-api tests |
 | 2 | `ontomark/iri` | VC-04, 54, 55; LM-01, 02, 03; AB-02; VG-06, VG-24 identity rewrite removed | EXP-02 on golden and full public build (IRI multiset diff = ∅); Loom `model_tests`, scaffold `tests.rs` |
-| 3 | `ontomark/taxonomy` | VC-05, 06 (tables), 18 (tables), 56; VW-03; VG-03, 04, 05; colour tables repinned to generated slugs | EXP-05; golden tiers byte-identical (D2); `check-space-domains.mjs`; `domain_palette_parity.rs`; `spaceDomains.test.ts` |
+| 3 | `ontomark/taxonomy` | VC-05, 06 (tables), 18 (tables), 56; VW-03; VG-03, 04, 05; colour tables repinned to generated slugs | EXP-05; golden tiers byte-identical (one ordered 53-slug registry; position = category id); `check-space-domains.mjs`; `domain_palette_parity.rs`; `spaceDomains.test.ts` |
 | 4 | `ontomark/reason` | VC-06 (checks), 15, 16, 46, 47, 48, 49 (D5); VG-26, 27 | EXP-01; `el_profile`, `defined_classes`, `probe_consistency`, `whelk_scaling`; `tests/inference/*`; `semantic_physics_integration_test`, `pipeline_test` |
 | 5 | `ontomark/ngg1` | VC-17; VW-01 (re-export, API frozen); VG-01, 02 (D6); knowledgeGraph per D3 | golden `graph/*.bin` byte-identical; vowl-wasm 214 tests plus wasm-pack bundle check; TS reads the shared fixture; explorer `vitest run` |
 | 6 | `ontomark/rdf` | VC-19, 20, 22, 28, 50, 52, 53; VG-09; LM-08 | EXP-02, 04, 09; `golden_parity.rs` 15; Loom `exp013_bundle`, `served_identity`, graph integration |
@@ -373,8 +420,9 @@ Loom `model.rs:32`, `stage_corpus.rs:101`, `hnsw.rs:446`, `loom-graph-oxigraph/s
 `ontology-apply.js:176,320`, `ontology-propose.js:64`, `elevation-stage.js:136`, `ontology-local.js:4`, `yaml_scalar.rs:33`; VisionClaw
 `pack-pod-resources.py:31`.
 
-Category-table diff, executed: `awk` over both tables gives 48 (`graph_tiers.rs` `CATEGORY_ORDER`) and 53 (`consistency.rs` `CATEGORY_SLUGS`);
-`comm -3` lists the five slugs in D2, all present only in `CATEGORY_SLUGS`.
+Category tables, executed: a Python regex over both declarations (multi-line tuples included) gives 53 and 53, equal as sets, with positions
+6-33 ordered differently. A first single-line `awk` count gave 48 because it missed wrapped tuples; D2 records the withdrawal. The fixture page
+`3D Scene Exchange Protocol (SXP).md` is the only golden page naming one of the five long-slug categories (`sc-standards-and-interop`).
 
 Limits: responsibility labels for some `crates/vault/src/build/*` modules came from symbol names, not full reads. Test counts are attribute
 counts, not executed passes. Consumer lists for Loom LM-02 and VisionClaw VC-49 are incomplete ("not traced"). This is a same-family census;
