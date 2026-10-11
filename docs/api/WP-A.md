@@ -32,7 +32,7 @@ Value::{Null, Bool, Int(i64), Float(String /*lexical*/), String, Seq(Vec<Value>)
 Wikilink { target, subpath: Option<Subpath::{Heading,Block}>, alias, embed } ; Wikilink::parse("[[..]]")
 BodyLink { span, link }; FootnoteRef { span, label }; FootnoteDef { span, label, text }
 Span { start, end } (byte offsets into the document source)
-doc.utf16_index() -> Utf16Index; .offset(byte) -> Option<usize>; .span(Span) -> Option<(usize, usize)>  // JS hosts
+doc.utf16_index() -> Utf16Index; .offset(byte) -> Option<usize>; .byte(utf16) -> Option<usize>; .span(Span) -> Option<(usize, usize)>  // JS hosts; None off a char boundary, inside a surrogate pair, out of range or reversed
 
 // Writing — the only write path
 let patch = Patch::new(doc.digest())
@@ -116,9 +116,13 @@ Axiom::{SubClassOf{sub,sup}, EquivalentClasses{classes}, DisjointClasses{classes
 ClassExpr::{Named(Iri), Thing, Nothing, And(Vec), Some{property, filler: Box}}   // Iri::as_str() is free
 Profile::predicates() -> Vec<PredicateDef>   // default empty
 // The one minter (explicit creation only; never called when reading a vault)
-Profile::mint_iri(&self, kind: Kind, title: &str, ctx: &MintContext{model: Option<&Model>}) -> Option<Iri>  // default None
+Model::mint_iri(&self, profile: &dyn Profile, kind: Kind, title: &str) -> Result<Iri, MintRefusal>  // THE entry point: title guard, then the profile's rule, then the claimed-IRI guard
+Profile::mint_iri(&self, kind, title, ctx: &MintContext{model: Option<&Model>}) -> Result<Iri, MintRefusal>  // the rule only; default Err(NoRule)
+MintRefusal::{NoRule, EmptySlug, InvalidIri(String), IriTaken(Iri), TitleTaken{title, existing: Vec<Iri>}}  // serde tag "refusal"
+Model::entities_named(&str) -> Vec<Iri>  // labels, aliases, note names; trimmed, case-insensitive
 ProfileSpec.mint: Option<MintSpec{class, individual, property: Option<namespace>}>  // namespace(kind) + slugify(title)
-slugify(&str) -> String   // estate rule re.sub('[^a-z0-9]+','-',lower).strip('-'); None on empty slug or claimed IRI
+slugify(&str) -> String   // = vault_core::slug::slugify, the current estate minter. 418 of 9,244 public resources predate it
+                          // (case/digit-boundary rule, e.g. 2-d-li-dar). TitleTaken stops a second IRI for those titles.
 m.is_claimed(&iri) -> bool
 m.resolve_with(&profile, target) -> Reference;  m.entity_of(&DocId);  m.resolution_counts()
 ```
@@ -153,4 +157,5 @@ so the unresolved figure is not a public-projection effect. Run: `ONTOMARK_CORPU
 | Gate | Status |
 |---|---|
 | Cross-vendor evidence audit (Codex, `gpt-6-astra`, EDD step 4) | **NOT RUN, pending.** On 2026-10-11, `codex exec` exited with no output (refresh token expired, reproduced by team-lead). Re-run on this branch once `codex login` is restored. |
-| Same-family adversarial review (Claude Opus, `code-reviewer`, at a55f80c) | **Degraded and supplementary.** It does not substitute for the Codex audit. It confirmed 5 defects plus 6 minor ones by running falsifiers. All 11 now have a regression test (`ontomark-parse/tests/review_regressions.rs`, plus 3 tests in `ontomark-model/tests/adr2015.rs`). In `177e5b9` the `Value::Float("1_0.0")` item was not actually fixed: its emitter change was a no-op, because the reader and the emitter already agree. It is now a named refusal, `PatchError::Unrepresentable`. **Scope:** the review covered `a55f80c`, so `axiom.rs`, `utf16.rs` and `mint.rs` (added later) need a second pass, which is in progress. Not falsified: lossless tiling (C1), the char-to-byte span mapping, digest and lock guards, the emitter on about 80 adversarial strings, IRI-tail isolation, and one form plus one disposition per statement. |
+| Same-family adversarial review (Claude Opus, `code-reviewer`, at a55f80c) | **Degraded and supplementary.** It does not substitute for the Codex audit. It confirmed 5 defects plus 6 minor ones by running falsifiers. All 11 now have a regression test (`ontomark-parse/tests/review_regressions.rs`, plus 3 tests in `ontomark-model/tests/adr2015.rs`). In `177e5b9` the `Value::Float("1_0.0")` item was not actually fixed: its emitter change was a no-op, because the reader and the emitter already agree. It is now a named refusal, `PatchError::Unrepresentable`. **Scope:** the review covered `a55f80c`. |
+| Same-family review, second pass (Claude Opus, `code-reviewer`, at 177e5b9; `axiom.rs`, `utf16.rs`, `mint.rs`) | **Degraded and supplementary.** It confirmed 6 findings, and each is fixed with a regression test. A predicate IRI whose page is a data property or a class was projected as an object property: now Rejected, with no Transitive axiom. Data⊑Data was projected as SubObjectPropertyOf: now PreservedNotReasoned. The axiom doc claim is narrowed. Utf16Index wrapped at 4 GiB (now an asserted limit), accepted a reversed span (now None), and had no reverse direction (`byte()` added). Not falsified: minting determinism, refusals, Unicode slugs, and the forward UTF-16 mapping. Not falsified: lossless tiling (C1), the char-to-byte span mapping, digest and lock guards, the emitter on about 80 adversarial strings, IRI-tail isolation, and one form plus one disposition per statement. |

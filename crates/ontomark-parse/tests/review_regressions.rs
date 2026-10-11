@@ -125,3 +125,50 @@ fn a_float_the_reader_would_not_type_as_a_float_is_refused_by_name() {
         assert_eq!(r.unwrap(), format!("---\na: 1\nq: {raw}\n---\n"));
     }
 }
+
+// ---------- second review: Utf16Index ----------
+
+use ontomark_parse::Utf16Index;
+
+#[test]
+fn utf16_offsets_round_trip_both_ways_at_every_boundary() {
+    for s in [
+        "",
+        "abc",
+        "é",
+        "€",
+        "𝄞",
+        "𝄞𝄞",
+        "a\r\nb",
+        "é𝄞x\r\n€",
+        "\u{feff}k",
+        "e\u{301}",
+    ] {
+        let ix = Utf16Index::new(s);
+        let units: Vec<u16> = s.encode_utf16().collect();
+        for b in 0..=s.len() + 2 {
+            let want = s.is_char_boundary(b).then(|| s[..b].encode_utf16().count());
+            let want = if b > s.len() { None } else { want };
+            assert_eq!(ix.offset(b), want, "{s:?} byte {b}");
+            if let Some(u) = want {
+                assert_eq!(ix.byte(u), Some(b), "{s:?} unit {u}");
+            }
+        }
+        for u in 0..=units.len() + 2 {
+            // Inside a surrogate pair, or past the end: no byte offset.
+            let inside = u > 0 && u < units.len() && (0xDC00..0xE000).contains(&units[u]);
+            if inside || u > units.len() {
+                assert_eq!(ix.byte(u), None, "{s:?} unit {u}");
+            } else {
+                assert!(ix.byte(u).is_some(), "{s:?} unit {u}");
+            }
+        }
+    }
+}
+
+#[test]
+fn a_reversed_span_has_no_utf16_range() {
+    let ix = Utf16Index::new("abc");
+    assert_eq!(ix.span(Span { start: 2, end: 0 }), None);
+    assert_eq!(ix.span(Span::new(0, 2)), Some((0, 2)));
+}

@@ -643,7 +643,7 @@ impl Model {
                         format!("`{}` item {:?} matches {n} entities", entry.key, item),
                     );
                 }
-                let (form, mut disposition) = shape(pred.form, p.kind, &object, kinds);
+                let (form, mut disposition) = shape(pred.form, &pred.iri, p.kind, &object, kinds);
                 if !reasoned && disposition == Disposition::Supported {
                     disposition =
                         Disposition::PreservedNotReasoned("lifecycle state is not reasoned".into());
@@ -744,6 +744,16 @@ impl Model {
         }
     }
 
+    /// Every entity IRI carrying `name` as a label, alias or note name
+    /// (trimmed, case-insensitive), sorted. Conflicted claims are included.
+    #[must_use]
+    pub fn entities_named(&self, name: &str) -> Vec<Iri> {
+        self.names
+            .get(&name.trim().to_lowercase())
+            .map(|s| s.iter().cloned().collect())
+            .unwrap_or_default()
+    }
+
     /// `true` when some document claims `iri` (uniquely or in conflict).
     #[must_use]
     pub fn is_claimed(&self, iri: &Iri) -> bool {
@@ -787,6 +797,7 @@ type KindTest = fn(Kind) -> bool;
 /// subject's kind and the object.
 fn shape(
     form: PredicateForm,
+    predicate: &Iri,
     subject: Kind,
     object: &Object,
     kinds: &BTreeMap<Iri, Kind>,
@@ -878,6 +889,24 @@ fn shape(
             Reject(format!("{sf:?} does not apply to a {subject:?} subject")),
         );
     }
+    // An object predicate whose IRI is itself a page must be an object
+    // property: one IRI cannot be both a data property (or a class) and an
+    // object property.
+    if matches!(
+        sf,
+        StatementForm::Existential | StatementForm::ObjectAssertion
+    ) {
+        if let Some(k) = kinds.get(predicate) {
+            if *k != Kind::Property(PropertyKind::Object) {
+                return (
+                    sf,
+                    Reject(format!(
+                        "predicate {predicate} is a {k:?}, not an object property"
+                    )),
+                );
+            }
+        }
+    }
     let Object::Reference(r) = object else {
         return (
             sf,
@@ -897,6 +926,18 @@ fn shape(
                 sf,
                 Reject(format!("a {subject:?} cannot be a sub-property of a {k:?}")),
             ),
+            // The EL projection has object-property hierarchies only.
+            (Some(_), _)
+                if sf == StatementForm::SubPropertyOf
+                    && subject == Kind::Property(PropertyKind::Data) =>
+            {
+                (
+                    sf,
+                    Keep(
+                        "data sub-property hierarchies are not projected to the EL reasoner".into(),
+                    ),
+                )
+            }
             (Some(k), Some(ok)) if !ok(*k) => (sf, Reject(format!("{sf:?} target is a {k:?}"))),
             _ => (sf, Supported),
         },

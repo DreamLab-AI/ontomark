@@ -652,34 +652,62 @@ fn axioms_project_only_supported_statements() {
 
 #[test]
 fn minting_is_explicit_single_sourced_and_collision_safe() {
-    use ontomark_model::{MintContext, PropertyKind};
+    use ontomark_model::{MintContext, MintRefusal, PropertyKind};
     let p = estate_like("warn");
     let none = MintContext::default();
+    // The profile supplies the rule ...
     assert_eq!(
         p.mint_iri(Kind::Class, "3D Gaussian Splatting", &none),
-        Some(iri("urn:ngm:class:3d-gaussian-splatting"))
+        Ok(iri("urn:ngm:class:3d-gaussian-splatting"))
     );
     assert_eq!(
         p.mint_iri(Kind::Individual, "Rex", &none),
-        Some(iri("urn:ngm:individual:rex"))
+        Ok(iri("urn:ngm:individual:rex"))
     );
     assert_eq!(
         p.mint_iri(Kind::Property(PropertyKind::Object), "part of", &none),
-        None,
+        Err(MintRefusal::NoRule),
         "no property namespace"
     );
-    assert_eq!(p.mint_iri(Kind::Class, "***", &none), None, "empty slug");
-    // A claimed IRI is never re-minted (no silent suffixing).
-    let v = Vault::new(&[("A.md", &page("Class", "urn:ngm:class:animal", ""))]);
-    let m = v.model(&p);
     assert_eq!(
-        p.mint_iri(Kind::Class, "Animal", &MintContext { model: Some(&m) }),
-        None
+        p.mint_iri(Kind::Class, "***", &none),
+        Err(MintRefusal::EmptySlug)
     );
-    // Generic profile: the caller must supply an IRI.
     assert_eq!(
         DeclarativeProfile::generic().mint_iri(Kind::Class, "Animal", &none),
-        None
+        Err(MintRefusal::NoRule),
+        "generic profile: the caller must supply an IRI"
+    );
+    // ... and Model::mint_iri is the one guarded entry point.
+    let v = Vault::new(&[
+        (
+            "A.md",
+            &page("Class", "urn:ngm:class:animal", "title: Animal\n"),
+        ),
+        (
+            "P.md",
+            &page("Class", "urn:ngm:class:pet-dog", "title: Pet\n"),
+        ),
+    ]);
+    let m = v.model(&p);
+    // A claimed IRI is never re-minted, and there is no silent suffixing:
+    // "Pet Dog" is a new title whose slug equals an existing IRI.
+    assert_eq!(
+        m.mint_iri(&p, Kind::Class, "Pet Dog"),
+        Err(MintRefusal::IriTaken(iri("urn:ngm:class:pet-dog")))
+    );
+    // A title (case-insensitive) already carried by an entity is refused,
+    // naming the existing IRI, whatever the slugs say.
+    assert_eq!(
+        m.mint_iri(&p, Kind::Class, "  ANIMAL "),
+        Err(MintRefusal::TitleTaken {
+            title: "  ANIMAL ".into(),
+            existing: vec![iri("urn:ngm:class:animal")]
+        })
+    );
+    assert_eq!(
+        m.mint_iri(&p, Kind::Class, "Cat"),
+        Ok(iri("urn:ngm:class:cat"))
     );
     // Building a model never mints: a typed page without an IRI stays NoIdentity.
     let v = Vault::new(&[("B.md", "---\ntype: Class\n---\n")]);
@@ -687,6 +715,61 @@ fn minting_is_explicit_single_sourced_and_collision_safe() {
         v.model(&p).documents[&DocId::new("B")].disposition,
         DocDisposition::NoIdentity
     );
+}
+
+/// Team-lead decision 2026-10-11: titles, not slugs, key the duplicate check.
+/// Fixture: the 418 public visionGraph pages whose `urn:ngm:class:` IRI came
+/// from the older case/digit-boundary rule, so slugify(title) differs
+/// (`3D Animation` -> `3-d-animation`, while slugify gives `3d-animation`).
+#[test]
+fn legacy_rule_iris_never_get_a_second_iri_for_the_same_title() {
+    use ontomark_model::{slugify, MintRefusal};
+    let fixture = include_str!("fixtures/legacy-slug-iris.tsv");
+    let rows: Vec<(&str, &str)> = fixture
+        .lines()
+        .filter(|l| !l.starts_with('#') && !l.is_empty())
+        .map(|l| l.split_once('\t').expect("title<TAB>iri"))
+        .collect();
+    assert_eq!(rows.len(), 418);
+    let pages: Vec<(String, String)> = rows
+        .iter()
+        .enumerate()
+        .map(|(i, (title, res))| {
+            let t = title.replace('\'', "''");
+            (
+                format!("p{i}.md"),
+                format!("---\ntype: Class\nresource: {res}\ntitle: '{t}'\nstatus: stable\n---\n"),
+            )
+        })
+        .collect();
+    let refs: Vec<(&str, &str)> = pages
+        .iter()
+        .map(|(a, b)| (a.as_str(), b.as_str()))
+        .collect();
+    let p = estate_like("warn");
+    let m = Vault::new(&refs).model(&p);
+    assert_eq!(m.entities.len(), 418, "every legacy page is an entity");
+    for (title, res) in &rows {
+        // The rule alone would offer a fresh, unclaimed IRI ...
+        let fresh = format!("urn:ngm:class:{}", slugify(title));
+        assert_ne!(&fresh, res);
+        assert!(!m.is_claimed(&iri(&fresh)), "{fresh}");
+        // ... but the guard refuses it and names the existing identity.
+        for variant in [
+            title.to_string(),
+            title.to_uppercase(),
+            title.to_lowercase(),
+        ] {
+            assert_eq!(
+                m.mint_iri(&p, Kind::Class, &variant),
+                Err(MintRefusal::TitleTaken {
+                    title: variant.clone(),
+                    existing: vec![iri(res)]
+                }),
+                "{variant}"
+            );
+        }
+    }
 }
 
 // ---------- regressions from the 2026-10-11 adversarial review ----------
@@ -817,4 +900,100 @@ fn a_conflicted_identity_never_resolves() {
         only_statement(&m, "https://ex.org/D").1,
         Disposition::PreservedNotReasoned(_)
     ));
+}
+
+// ---------- regressions from the second review (axiom, utf16, mint) ----------
+
+/// A profile whose `has` predicate is an existential, transitive object
+/// predicate on `https://ex.org/has`.
+fn has_profile() -> DeclarativeProfile {
+    let spec: ProfileSpec = serde_json::from_str(
+        r#"{
+        "id": "test-has/1",
+        "kinds": { "Class": "class", "ObjectProperty": "object_property",
+                   "DatatypeProperty": "data_property", "AnnotationProperty": "annotation_property" },
+        "identity_key": "iri",
+        "predicates": {
+            "has": { "iri": "https://ex.org/has", "form": "existential", "transitive": true },
+            "rdfs:subPropertyOf": { "iri": "rdfs:subPropertyOf", "form": "sub_property_of" }
+        }
+    }"#,
+    )
+    .expect("spec parses");
+    DeclarativeProfile::new(spec).expect("spec compiles")
+}
+
+#[test]
+fn a_predicate_whose_iri_is_a_non_object_entity_is_never_reasoned_as_one() {
+    use ontomark_model::Axiom;
+    let p = has_profile();
+    for ty in ["DatatypeProperty", "Class"] {
+        let v = Vault::new(&[
+            ("A.md", &generic_page("Class", "https://ex.org/A", "")),
+            (
+                "C.md",
+                &generic_page("Class", "https://ex.org/C", "has: ['[[A]]']\n"),
+            ),
+            ("Has.md", &generic_page(ty, "https://ex.org/has", "")),
+        ]);
+        let m = v.model(&p);
+        assert!(
+            matches!(
+                only_statement(&m, "https://ex.org/C").1,
+                Disposition::Rejected(_)
+            ),
+            "{ty}"
+        );
+        let ax: Vec<Axiom> = m.axioms(&p).into_iter().map(|a| a.axiom).collect();
+        assert!(ax.is_empty(), "{ty}: {ax:?}");
+    }
+    // Declared as an object property, or not a page at all: reasoned.
+    for extra in [Some("ObjectProperty"), None] {
+        let mut pages = vec![
+            ("A.md", generic_page("Class", "https://ex.org/A", "")),
+            (
+                "C.md",
+                generic_page("Class", "https://ex.org/C", "has: ['[[A]]']\n"),
+            ),
+        ];
+        if let Some(ty) = extra {
+            pages.push(("Has.md", generic_page(ty, "https://ex.org/has", "")));
+        }
+        let refs: Vec<(&str, &str)> = pages.iter().map(|(a, b)| (*a, b.as_str())).collect();
+        let m = Vault::new(&refs).model(&p);
+        assert_eq!(
+            only_statement(&m, "https://ex.org/C").1,
+            Disposition::Supported
+        );
+        let ax: Vec<Axiom> = m.axioms(&p).into_iter().map(|a| a.axiom).collect();
+        assert_eq!(ax.len(), 2, "{extra:?}: {ax:?}");
+        assert!(ax.contains(&Axiom::Transitive {
+            property: iri("https://ex.org/has")
+        }));
+    }
+}
+
+#[test]
+fn data_sub_properties_are_kept_not_projected_as_object_ones() {
+    let v = Vault::new(&[
+        (
+            "D1.md",
+            &generic_page(
+                "DatatypeProperty",
+                "https://ex.org/d1",
+                "rdfs:subPropertyOf: ['[[D2]]']\n",
+            ),
+        ),
+        (
+            "D2.md",
+            &generic_page("DatatypeProperty", "https://ex.org/d2", ""),
+        ),
+    ]);
+    let p = DeclarativeProfile::generic();
+    let m = v.model(&p);
+    assert!(matches!(
+        only_statement(&m, "https://ex.org/d1").1,
+        Disposition::PreservedNotReasoned(_)
+    ));
+    assert!(m.axioms(&p).is_empty());
 }

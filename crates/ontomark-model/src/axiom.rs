@@ -2,13 +2,17 @@
 //!
 //! [`Model::axioms`] projects only statements whose [`Disposition`] is
 //! [`Disposition::Supported`], plus property characteristics the profile
-//! declares. Everything else stays in the statement layer with its reason.
+//! declares. Subjects and objects of the axioms are always keys of
+//! [`Model::entities`]. Property IRIs are either profile-declared predicates
+//! that no page claims, or pages of kind object property: a predicate IRI
+//! whose page is a data property or a class is rejected, never projected. Everything else stays in the statement layer with its reason.
 //! The shapes here are the EL constructs Markdown pages can express; a
 //! reasoner that also accepts other inputs owns any wider expression type.
 
 use serde::{Deserialize, Serialize};
 
 use crate::iri::Iri;
+use crate::kind::{Kind, PropertyKind};
 use crate::model::{Disposition, Model, Object, Origin, Resolution, StatementForm};
 use crate::profile::{PredicateForm, Profile};
 
@@ -183,7 +187,13 @@ impl Model {
                 p.form,
                 PredicateForm::Existential | PredicateForm::ObjectAssertion
             );
-            if p.transitive && object && seen.insert(p.iri.clone()) {
+            // A predicate IRI that is a page of another kind is not an
+            // object property: no characteristic is asserted for it.
+            let not_object = self
+                .entities
+                .get(&p.iri)
+                .is_some_and(|e| e.kind != Kind::Property(PropertyKind::Object));
+            if p.transitive && object && !not_object && seen.insert(p.iri.clone()) {
                 out.push(SourcedAxiom {
                     axiom: Axiom::Transitive { property: p.iri },
                     origin: None,

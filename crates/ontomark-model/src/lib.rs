@@ -47,7 +47,7 @@ mod profile;
 pub use axiom::{Axiom, ClassExpr, SourcedAxiom};
 pub use iri::{Iri, IriError, PrefixMap};
 pub use kind::{Kind, PropertyKind};
-pub use mint::{slugify, MintContext, MintSpec};
+pub use mint::{slugify, MintContext, MintRefusal, MintSpec};
 pub use model::Disposition;
 pub use model::{
     codes, Diagnostic, DocDisposition, DocId, DocumentRecord, Entity, Literal, Model, Object,

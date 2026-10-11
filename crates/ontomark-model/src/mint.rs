@@ -5,9 +5,43 @@
 //! renaming never mints. The model only *offers* an IRI through
 //! [`crate::Profile::mint_iri`]; the caller writes it with a guarded patch.
 
+use serde::{Deserialize, Serialize};
+
 use crate::iri::Iri;
 use crate::kind::Kind;
 use crate::model::Model;
+use crate::profile::Profile;
+
+/// Why no IRI was minted. Each case means the caller must not write an
+/// identity on its own: it either supplies one explicitly or links the
+/// existing entity.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, thiserror::Error)]
+#[serde(tag = "refusal", rename_all = "snake_case")]
+pub enum MintRefusal {
+    /// The profile has no minting rule for this kind (the generic profile
+    /// never mints).
+    #[error("the profile has no minting rule for this kind; supply an IRI")]
+    NoRule,
+    /// The title yields no identifier (`***`).
+    #[error("the title yields no identifier")]
+    EmptySlug,
+    /// The rule produced text that is not an absolute IRI.
+    #[error("the minting rule produced an invalid IRI: {0}")]
+    InvalidIri(String),
+    /// The candidate IRI is already claimed. There is no silent suffixing.
+    #[error("{0} is already claimed")]
+    IriTaken(Iri),
+    /// An entity already carries this title (case-insensitive, among labels,
+    /// aliases and note names). Titles, not slugs, key this check, so
+    /// `3D Animation` never gets a second IRI beside `3-d-animation`.
+    #[error("{title:?} is already the title of {existing:?}")]
+    TitleTaken {
+        /// The title as requested.
+        title: String,
+        /// Every entity carrying it, sorted.
+        existing: Vec<Iri>,
+    },
+}
 
 /// What a minter may consult.
 #[derive(Debug, Clone, Copy, Default)]
@@ -54,20 +88,63 @@ pub fn slugify(s: &str) -> String {
 }
 
 /// The declarative minting rule: `namespace(kind) + slugify(title)`,
-/// refused (`None`) for an empty slug, a kind without a namespace, or an IRI
-/// already claimed in the context.
+/// refused for a kind without a namespace, an empty slug, or an IRI already
+/// claimed in the context.
 pub(crate) fn mint_slug(
     namespace: Option<&str>,
     title: &str,
     ctx: &MintContext<'_>,
-) -> Option<Iri> {
-    let ns = namespace?;
+) -> Result<Iri, MintRefusal> {
+    let ns = namespace.ok_or(MintRefusal::NoRule)?;
     let slug = slugify(title);
     if slug.is_empty() {
-        return None;
+        return Err(MintRefusal::EmptySlug);
     }
-    let iri = Iri::parse(format!("{ns}{slug}")).ok()?;
-    (!ctx.is_taken(&iri)).then_some(iri)
+    let text = format!("{ns}{slug}");
+    let iri = Iri::parse(text.clone()).map_err(|_| MintRefusal::InvalidIri(text))?;
+    if ctx.is_taken(&iri) {
+        return Err(MintRefusal::IriTaken(iri));
+    }
+    Ok(iri)
+}
+
+impl Model {
+    /// Mint an IRI for a new entity the author is explicitly creating. This
+    /// is **the** entry point. It applies the guards every profile shares,
+    /// then the profile's rule ([`Profile::mint_iri`]):
+    ///
+    /// 1. If any entity already carries `title` (trimmed, case-insensitive,
+    ///    among labels, aliases and note names), refuse with
+    ///    [`MintRefusal::TitleTaken`], naming it. The caller should link
+    ///    that entity, not create a second one.
+    /// 2. Ask the profile for a candidate.
+    /// 3. If the candidate is already claimed, refuse with
+    ///    [`MintRefusal::IriTaken`]. This is checked here too, so a custom
+    ///    profile cannot skip it.
+    ///
+    /// Never called while building a model.
+    ///
+    /// # Errors
+    /// Every [`MintRefusal`].
+    pub fn mint_iri(
+        &self,
+        profile: &dyn Profile,
+        kind: Kind,
+        title: &str,
+    ) -> Result<Iri, MintRefusal> {
+        let existing = self.entities_named(title);
+        if !existing.is_empty() {
+            return Err(MintRefusal::TitleTaken {
+                title: title.to_owned(),
+                existing,
+            });
+        }
+        let iri = profile.mint_iri(kind, title, &MintContext { model: Some(self) })?;
+        if self.is_claimed(&iri) {
+            return Err(MintRefusal::IriTaken(iri));
+        }
+        Ok(iri)
+    }
 }
 
 /// Namespaces per kind for the slug rule.

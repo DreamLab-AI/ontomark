@@ -184,19 +184,22 @@ pub trait Profile {
     fn reference_candidates(&self, _target: &str) -> Vec<Iri> {
         Vec::new()
     }
-    /// Offer an IRI for a new entity the author is explicitly creating.
+    /// The profile's minting rule: a candidate IRI for a new entity.
     ///
-    /// The only minter in the workspace. `None` means the profile has no
-    /// rule for this kind, the title yields no identifier, or the candidate
-    /// is already claimed in `ctx`: the caller must then supply an IRI.
-    /// Never called when reading or indexing a vault. Default: `None`.
+    /// Callers go through [`crate::Model::mint_iri`], which applies the
+    /// title and claimed-IRI guards around this rule. A rule refuses with
+    /// [`crate::MintRefusal`] when it has nothing to offer. Never called when
+    /// reading or indexing a vault. Default: [`crate::MintRefusal::NoRule`].
+    ///
+    /// # Errors
+    /// [`crate::MintRefusal`].
     fn mint_iri(
         &self,
         _kind: Kind,
         _title: &str,
         _ctx: &crate::mint::MintContext<'_>,
-    ) -> Option<Iri> {
-        None
+    ) -> Result<Iri, crate::mint::MintRefusal> {
+        Err(crate::mint::MintRefusal::NoRule)
     }
     /// The public URL for an entity, when the profile maps one explicitly.
     fn publication_url(&self, _iri: &Iri) -> Option<String> {
@@ -655,8 +658,17 @@ impl Profile for DeclarativeProfile {
             .collect()
     }
 
-    fn mint_iri(&self, kind: Kind, title: &str, ctx: &crate::mint::MintContext<'_>) -> Option<Iri> {
-        let m = self.spec.mint.as_ref()?;
+    fn mint_iri(
+        &self,
+        kind: Kind,
+        title: &str,
+        ctx: &crate::mint::MintContext<'_>,
+    ) -> Result<Iri, crate::mint::MintRefusal> {
+        let m = self
+            .spec
+            .mint
+            .as_ref()
+            .ok_or(crate::mint::MintRefusal::NoRule)?;
         crate::mint::mint_slug(m.namespace(kind), title, ctx)
     }
 
