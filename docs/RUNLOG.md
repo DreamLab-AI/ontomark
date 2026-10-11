@@ -158,3 +158,10 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   `reload_published_generation` in loom-facade with a fixture-bundle test;
   Python deleted in the same branch once it passes (step 11). Tag format
   `v0.1.0-rc.1` accepted by every estate test.
+- 19:45 spec-compile: golden repinned to `ontomark-census-baseline-1`
+  (`ac3149c`), identical to the original tag apart from the injected build
+  clock; parity still 0 differences on fixture and corpus. `ontomark-ngg1`
+  landed as the single NGG1 owner with byte parity; the TypeScript reader
+  agrees; vowl-wasm re-export works. migrate, Turtle conformance and test
+  porting committed. Still running: profile threading, JSON-LD and SHACL.
+  Then redaction (count to queen first), fmt and Cargo.lock, rc.1 build.
