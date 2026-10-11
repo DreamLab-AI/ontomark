@@ -173,3 +173,11 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   deleting a following comment; case-only path clash resolving to last-loaded)
   fixed test-first in `3f6f521`. Delta audit `4cc0810..3f6f521` pending.
   Consumers told to take WP-A from main.
+- 20:10 spec-compile: `ontomark migrate` engine landed (`f8b7a84`, `c299746`,
+  `79db994`; 21 integration tests). On the corpus it plans 53 conversions, the
+  same 53 pages legacy `repair bodies` flags; apply leaves validate and the full
+  gate clean, re-apply is a no-op, rollback restores byte-identically (EXP-08).
+  Plan files hold digests only; the journal under `.ontomark/` is gitignored in
+  ontomark (`bd00ffa`) and must be in visionGraph too (routed to spec-estate).
+  Remaining before rc.1: CLI wiring of migrate, JSON-LD/SHACL doctest fixes,
+  redaction with count, fmt/lockfile tidy, Codex audit.
