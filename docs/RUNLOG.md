@@ -97,3 +97,12 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   (refresh token expired, 401 reproduced); user asked to `codex login`. Until
   then audits are Claude-only and labelled degraded; the Codex audit is a
   pending gate, not a pass.
+- 19:00 spec-estate: `scripts/estate-guard.sh` committed (`516f92c`,
+  `wp-d-estate`). Four residue kinds (invocation, producer-pin, vowl-pin,
+  legacy-crate) over seven repos, allowlist with reasons, 22-case self-test.
+  Baseline 876 residue lines, exit 1: project 376, visionGraph 174, agentbox
+  131, VisionFlow 131, loom 59, knowledgeGraph 4, plus the legacy crate dir.
+  This is the sprint burn-down number; done means exit 0. Five Sonnet workers
+  are writing failing consumer tests and staged doc edits on
+  `ontomark/<responsibility>` branches in worktrees under ~/workspace/wt-ontomark.
+  Diagram topics are restamped only after code lands (no citing unlanded code).
