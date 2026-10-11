@@ -29,7 +29,7 @@ use std::path::PathBuf;
 
 use ontomark_compile::build::turtle::{serialise, Graph, Subject, Term};
 use ontomark_compile::profile::Profile;
-use oxrdf::dataset::CanonicalizationAlgorithm;
+use oxrdf::dataset::{CanonicalizationAlgorithm, CanonicalizationHashAlgorithm};
 use oxrdf::{
     BlankNode, Graph as OxGraph, Literal, NamedNode, NamedOrBlankNode, Term as OxTerm, Triple,
 };
@@ -93,11 +93,15 @@ fn ox_graph(triples: &[Triple]) -> OxGraph {
     g
 }
 
-/// RDF graph isomorphism: canonicalise both sides and compare as sets.
+const RDFC10: CanonicalizationAlgorithm = CanonicalizationAlgorithm::Rdfc10 {
+    hash_algorithm: CanonicalizationHashAlgorithm::Sha256,
+};
+
+/// RDF graph isomorphism (RDFC-1.0 canonical form): canonicalise both sides and compare as sets.
 fn isomorphic(a: &[Triple], b: &[Triple]) -> bool {
     let (mut a, mut b) = (ox_graph(a), ox_graph(b));
-    a.canonicalize(CanonicalizationAlgorithm::Unstable);
-    b.canonicalize(CanonicalizationAlgorithm::Unstable);
+    a.canonicalize(RDFC10);
+    b.canonicalize(RDFC10);
     a == b
 }
 
@@ -639,7 +643,7 @@ fn property_unicode_and_escapes_in_literals() {
 /// The same generator with the known-bug avoidance off: fails until the
 /// writer is fixed.
 #[test]
-#[ignore = "BUG: shorten() emits `a` for rdf:type in object/datatype position and `p:-x` for locals starting with `-`"]
+#[ignore = "BUG: shorten() emits `a` for rdf:type in subject/object/datatype position and `p:-x` for locals starting with `-`"]
 fn bug_random_graphs_round_trip_unrestricted() {
     for (label, profile) in profiles() {
         for seed in 0..400 {
@@ -652,9 +656,14 @@ fn bug_random_graphs_round_trip_unrestricted() {
 }
 
 #[test]
-#[ignore = "BUG: turtle::shorten returns the keyword `a` for rdf:type everywhere, but `a` is only legal as a predicate"]
-fn bug_rdf_type_as_object_is_not_valid_turtle() {
+#[ignore = "BUG: turtle::shorten returns the keyword `a` for rdf:type in every position, but `a` is only legal as a predicate"]
+fn bug_rdf_type_outside_predicate_position_is_not_valid_turtle() {
     let mut g = Graph::new();
+    g.add_iri(
+        RDF_TYPE,
+        "http://example.org/p",
+        Term::plain("subject position"),
+    );
     g.add_iri(
         "http://example.org/s",
         "http://example.org/p",

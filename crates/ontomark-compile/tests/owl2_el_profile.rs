@@ -8,9 +8,11 @@
 //!
 //! The classifier works on RDF triples (`oxttl` / `oxrdfxml`), reading the
 //! OWL 2 RDF mapping back into axioms with a structural walk. `horned-owl`
-//! was considered and not used: the current release is 4.x (not 1.x), its RDF
-//! reader takes RDF/XML only, and a single triple-level classifier serves
-//! the Turtle output, the RDF/XML test cases and the fixture alike.
+//! 1.4 (already in the lockfile through the optional `whelk-el` adapter) was
+//! not used: its RDF reader takes RDF/XML only, so the Turtle output would
+//! first have to be converted, and it ships no profile checker, so the EL rules
+//! would be written against its component model anyway. One triple-level
+//! classifier serves the Turtle output, the RDF/XML test cases and the fixture.
 //!
 //! The classifier itself is checked two ways:
 //!
@@ -1268,8 +1270,10 @@ const PROFILE_FILES: &[(&str, bool, bool)] = &[
 ];
 
 /// Documents in a profile file: blank-line separated; RDF/XML ones start with
-/// `<`. Every case is stored once in each syntax, so the RDF/XML copy stands
-/// for the case.
+/// `<`, the rest are functional syntax. The two syntaxes are interleaved and
+/// the counts differ per file, so they are not paired: only the RDF/XML
+/// documents are classified and the functional-syntax ones are counted and
+/// reported as not run (there is no functional-syntax reader in the test).
 fn split_documents(text: &str) -> Vec<String> {
     text.split("\n\n")
         .map(str::trim)
@@ -1337,7 +1341,7 @@ fn profile_identification_agreement() {
             *el_expected,
         );
         println!(
-            "owl2-profile {name:<5} expect EL={el_expected:<5} (DL ontology: {dl:<5}): cases={} agree={} disagree={} unparsable={} functional-syntax copies skipped={}",
+            "owl2-profile {name:<5} expect EL={el_expected:<5} (DL ontology: {dl:<5}): cases={} agree={} disagree={} unparsable={} functional-syntax documents not classified={}",
             a.cases,
             a.agree,
             a.disagree.len(),

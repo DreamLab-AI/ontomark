@@ -30,5 +30,6 @@ The W3C OWL 2 test-case site is no longer served, so the labelled profile
 cases come from the OWL API repository (`contract/src/test/resources/.../apitest/profile*TestCases.txt`).
 The expectation for each file is the one in the OWL API's `Profile*TestCase`
 classes: `All`, `ELDL`, `NOQL`, `NORL` are in EL; `NOEL`, `DL`, `RLDL`, `QLDL`
-are not; `Full` is not even OWL 2 DL. Each case is stored in RDF/XML and in
-functional syntax; the RDF/XML copy is classified.
+are not; `Full` is not even OWL 2 DL. Documents are RDF/XML or functional
+syntax, interleaved and not paired; only the RDF/XML ones are classified and
+the functional-syntax ones are counted as not run.
