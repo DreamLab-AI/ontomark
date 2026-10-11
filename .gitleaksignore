@@ -1,0 +1,16 @@
+# Reviewed false positives only: immutable conformance source hashes and
+# explicitly synthetic secret-scanner test values (never live credentials).
+# Exact commit/file/rule/line fingerprints do not exempt future changes.
+1511dd40bbac41bd59ccf52f48faf7ca0616b932:conformance/evidence/w3c.md:generic-api-key:11
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:5
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:6
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:7
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:8
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:9
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:10
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:11
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:12
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:13
+8551a2669dfedcb815a06731b31f1a22dfda9ee2:conformance/w3c/PINS:generic-api-key:14
+2bb20ec7e87a15a2b15ae3722a9f466dda30de1e:crates/ontomark-compile/src/input/secrets.rs:private-key:237
+2bb20ec7e87a15a2b15ae3722a9f466dda30de1e:crates/ontomark-compile/src/input/secrets.rs:github-pat:220
