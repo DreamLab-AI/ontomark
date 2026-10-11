@@ -23,27 +23,7 @@ use crate::input::vocabulary::{ScalarDef, ScalarType, Vocabulary};
 use serde::Serialize;
 
 use crate::ir::model::{ClassRecord, Corpus};
-
-/// The domain vocabulary the Python pipeline accepted, used when
-/// `vocabulary.yaml` does not enumerate `domain` itself.
-const FALLBACK_DOMAINS: &[&str] = &[
-    "artificial-intelligence",
-    "spatial-computing",
-    "blockchain",
-    "infrastructure",
-    "distributed-collaboration",
-    "robotics",
-    "ai",
-    "supply-chain",
-    "metaverse",
-    "data",
-    "governance",
-    "security",
-    "standards",
-    "finance",
-    "distributed-systems",
-    "machine-learning",
-];
+use crate::profile::{Profile, Taxonomy};
 
 /// How serious a finding is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -342,7 +322,7 @@ fn page_level_checks(
 /// Validate a loaded vault against its vocabulary.
 #[must_use]
 #[allow(clippy::too_many_lines)] // One check per rule; splitting hides the list.
-pub fn validate(vault: &Vault, corpus: &Corpus, vocab: &Vocabulary) -> Report {
+pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocabulary) -> Report {
     let mut report = Report {
         total_pages: vault.pages.len(),
         total_journals: vault.journals.len(),
@@ -358,16 +338,27 @@ pub fn validate(vault: &Vault, corpus: &Corpus, vocab: &Vocabulary) -> Report {
     // with a count, i.e. one the owner knows about and has deliberately not
     // normalised yet. A warning that fires on known-good data is noise, and
     // noise is what gets filtered out along with the real findings.
-    let valid_domains: HashSet<&str> = {
+    // `None` accepts any value: neither the vocabulary nor the profile
+    // enumerates the domains.
+    let valid_domains: Option<HashSet<&str>> = {
         let declared: Vec<&str> = vocab
             .scalars
             .get("domain")
             .map(ScalarDef::known_values)
             .unwrap_or_default();
-        if declared.is_empty() {
-            FALLBACK_DOMAINS.iter().copied().collect()
+        if !declared.is_empty() {
+            Some(declared.into_iter().collect())
+        } else if profile.taxonomy.accepted_domains.is_empty() {
+            None
         } else {
-            declared.into_iter().collect()
+            Some(
+                profile
+                    .taxonomy
+                    .accepted_domains
+                    .iter()
+                    .map(String::as_str)
+                    .collect(),
+            )
         }
     };
 
@@ -470,7 +461,7 @@ pub fn validate(vault: &Vault, corpus: &Corpus, vocab: &Vocabulary) -> Report {
             continue;
         }
         iri_owners.entry(&record.iri).or_default().push(path);
-        check_disjointness(&mut report, path, record, &by_iri);
+        check_disjointness(&mut report, &profile.taxonomy, path, record, &by_iri);
         check_definition(&mut report, path, page, record, vocab, &by_iri);
 
         if record.label.is_empty() {
@@ -478,7 +469,10 @@ pub fn validate(vault: &Vault, corpus: &Corpus, vocab: &Vocabulary) -> Report {
         }
         if record.domain.is_empty() {
             report.push(path, Severity::Warning, "MISSING_DOMAIN", "no domain");
-        } else if !valid_domains.contains(record.domain.as_str()) {
+        } else if valid_domains
+            .as_ref()
+            .is_some_and(|valid| !valid.contains(record.domain.as_str()))
+        {
             report.push(
                 path,
                 Severity::Warning,
@@ -679,6 +673,7 @@ fn check_definition(
 /// the rule the elevation actor applies too).
 fn check_disjointness(
     report: &mut Report,
+    taxonomy: &Taxonomy,
     path: &str,
     record: &ClassRecord,
     by_iri: &HashMap<&str, &ClassRecord>,
@@ -689,10 +684,16 @@ fn check_disjointness(
     for target in record.relation(crate::ir::model::DISJOINT_WITH_JSON_KEY) {
         let outcome = match by_iri.get(target.iri.as_str()) {
             Some(other) => {
-                check_disjoint_pair(&record.iri, &parents(record), &other.iri, &parents(other))
+                check_disjoint_pair(
+                    taxonomy,
+                    &record.iri,
+                    &parents(record),
+                    &other.iri,
+                    &parents(other),
+                )
             }
-            None if crate::input::consistency::is_taxonomic(&target.iri) => {
-                check_disjoint_pair(&record.iri, &[], &target.iri, &[])
+            None if crate::input::consistency::is_taxonomic(taxonomy, &target.iri) => {
+                check_disjoint_pair(taxonomy, &record.iri, &[], &target.iri, &[])
             }
             None => Err(crate::input::promotion::Blocker::new(
                 DISJOINT_NOT_SIBLINGS,
@@ -815,6 +816,7 @@ mod tests {
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource, status] }
 working_types: [Note]
@@ -853,7 +855,7 @@ scalars:
     fn run(pages: Vec<(&str, &str)>, kind: VaultKind) -> Report {
         let vault = vault_of(pages, kind);
         let corpus = Corpus::build(&vault, &vocab());
-        validate(&vault, &corpus, &vocab())
+        validate(&crate::profile::test_estate(), &vault, &corpus, &vocab())
     }
 
     fn codes(report: &Report) -> Vec<String> {
@@ -1066,6 +1068,7 @@ scalars:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource, status] }
 relations:
@@ -1077,7 +1080,7 @@ relations:
         let pages: Vec<(&str, &str)> = pages.iter().map(|(id, t)| (*id, t.as_str())).collect();
         let vault = vault_of(pages, VaultKind::Knowledge);
         let corpus = Corpus::build(&vault, &vocab);
-        validate(&vault, &corpus, &vocab)
+        validate(&crate::profile::test_estate(), &vault, &corpus, &vocab)
     }
 
     fn cls(slug: &str, extra: &str) -> String {
@@ -1171,6 +1174,7 @@ relations:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource, status] }
   Individual: { owl: "owl:NamedIndividual", required: [resource, status] }
@@ -1196,7 +1200,7 @@ relations:
         let pages: Vec<(&str, &str)> = pages.iter().map(|(id, t)| (*id, t.as_str())).collect();
         let vault = vault_of(pages, VaultKind::Knowledge);
         let corpus = Corpus::build(&vault, &vocab);
-        validate(&vault, &corpus, &vocab)
+        validate(&crate::profile::test_estate(), &vault, &corpus, &vocab)
     }
 
     fn non_el(r: &Report) -> Vec<&Issue> {
@@ -1346,6 +1350,7 @@ relations:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Individual: { owl: "owl:NamedIndividual", required: [resource, status] }
   Class: { owl: "owl:Class", required: [resource, status] }
@@ -1365,7 +1370,7 @@ relations:
         let pages: Vec<(&str, &str)> = pages.iter().map(|(id, t)| (*id, t.as_str())).collect();
         let vault = vault_of(pages, VaultKind::Knowledge);
         let corpus = Corpus::build(&vault, &vocab);
-        let r = validate(&vault, &corpus, &vocab);
+        let r = validate(&crate::profile::test_estate(), &vault, &corpus, &vocab);
         let found = non_el(&r);
         assert_eq!(found.len(), 1, "{:?}", r.issues);
         assert!(

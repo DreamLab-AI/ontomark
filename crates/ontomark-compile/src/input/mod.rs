@@ -10,7 +10,6 @@
 pub mod code;
 pub mod consistency;
 pub mod definition;
-pub mod domains;
 pub mod error;
 pub mod frontmatter;
 pub mod okf;

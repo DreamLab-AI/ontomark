@@ -8,13 +8,23 @@ version: "1.0.0"
 iris:
   # Authored identities (frontmatter `resource:` / `page_resource:`), kept byte for byte.
   class_namespace: "urn:ngm:class:"
+  individual_namespace: "urn:ngm:individual:"
   page_namespace: "urn:visionflow:page:"
   # Published projections of those identities.
   public_class_base: "https://narrativegoldmine.com/class/"
   public_individual_base: "https://narrativegoldmine.com/individual/"
+  public_page_base: "https://narrativegoldmine.com/page/"
+  # Historical namespaces older pages still cite; they publish under the same bases.
+  legacy_projections:
+    - {prefix: "urn:visionflow:owl:class:", base: "https://narrativegoldmine.com/class/"}
+    - {prefix: "urn:visionflow:linked:", base: "https://narrativegoldmine.com/linked/"}
+  vocabulary_prefix: "vc"
+  class_prefix: "ngm"
+  individual_prefix: "ngmi"
   vocabulary_namespace: "https://narrativegoldmine.com/ns/v1#"
   ns_base: "https://narrativegoldmine.com/ns"
   ontology_iri: "https://narrativegoldmine.com/ontology"
+  ontology_label: "NarrativeGoldmine Ontology"
   inferred_ontology_iri: "https://narrativegoldmine.com/ontology/inferred"
   inferred_label: "NarrativeGoldmine Inferred Axioms"
   version_info: "3.1.0"
@@ -23,18 +33,21 @@ dataset:
   attributed_to: "did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246"
   attributed_label: "DreamLab AI"
   nature: "synthetic-ai-generated-human-directed"
+  kind: "synthetic"
+  authors: ["Dr John O'Hare", "LCR Swarm"]
+  bundle_title: "NarrativeGoldmine Knowledge Bundle"
   description: "Mostly AI-generated synthetic content, produced under human direction, by design — this corpus exists to exercise and demonstrate the VisionFlow pipeline and VisionClaw engine on a medium-scale ontology (~8.1k classes, ~100k relations). Provenance (did:nostr, generatedAtTime, URNs) attests traceable generation under human direction, not human authorship."
 taxonomy:
   # Publication order: position + 1 is the GPU class id, position the NGG1 domain id.
   domains:
-    - {slug: "artificial-intelligence", label: "Artificial Intelligence"}
-    - {slug: "blockchain", label: "Blockchain"}
-    - {slug: "spatial-computing", label: "Spatial Computing"}
-    - {slug: "robotics", label: "Robotics"}
-    - {slug: "distributed-collaboration", label: "Distributed Collaboration"}
-    - {slug: "infrastructure", label: "Infrastructure"}
-    - {slug: "space-science-and-systems", label: "Space Science and Systems"}
-    - {slug: "earth-observation-and-geospatial-sensing", label: "Earth Observation and Geospatial Sensing"}
+    - {slug: "artificial-intelligence", label: "Artificial Intelligence", colour: "#4CAF50"}
+    - {slug: "blockchain", label: "Blockchain", colour: "#FF9800"}
+    - {slug: "spatial-computing", label: "Spatial Computing", colour: "#2196F3"}
+    - {slug: "robotics", label: "Robotics", colour: "#F44336"}
+    - {slug: "distributed-collaboration", label: "Distributed Collaboration", colour: "#00BCD4"}
+    - {slug: "infrastructure", label: "Infrastructure", colour: "#9C27B0"}
+    - {slug: "space-science-and-systems", label: "Space Science and Systems", colour: "#646b9f"}
+    - {slug: "earth-observation-and-geospatial-sensing", label: "Earth Observation and Geospatial Sensing", colour: "#438273"}
   # Historical short names that keep their domain class id.
   short_names:
     ai: "artificial-intelligence"
@@ -56,6 +69,8 @@ taxonomy:
     "standards": "infrastructure"
     "finance": "blockchain"
     "economics": "blockchain"
+  # Domain values accepted when the vocabulary does not enumerate `domain`.
+  accepted_domains: [artificial-intelligence, spatial-computing, blockchain, infrastructure, distributed-collaboration, robotics, ai, supply-chain, metaverse, data, governance, security, standards, finance, distributed-systems, machine-learning]
   # Position is the category id; `domain` the domain position.
   categories:
     - {slug: "ai-technique", label: "AI Technique", domain: 0}
@@ -112,6 +127,7 @@ taxonomy:
     - {slug: "earth-observation-applications", label: "Applications", domain: 7}
     - {slug: "geodesy", label: "Geodesy", domain: 7}
 lifecycle:
+  default_maturity: "draft"
   maturity_levels:
     - {slug: "established", label: "Established"}
     - {slug: "emerging", label: "Emerging"}

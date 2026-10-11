@@ -220,6 +220,7 @@ mod tests {
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource, status] }
 relations:
@@ -249,7 +250,7 @@ relations:
                 .collect(),
         };
         let corpus = Corpus::build(&vault, &vocab());
-        let report = validate::validate(&vault, &corpus, &vocab());
+        let report = validate::validate(&crate::profile::test_estate(), &vault, &corpus, &vocab());
         (report, corpus)
     }
 
@@ -311,7 +312,12 @@ relations:
     #[test]
     fn whelk_runs_when_a_graph_is_supplied() {
         let (report, corpus) = setup(vec![("A", GOOD)]);
-        let graph = crate::build::turtle::build_graph(&corpus, &vocab(), true);
+        let graph = crate::build::turtle::build_graph(
+            &crate::profile::test_estate(),
+            &corpus,
+            &vocab(),
+            true,
+        );
         let v = run(
             &report,
             &corpus,

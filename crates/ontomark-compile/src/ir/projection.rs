@@ -28,6 +28,7 @@ use indexmap::IndexMap;
 use regex::Regex;
 
 use crate::ir::model::{ClassRecord, Conjunct, Corpus, Ref};
+use crate::profile::Profile;
 
 /// An input could not safely cross the public build boundary.
 #[derive(Debug, thiserror::Error)]
@@ -341,28 +342,6 @@ impl Redactor {
     }
 }
 
-/// HTTP projections of the URN namespaces, so a redacted URN cannot reappear
-/// as a resolvable web IRI.
-const URN_TO_HTTP: &[(&str, &str)] = &[
-    ("urn:ngm:class:", "https://narrativegoldmine.com/class/"),
-    (
-        "urn:ngm:individual:",
-        "https://narrativegoldmine.com/individual/",
-    ),
-    (
-        "urn:visionflow:owl:class:",
-        "https://narrativegoldmine.com/class/",
-    ),
-    (
-        "urn:visionflow:page:",
-        "https://narrativegoldmine.com/page/",
-    ),
-    (
-        "urn:visionflow:linked:",
-        "https://narrativegoldmine.com/linked/",
-    ),
-];
-
 /// Project `corpus` onto the public set, dropping and redacting every private
 /// reference.
 ///
@@ -373,6 +352,7 @@ const URN_TO_HTTP: &[(&str, &str)] = &[
 /// public and a private page.
 #[allow(clippy::implicit_hasher)] // The build always uses the default hasher.
 pub fn project(
+    profile: &Profile,
     corpus: &Corpus,
     extra_private: &HashSet<String>,
 ) -> Result<Corpus, PublicationBlocked> {
@@ -401,10 +381,9 @@ pub fn project(
     let mut markers: HashSet<String> = private_ids.clone();
     markers.extend(private_names.difference(&public_names).cloned());
     for value in &private_ids {
-        for (urn, http) in URN_TO_HTTP {
-            if let Some(tail) = value.strip_prefix(urn) {
-                markers.insert(format!("{http}{tail}"));
-            }
+        // A redacted URN must not reappear as a resolvable web IRI.
+        if let Some(published) = profile.iris.project(value) {
+            markers.insert(published);
         }
     }
     // An identity that is also a public name must not be redacted out of the
@@ -474,7 +453,7 @@ mod tests {
     #[test]
     fn keeps_only_public_pages() {
         let c = corpus_of(vec![record("Pub", true), record("Secret", false)]);
-        let p = project(&c, &HashSet::new()).unwrap();
+        let p = project(&crate::profile::test_estate(), &c, &HashSet::new()).unwrap();
         assert_eq!(p.records.len(), 1);
         assert_eq!(p.records[0].page_id, "Pub");
     }
@@ -493,7 +472,7 @@ mod tests {
             },
         ];
         let c = corpus_of(vec![pub_rec, record("Secret", false), record("Open", true)]);
-        let p = project(&c, &HashSet::new()).unwrap();
+        let p = project(&crate::profile::test_estate(), &c, &HashSet::new()).unwrap();
         let parents: Vec<&str> = p.records[0]
             .sub_class_of
             .iter()
@@ -532,7 +511,7 @@ mod tests {
             record("Secret", false),
             record("Open", true),
         ]);
-        let p = project(&c, &HashSet::new()).unwrap();
+        let p = project(&crate::profile::test_estate(), &c, &HashSet::new()).unwrap();
         assert!(p.records[0].defines_as.is_empty(), "{:?}", p.records[0]);
         assert_eq!(p.records[1].defines_as, clean.defines_as);
     }
@@ -542,7 +521,7 @@ mod tests {
         let mut pub_rec = record("Pub", true);
         pub_rec.body = "Refer to Secret Project for detail; SecretProjectX is unrelated.".into();
         let c = corpus_of(vec![pub_rec, record("Secret Project", false)]);
-        let p = project(&c, &HashSet::new()).unwrap();
+        let p = project(&crate::profile::test_estate(), &c, &HashSet::new()).unwrap();
         assert_eq!(
             p.records[0].body,
             "Refer to [private] for detail; SecretProjectX is unrelated."
@@ -559,7 +538,7 @@ mod tests {
             r.label = "Shared".into();
             r
         }]);
-        let p = project(&c, &HashSet::new()).unwrap();
+        let p = project(&crate::profile::test_estate(), &c, &HashSet::new()).unwrap();
         assert_eq!(p.records[0].body, "Shared appears here.");
     }
 
@@ -568,7 +547,7 @@ mod tests {
         let mut pub_rec = record("Pub", true);
         pub_rec.body = "See https://narrativegoldmine.com/class/secret now.".into();
         let c = corpus_of(vec![pub_rec, record("Secret", false)]);
-        let p = project(&c, &HashSet::new()).unwrap();
+        let p = project(&crate::profile::test_estate(), &c, &HashSet::new()).unwrap();
         assert!(p.records[0].body.contains("[private]"));
     }
 
@@ -578,7 +557,12 @@ mod tests {
         let mut b = record("B", false);
         a.iri = "urn:ngm:class:same".into();
         b.iri = "urn:ngm:class:same".into();
-        let err = project(&corpus_of(vec![a, b]), &HashSet::new()).unwrap_err();
+        let err = project(
+            &crate::profile::test_estate(),
+            &corpus_of(vec![a, b]),
+            &HashSet::new(),
+        )
+        .unwrap_err();
         assert!(matches!(err, PublicationBlocked::Collision(_)));
     }
 
@@ -590,7 +574,12 @@ mod tests {
             label: "Held".into(),
         }];
         let extra: HashSet<String> = ["urn:ngm:class:held".to_owned()].into_iter().collect();
-        let p = project(&corpus_of(vec![pub_rec]), &extra).unwrap();
+        let p = project(
+            &crate::profile::test_estate(),
+            &corpus_of(vec![pub_rec]),
+            &extra,
+        )
+        .unwrap();
         assert_eq!(p.records[0].links, []);
     }
 

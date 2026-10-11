@@ -20,6 +20,7 @@ use crate::input::slug::{is_thing, ref_slug};
 use indexmap::IndexMap;
 
 use crate::ir::model::{ClassRecord, Corpus, Ref};
+use crate::profile::Profile;
 
 /// Cap on inherited targets per relation type, matching
 /// `reason.py::INHERITED_RELATION_CAP`.
@@ -41,6 +42,9 @@ pub struct Closure {
     pub labels: HashMap<String, String>,
     /// Best-known IRI per slug.
     pub iris: HashMap<String, String>,
+    /// The profile's class namespace, which synthesises an IRI for a slug the
+    /// corpus does not define.
+    pub class_namespace: String,
 }
 
 impl Closure {
@@ -58,14 +62,14 @@ impl Closure {
             .map_or(&[], Vec::as_slice)
     }
 
-    /// The IRI for a slug, synthesising `urn:ngm:class:<slug>` when the slug
+    /// The IRI for a slug, synthesising `<class namespace><slug>` when the slug
     /// is not in the corpus — exactly the Python fallback.
     #[must_use]
     pub fn iri_of(&self, slug: &str) -> String {
         self.iris
             .get(slug)
             .cloned()
-            .unwrap_or_else(|| format!("urn:ngm:class:{slug}"))
+            .unwrap_or_else(|| format!("{}{slug}", self.class_namespace))
     }
 
     /// The label for a slug, falling back to the slug itself.
@@ -84,8 +88,11 @@ impl Closure {
 /// `build.py`, which computes the closure after the public projection has
 /// already been applied to `pages`.
 #[must_use]
-pub fn compute(corpus: &Corpus) -> Closure {
-    let mut closure = Closure::default();
+pub fn compute(profile: &Profile, corpus: &Corpus) -> Closure {
+    let mut closure = Closure {
+        class_namespace: profile.iris.class_namespace.clone(),
+        ..Closure::default()
+    };
     let mut class_by_slug: IndexMap<String, &ClassRecord> = IndexMap::new();
     let mut parent_map: IndexMap<String, Vec<String>> = IndexMap::new();
 
@@ -228,6 +235,7 @@ mod tests {
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:     { owl: "rdfs:subClassOf" }
   requires: { owl: "vc:requires" }
@@ -255,7 +263,10 @@ relations:
             skipped: Vec::new(),
             pages,
         };
-        compute(&Corpus::build(&vault, &vocab()))
+        compute(
+            &crate::profile::test_estate(),
+            &Corpus::build(&vault, &vocab()),
+        )
     }
 
     #[test]

@@ -297,6 +297,7 @@ mod tests {
         Vocabulary::from_yaml_str(
             r#"
 version: 1
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:          { owl: "rdfs:subClassOf" }
   has-part:      { owl: "vc:hasPart", restriction: true }

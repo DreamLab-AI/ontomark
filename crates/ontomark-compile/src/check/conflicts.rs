@@ -354,6 +354,7 @@ mod tests {
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:            { owl: "rdfs:subClassOf" }
   contrasts-with:  { owl: "vc:contrastsWith" }

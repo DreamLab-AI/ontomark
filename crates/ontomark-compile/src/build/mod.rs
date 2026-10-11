@@ -39,6 +39,7 @@ use crate::check::validate;
 use crate::ir::closure;
 use crate::ir::model::Corpus;
 use crate::ir::projection;
+use crate::profile::Profile;
 use crate::reason;
 
 /// What to build and where.
@@ -290,6 +291,7 @@ fn alias_map(vault: &Vault) -> HashMap<String, Vec<String>> {
 #[allow(clippy::too_many_lines)] // The pipeline, in the order it must run.
 pub fn run(
     options: &Options,
+    profile: &Profile,
     vocab: &Vocabulary,
     classifier: &dyn reason::Classifier,
 ) -> anyhow::Result<Report> {
@@ -319,7 +321,7 @@ pub fn run(
     publish_vaults.extend(working.as_ref());
     let staging = publish::stage(&publish_vaults)?;
 
-    let report = validate::validate(&vault, &raw, vocab);
+    let report = validate::validate(profile, &vault, &raw, vocab);
     anyhow::ensure!(
         report.errors().is_empty(),
         "validation rejected {} error(s); no bundle written. First: {}",
@@ -328,16 +330,16 @@ pub fn run(
     );
 
     let excluded = projection::excluded_identities(&pages_dir)?;
-    let corpus = projection::project(&raw, &excluded)?;
+    let corpus = projection::project(profile, &raw, &excluded)?;
 
-    let structural = closure::compute(&corpus);
+    let structural = closure::compute(profile, &corpus);
     let backlinks = indexes::backlink_index(&corpus);
     let roster = options
         .vault_root
         .parent()
         .map(attribution::Roster::discover)
         .unwrap_or_default();
-    let graph = turtle::build_graph_attributed(&corpus, vocab, true, &roster);
+    let graph = turtle::build_graph_attributed(profile, &corpus, vocab, true, &roster);
     // ADR-2124: a definition over a transitive hierarchy is refused here,
     // before the reasoner runs, with the named `WHELK_RELEVANT_CAP` error —
     // never a hang. The error is returned unwrapped so the CLI can downcast it.
@@ -374,10 +376,10 @@ pub fn run(
             staged.add_for(file.path.clone(), file.content.clone(), file.path.clone());
         }
     }
-    staged.add("data/ontology.ttl", turtle::serialise(&graph));
+    staged.add("data/ontology.ttl", turtle::serialise(profile, &graph));
     staged.add(
         "data/ontology-inferred.ttl",
-        reason::inferred_turtle(&reasoning, &generated),
+        reason::inferred_turtle(profile, &reasoning, &generated),
     );
 
     let scaffold = indexes::scaffold_index(&corpus, &structural, &backlinks, &generated);
@@ -405,11 +407,11 @@ pub fn run(
         to_indented(&report.summary())?,
     );
     // The context is served from /ns/v2.jsonld; the property IRIs inside it
-    // still cite narrativegoldmine.com/ns/v1#. Every path ships, byte-identical,
+    // still cite the profile's vocabulary namespace. Every path ships, byte-identical,
     // because consumers exist for each (contract C3). `/api/schema/context.jsonld`
     // is the old site's pinned URL — its five prefixes are a strict subset of
     // this document — and the publish workflow requires it.
-    let context = okf::context(vocab);
+    let context = okf::context(profile, vocab);
     let context_json = to_indented(&context)?;
     staged.add("context/v1.jsonld", context_json.clone());
     staged.add("api/schema/context.jsonld", context_json.clone());
@@ -418,12 +420,12 @@ pub fn run(
     // WebVOWL graph — the explorer's build input.
     staged.add(
         "data/ontology.json",
-        to_default_ascii(&webvowl::build(&corpus))?,
+        to_default_ascii(&webvowl::build(profile, &corpus))?,
     );
 
     // NGG1 graph tiers — the explorer physics worker reads these from the
     // published site, so the `.bin` layout is byte-frozen.
-    let tiers = graph_tiers::emit(&corpus, &today);
+    let tiers = graph_tiers::emit(profile, &corpus, &today);
     for file in &tiers.files {
         staged.add(format!("data/graph/{}", file.name), file.bytes.clone());
     }
@@ -502,7 +504,7 @@ pub fn run(
         (commit, dirty)
     };
     let generation_id = generation::generation_id(&commit, dirty);
-    for file in okf::bundle(&corpus, vocab, &generation_id) {
+    for file in okf::bundle(profile, &corpus, vocab, &generation_id) {
         staged.add(format!("okf/{}", file.path), file.content);
     }
 
@@ -521,7 +523,7 @@ pub fn run(
     // Pages alone do not fix the Turtle (the vocabulary and the emitter do
     // too), so the ontology carries its own digest — the tail of its
     // `owl:versionIRI` — recorded here beside the page digest (ADR-2128).
-    let ontology_digest = turtle::ontology_digest(&graph);
+    let ontology_digest = turtle::ontology_digest(profile, &graph);
 
     let gen = generation::generation(
         commit,
@@ -617,7 +619,8 @@ mod tests {
 
     // The legacy tests, verbatim, against the default classifier.
     fn run(options: &Options, vocab: &Vocabulary) -> anyhow::Result<Report> {
-        super::run(options, vocab, &crate::whelk::WhelkEl)
+        let profile = crate::profile::test_estate();
+        super::run(options, &profile, vocab, &crate::whelk::WhelkEl)
     }
 
     fn fixture_vault(dir: &Path) {
@@ -645,6 +648,7 @@ mod tests {
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource] }
 relations:
@@ -750,7 +754,7 @@ scalars:
         assert!(
             ttl.contains(&format!(
                 "owl:versionIRI <{}/{digest}>",
-                turtle::ONTOLOGY_IRI
+                crate::profile::test_estate().iris.ontology_iri
             )),
             "the Turtle names the digest .generation.json records"
         );
@@ -991,6 +995,7 @@ scalars:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource] }
 relations:
@@ -1081,6 +1086,7 @@ scalars:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource] }
 relations:

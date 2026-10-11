@@ -24,6 +24,7 @@ use ontomark_compile::check::{bodies, conflicts, gate, repair, validate};
 use ontomark_compile::input::page::{load_vault, Vault, VaultKind};
 use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::ir::model::Corpus;
+use ontomark_compile::profile::Profile;
 use ontomark_compile::{build, reason};
 
 /// Markdown ontology vaults to standard artefacts.
@@ -38,6 +39,12 @@ struct Cli {
     /// Emit machine-readable JSON instead of prose.
     #[arg(long, global = true)]
     json: bool,
+
+    /// The corpus profile: `estate`, `generic` or the path of a profile YAML.
+    /// Defaults to `estate` when the repository has `ontology/vocabulary.yaml`,
+    /// else `generic`.
+    #[arg(long, global = true, value_name = "estate|generic|PATH")]
+    profile: Option<String>,
 
     #[command(subcommand)]
     command: Command,
@@ -228,6 +235,23 @@ fn resolve_repo(explicit: Option<&Path>) -> anyhow::Result<(PathBuf, Vocabulary)
     Ok((root, vocab))
 }
 
+/// Resolve `--profile`: a built-in name or a YAML path.
+fn resolve_profile(spec: Option<&str>, root: &Path) -> anyhow::Result<Profile> {
+    match spec {
+        Some("estate") => Ok(ontomark_profile_estate::profile()),
+        Some("generic") => Ok(Profile::generic()),
+        Some(path) => {
+            let text =
+                std::fs::read_to_string(path).with_context(|| format!("reading profile {path}"))?;
+            Profile::from_yaml(&text).with_context(|| format!("parsing profile {path}"))
+        }
+        None if root.join("ontology/vocabulary.yaml").is_file() => {
+            Ok(ontomark_profile_estate::profile())
+        }
+        None => Ok(Profile::generic()),
+    }
+}
+
 fn load(root: &Path, kinds: &[VaultKind]) -> anyhow::Result<Vec<Vault>> {
     kinds
         .iter()
@@ -253,6 +277,7 @@ fn emit(json: bool, value: &serde_json::Value, prose: impl FnOnce()) -> anyhow::
 fn run() -> anyhow::Result<ExitCode> {
     let cli = Cli::parse();
     let (root, vocab) = resolve_repo(cli.repo.as_deref())?;
+    let profile = resolve_profile(cli.profile.as_deref(), &root)?;
 
     match &cli.command {
         Command::Validate(args) => {
@@ -260,7 +285,7 @@ fn run() -> anyhow::Result<ExitCode> {
             let mut reports = serde_json::Map::new();
             for vault in load(&root, &args.selector.kinds())? {
                 let corpus = Corpus::build(&vault, &vocab);
-                let report = validate::validate(&vault, &corpus, &vocab);
+                let report = validate::validate(&profile, &vault, &corpus, &vocab);
                 failed |=
                     !report.errors().is_empty() || (args.strict && !report.warnings().is_empty());
                 if !cli.json {
@@ -293,9 +318,9 @@ fn run() -> anyhow::Result<ExitCode> {
                 .next()
                 .context("no vault selected")?;
             let corpus = Corpus::build(&vault, &vocab);
-            let report = validate::validate(&vault, &corpus, &vocab);
+            let report = validate::validate(&profile, &vault, &corpus, &vocab);
             let graph = (tier == gate::Tier::Full && report.errors().is_empty())
-                .then(|| build::turtle::build_graph(&corpus, &vocab, false));
+                .then(|| build::turtle::build_graph(&profile, &corpus, &vocab, false));
             let classifier = ontomark_compile::whelk::WhelkEl;
             let verdict = gate::run(
                 &report,
@@ -371,7 +396,12 @@ fn run() -> anyhow::Result<ExitCode> {
                     .map(|commit| (commit, args.source_dirty)),
                 stale_after: args.stale_after.clone(),
             };
-            let report = match build::run(&options, &vocab, &ontomark_compile::whelk::WhelkEl) {
+            let report = match build::run(
+                &options,
+                &profile,
+                &vocab,
+                &ontomark_compile::whelk::WhelkEl,
+            ) {
                 Ok(report) => report,
                 Err(e) => {
                     // A credential on a page selected for publication is not a

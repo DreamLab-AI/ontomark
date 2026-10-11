@@ -20,25 +20,10 @@ use std::collections::BTreeSet;
 use serde_json::{json, Map, Value};
 
 use crate::ir::model::{Corpus, EntityType};
+use crate::profile::Profile;
 
-/// Domain fill colours.
-const DOMAIN_COLOURS: &[(&str, &str)] = &[
-    ("artificial-intelligence", "#4CAF50"),
-    ("spatial-computing", "#2196F3"),
-    ("blockchain", "#FF9800"),
-    ("infrastructure", "#9C27B0"),
-    ("distributed-collaboration", "#00BCD4"),
-    ("robotics", "#F44336"),
-    ("space-science-and-systems", "#646b9f"),
-    ("earth-observation-and-geospatial-sensing", "#438273"),
-];
 const DEFAULT_COLOUR: &str = "#607D8B";
 const INDIVIDUAL_COLOUR: &str = "#FF5722";
-
-/// The HTTP class namespace.
-pub const BASE_CLASS_IRI: &str = "https://narrativegoldmine.com/class/";
-/// The HTTP individual namespace.
-pub const BASE_INDIVIDUAL_IRI: &str = "https://narrativegoldmine.com/individual/";
 
 /// The twelve relation keys `WebVOWL` draws, with the property IRI it labels each
 /// with. Note `related-to` to `skos:related`.
@@ -64,39 +49,21 @@ const REL_MAP: &[(&str, &str)] = &[
 /// This one passes anything unrecognised through untouched, which is what keeps
 /// a foreign IRI out of the rendered graph's namespace.
 #[must_use]
-pub fn remap_iri(iri: &str) -> String {
-    const MAPPINGS: &[(&str, &str)] = &[
-        ("urn:ngm:class:", BASE_CLASS_IRI),
-        ("urn:ngm:individual:", BASE_INDIVIDUAL_IRI),
-        ("urn:visionflow:owl:class:", BASE_CLASS_IRI),
-        (
-            "urn:visionflow:linked:",
-            "https://narrativegoldmine.com/linked/",
-        ),
-        (
-            "urn:visionflow:page:",
-            "https://narrativegoldmine.com/page/",
-        ),
-    ];
-    for (prefix, base) in MAPPINGS {
-        if let Some(tail) = iri.strip_prefix(prefix) {
-            return format!("{base}{tail}");
-        }
-    }
-    iri.to_owned()
+pub fn remap_iri(profile: &Profile, iri: &str) -> String {
+    profile.iris.project(iri).unwrap_or_else(|| iri.to_owned())
 }
 
 /// Build the `WebVOWL` document.
 #[must_use]
 #[allow(clippy::too_many_lines)] // One faithful port of one Python function.
-pub fn build(corpus: &Corpus) -> Value {
+pub fn build(profile: &Profile, corpus: &Corpus) -> Value {
     let public: Vec<_> = corpus
         .records
         .iter()
         .filter(|r| r.public && r.has_ontology && !r.iri.is_empty())
         .collect();
 
-    let declared: BTreeSet<String> = public.iter().map(|r| remap_iri(&r.iri)).collect();
+    let declared: BTreeSet<String> = public.iter().map(|r| remap_iri(profile, &r.iri)).collect();
 
     let mut classes = Vec::new();
     let mut class_attrs = Vec::new();
@@ -106,7 +73,7 @@ pub fn build(corpus: &Corpus) -> Value {
     let mut domains = BTreeSet::new();
 
     for record in &public {
-        let node_id = remap_iri(&record.iri);
+        let node_id = remap_iri(profile, &record.iri);
         let is_individual = record.entity_type == EntityType::Individual;
 
         classes.push(json!({
@@ -117,10 +84,12 @@ pub fn build(corpus: &Corpus) -> Value {
         let bg = if is_individual {
             INDIVIDUAL_COLOUR
         } else {
-            DOMAIN_COLOURS
+            profile
+                .taxonomy
+                .domains
                 .iter()
-                .find(|(d, _)| *d == record.domain)
-                .map_or(DEFAULT_COLOUR, |(_, c)| *c)
+                .find(|d| d.slug == record.domain && !d.colour.is_empty())
+                .map_or(DEFAULT_COLOUR, |d| d.colour.as_str())
         };
         domains.insert(record.domain.clone());
 
@@ -128,7 +97,7 @@ pub fn build(corpus: &Corpus) -> Value {
         class_attrs.push(json!({
             "id": node_id,
             "iri": node_id,
-            "baseIri": if is_individual { BASE_INDIVIDUAL_IRI } else { BASE_CLASS_IRI },
+            "baseIri": if is_individual { profile.iris.individual_base() } else { profile.iris.class_base() },
             "attributes": ["colored"],
             "backgroundColor": bg,
             "domain": record.domain,
@@ -145,7 +114,7 @@ pub fn build(corpus: &Corpus) -> Value {
                 &record.instance_of
             };
             for r in refs {
-                let target = remap_iri(&r.iri);
+                let target = remap_iri(profile, &r.iri);
                 if !declared.contains(&target) {
                     continue;
                 }
@@ -162,7 +131,7 @@ pub fn build(corpus: &Corpus) -> Value {
             }
         } else {
             for parent in &record.sub_class_of {
-                let target = remap_iri(&parent.iri);
+                let target = remap_iri(profile, &parent.iri);
                 if !declared.contains(&target) {
                     continue;
                 }
@@ -184,7 +153,7 @@ pub fn build(corpus: &Corpus) -> Value {
                 .find(|(f, _)| f == fm_key)
                 .map_or(*fm_key, |(_, j)| *j);
             for r in record.relation(json_key) {
-                let target = remap_iri(&r.iri);
+                let target = remap_iri(profile, &r.iri);
                 if !declared.contains(&target) {
                     continue;
                 }
@@ -194,7 +163,7 @@ pub fn build(corpus: &Corpus) -> Value {
                 prop_attrs.push(json!({
                     "id": prop_id,
                     "iri": prop_iri,
-                    "baseIri": "https://narrativegoldmine.com/ns/v1#",
+                    "baseIri": profile.iris.vocabulary_namespace,
                     "attributes": ["object"],
                     "domain": node_id,
                     "range": target,
@@ -206,16 +175,10 @@ pub fn build(corpus: &Corpus) -> Value {
 
     let mut header = Map::new();
     header.insert("languages".into(), json!(["en"]));
-    header.insert(
-        "title".into(),
-        json!({ "en": "NarrativeGoldmine Ontology" }),
-    );
-    header.insert(
-        "iri".into(),
-        json!("https://narrativegoldmine.com/ontology"),
-    );
-    header.insert("version".into(), json!("3.1.0"));
-    header.insert("author".into(), json!(["Dr John O'Hare", "LCR Swarm"]));
+    header.insert("title".into(), json!({ "en": profile.iris.ontology_label }));
+    header.insert("iri".into(), json!(profile.iris.ontology_iri));
+    header.insert("version".into(), json!(profile.iris.version_info));
+    header.insert("author".into(), json!(profile.dataset.authors));
     header.insert(
         "description".into(),
         json!({
@@ -240,6 +203,7 @@ pub fn build(corpus: &Corpus) -> Value {
 mod tests {
     use super::*;
     use crate::ir::model::Ref;
+    use crate::profile::testing::{est, ngm, ngmi};
     use indexmap::IndexMap;
 
     fn record(id: &str) -> crate::ir::model::ClassRecord {
@@ -281,28 +245,28 @@ mod tests {
 
     #[test]
     fn remaps_every_urn_namespace_and_passes_others_through() {
-        assert_eq!(remap_iri("urn:ngm:class:x"), format!("{BASE_CLASS_IRI}x"));
+        assert_eq!(remap_iri(est(), "urn:ngm:class:x"), format!("{}x", ngm()));
         assert_eq!(
-            remap_iri("urn:ngm:individual:y"),
-            format!("{BASE_INDIVIDUAL_IRI}y")
+            remap_iri(est(), "urn:ngm:individual:y"),
+            format!("{}y", ngmi())
         );
         assert_eq!(
-            remap_iri("urn:visionflow:linked:z"),
+            remap_iri(est(), "urn:visionflow:linked:z"),
             "https://narrativegoldmine.com/linked/z"
         );
         // Unlike the Turtle mapper, a bare slug is NOT given a namespace.
-        assert_eq!(remap_iri("bare"), "bare");
-        assert_eq!(remap_iri("owl:Thing"), "owl:Thing");
+        assert_eq!(remap_iri(est(), "bare"), "bare");
+        assert_eq!(remap_iri(est(), "owl:Thing"), "owl:Thing");
     }
 
     #[test]
     fn emits_a_class_node_with_its_colour_and_comment() {
         let mut r = record("Bitcoin");
         r.definition = "x".repeat(300);
-        let doc = build(&corpus_of(vec![r]));
+        let doc = build(est(), &corpus_of(vec![r]));
         assert_eq!(doc["class"][0]["type"], "owl:Class");
         assert_eq!(doc["classAttribute"][0]["backgroundColor"], "#FF9800");
-        assert_eq!(doc["classAttribute"][0]["baseIri"], BASE_CLASS_IRI);
+        assert_eq!(doc["classAttribute"][0]["baseIri"], ngm());
         assert_eq!(
             doc["classAttribute"][0]["comment"]["en"]
                 .as_str()
@@ -317,7 +281,7 @@ mod tests {
     fn an_unknown_domain_takes_the_default_colour() {
         let mut r = record("X");
         r.domain = "not-a-domain".into();
-        let doc = build(&corpus_of(vec![r]));
+        let doc = build(est(), &corpus_of(vec![r]));
         assert_eq!(doc["classAttribute"][0]["backgroundColor"], DEFAULT_COLOUR);
     }
 
@@ -325,13 +289,13 @@ mod tests {
     fn an_individual_is_coloured_and_typed_differently() {
         let mut r = record("Instance");
         r.entity_type = EntityType::Individual;
-        let doc = build(&corpus_of(vec![r]));
+        let doc = build(est(), &corpus_of(vec![r]));
         assert_eq!(doc["class"][0]["type"], "owl:NamedIndividual");
         assert_eq!(
             doc["classAttribute"][0]["backgroundColor"],
             INDIVIDUAL_COLOUR
         );
-        assert_eq!(doc["classAttribute"][0]["baseIri"], BASE_INDIVIDUAL_IRI);
+        assert_eq!(doc["classAttribute"][0]["baseIri"], ngmi());
     }
 
     #[test]
@@ -341,7 +305,7 @@ mod tests {
             iri: "urn:ngm:class:nowhere".into(),
             label: "Nowhere".into(),
         }];
-        let doc = build(&corpus_of(vec![a]));
+        let doc = build(est(), &corpus_of(vec![a]));
         assert_eq!(doc["property"].as_array().unwrap(), &[] as &[Value]);
     }
 
@@ -352,7 +316,7 @@ mod tests {
             iri: "urn:ngm:class:b".into(),
             label: "B".into(),
         }];
-        let doc = build(&corpus_of(vec![a, record("B")]));
+        let doc = build(est(), &corpus_of(vec![a, record("B")]));
         assert_eq!(doc["property"][0]["type"], "rdfs:subClassOf");
         assert_eq!(doc["property"][0]["id"], "prop-sub-0");
         assert_eq!(doc["propertyAttribute"][0]["attributes"][0], "subclass");
@@ -368,7 +332,7 @@ mod tests {
                 label: "B".into(),
             }],
         );
-        let doc = build(&corpus_of(vec![a, record("B")]));
+        let doc = build(est(), &corpus_of(vec![a, record("B")]));
         assert_eq!(doc["propertyAttribute"][0]["iri"], "skos:related");
         assert_eq!(doc["propertyAttribute"][0]["label"]["en"], "related");
     }
@@ -387,7 +351,7 @@ mod tests {
                 label: "B".into(),
             }],
         );
-        let doc = build(&corpus_of(vec![a, record("B")]));
+        let doc = build(est(), &corpus_of(vec![a, record("B")]));
         let ids: Vec<&str> = doc["property"]
             .as_array()
             .unwrap()
@@ -401,7 +365,7 @@ mod tests {
     fn the_header_counts_nodes_and_domains() {
         let mut b = record("B");
         b.domain = "robotics".into();
-        let doc = build(&corpus_of(vec![record("A"), b]));
+        let doc = build(est(), &corpus_of(vec![record("A"), b]));
         assert_eq!(
             doc["header"]["description"]["en"],
             "Knowledge graph ontology with 2 nodes across 2 domains"
@@ -413,7 +377,7 @@ mod tests {
     fn private_pages_contribute_nothing() {
         let mut r = record("Secret");
         r.public = false;
-        let doc = build(&corpus_of(vec![r]));
+        let doc = build(est(), &corpus_of(vec![r]));
         assert_eq!(doc["class"].as_array().unwrap(), &[] as &[Value]);
     }
 
@@ -421,7 +385,7 @@ mod tests {
     fn the_legacy_term_id_is_carried_into_the_node_attributes() {
         let mut r = record("A");
         r.legacy_term_id = "BC-0042".into();
-        let doc = build(&corpus_of(vec![r]));
+        let doc = build(est(), &corpus_of(vec![r]));
         assert_eq!(doc["classAttribute"][0]["term_id"], "BC-0042");
     }
 }

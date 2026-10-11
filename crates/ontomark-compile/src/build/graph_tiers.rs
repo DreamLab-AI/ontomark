@@ -39,143 +39,26 @@ use super::ngg1::{
 };
 use super::webvowl::remap_iri;
 use crate::ir::model::{ClassRecord, Corpus, EntityType, RELATION_KEYS};
-
-/// Pipeline identity carried into `overview.json` and `stats.json`.
-pub const PIPELINE_VERSION: &str = "ng-1.0.0";
-/// `did:nostr` of the human director of the published corpus (the secp256k1 x-only key
-/// listed as `jjohare` in the corpus repository's `ontology/attribution.yaml`). Per-class
-/// attribution comes from each page's `generated.by` via the roster; this is the
-/// dataset-level fallback.
-pub const ATTRIBUTED_TO: &str =
-    "did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246";
-const ATTRIBUTED_LABEL: &str = "DreamLab AI";
-const CORPUS_NATURE: &str = "synthetic-ai-generated-human-directed";
-const CORPUS_DESCRIPTION: &str = "Mostly AI-generated synthetic content, produced under human direction, by design — this corpus exists to exercise and demonstrate the VisionFlow pipeline and VisionClaw engine on a medium-scale ontology (~8.1k classes, ~100k relations). Provenance (did:nostr, generatedAtTime, URNs) attests traceable generation under human direction, not human authorship.";
-const NGM_NS_BASE: &str = "https://narrativegoldmine.com/ns";
+use crate::profile::Profile;
 
 /// On-screen node ceiling for a domain tier.
 pub const MAX_NODES: usize = 1500;
 /// Per-node `objectProperty` ship cap for domain tiers.
 pub const RELATION_TOPK: usize = 8;
 
-/// Domain order is append-only: the first six numeric identities stay fixed.
-pub use crate::input::domains::DOMAIN_SLUGS;
-
-const DOMAIN_LABELS: &[(&str, &str)] = crate::input::domains::DOMAIN_ROOTS;
-
-/// Short-form and legacy domain vocabulary folded onto a canonical domain.
-///
-/// This is a *rendering* decision the graph tiers have always made; the
-/// vocabulary deliberately leaves the `ai` / `artificial-intelligence` split
-/// unresolved in the corpus itself, because normalising it is a content change
-/// that belongs in the governance loop.
-const DOMAIN_ALIASES: &[(&str, &str)] = &[
-    ("ai", "artificial-intelligence"),
-    ("machine-learning", "artificial-intelligence"),
-    ("metaverse", "spatial-computing"),
-    ("distributed-systems", "infrastructure"),
-    ("supply-chain", "infrastructure"),
-    ("data", "infrastructure"),
-    ("governance", "infrastructure"),
-    ("security", "infrastructure"),
-    ("standards", "infrastructure"),
-    ("finance", "blockchain"),
-    ("economics", "blockchain"),
-];
-
-/// `(slug, label, domain id)` — position is the category id.
-pub const CATEGORY_ORDER: &[(&str, &str, u16)] = &[
-    ("ai-technique", "AI Technique", 0),
-    ("ai-model-architecture", "AI Model Architecture", 0),
-    ("ai-application", "AI Application", 0),
-    ("ai-governance-and-ethics", "AI Governance and Ethics", 0),
-    ("cat-ai-infrastructure", "AI Infrastructure", 0),
-    ("ai-research-area", "AI Research Area", 0),
-    ("bc-protocol-and-consensus", "Protocol and Consensus", 1),
-    ("bc-cryptographic-primitive", "Cryptographic Primitive", 1),
-    ("bc-token-and-asset", "Token and Asset", 1),
-    ("bc-defi-and-economics", "DeFi and Economics", 1),
-    ("bc-network-component", "Network Component", 1),
-    (
-        "bc-governance-and-regulation",
-        "Governance and Regulation",
-        1,
-    ),
-    ("sc-display-and-rendering", "Display and Rendering", 2),
-    ("sc-interaction", "Interaction Technology", 2),
-    ("sc-content-and-assets", "Content and Assets", 2),
-    ("sc-platform-and-environment", "Platform and Environment", 2),
-    (
-        "sc-standards-and-interop",
-        "Standards and Interoperability",
-        2,
-    ),
-    ("sc-governance-and-safety", "Governance and Safety", 2),
-    ("robo-perception", "Perception and Sensing", 3),
-    ("robo-actuation-and-control", "Actuation and Control", 3),
-    ("robo-robot-type", "Robot Type", 3),
-    ("robo-navigation-and-planning", "Navigation and Planning", 3),
-    ("robo-safety-and-standards", "Safety and Standards", 3),
-    ("robo-human-robot-interaction", "Human-Robot Interaction", 3),
-    ("dc-communication", "Communication Technology", 4),
-    ("dc-workspace-tools", "Workspace Tools", 4),
-    ("dc-telepresence", "Telepresence", 4),
-    ("dc-protocol-and-infra", "Protocol and Infrastructure", 4),
-    ("infra-computing-and-cloud", "Computing and Cloud", 5),
-    ("infra-network-and-comms", "Network and Communication", 5),
-    ("infra-security-and-identity", "Security and Identity", 5),
-    ("infra-data-management", "Data Management", 5),
-    ("infra-legal-and-regulatory", "Legal and Regulatory", 5),
-    ("infra-software-engineering", "Software Engineering", 5),
-    // Space science and systems (domain 6): the research-campaign branches.
-    ("astronomy", "Astronomy", 6),
-    ("heliophysics", "Heliophysics", 6),
-    ("planetary-science", "Planetary Science", 6),
-    ("orbital-dynamics", "Orbital Dynamics", 6),
-    ("space-reference-systems", "Space Reference Systems", 6),
-    (
-        "positioning-navigation-and-timing",
-        "Positioning, Navigation and Timing",
-        6,
-    ),
-    ("spacecraft-bus", "Spacecraft Systems", 6),
-    ("spacecraft-propulsion", "Spacecraft Propulsion", 6),
-    (
-        "spacecraft-power-and-thermal-control",
-        "Spacecraft Power and Thermal Control",
-        6,
-    ),
-    (
-        "spacecraft-guidance-navigation-and-control",
-        "Guidance, Navigation and Control",
-        6,
-    ),
-    ("spacecraft-communications", "Satellite Communications", 6),
-    ("space-life-sciences", "Space Life Sciences", 6),
-    ("space-prime", "Space Industry", 6),
-    // Earth observation and geospatial sensing (domain 7).
-    ("earth-observation-sensor", "Observation Methods", 7),
-    ("earth-system-phenomena", "Observed Phenomena", 7),
-    ("earth-observation-processing", "Data Processing", 7),
-    ("earth-observation-data-quality", "Data Quality", 7),
-    ("earth-observation-applications", "Applications", 7),
-    ("geodesy", "Geodesy", 7),
-];
-
 /// Maximum ancestry depth the category resolver walks.
 const MAX_DEPTH: usize = 12;
 
-fn domain_index(slug: &str) -> Option<u16> {
-    DOMAIN_SLUGS
-        .iter()
-        .position(|s| *s == slug)
-        .map(|i| i as u16)
+fn domain_index(profile: &Profile, slug: &str) -> Option<u16> {
+    profile.taxonomy.domain_index(slug).map(|i| i as u16)
 }
 
-fn category_index(slug: &str) -> Option<u16> {
-    CATEGORY_ORDER
+fn category_index(profile: &Profile, slug: &str) -> Option<u16> {
+    profile
+        .taxonomy
+        .categories
         .iter()
-        .position(|(s, _, _)| *s == slug)
+        .position(|c| c.slug == slug)
         .map(|i| i as u16)
 }
 
@@ -192,13 +75,17 @@ pub fn slug_of(iri: &str) -> String {
     }
 }
 
-fn resolve_domain(domain: &str) -> u16 {
+/// Short-form and legacy domain vocabulary is folded onto a canonical domain
+/// by the profile's `domain_aliases`: a *rendering* decision, because the
+/// vocabulary deliberately leaves such splits unresolved in the corpus itself.
+fn resolve_domain(profile: &Profile, domain: &str) -> u16 {
     let d = domain.trim().to_lowercase();
-    let canonical = DOMAIN_ALIASES
-        .iter()
-        .find(|(from, _)| *from == d)
-        .map_or(d.as_str(), |(_, to)| *to);
-    domain_index(canonical).unwrap_or(DOMAIN_NONE)
+    let canonical = profile
+        .taxonomy
+        .domain_aliases
+        .get(d.as_str())
+        .map_or(d.as_str(), String::as_str);
+    domain_index(profile, canonical).unwrap_or(DOMAIN_NONE)
 }
 
 /// A class bridging more than one taxonomy category or domain.
@@ -264,7 +151,7 @@ impl CategoryResolver {
         }
     }
 
-    fn resolve(&mut self, slug: &str) -> u16 {
+    fn resolve(&mut self, profile: &Profile, slug: &str) -> u16 {
         if let Some(hit) = self.memo.get(slug) {
             return *hit;
         }
@@ -276,7 +163,7 @@ impl CategoryResolver {
         while !frontier.is_empty() && depth < MAX_DEPTH {
             let mut next: Vec<String> = Vec::new();
             for parent in &frontier {
-                if let Some(cid) = category_index(parent) {
+                if let Some(cid) = category_index(profile, parent) {
                     found = cid;
                     break;
                 }
@@ -304,7 +191,7 @@ impl CategoryResolver {
 /// is itself a declared public node.
 #[must_use]
 #[allow(clippy::too_many_lines)] // One faithful port of one Python function.
-pub fn build_model(corpus: &Corpus) -> GraphModel {
+pub fn build_model(profile: &Profile, corpus: &Corpus) -> GraphModel {
     let public: Vec<&ClassRecord> = corpus
         .records
         .iter()
@@ -329,26 +216,26 @@ pub fn build_model(corpus: &Corpus) -> GraphModel {
     let mut resolver = CategoryResolver::new(&public);
     let domain_by_slug: HashMap<String, u16> = public
         .iter()
-        .map(|r| (slug_of(&r.iri), resolve_domain(&r.domain)))
+        .map(|r| (slug_of(&r.iri), resolve_domain(profile, &r.domain)))
         .collect();
 
     // 1. Nodes, keyed by canonical IRI, first definition winning.
     let mut seen_canon: BTreeSet<String> = BTreeSet::new();
     let mut staged: Vec<(Node, &ClassRecord)> = Vec::new();
     for record in &public {
-        let canon = remap_iri(&record.iri);
+        let canon = remap_iri(profile, &record.iri);
         if !seen_canon.insert(canon.clone()) {
             continue;
         }
         let own_slug = slug_of(&record.iri);
-        let is_domain_root = DOMAIN_SLUGS.contains(&own_slug.as_str());
-        let is_category_root = category_index(&own_slug).is_some();
-        let category_id = if let Some(cid) = category_index(&own_slug) {
+        let is_domain_root = profile.taxonomy.domain_index(&own_slug).is_some();
+        let is_category_root = category_index(profile, &own_slug).is_some();
+        let category_id = if let Some(cid) = category_index(profile, &own_slug) {
             cid
         } else if is_domain_root {
             CATEGORY_NONE
         } else {
-            resolver.resolve(&own_slug)
+            resolver.resolve(profile, &own_slug)
         };
         let individual = record.entity_type == EntityType::Individual;
         let mut flags = FLAG_HAS_PAGE;
@@ -371,7 +258,7 @@ pub fn build_model(corpus: &Corpus) -> GraphModel {
                 },
                 iri: canon,
                 individual,
-                domain_id: resolve_domain(&record.domain),
+                domain_id: resolve_domain(profile, &record.domain),
                 category_id,
                 flags,
                 degree: 0,
@@ -408,7 +295,7 @@ pub fn build_model(corpus: &Corpus) -> GraphModel {
             };
         for r in backbone {
             declared_backbone += 1;
-            if let Some(&tgt) = gid_by_canon.get(&remap_iri(&r.iri)) {
+            if let Some(&tgt) = gid_by_canon.get(&remap_iri(profile, &r.iri)) {
                 if tgt != node.gid && edge_set.insert((node.gid, tgt, EDGE_SUBCLASS)) {
                     edges.push((node.gid, tgt, EDGE_SUBCLASS));
                     resolvable_backbone += 1;
@@ -419,7 +306,7 @@ pub fn build_model(corpus: &Corpus) -> GraphModel {
         for (fm_key, json_key) in RELATION_KEYS {
             for r in record.relation(json_key) {
                 declared_relations += 1;
-                if let Some(&tgt) = gid_by_canon.get(&remap_iri(&r.iri)) {
+                if let Some(&tgt) = gid_by_canon.get(&remap_iri(profile, &r.iri)) {
                     if tgt == node.gid {
                         continue;
                     }
@@ -473,7 +360,8 @@ pub fn build_model(corpus: &Corpus) -> GraphModel {
         let (mut cats, mut doms): (Vec<u16>, Vec<u16>) = (Vec::new(), Vec::new());
         for parent in &record.sub_class_of {
             let ps = slug_of(&parent.iri);
-            let cid = category_index(&ps).unwrap_or_else(|| resolver.resolve(&ps));
+            let cid =
+                category_index(profile, &ps).unwrap_or_else(|| resolver.resolve(profile, &ps));
             if cid != CATEGORY_NONE && !cats.contains(&cid) {
                 cats.push(cid);
             }
@@ -485,7 +373,7 @@ pub fn build_model(corpus: &Corpus) -> GraphModel {
         }
         if cats.len() > 1 || doms.len() > 1 {
             bridges.push(Bridge {
-                iri: remap_iri(&record.iri),
+                iri: remap_iri(profile, &record.iri),
                 label: record.label.clone(),
                 categories: cats,
                 domains: doms,
@@ -648,19 +536,22 @@ fn bytes_equal_to(bytes: &[u8], needle: u8) -> usize {
 }
 
 /// The display label for a domain slug.
-fn domain_label(slug: &str) -> &'static str {
-    DOMAIN_LABELS
+fn domain_label<'p>(profile: &'p Profile, slug: &str) -> &'p str {
+    profile
+        .taxonomy
+        .domains
         .iter()
-        .find(|(s, _)| *s == slug)
-        .map_or("", |(_, l)| *l)
+        .find(|d| d.slug == slug)
+        .map_or("", |d| d.label.as_str())
 }
 
 /// Build `overview.json`.
 #[must_use]
 #[allow(clippy::too_many_lines)] // One faithful port of one Python function.
-pub fn build_overview(model: &GraphModel, generated_at: &str) -> Value {
-    let ndom = DOMAIN_SLUGS.len();
-    let ncat = CATEGORY_ORDER.len();
+pub fn build_overview(profile: &Profile, model: &GraphModel, generated_at: &str) -> Value {
+    let tax = &profile.taxonomy;
+    let ndom = tax.domains.len();
+    let ncat = tax.categories.len();
 
     let mut domain_members = vec![0usize; ndom];
     let mut category_members = vec![0usize; ncat];
@@ -673,10 +564,11 @@ pub fn build_overview(model: &GraphModel, generated_at: &str) -> Value {
         }
     }
 
-    let mut layout_edges: Vec<(usize, usize)> = CATEGORY_ORDER
+    let mut layout_edges: Vec<(usize, usize)> = tax
+        .categories
         .iter()
         .enumerate()
-        .map(|(ci, (_, _, dom))| (ndom + ci, *dom as usize))
+        .map(|(ci, c)| (ndom + ci, c.domain as usize))
         .collect();
 
     // Bridge edges, aggregated into weighted category pairs so 313 bridging
@@ -712,15 +604,20 @@ pub fn build_overview(model: &GraphModel, generated_at: &str) -> Value {
         }
     }
 
-    let label_of = domain_label;
+    let ds = &profile.dataset;
+    let ns_base = profile.iris.ns_base.as_str();
+    let label_of = |slug: &str| domain_label(profile, slug);
 
-    let domains: Vec<Value> = DOMAIN_SLUGS
+    let domains: Vec<Value> = tax
+        .domains
         .iter()
+        .map(|d| d.slug.as_str())
         .enumerate()
         .map(|(di, slug)| {
-            let cat_count = CATEGORY_ORDER
+            let cat_count = tax
+                .categories
                 .iter()
-                .filter(|(_, _, d)| *d as usize == di)
+                .filter(|c| c.domain as usize == di)
                 .count();
             json!({
                 "id": di, "slug": slug, "label": label_of(slug),
@@ -729,10 +626,12 @@ pub fn build_overview(model: &GraphModel, generated_at: &str) -> Value {
             })
         })
         .collect();
-    let categories: Vec<Value> = CATEGORY_ORDER
+    let categories: Vec<Value> = tax
+        .categories
         .iter()
         .enumerate()
-        .map(|(ci, (slug, label, dom))| {
+        .map(|(ci, c)| {
+            let (slug, label, dom) = (&c.slug, &c.label, &c.domain);
             json!({
                 "id": ci, "slug": slug, "label": label, "domain": dom,
                 "x": pos[ndom + ci].0, "y": pos[ndom + ci].1,
@@ -744,26 +643,27 @@ pub fn build_overview(model: &GraphModel, generated_at: &str) -> Value {
     // Overview array indices put all domains first, then categories. These
     // are local edge indices; domain/category identities remain append-only.
     let mut nodes: Vec<Value> = Vec::with_capacity(ndom + ncat);
-    for (di, slug) in DOMAIN_SLUGS.iter().enumerate() {
+    for (di, slug) in tax.domains.iter().map(|d| d.slug.as_str()).enumerate() {
         let root = domain_root.get(&(di as u16));
         nodes.push(json!({
             "id": di,
             "label": root.map_or_else(|| label_of(slug).to_owned(), |r| r.label.clone()),
             "iri": root.map_or_else(
-                || format!("{NGM_NS_BASE}/domain/{slug}"), |r| r.iri.clone()),
+                || format!("{ns_base}/domain/{slug}"), |r| r.iri.clone()),
             "domain": di,
             "degree": domain_members[di],
             "flags": FLAG_DOMAIN_ROOT | if root.is_some() { FLAG_HAS_PAGE } else { 0 },
             "x": pos[di].0, "y": pos[di].1,
         }));
     }
-    for (ci, (slug, label, dom)) in CATEGORY_ORDER.iter().enumerate() {
+    for (ci, c) in tax.categories.iter().enumerate() {
+        let (slug, label, dom) = (&c.slug, &c.label, &c.domain);
         let root = category_root.get(&(ci as u16));
         nodes.push(json!({
             "id": ndom + ci,
-            "label": root.map_or_else(|| (*label).to_owned(), |r| r.label.clone()),
+            "label": root.map_or_else(|| label.clone(), |r| r.label.clone()),
             "iri": root.map_or_else(
-                || format!("{NGM_NS_BASE}/category/{slug}"), |r| r.iri.clone()),
+                || format!("{ns_base}/category/{slug}"), |r| r.iri.clone()),
             "domain": dom,
             "category": ci,
             "degree": category_members[ci],
@@ -773,10 +673,12 @@ pub fn build_overview(model: &GraphModel, generated_at: &str) -> Value {
     }
 
     // Backbone edges first so an index-sensitive reader sees them unmoved.
-    let mut edges: Vec<Value> = CATEGORY_ORDER
+    let mut edges: Vec<Value> = tax
+        .categories
         .iter()
         .enumerate()
-        .map(|(ci, (_, _, dom))| {
+        .map(|(ci, c)| {
+            let dom = c.domain;
             json!({
                 "source": ndom + ci, "target": dom, "type": EDGE_SUBCLASS,
             })
@@ -793,15 +695,15 @@ pub fn build_overview(model: &GraphModel, generated_at: &str) -> Value {
 
     json!({
         "version": super::ngg1::VERSION,
-        "pipelineVersion": PIPELINE_VERSION,
+        "pipelineVersion": ds.pipeline_version,
         "generatedAt": generated_at,
-        "attributedTo": ATTRIBUTED_TO,
+        "attributedTo": ds.attributed_to,
         "provenance": {
-            "did": ATTRIBUTED_TO,
-            "label": ATTRIBUTED_LABEL,
-            "corpusNature": CORPUS_NATURE,
+            "did": ds.attributed_to,
+            "label": ds.attributed_label,
+            "corpusNature": ds.nature,
         },
-        "taxonomy": CATEGORY_ORDER.iter().map(|(_, l, _)| *l).collect::<Vec<_>>(),
+        "taxonomy": tax.categories.iter().map(|c| c.label.as_str()).collect::<Vec<_>>(),
         "nodes": nodes,
         "edges": edges,
         "domains": domains,
@@ -815,11 +717,12 @@ pub fn build_overview(model: &GraphModel, generated_at: &str) -> Value {
 /// pin the date.
 #[must_use]
 #[allow(clippy::too_many_lines)] // One faithful port of one Python function.
-pub fn emit(corpus: &Corpus, generated_at: &str) -> Tiers {
-    let mut model = build_model(corpus);
+pub fn emit(profile: &Profile, corpus: &Corpus, generated_at: &str) -> Tiers {
+    let ds = &profile.dataset;
+    let mut model = build_model(profile, corpus);
     let mut files = Vec::new();
 
-    let overview = build_overview(&model, generated_at);
+    let overview = build_overview(profile, &model, generated_at);
     files.push(TierFile {
         name: "overview.json".to_owned(),
         bytes: crate::json::to_default_ascii(&overview)
@@ -827,7 +730,7 @@ pub fn emit(corpus: &Corpus, generated_at: &str) -> Tiers {
             .into_bytes(),
     });
 
-    // Insertion-ordered: `full` first, then the six domains in DOMAIN_SLUGS
+    // Insertion-ordered: `full` first, then the domains in profile order
     // order. A sorted map would reorder them and stats.json is byte-compared.
     let mut scope_stats: indexmap::IndexMap<String, ScopeStats> = indexmap::IndexMap::new();
 
@@ -839,7 +742,13 @@ pub fn emit(corpus: &Corpus, generated_at: &str) -> Tiers {
     });
     scope_stats.insert("full".to_owned(), full_scope);
 
-    for (di, slug) in DOMAIN_SLUGS.iter().enumerate() {
+    for (di, slug) in profile
+        .taxonomy
+        .domains
+        .iter()
+        .map(|d| d.slug.as_str())
+        .enumerate()
+    {
         let want = di as u16;
         let mut dnodes: Vec<Node> = model
             .nodes
@@ -874,21 +783,21 @@ pub fn emit(corpus: &Corpus, generated_at: &str) -> Tiers {
     }
 
     let stats = json!({
-        "pipelineVersion": PIPELINE_VERSION,
-        "attributedTo": ATTRIBUTED_TO,
+        "pipelineVersion": ds.pipeline_version,
+        "attributedTo": ds.attributed_to,
         "provenance": {
-            "did": ATTRIBUTED_TO,
-            "label": ATTRIBUTED_LABEL,
-            "corpusNature": CORPUS_NATURE,
+            "did": ds.attributed_to,
+            "label": ds.attributed_label,
+            "corpusNature": ds.nature,
         },
-        "corpus": { "nature": "synthetic", "description": CORPUS_DESCRIPTION },
+        "corpus": { "nature": ds.kind, "description": ds.description },
         "datasetDate": generated_at,
         "pages": model.pages_public,
         "classes": model.classes,
         "individuals": model.individuals,
         "nodes": model.nodes.len(),
-        "domains": DOMAIN_SLUGS.len(),
-        "categories": CATEGORY_ORDER.len(),
+        "domains": profile.taxonomy.domains.len(),
+        "categories": profile.taxonomy.categories.len(),
         "uncategorised": model.uncategorised,
         "domainless": model.domainless,
         "bridging": {
@@ -914,7 +823,7 @@ pub fn emit(corpus: &Corpus, generated_at: &str) -> Tiers {
     });
 
     let bridges = json!({
-        "pipelineVersion": PIPELINE_VERSION,
+        "pipelineVersion": ds.pipeline_version,
         "note": "Classes bridging more than one taxonomy category or domain. Overlap is a design property of this corpus. The NGG1 node record carries a single u16 category (FORMAT-NGG1 3), so tiers keep the nearest one; the full membership is here. Indices match overview.json.",
         "count": model.bridges.len(),
         "bridges": model.bridges,
@@ -937,6 +846,7 @@ pub fn emit(corpus: &Corpus, generated_at: &str) -> Tiers {
 mod tests {
     use super::*;
     use crate::ir::model::Ref;
+    use crate::profile::testing::est;
     use indexmap::IndexMap;
 
     fn record(id: &str, domain: &str) -> ClassRecord {
@@ -985,9 +895,12 @@ mod tests {
 
     #[test]
     fn the_taxonomy_preserves_legacy_ids_and_appends_space_domains() {
-        assert_eq!(DOMAIN_SLUGS.len(), 8);
+        assert_eq!(est().taxonomy.domains.len(), 8);
         assert_eq!(
-            &DOMAIN_SLUGS[..6],
+            &est().taxonomy.domains[..6]
+                .iter()
+                .map(|d| d.slug.as_str())
+                .collect::<Vec<_>>()[..],
             &[
                 "artificial-intelligence",
                 "blockchain",
@@ -997,28 +910,28 @@ mod tests {
                 "infrastructure"
             ]
         );
-        assert_eq!(resolve_domain("space-science-and-systems"), 6);
+        assert_eq!(resolve_domain(est(), "space-science-and-systems"), 6);
         assert_eq!(
-            resolve_domain("earth-observation-and-geospatial-sensing"),
+            resolve_domain(est(), "earth-observation-and-geospatial-sensing"),
             7
         );
-        assert_eq!(CATEGORY_ORDER.len(), 53);
-        // Category ids are contiguous per domain, in DOMAIN_SLUGS order.
+        assert_eq!(est().taxonomy.categories.len(), 53);
+        // Category ids are contiguous per domain, in domain order.
         let mut last = 0u16;
-        for (_, _, dom) in CATEGORY_ORDER {
-            assert!(*dom >= last, "categories must be grouped by domain");
-            last = *dom;
+        for c in &est().taxonomy.categories {
+            assert!(c.domain >= last, "categories must be grouped by domain");
+            last = c.domain;
         }
     }
 
     #[test]
     fn domain_aliases_fold_onto_the_canonical_six() {
-        assert_eq!(resolve_domain("ai"), 0);
-        assert_eq!(resolve_domain("machine-learning"), 0);
-        assert_eq!(resolve_domain("metaverse"), 2);
-        assert_eq!(resolve_domain("finance"), 1);
-        assert_eq!(resolve_domain("blockchain"), 1);
-        assert_eq!(resolve_domain("nonsense"), DOMAIN_NONE);
+        assert_eq!(resolve_domain(est(), "ai"), 0);
+        assert_eq!(resolve_domain(est(), "machine-learning"), 0);
+        assert_eq!(resolve_domain(est(), "metaverse"), 2);
+        assert_eq!(resolve_domain(est(), "finance"), 1);
+        assert_eq!(resolve_domain(est(), "blockchain"), 1);
+        assert_eq!(resolve_domain(est(), "nonsense"), DOMAIN_NONE);
     }
 
     #[test]
@@ -1036,11 +949,11 @@ mod tests {
         let mut middle = record("Middle", "ai");
         middle.sub_class_of = vec![parent("ai-technique")];
         let root = record("ai-technique", "ai");
-        let model = build_model(&corpus_of(vec![leaf, middle, root]));
+        let model = build_model(est(), &corpus_of(vec![leaf, middle, root]));
         let leaf_node = model.nodes.iter().find(|n| n.label == "Leaf").unwrap();
         assert_eq!(
             leaf_node.category_id,
-            category_index("ai-technique").unwrap(),
+            category_index(est(), "ai-technique").unwrap(),
             "a two-hop ancestor must still supply the category"
         );
     }
@@ -1052,11 +965,14 @@ mod tests {
         leaf.sub_class_of = vec![parent("ai-application")];
         let mut mid = record("ai-application", "ai");
         mid.sub_class_of = vec![parent("ai-technique")];
-        let model = build_model(&corpus_of(vec![leaf, mid, record("ai-technique", "ai")]));
+        let model = build_model(
+            est(),
+            &corpus_of(vec![leaf, mid, record("ai-technique", "ai")]),
+        );
         let leaf_node = model.nodes.iter().find(|n| n.label == "Leaf").unwrap();
         assert_eq!(
             leaf_node.category_id,
-            category_index("ai-application").unwrap()
+            category_index(est(), "ai-application").unwrap()
         );
     }
 
@@ -1066,17 +982,17 @@ mod tests {
         a.sub_class_of = vec![parent("b")];
         let mut b = record("B", "ai");
         b.sub_class_of = vec![parent("a")];
-        let model = build_model(&corpus_of(vec![a, b]));
+        let model = build_model(est(), &corpus_of(vec![a, b]));
         assert_eq!(model.nodes.len(), 2);
         assert!(model.nodes.iter().all(|n| n.category_id == CATEGORY_NONE));
     }
 
     #[test]
     fn gids_follow_canonical_iri_order() {
-        let model = build_model(&corpus_of(vec![
-            record("Zebra", "ai"),
-            record("Apple", "ai"),
-        ]));
+        let model = build_model(
+            est(),
+            &corpus_of(vec![record("Zebra", "ai"), record("Apple", "ai")]),
+        );
         assert_eq!(model.nodes[0].label, "Apple");
         assert_eq!(model.nodes[0].gid, 0);
         assert_eq!(model.nodes[1].label, "Zebra");
@@ -1086,7 +1002,7 @@ mod tests {
     fn only_edges_to_declared_nodes_are_resolvable() {
         let mut a = record("A", "ai");
         a.sub_class_of = vec![parent("b"), parent("nowhere")];
-        let model = build_model(&corpus_of(vec![a, record("B", "ai")]));
+        let model = build_model(est(), &corpus_of(vec![a, record("B", "ai")]));
         assert_eq!(model.declared_backbone, 2);
         assert_eq!(model.resolvable_backbone, 1);
         assert_eq!(model.edges.len(), 1);
@@ -1096,17 +1012,20 @@ mod tests {
     fn a_bridges_to_edge_sets_the_bridge_flag() {
         let mut a = record("A", "ai");
         a.relations.insert("bridgesTo", vec![parent("b")]);
-        let model = build_model(&corpus_of(vec![a, record("B", "ai")]));
+        let model = build_model(est(), &corpus_of(vec![a, record("B", "ai")]));
         let node = model.nodes.iter().find(|n| n.label == "A").unwrap();
         assert_eq!(node.flags & FLAG_BRIDGE, FLAG_BRIDGE);
     }
 
     #[test]
     fn roots_carry_their_structural_flags() {
-        let model = build_model(&corpus_of(vec![
-            record("artificial-intelligence", "ai"),
-            record("ai-technique", "ai"),
-        ]));
+        let model = build_model(
+            est(),
+            &corpus_of(vec![
+                record("artificial-intelligence", "ai"),
+                record("ai-technique", "ai"),
+            ]),
+        );
         let domain = model.nodes.iter().find(|n| n.is_domain_root).unwrap();
         assert_eq!(domain.flags & FLAG_DOMAIN_ROOT, FLAG_DOMAIN_ROOT);
         assert_eq!(domain.category_id, CATEGORY_NONE);
@@ -1120,7 +1039,7 @@ mod tests {
         ind.entity_type = EntityType::Individual;
         ind.instance_of = vec![parent("a")];
         ind.sub_class_of = vec![parent("nowhere")];
-        let model = build_model(&corpus_of(vec![ind, record("A", "ai")]));
+        let model = build_model(est(), &corpus_of(vec![ind, record("A", "ai")]));
         let node = model.nodes.iter().find(|n| n.label == "Instance").unwrap();
         assert_eq!(node.flags & FLAG_INDIVIDUAL, FLAG_INDIVIDUAL);
         assert_eq!(model.individuals, 1);
@@ -1142,7 +1061,7 @@ mod tests {
             }
             records.push(t);
         }
-        let model = build_model(&corpus_of(records));
+        let model = build_model(est(), &corpus_of(records));
         let (_, scope) = build_tier(&model.nodes, &model.edges, Some(RELATION_TOPK));
         assert!(scope.relations_capped > 0, "the cap must bite");
         let (_, uncapped) = build_tier(&model.nodes, &model.edges, None);
@@ -1174,11 +1093,14 @@ mod tests {
     fn bridges_record_multi_category_membership() {
         let mut a = record("A", "ai");
         a.sub_class_of = vec![parent("ai-technique"), parent("bc-token-and-asset")];
-        let model = build_model(&corpus_of(vec![
-            a,
-            record("ai-technique", "ai"),
-            record("bc-token-and-asset", "blockchain"),
-        ]));
+        let model = build_model(
+            est(),
+            &corpus_of(vec![
+                a,
+                record("ai-technique", "ai"),
+                record("bc-token-and-asset", "blockchain"),
+            ]),
+        );
         assert_eq!(model.bridges.len(), 1);
         assert_eq!(model.bridges[0].categories.len(), 2);
         assert_eq!(model.bridges[0].domains.len(), 2);
@@ -1189,32 +1111,38 @@ mod tests {
     fn a_single_parent_class_is_not_a_bridge() {
         let mut a = record("A", "ai");
         a.sub_class_of = vec![parent("ai-technique")];
-        let model = build_model(&corpus_of(vec![a, record("ai-technique", "ai")]));
+        let model = build_model(est(), &corpus_of(vec![a, record("ai-technique", "ai")]));
         assert!(model.bridges.is_empty());
     }
 
     #[test]
     fn the_overview_uses_domain_count_for_category_array_indices() {
-        let model = build_model(&corpus_of(vec![record("A", "ai")]));
-        let ov = build_overview(&model, "2026-09-22");
+        let model = build_model(est(), &corpus_of(vec![record("A", "ai")]));
+        let ov = build_overview(est(), &model, "2026-09-22");
         let nodes = ov["nodes"].as_array().unwrap();
-        assert_eq!(nodes.len(), DOMAIN_SLUGS.len() + CATEGORY_ORDER.len());
+        assert_eq!(
+            nodes.len(),
+            est().taxonomy.domains.len() + est().taxonomy.categories.len()
+        );
         assert_eq!(nodes[0]["id"], 0);
         assert_eq!(nodes[0]["label"], "Artificial Intelligence");
-        assert_eq!(nodes[DOMAIN_SLUGS.len()]["id"], DOMAIN_SLUGS.len());
-        assert_eq!(nodes[DOMAIN_SLUGS.len()]["label"], "AI Technique");
+        assert_eq!(
+            nodes[est().taxonomy.domains.len()]["id"],
+            est().taxonomy.domains.len()
+        );
+        assert_eq!(nodes[est().taxonomy.domains.len()]["label"], "AI Technique");
         assert_eq!(ov["taxonomy"].as_array().unwrap().len(), 53);
         // 53 backbone edges, category -> domain.
         assert_eq!(ov["edges"].as_array().unwrap().len(), 53);
-        assert_eq!(ov["attributedTo"], ATTRIBUTED_TO);
+        assert_eq!(ov["attributedTo"], est().dataset.attributed_to);
     }
 
     #[test]
     fn an_authored_root_page_supplies_the_overview_label_and_iri() {
         let mut root = record("artificial-intelligence", "ai");
         root.label = "Artificial Intelligence (authored)".into();
-        let model = build_model(&corpus_of(vec![root]));
-        let ov = build_overview(&model, "2026-09-22");
+        let model = build_model(est(), &corpus_of(vec![root]));
+        let ov = build_overview(est(), &model, "2026-09-22");
         assert_eq!(
             ov["nodes"][0]["label"],
             "Artificial Intelligence (authored)"
@@ -1228,8 +1156,8 @@ mod tests {
 
     #[test]
     fn a_domain_with_no_authored_root_gets_a_synthetic_iri() {
-        let model = build_model(&corpus_of(vec![record("A", "ai")]));
-        let ov = build_overview(&model, "2026-09-22");
+        let model = build_model(est(), &corpus_of(vec![record("A", "ai")]));
+        let ov = build_overview(est(), &model, "2026-09-22");
         assert_eq!(
             ov["nodes"][0]["iri"],
             "https://narrativegoldmine.com/ns/domain/artificial-intelligence"
@@ -1239,24 +1167,24 @@ mod tests {
 
     #[test]
     fn emit_produces_every_contract_c3_graph_file() {
-        let tiers = emit(&corpus_of(vec![record("A", "ai")]), "2026-09-22");
+        let tiers = emit(est(), &corpus_of(vec![record("A", "ai")]), "2026-09-22");
         let names: Vec<&str> = tiers.files.iter().map(|f| f.name.as_str()).collect();
         assert!(names.contains(&"overview.json"));
         assert!(names.contains(&"full.bin"));
         assert!(names.contains(&"stats.json"));
         assert!(names.contains(&"bridges.json"));
-        for slug in DOMAIN_SLUGS {
+        for slug in est().taxonomy.domains.iter().map(|d| d.slug.as_str()) {
             assert!(
                 names.contains(&format!("domain-{slug}.bin").as_str()),
                 "{slug}"
             );
         }
-        assert_eq!(tiers.files.len(), 4 + DOMAIN_SLUGS.len());
+        assert_eq!(tiers.files.len(), 4 + est().taxonomy.domains.len());
     }
 
     #[test]
     fn the_bin_tiers_carry_the_ngg1_magic() {
-        let tiers = emit(&corpus_of(vec![record("A", "ai")]), "2026-09-22");
+        let tiers = emit(est(), &corpus_of(vec![record("A", "ai")]), "2026-09-22");
         let is_bin = |name: &str| std::path::Path::new(name).extension() == Some("bin".as_ref());
         for f in tiers.files.iter().filter(|f| is_bin(&f.name)) {
             assert_eq!(&f.bytes[0..4], super::super::ngg1::MAGIC, "{}", f.name);
@@ -1266,8 +1194,8 @@ mod tests {
     #[test]
     fn emission_is_byte_stable() {
         let corpus = corpus_of(vec![record("A", "ai"), record("B", "blockchain")]);
-        let a = emit(&corpus, "2026-09-22");
-        let b = emit(&corpus, "2026-09-22");
+        let a = emit(est(), &corpus, "2026-09-22");
+        let b = emit(est(), &corpus, "2026-09-22");
         for (x, y) in a.files.iter().zip(&b.files) {
             assert_eq!(x.name, y.name);
             assert_eq!(x.bytes, y.bytes, "{}", x.name);
@@ -1278,7 +1206,7 @@ mod tests {
     fn stats_separates_declared_from_resolvable() {
         let mut a = record("A", "ai");
         a.sub_class_of = vec![parent("b"), parent("nowhere")];
-        let tiers = emit(&corpus_of(vec![a, record("B", "ai")]), "2026-09-22");
+        let tiers = emit(est(), &corpus_of(vec![a, record("B", "ai")]), "2026-09-22");
         let stats: Value = serde_json::from_slice(
             &tiers
                 .files
@@ -1293,20 +1221,5 @@ mod tests {
         assert_eq!(stats["pages"], 2);
         assert_eq!(stats["classes"], 2);
         assert_eq!(stats["scopes"]["full"]["nodes"], 2);
-    }
-
-    #[test]
-    fn category_order_matches_the_consistency_slugs() {
-        // Two tables, one truth: every slug the validator knows must have a tier id, and vice versa.
-        let order: std::collections::BTreeSet<&str> =
-            CATEGORY_ORDER.iter().map(|(s, _, _)| *s).collect();
-        let slugs: std::collections::BTreeSet<&str> = crate::input::consistency::CATEGORY_SLUGS
-            .iter()
-            .copied()
-            .collect();
-        assert_eq!(
-            order, slugs,
-            "CATEGORY_ORDER and CATEGORY_SLUGS have drifted"
-        );
     }
 }

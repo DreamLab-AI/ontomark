@@ -59,9 +59,6 @@ const BUILTIN_PREFIXES: &[(&str, &str)] = &[
     ("dc", "http://purl.org/dc/terms/"),
     ("dcterms", "http://purl.org/dc/terms/"),
     ("prov", "http://www.w3.org/ns/prov#"),
-    ("vc", "https://narrativegoldmine.com/ns/v1#"),
-    ("ngm", "https://narrativegoldmine.com/class/"),
-    ("ngmi", "https://narrativegoldmine.com/individual/"),
 ];
 
 /// The error code a vocabulary load fails with when an entry would emit a
@@ -133,11 +130,11 @@ fn default_true() -> bool {
 }
 
 fn default_namespace() -> String {
-    "urn:ngm:class:".to_owned()
+    "urn:ontomark:class:".to_owned()
 }
 
 fn default_individual_namespace() -> String {
-    "urn:ngm:individual:".to_owned()
+    "urn:ontomark:individual:".to_owned()
 }
 
 /// An OKF `type` the `knowledge/` vault permits.
@@ -729,6 +726,7 @@ impl Vocabulary {
     /// # use ontomark_compile::input::vocabulary::Vocabulary;
     /// let v = Vocabulary::from_yaml_str(r#"
     /// version: 1
+    /// prefixes: { vc: "https://narrativegoldmine.com/ns/v1#" }
     /// relations:
     ///   is-a:       { owl: "rdfs:subClassOf" }
     ///   has-part:   { owl: "vc:hasPart", restriction: true }
@@ -795,6 +793,7 @@ impl Vocabulary {
     /// # use ontomark_compile::input::vocabulary::Vocabulary;
     /// let v = Vocabulary::from_yaml_str(r#"
     /// version: 1
+    /// prefixes: { vc: "https://narrativegoldmine.com/ns/v1#" }
     /// relations:
     ///   requires:   { owl: vc:requires, characteristics: [transitive], sub_property_of: vc:dependsOn, restriction: true }
     ///   depends-on: { owl: vc:dependsOn, characteristics: [transitive] }
@@ -887,6 +886,7 @@ mod tests {
     const CORE: &str = r#"
 version: 1
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource, status], count_2026_09_22: 8446 }
 working_types: [Note]
@@ -959,6 +959,7 @@ validation:
         let v = Vocabulary::from_yaml_str(
             r"
 version: 1
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:          { owl: rdfs:subClassOf }
   has-part:      { owl: vc:hasPart, restriction: true }
@@ -995,6 +996,7 @@ relations:
         let v = Vocabulary::from_yaml_str(
             r"
 version: 1
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   has-part:   { owl: vc:hasPart, restriction: true }
   related-to: { owl: vc:relatedTo }
@@ -1018,6 +1020,7 @@ relations:
         let v = Vocabulary::from_yaml_str(
             r"
 version: 1
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   requires:   { owl: vc:requires, characteristics: [transitive], sub_property_of: vc:dependsOn, restriction: true }
   depends-on: { owl: vc:dependsOn, characteristics: [transitive] }

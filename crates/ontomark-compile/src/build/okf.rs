@@ -12,6 +12,7 @@ use crate::input::vocabulary::Vocabulary;
 use serde_json::{json, Value};
 
 use crate::ir::model::{ClassRecord, Corpus, RELATION_KEYS};
+use crate::profile::Profile;
 
 /// One file of the OKF bundle.
 #[derive(Debug, Clone)]
@@ -27,11 +28,18 @@ pub struct BundleFile {
 /// Every relation the vocabulary declares gets a term mapping, so a consumer
 /// can expand the page API's camelCase keys without a second lookup table.
 #[must_use]
-pub fn context(vocab: &Vocabulary) -> Value {
+pub fn context(profile: &Profile, vocab: &Vocabulary) -> Value {
+    let iris = &profile.iris;
     let mut ctx = serde_json::Map::new();
-    ctx.insert("vc".into(), json!(super::turtle::VC));
-    ctx.insert("ngm".into(), json!(super::turtle::NGM));
-    ctx.insert("ngmi".into(), json!(super::turtle::NGMI));
+    ctx.insert(
+        iris.vocabulary_prefix.clone(),
+        json!(iris.vocabulary_namespace),
+    );
+    ctx.insert(iris.class_prefix.clone(), json!(iris.class_base()));
+    ctx.insert(
+        iris.individual_prefix.clone(),
+        json!(iris.individual_base()),
+    );
     ctx.insert("owl".into(), json!("http://www.w3.org/2002/07/owl#"));
     ctx.insert(
         "rdfs".into(),
@@ -47,29 +55,42 @@ pub fn context(vocab: &Vocabulary) -> Value {
         );
     }
     for key in vocab.scalars.keys() {
-        ctx.insert(key.clone(), json!(format!("{}{key}", super::turtle::VC)));
+        ctx.insert(
+            key.clone(),
+            json!(format!("{}{key}", iris.vocabulary_namespace)),
+        );
     }
     json!({ "@context": Value::Object(ctx) })
 }
 
 /// Build the OKF bundle: `index.md` plus `concepts/<slug>.md` per public class.
 #[must_use]
-pub fn bundle(corpus: &Corpus, vocab: &Vocabulary, generation_id: &str) -> Vec<BundleFile> {
+pub fn bundle(
+    profile: &Profile,
+    corpus: &Corpus,
+    vocab: &Vocabulary,
+    generation_id: &str,
+) -> Vec<BundleFile> {
     let mut classes: Vec<&ClassRecord> = corpus.public_classes().collect();
     classes.sort_by_key(|r| r.class_slug());
 
+    let title = if profile.dataset.bundle_title.is_empty() {
+        "Knowledge Bundle"
+    } else {
+        profile.dataset.bundle_title.as_str()
+    };
     let mut files = Vec::with_capacity(classes.len() + 1);
     let mut index = String::new();
     let _ = writeln!(index, "---");
     let _ = writeln!(index, "okf_version: \"0.2\"");
     let _ = writeln!(index, "type: Index");
-    let _ = writeln!(index, "title: NarrativeGoldmine Knowledge Bundle");
+    let _ = writeln!(index, "title: {title}");
     let _ = writeln!(index, "generation: {generation_id}");
     let _ = writeln!(index, "vocabulary_version: {}", vocab.version);
     let _ = writeln!(index, "concept_count: {}", classes.len());
     let _ = writeln!(index, "---");
     let _ = writeln!(index);
-    let _ = writeln!(index, "# NarrativeGoldmine Knowledge Bundle");
+    let _ = writeln!(index, "# {title}");
     let _ = writeln!(index);
     let _ = writeln!(
         index,
@@ -179,6 +200,7 @@ fn yaml_scalar(s: &str) -> String {
 mod tests {
     use super::*;
     use crate::ir::model::{EntityType, Ref};
+    use crate::profile::testing::est;
     use indexmap::IndexMap;
 
     fn vocab() -> Vocabulary {
@@ -186,6 +208,7 @@ mod tests {
             r#"
 version: 3
 namespace: "urn:ngm:class:"
+prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:     { owl: "rdfs:subClassOf" }
   requires: { owl: "vc:requires", json_key: requires }
@@ -235,7 +258,7 @@ scalars:
 
     #[test]
     fn the_context_maps_every_declared_relation() {
-        let ctx = context(&vocab());
+        let ctx = context(est(), &vocab());
         assert_eq!(
             ctx["@context"]["requires"]["@id"],
             "https://narrativegoldmine.com/ns/v1#requires"
@@ -247,6 +270,7 @@ scalars:
     #[test]
     fn the_bundle_has_an_index_and_one_file_per_class() {
         let files = bundle(
+            est(),
             &corpus_of(vec![record("Zeta"), record("Alpha")]),
             &vocab(),
             "visionGraph@abc",
@@ -273,7 +297,7 @@ scalars:
                 label: "Store".into(),
             }],
         );
-        let files = bundle(&corpus_of(vec![r]), &vocab(), "g");
+        let files = bundle(est(), &corpus_of(vec![r]), &vocab(), "g");
         let c = &files[1].content;
         assert!(c.contains("okf_version: \"0.2\""));
         assert!(c.contains("resource: urn:ngm:class:graph"));
@@ -287,7 +311,7 @@ scalars:
     fn private_classes_never_reach_the_bundle() {
         let mut r = record("Secret");
         r.public = false;
-        assert_eq!(bundle(&corpus_of(vec![r]), &vocab(), "g").len(), 1);
+        assert_eq!(bundle(est(), &corpus_of(vec![r]), &vocab(), "g").len(), 1);
     }
 
     #[test]

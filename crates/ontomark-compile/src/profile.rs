@@ -97,18 +97,33 @@ impl Profile {
 pub struct IriRules {
     /// The namespace minted class identities live in (`resource:`).
     pub class_namespace: String,
+    /// The namespace individual identities live in.
+    pub individual_namespace: String,
     /// The namespace page identities live in (`page_resource:`).
     pub page_namespace: String,
     /// Where a class identity is published; empty publishes it unchanged.
     pub public_class_base: String,
     /// Where an individual identity is published; empty publishes it unchanged.
     pub public_individual_base: String,
+    /// Where a page identity is published; empty publishes it unchanged.
+    pub public_page_base: String,
+    /// Historical identity namespaces that still publish under a base, as
+    /// ordered `prefix -> base` pairs (a parser's tolerance for legacy input).
+    pub legacy_projections: Vec<IriMapping>,
+    /// Turtle/JSON-LD prefix name of [`IriRules::vocabulary_namespace`].
+    pub vocabulary_prefix: String,
+    /// Turtle/JSON-LD prefix name of the published class base.
+    pub class_prefix: String,
+    /// Turtle/JSON-LD prefix name of the published individual base.
+    pub individual_prefix: String,
     /// The corpus's own property namespace.
     pub vocabulary_namespace: String,
     /// Base of the published JSON-LD context documents.
     pub ns_base: String,
     /// The asserted ontology's IRI; `owl:versionIRI` appends the digest.
     pub ontology_iri: String,
+    /// The asserted ontology's `rdfs:label` (also the WebVOWL title).
+    pub ontology_label: String,
     /// The inferred ontology's IRI.
     pub inferred_ontology_iri: String,
     /// The inferred ontology's `rdfs:label`.
@@ -121,16 +136,77 @@ impl Default for IriRules {
     fn default() -> Self {
         Self {
             class_namespace: "urn:ontomark:class:".to_owned(),
+            individual_namespace: "urn:ontomark:individual:".to_owned(),
             page_namespace: "urn:ontomark:page:".to_owned(),
             public_class_base: String::new(),
             public_individual_base: String::new(),
+            public_page_base: String::new(),
+            legacy_projections: Vec::new(),
+            vocabulary_prefix: "vc".to_owned(),
+            class_prefix: "cls".to_owned(),
+            individual_prefix: "ind".to_owned(),
             vocabulary_namespace: "urn:ontomark:vocab#".to_owned(),
             ns_base: String::new(),
             ontology_iri: "urn:ontomark:ontology".to_owned(),
+            ontology_label: "Ontology".to_owned(),
             inferred_ontology_iri: "urn:ontomark:ontology:inferred".to_owned(),
             inferred_label: "Inferred axioms".to_owned(),
             version_info: "1.0.0".to_owned(),
         }
+    }
+}
+
+/// One ordered `prefix -> base` publication mapping.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct IriMapping {
+    /// The authored identity prefix.
+    pub prefix: String,
+    /// The base it is published under.
+    pub base: String,
+}
+
+impl IriRules {
+    /// Where classes are published: the public base, else the authored namespace.
+    #[must_use]
+    pub fn class_base(&self) -> &str {
+        if self.public_class_base.is_empty() {
+            &self.class_namespace
+        } else {
+            &self.public_class_base
+        }
+    }
+
+    /// Where individuals are published: the public base, else the authored namespace.
+    #[must_use]
+    pub fn individual_base(&self) -> &str {
+        if self.public_individual_base.is_empty() {
+            &self.individual_namespace
+        } else {
+            &self.public_individual_base
+        }
+    }
+
+    /// Project an authored identity onto its published form when one of the
+    /// namespaces here claims it; `None` otherwise. Class, individual and
+    /// legacy namespaces are tried before the page namespace.
+    #[must_use]
+    pub fn project(&self, iri: &str) -> Option<String> {
+        let own = [
+            (self.class_namespace.as_str(), self.class_base()),
+            (self.individual_namespace.as_str(), self.individual_base()),
+        ];
+        let legacy = self
+            .legacy_projections
+            .iter()
+            .map(|m| (m.prefix.as_str(), m.base.as_str()));
+        let page = (!self.public_page_base.is_empty())
+            .then_some((self.page_namespace.as_str(), self.public_page_base.as_str()));
+        own.into_iter()
+            .chain(legacy)
+            .chain(page)
+            .filter(|(prefix, _)| !prefix.is_empty())
+            .find_map(|(prefix, base)| iri.strip_prefix(prefix).map(|tail| format!("{base}{tail}")))
     }
 }
 
@@ -148,6 +224,13 @@ pub struct Dataset {
     pub nature: String,
     /// The dataset description.
     pub description: String,
+    /// The short corpus classifier carried in `stats.json`.
+    pub kind: String,
+    /// Title of the OKF bundle index.
+    pub bundle_title: String,
+    /// Named authors: the first is the asserted ontology header's
+    /// `dcterms:creator`; all are listed in the WebVOWL header. Empty omits both.
+    pub authors: Vec<String>,
 }
 
 /// One domain: its position in [`Taxonomy::domains`] is its published id.
@@ -158,6 +241,9 @@ pub struct Domain {
     pub slug: String,
     /// Display label.
     pub label: String,
+    /// Fill colour in the WebVOWL rendering; empty uses the default colour.
+    #[serde(default)]
+    pub colour: String,
 }
 
 /// One category: its position in [`Taxonomy::categories`] is its id.
@@ -185,6 +271,9 @@ pub struct Taxonomy {
     pub domain_aliases: IndexMap<String, String>,
     /// Categories in id order (append-only).
     pub categories: Vec<Category>,
+    /// Domain values accepted when the vocabulary does not enumerate
+    /// `domain`; empty accepts any.
+    pub accepted_domains: Vec<String>,
 }
 
 impl Taxonomy {
@@ -198,10 +287,7 @@ impl Taxonomy {
     /// otherwise. Short names resolve to their canonical domain first.
     #[must_use]
     pub fn domain_class_id(&self, domain: &str) -> i32 {
-        let canonical = self
-            .short_names
-            .get(domain)
-            .map_or(domain, String::as_str);
+        let canonical = self.short_names.get(domain).map_or(domain, String::as_str);
         self.domain_index(canonical)
             .and_then(|id| i32::try_from(id + 1).ok())
             .unwrap_or(0)
@@ -232,6 +318,8 @@ pub struct Term {
 pub struct Lifecycle {
     /// Maturity levels, declared as named individuals in the ontology.
     pub maturity_levels: Vec<Term>,
+    /// The level an unknown or absent `maturity:` falls back to.
+    pub default_maturity: String,
 }
 
 /// Label reconstruction.
@@ -313,4 +401,86 @@ pub struct AttributionRules {
 pub struct Governance {
     /// Name → event kind number.
     pub kinds: IndexMap<String, u32>,
+}
+
+/// The estate profile, for unit tests that exercise corpus-shaped data.
+#[cfg(test)]
+pub(crate) fn test_estate() -> Profile {
+    Profile::from_yaml(include_str!("../../../profiles/estate/profile.yaml"))
+        .expect("the estate profile parses")
+}
+
+/// Shared estate fixtures for unit tests.
+#[cfg(test)]
+pub(crate) mod testing {
+    use super::Profile;
+    use std::sync::OnceLock;
+
+    /// The estate profile, parsed once.
+    pub(crate) fn est() -> &'static Profile {
+        static P: OnceLock<Profile> = OnceLock::new();
+        P.get_or_init(super::test_estate)
+    }
+    /// The estate vocabulary namespace.
+    pub(crate) fn vc() -> &'static str {
+        &est().iris.vocabulary_namespace
+    }
+    /// The estate published class base.
+    pub(crate) fn ngm() -> &'static str {
+        &est().iris.public_class_base
+    }
+    /// The estate published individual base.
+    pub(crate) fn ngmi() -> &'static str {
+        &est().iris.public_individual_base
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn short_names_keep_their_domain_class_ids() {
+        let t = test_estate().taxonomy;
+        for (id, alias) in ["ai", "bc", "mv", "rb", "ngm", "tc"].iter().enumerate() {
+            let canonical = t.short_names.get(*alias).map_or(*alias, String::as_str);
+            assert_eq!(t.domain_class_id(alias), t.domain_class_id(canonical));
+            assert_ne!(t.domain_class_id(alias), 0, "{alias} ({id})");
+        }
+        assert_eq!(t.domain_class_id("ai"), 1);
+        assert_eq!(t.domain_class_id("bc"), 2);
+        assert_eq!(t.domain_class_id("space-science-and-systems"), 7);
+        assert_eq!(
+            t.domain_class_id("earth-observation-and-geospatial-sensing"),
+            8
+        );
+        assert_eq!(t.domain_class_id(""), 0);
+        assert_eq!(t.domain_class_id("space-science-typo"), 0);
+    }
+
+    #[test]
+    fn projection_prefers_class_then_individual_then_legacy_then_page() {
+        let r = test_estate().iris;
+        assert_eq!(
+            r.project("urn:ngm:class:x").unwrap(),
+            format!("{}x", r.public_class_base)
+        );
+        assert_eq!(
+            r.project("urn:ngm:individual:y").unwrap(),
+            format!("{}y", r.public_individual_base)
+        );
+        assert_eq!(
+            r.project("urn:visionflow:linked:z").unwrap(),
+            "https://narrativegoldmine.com/linked/z"
+        );
+        assert_eq!(
+            r.project("urn:visionflow:page:p").unwrap(),
+            "https://narrativegoldmine.com/page/p"
+        );
+        assert_eq!(r.project("bare"), None);
+        assert_eq!(
+            IriRules::default().project("urn:ontomark:class:a").unwrap(),
+            "urn:ontomark:class:a"
+        );
+    }
 }

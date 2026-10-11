@@ -20,6 +20,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::build::turtle::{Graph, Subject, Term};
+use crate::profile::Profile;
 
 const OWL_THING: &str = "http://www.w3.org/2002/07/owl#Thing";
 const OWL_NOTHING: &str = "http://www.w3.org/2002/07/owl#Nothing";
@@ -645,9 +646,10 @@ fn reason_axioms(
 
 /// Serialise the inferred subsumptions as `ontology-inferred.ttl`.
 #[must_use]
-pub fn inferred_turtle(reasoning: &Reasoning, generated_at: &str) -> String {
+pub fn inferred_turtle(profile: &Profile, reasoning: &Reasoning, generated_at: &str) -> String {
     let mut g = Graph::new();
-    let ontology = "https://narrativegoldmine.com/ontology/inferred";
+    let ontology = profile.iris.inferred_ontology_iri.as_str();
+    let vc = profile.iris.vocabulary_namespace.as_str();
     g.add_iri(
         ontology,
         RDF_TYPE,
@@ -656,22 +658,22 @@ pub fn inferred_turtle(reasoning: &Reasoning, generated_at: &str) -> String {
     g.add_iri(
         ontology,
         "http://www.w3.org/2000/01/rdf-schema#label",
-        Term::lang("NarrativeGoldmine Inferred Axioms", "en"),
+        Term::lang(profile.iris.inferred_label.as_str(), "en"),
     );
     g.add_iri(
         ontology,
-        &format!("{}inferenceMethod", crate::build::turtle::VC),
+        &format!("{vc}inferenceMethod"),
         Term::plain("whelk-el++-closure"),
     );
     g.add_iri(
         ontology,
-        &format!("{}generatedAt", crate::build::turtle::VC),
+        &format!("{vc}generatedAt"),
         Term::typed(generated_at, "http://www.w3.org/2001/XMLSchema#dateTime"),
     );
     for (sub, sup) in &reasoning.inferred {
         g.add_iri(sub, RDFS_SUBCLASS_OF, Term::Iri(sup.clone()));
     }
-    crate::build::turtle::serialise(&g)
+    crate::build::turtle::serialise(profile, &g)
 }
 
 #[cfg(test)]
@@ -1227,7 +1229,11 @@ mod tests {
             root_causes: Vec::new(),
             classified: 3,
         };
-        let ttl = inferred_turtle(&reasoning, "2026-09-22T00:00:00+00:00");
+        let ttl = inferred_turtle(
+            &crate::profile::test_estate(),
+            &reasoning,
+            "2026-09-22T00:00:00+00:00",
+        );
         assert!(ttl.contains("whelk-el++-closure"));
         assert!(ttl.contains("<urn:a> rdfs:subClassOf <urn:c>"));
         assert!(ttl.contains("2026-09-22T00:00:00+00:00"));
