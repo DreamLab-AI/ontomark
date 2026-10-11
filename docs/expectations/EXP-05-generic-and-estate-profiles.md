@@ -4,7 +4,9 @@ linked_adrs: [ADR-2014, ADR-2016]
 priority: high
 regression_critical: true
 evidence_category: executable
-status: accepted
+status: proven
+evidence: docs/evidence/WP-E/README.md
+stabilized_by: "crates/ontomark-wasm/src/projection.rs::tests; crates/ontomark-wasm/tests/transcript.rs::transcript_semantics; plugin/test/e2e/offline.e2e.cjs"
 authored_by: pair
 slice: WP-E (plugin surface of EXP-05)
 ---

@@ -1,0 +1,22 @@
+$ (plugin) npm run build
+# sha=03d7187 at=2026-10-11T18:33:55Z
+
+> ontomark-obsidian@0.1.0 build
+> node scripts/build-wasm.mjs && tsc --noEmit -p . && node esbuild.config.mjs production
+
+    Finished `release` profile [optimized] target(s) in 0.43s
+wasm-opt web: 4479577 -> 2332819 bytes
+wasm-opt node: 4479577 -> 2332819 bytes
+▲ [WARNING] "import.meta" is not available with the "iife" output format and will be empty [empty-import-meta]
+
+    src/generated/web/ontomark_wasm.js:292:58:
+      292 │ ...dule_or_path = new URL('ontomark_wasm_bg.wasm', import.meta.url);
+          ╵                                                    ~~~~~~~~~~~
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+  dist/main.js  3.0mb ⚠️
+
+⚡ Done in 76ms
+# exit=0

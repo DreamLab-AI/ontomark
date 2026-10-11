@@ -4,7 +4,9 @@ linked_adrs: [ADR-2016]
 priority: critical
 regression_critical: true
 evidence_category: executable
-status: accepted
+status: proven
+evidence: docs/evidence/WP-E/README.md
+stabilized_by: "plugin/test/client.test.ts; plugin/test/guard.test.ts; crates/ontomark-wasm/tests/transcript.rs::transcript_semantics"
 authored_by: pair
 ---
 

@@ -4,7 +4,9 @@ linked_adrs: [ADR-2016]
 priority: critical
 regression_critical: true
 evidence_category: partially-verifiable
-status: accepted
+status: proven
+evidence: docs/evidence/WP-E/README.md
+stabilized_by: "plugin/scripts/offline-test.mjs; plugin/scripts/check-bundle.mjs; plugin/test/wasm-harness.test.mjs"
 authored_by: pair
 ---
 

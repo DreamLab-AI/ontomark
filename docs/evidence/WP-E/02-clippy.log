@@ -1,0 +1,4 @@
+$ cargo clippy -p ontomark-wasm --all-targets -- -D warnings
+# sha=03d7187 at=2026-10-11T18:33:53Z
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+# exit=0

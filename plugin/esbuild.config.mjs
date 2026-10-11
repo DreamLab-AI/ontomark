@@ -17,6 +17,10 @@ const worker = await esbuild.build({
   target: "es2020",
   minify: production,
   legalComments: "none",
+  // The glue's async `__wbg_init` (fetch + import.meta.url) is parsed, then
+  // tree-shaken: the worker calls only `initSync` with transferred bytes.
+  // scripts/check-bundle.mjs proves no fetch/import.meta survives.
+  logOverride: { "empty-import-meta": "silent" },
 });
 const workerSource = worker.outputFiles[0].text;
 
