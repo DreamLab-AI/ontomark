@@ -114,3 +114,18 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   the estate profile, `--no-redact-private-links` for parity runs. Divergence 1,
   about 96 pages on narrativegoldmine.com/notes. EXP-04 canary extended to the
   staging tree.
+- 19:12 queen: Codex restored by the user (`codex login`); `codex exec -m
+  gpt-6-astra` verified from the queen's shell. All five specialists told to run
+  the cross-vendor audit: WP-A now on its six claims; WP-C on the parity claim
+  and divergence 1 before the release tag; WP-D on each estate branch before
+  reporting it ready; WP-B and WP-E when their evidence exists. NOT RUN
+  entries are to be replaced by verdicts.
+- 19:10 spec-estate: Phase 2 step 1 ready on visionGraph `ontomark/publish-cli`
+  (`9faf22f8c`, worktree, not pushed): consumer contract test 7 cases (red on
+  main, 6/7 green now, the 7th waits on the release tag and digest), publish.yml
+  fetches `ontomark-x86_64-unknown-linux-gnu` by tag and sha256 and drops the
+  Rust steps, gates and CLAUDE.md and README rewritten, ADR-VG-007 status
+  section. Queen decisions: no source fallback (digest pins what runs); step 1
+  (parse) repins crates/vault in the same change; VC-54 six slugifiers, VC-55
+  five PROV definitions. First release v0.1.0-rc.1 to be cut from wp-c-compile
+  when compile confirms readiness.
