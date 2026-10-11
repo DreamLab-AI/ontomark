@@ -371,6 +371,10 @@ before then would break the agentbox pin and publish.yml.
 - **vowl-wasm test count:** 173 lib tests with all features plus the integration suites, not 214.
 - **AB-05 split:** `ontology-local.js`'s json-ld parsing goes in step 1 and its validator in step 7.
 - **agentbox CI gap:** CI runs none of `management-api/tests/*.test.js` (jest roots are `tests/contract|sovereign|integration`); the step tests live there beside the ontology-apply tests and must be wired into `test:node` when each step lands.
+- **Unassigned rows:** VC-03 goes in step 1, VC-11 and VC-14 in step 10, and VW-02 and VW-04 in step 5 (D8).
+- **§10.1 additions:** knowledgeGraph `README.md` and `docs/architecture/explorer.md`; VisionFlow ADR-2013 §3 and `BASELINE-visionflow.md` invariants 8 and 9, which VF-01, KG-01, KG-04 and KG-05 quote.
+- **§10.2 counts:** the generator parses 139 topic files. The migration plan (`VisionFlow/docs/engineering/ontomark-diagram-migration.md`, branch `ontomark/docs`) covers 55 topics: 48 change, 7 reviewed with no change. VC-01, VC-26, ES-01, VF-03 and VF-07 make no vault claim. AB-01's `vaultSrc` block is at `flake.nix:40-43`.
+- **Citations wrong today, despite a green `--cite-check`:** VC-24 (`elevation_actor.rs` gate lines), VW-01, VW-03 and VW-04 line numbers, and AB-02 (`entrypoint-unified.sh:1159`, actually `:1222`). They are fixed at restamp; a green strict run does not prove the prose.
 - **Ordering:** visionGraph `ontomark/publish-cli` (the queen's Phase 2 step 1) is this plan's step 10 for visionGraph only, and lands first. VisionClaw crate deletion and the agentbox flake stay on their step-10 branches.
 
 ## 10. Documentation and diagrams
