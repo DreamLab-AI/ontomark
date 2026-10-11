@@ -680,23 +680,29 @@ pub fn inferred_turtle(profile: &Profile, reasoning: &Reasoning, generated_at: &
 mod tests {
 
     use super::*;
+    #[cfg(feature = "whelk-el")]
     use crate::build::turtle::{Subject as S, Term as T};
 
     // The legacy tests, verbatim, against the default classifier.
+    #[cfg(feature = "whelk-el")]
     fn reason(graph: &Graph) -> Result<Reasoning, ReasoningError> {
         super::reason(graph, &crate::whelk::WhelkEl)
     }
+    #[cfg(feature = "whelk-el")]
     fn reason_capped(graph: &Graph, cap: usize) -> Result<Reasoning, ReasoningError> {
         super::reason_capped(graph, cap, &crate::whelk::WhelkEl)
     }
+    #[cfg(feature = "whelk-el")]
     fn reason_with(graph: &Graph, restrictions: Restrictions) -> Reasoning {
         super::reason_with(graph, restrictions, &crate::whelk::WhelkEl)
     }
 
+    #[cfg(feature = "whelk-el")]
     fn class(g: &mut Graph, iri: &str) {
         g.add_iri(iri, RDF_TYPE, T::Iri(OWL_CLASS.to_owned()));
     }
 
+    #[cfg(feature = "whelk-el")]
     fn sub(g: &mut Graph, a: &str, b: &str) {
         g.add_iri(a, RDFS_SUBCLASS_OF, T::Iri(b.to_owned()));
     }
@@ -712,6 +718,7 @@ mod tests {
     /// with definitions are covered by
     /// `relevant_and_include_give_the_same_closure_and_skip_loses_the_entailment`.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn restrictions_change_no_named_subsumption() {
         let mut g = Graph::new();
         for c in ["urn:a", "urn:b", "urn:c", "urn:d"] {
@@ -767,12 +774,14 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "whelk-el")]
     fn disjoint(g: &mut Graph, a: &str, b: &str) {
         g.add_iri(a, OWL_DISJOINT_WITH, T::Iri(b.to_owned()));
     }
 
     /// `P ⊑ A, P ⊑ B, A disjointWith B` (A, B siblings under `parent`), and
     /// `Q ⊑ P`. With the disjointness P and Q are unsatisfiable.
+    #[cfg(feature = "whelk-el")]
     fn probe(with_disjointness: bool) -> Graph {
         let mut g = Graph::new();
         for c in ["urn:parent", "urn:a", "urn:b", "urn:p", "urn:q"] {
@@ -790,6 +799,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn disjoint_parents_make_their_common_subclass_unsatisfiable() {
         let r = reason(&probe(true)).unwrap();
         assert!(!r.is_consistent());
@@ -800,6 +810,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn without_the_disjointness_the_probe_is_consistent() {
         let r = reason(&probe(false)).unwrap();
         assert!(r.is_consistent(), "{:?}", r.unsatisfiable);
@@ -808,6 +819,7 @@ mod tests {
 
     /// Q is unsatisfiable only because it sits under P; P is the root cause.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn root_causes_exclude_classes_derived_from_an_unsatisfiable_parent() {
         let r = reason(&probe(true)).unwrap();
         assert_eq!(r.root_causes, vec!["urn:p".to_owned()]);
@@ -815,6 +827,7 @@ mod tests {
 
     /// Two unrelated clashes are two root causes, each named once.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn two_independent_clashes_are_two_root_causes() {
         let mut g = probe(true);
         for c in ["urn:c", "urn:d", "urn:r"] {
@@ -831,17 +844,25 @@ mod tests {
 
     // ── ADR-2124: defined classes and Restrictions::Relevant ───────────────
 
+    #[cfg(feature = "whelk-el")]
     const RDF_FIRST: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#first";
+    #[cfg(feature = "whelk-el")]
     const RDF_REST: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest";
+    #[cfg(feature = "whelk-el")]
     const RDF_NIL: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil";
+    #[cfg(feature = "whelk-el")]
     const OWL_RESTRICTION: &str = "http://www.w3.org/2002/07/owl#Restriction";
+    #[cfg(feature = "whelk-el")]
     const OWL_EQUIVALENT: &str = "http://www.w3.org/2002/07/owl#equivalentClass";
+    #[cfg(feature = "whelk-el")]
     const OWL_INTERSECTION: &str = "http://www.w3.org/2002/07/owl#intersectionOf";
 
+    #[cfg(feature = "whelk-el")]
     fn property(g: &mut Graph, iri: &str) {
         g.add_iri(iri, RDF_TYPE, T::Iri(OWL_OBJECT_PROPERTY.to_owned()));
     }
 
+    #[cfg(feature = "whelk-el")]
     fn some(g: &mut Graph, prop: &str, filler: &str) -> String {
         let b = g.fresh_blank();
         g.add(
@@ -863,6 +884,7 @@ mod tests {
     }
 
     /// `sub ⊑ ∃prop.filler`, in the superclass position the emitter writes.
+    #[cfg(feature = "whelk-el")]
     fn existential(g: &mut Graph, sub: &str, prop: &str, filler: &str) {
         let b = some(g, prop, filler);
         g.add_iri(sub, RDFS_SUBCLASS_OF, T::Blank(b));
@@ -871,6 +893,7 @@ mod tests {
     /// `class ≡ named₁ ⊓ … ⊓ ∃p₁.f₁ ⊓ …`, written exactly as
     /// `build::turtle` writes a `defines-as` page: an `owl:intersectionOf`
     /// RDF list, or the lone conjunct when there is only one.
+    #[cfg(feature = "whelk-el")]
     fn define(g: &mut Graph, class_iri: &str, named: &[&str], somes: &[(&str, &str)]) {
         let mut members: Vec<T> = named.iter().map(|n| T::Iri((*n).to_owned())).collect();
         for (p, f) in somes {
@@ -902,6 +925,7 @@ mod tests {
     /// `Arm ⊑ GrippingRobot`; the definition entails it. `Arm ⊑ ∃relatedTo.Gripper`
     /// shares no property with the definition and is the restriction
     /// `Relevant` drops.
+    #[cfg(feature = "whelk-el")]
     fn defined_fixture() -> Graph {
         let mut g = Graph::new();
         for c in [
@@ -928,11 +952,13 @@ mod tests {
         g
     }
 
+    #[cfg(feature = "whelk-el")]
     fn entails(r: &Reasoning, sub: &str, sup: &str) -> bool {
         r.inferred.contains(&(sub.to_owned(), sup.to_owned()))
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_definition_yields_a_named_subsumption_nobody_asserted() {
         let g = defined_fixture();
         let r = reason(&g).unwrap();
@@ -962,6 +988,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn relevant_and_include_give_the_same_closure_and_skip_loses_the_entailment() {
         let g = defined_fixture();
         let relevant = reason_with(&g, Restrictions::Relevant);
@@ -989,12 +1016,14 @@ mod tests {
 
     /// `n` classes `urn:c<i> ⊑ ∃prop.urn:filler`, plus (in [`fan_out`]) a definition
     /// `urn:defined ≡ ∃prop.urn:filler`, with `prop` transitive or not.
+    #[cfg(feature = "whelk-el")]
     fn fan_out(n: usize, transitive: bool) -> Graph {
         let mut g = fan_out_undefined(n, transitive);
         define(&mut g, "urn:defined", &[], &[("urn:prop", "urn:filler")]);
         g
     }
 
+    #[cfg(feature = "whelk-el")]
     fn fan_out_undefined(n: usize, transitive: bool) -> Graph {
         let mut g = Graph::new();
         class(&mut g, "urn:filler");
@@ -1019,6 +1048,7 @@ mod tests {
     /// existentials and the build hung. Over the cap the reasoner is not run
     /// at all; the named error says why and over which property.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn relevant_over_the_transitive_cap_is_refused_before_reasoning() {
         let err = reason_capped(&fan_out(5, true), 3).expect_err("over the cap");
         assert_eq!(
@@ -1043,6 +1073,7 @@ mod tests {
     /// 9,563 existentials and reasons in about a second. Only existentials over
     /// a transitive property count toward the cap.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn non_transitive_existentials_do_not_count_toward_the_cap() {
         let r = reason_capped(&fan_out(5, false), 3).expect("non-transitive");
         assert_eq!(r.restrictions_kept, 5);
@@ -1052,12 +1083,14 @@ mod tests {
     /// Without a definition the mode is `Skip` and nothing is kept, so no cap
     /// can apply however many transitive existentials the graph holds.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn skip_is_never_capped() {
         let r = reason_capped(&fan_out_undefined(5, true), 0).expect("skip");
         assert_eq!(r.mode, Restrictions::Skip);
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_graph_without_definitions_still_uses_skip() {
         let mut g = Graph::new();
         for c in ["urn:a", "urn:b"] {
@@ -1075,6 +1108,7 @@ mod tests {
     /// `dependsOn` keeps `requires` (a sub-property: it feeds the definition)
     /// and `top` (a super-property), and drops the unrelated `relatedTo`.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn relevant_keeps_restrictions_over_sub_and_super_properties_only() {
         let mut g = Graph::new();
         for c in ["urn:x", "urn:y", "urn:z", "urn:d", "urn:needs-d"] {
@@ -1121,6 +1155,7 @@ mod tests {
     /// A definition of named classes only (`C ≡ A ⊓ B`) mentions no property,
     /// so `Relevant` keeps no restriction — and still classifies.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_named_only_definition_keeps_no_restriction_and_still_classifies() {
         let mut g = Graph::new();
         for c in ["urn:a", "urn:b", "urn:ab", "urn:x", "urn:f"] {
@@ -1140,6 +1175,7 @@ mod tests {
     /// The lone-conjunct form (`C owl:equivalentClass [restriction]`, no
     /// intersection list) is a definition too.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_single_existential_definition_is_extracted() {
         let mut g = Graph::new();
         for c in ["urn:x", "urn:f", "urn:has-f"] {
@@ -1154,6 +1190,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn derives_the_transitive_subclass_closure() {
         let mut g = Graph::new();
         for c in ["urn:a", "urn:b", "urn:c"] {
@@ -1173,6 +1210,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn classifies_through_an_existential_restriction() {
         let mut g = Graph::new();
         for c in ["urn:parent", "urn:child", "urn:filler"] {
@@ -1197,6 +1235,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn an_empty_graph_classifies_cleanly() {
         let r = reason(&Graph::new()).unwrap();
         assert!(r.is_consistent());
@@ -1205,6 +1244,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn owl_thing_never_appears_in_the_inferred_set() {
         let mut g = Graph::new();
         class(&mut g, "urn:a");
@@ -1240,6 +1280,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn reasoning_is_deterministic() {
         let mut g = Graph::new();
         for c in ["urn:a", "urn:b", "urn:c"] {

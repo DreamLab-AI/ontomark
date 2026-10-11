@@ -309,6 +309,7 @@ relations:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn whelk_runs_when_a_graph_is_supplied() {
         let (report, corpus) = setup(vec![("A", GOOD)]);
         let graph = crate::build::turtle::build_graph(

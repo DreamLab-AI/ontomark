@@ -45,3 +45,17 @@ oxiri = "0.3.1"
 
 [lints]
 workspace = true
+
+# These integration tests exercise the optional concrete classifier.
+
+[[test]]
+name = "probe_consistency"
+required-features = ["whelk-el"]
+
+[[test]]
+name = "publish_gate"
+required-features = ["whelk-el"]
+
+[[test]]
+name = "whelk_scaling"
+required-features = ["whelk-el"]

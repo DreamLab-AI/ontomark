@@ -331,8 +331,16 @@ fn a_replan_with_nothing_to_do_reports_zero_inferred_not_unknown() {
     let (_d, root) = seeded();
     apply(&root, &plan_m1(&root)).unwrap();
     let again = plan_m1(&root);
-    let i = again.deltas.inferred.expect("zero, not absent");
-    assert_eq!((i.added, i.removed), (0, 0));
+    #[cfg(feature = "whelk-el")]
+    {
+        let i = again.deltas.inferred.expect("zero, not absent");
+        assert_eq!((i.added, i.removed), (0, 0));
+    }
+    #[cfg(not(feature = "whelk-el"))]
+    assert!(
+        again.deltas.inferred.is_none(),
+        "no classifier, no inference claim"
+    );
 }
 
 #[test]
@@ -498,8 +506,13 @@ fn the_delta_machinery_reports_zero_for_a_no_op_edit() {
         "{:?}",
         d.asserted
     );
-    let inferred = d.inferred.as_ref().expect("whelk is a default feature");
-    assert_eq!((inferred.added, inferred.removed), (0, 0));
+    #[cfg(feature = "whelk-el")]
+    {
+        let inferred = d.inferred.as_ref().expect("whelk is a default feature");
+        assert_eq!((inferred.added, inferred.removed), (0, 0));
+    }
+    #[cfg(not(feature = "whelk-el"))]
+    assert!(d.inferred.is_none(), "no classifier, no inference claim");
     assert!(d.visibility.is_empty() && d.identity.is_empty() && d.newly_unsatisfiable.is_empty());
 }
 

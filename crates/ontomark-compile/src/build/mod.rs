@@ -689,11 +689,13 @@ mod tests {
     use super::*;
 
     // The legacy tests, verbatim, against the default classifier.
+    #[cfg(feature = "whelk-el")]
     fn run(options: &Options, vocab: &Vocabulary) -> anyhow::Result<Report> {
         let profile = crate::profile::test_estate();
         super::run(options, &profile, vocab, &crate::whelk::WhelkEl)
     }
 
+    #[cfg(feature = "whelk-el")]
     fn fixture_vault(dir: &Path) {
         let pages = dir.join("knowledge/pages");
         std::fs::create_dir_all(&pages).unwrap();
@@ -714,6 +716,7 @@ mod tests {
         .unwrap();
     }
 
+    #[cfg(feature = "whelk-el")]
     fn vocab() -> Vocabulary {
         Vocabulary::from_yaml_str(
             r#"
@@ -734,6 +737,7 @@ scalars:
         .unwrap()
     }
 
+    #[cfg(feature = "whelk-el")]
     fn build_fixture() -> (tempfile::TempDir, Report) {
         let dir = tempfile::tempdir().unwrap();
         fixture_vault(dir.path());
@@ -754,6 +758,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn emits_every_contract_c3_artefact() {
         let (dir, _) = build_fixture();
         let out = dir.path().join("www");
@@ -775,6 +780,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn private_pages_reach_no_artefact() {
         let (dir, report) = build_fixture();
         let out = dir.path().join("www");
@@ -785,6 +791,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn the_scaffold_index_is_compact_and_ascii_only() {
         let (dir, _) = build_fixture();
         let raw = std::fs::read_to_string(dir.path().join("www/data/scaffold-index.json")).unwrap();
@@ -794,6 +801,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn the_generation_stamps_every_artefact() {
         let (dir, report) = build_fixture();
         let gen: Value = read_artifact(&dir.path().join("www"), ".generation.json").unwrap();
@@ -811,6 +819,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn the_generation_records_the_ontology_version_iri_digest() {
         let (dir, report) = build_fixture();
         let out = dir.path().join("www");
@@ -837,6 +846,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn the_data_marker_verifies_every_data_artefact_relative_to_data() {
         let (dir, report) = build_fixture();
         let data = dir.path().join("www/data");
@@ -907,6 +917,7 @@ scalars:
         assert!(clash.to_string().contains("Page One"));
     }
 
+    #[cfg(feature = "whelk-el")]
     fn build_pages(pages: &[(&str, &str)]) -> (tempfile::TempDir, anyhow::Result<Report>) {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().join("knowledge/pages");
@@ -930,6 +941,7 @@ scalars:
         (dir, result)
     }
 
+    #[cfg(feature = "whelk-el")]
     fn class_page(extra: &str) -> String {
         format!(
             "---\ntype: Class\npublic: true\nstatus: stable\ndomain: infrastructure\n{extra}---\nA page.\n"
@@ -937,6 +949,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn the_markdown_mirror_is_written_under_the_title_the_explorer_requests() {
         // The explorer fetches /api/markdown/<search-index title>.md; the title
         // can differ from the file name.
@@ -958,6 +971,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_title_that_is_another_pages_name_is_not_an_alias() {
         // `bc-cryptographic-primitive` is titled like the page named
         // `Cryptographic Primitive`: the name stays that page's alone.
@@ -982,6 +996,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn the_markdown_mirror_states_a_leading_paragraph_definition_once() {
         let (dir, result) = build_pages(&[(
             "Once",
@@ -997,6 +1012,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_title_slug_colliding_with_a_declared_slug_gets_its_own_file() {
         // The real pair: `ML Experiment Tracking` declares the slug that
         // `Experiment Tracking` derives from its title.
@@ -1034,6 +1050,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn an_unresolvable_collision_refuses_the_build_and_names_both_pages() {
         // `Foo` loses `foo` to the page declaring it and falls back to its
         // resource tail `bar` — which `Bar` already derives from its title.
@@ -1060,6 +1077,7 @@ scalars:
 
     // ── ADR-2125 item 4: the zero-unsatisfiable build gate ──────────────────
 
+    #[cfg(feature = "whelk-el")]
     fn build_with_disjointness(
         pages: &[(&str, String)],
     ) -> (tempfile::TempDir, anyhow::Result<Report>) {
@@ -1101,6 +1119,7 @@ scalars:
 
     /// `Parent ⊐ A, B`, `A disjoint-with B`, and `P ⊑ A` (plus `P ⊑ B` when
     /// `clash`), with `Q ⊑ P` hanging below.
+    #[cfg(feature = "whelk-el")]
     fn disjoint_corpus(clash: bool) -> Vec<(&'static str, String)> {
         let p_parents = if clash {
             "[\"[[A]]\", \"[[B]]\"]"
@@ -1122,6 +1141,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn an_unsatisfiable_class_fails_the_build_naming_only_the_root_cause() {
         let (dir, result) = build_with_disjointness(&disjoint_corpus(true));
         let error = result.expect_err("P ⊑ A ⊓ B with A disjoint B must refuse the build");
@@ -1141,6 +1161,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_satisfiable_disjointness_builds_and_emits_the_axiom() {
         let (dir, result) = build_with_disjointness(&disjoint_corpus(false));
         let report = result.expect("siblings A, B disjoint with no common subclass is fine");
@@ -1153,6 +1174,7 @@ scalars:
     /// derived membership lands in `ontology-inferred.ttl` only (decision 5),
     /// and the report carries the restriction mode and kept count.
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_defined_class_is_classified_into_by_the_build() {
         let vocab = Vocabulary::from_yaml_str(
             r#"
@@ -1219,6 +1241,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_corpus_without_definitions_reasons_with_skip() {
         let (_dir, report) = build_fixture();
         assert_eq!(report.reasoner_mode, "skip");
@@ -1227,6 +1250,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn the_closure_and_the_reasoner_agree_on_the_taxonomy() {
         let (dir, report) = build_fixture();
         let scaffold: Value =
@@ -1239,6 +1263,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn the_prose_index_captures_the_current_landscape() {
         let (dir, _) = build_fixture();
         let prose: Value = read_artifact(&dir.path().join("www"), "data/prose-index.json").unwrap();
@@ -1246,6 +1271,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn promotion_replaces_the_previous_bundle_wholesale() {
         let (dir, _) = build_fixture();
         let out = dir.path().join("www");
@@ -1267,6 +1293,7 @@ scalars:
     }
 
     #[test]
+    #[cfg(feature = "whelk-el")]
     fn a_validation_error_writes_nothing() {
         let dir = tempfile::tempdir().unwrap();
         fixture_vault(dir.path());

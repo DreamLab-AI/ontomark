@@ -544,16 +544,16 @@ impl Gen {
         let len = self.rng.below(8);
         let mut value = String::new();
         for _ in 0..len {
-            value.push_str(self.rng.pick(LITERAL_CHARS));
+            value.push_str(self.rng.pick::<&str>(LITERAL_CHARS));
         }
         match self.rng.below(3) {
             0 => Term::plain(value),
-            1 => Term::lang(value, self.rng.pick(LANGS)),
+            1 => Term::lang(value, self.rng.pick::<&str>(LANGS)),
             _ => {
                 let dt = if self.rng.chance(30) {
                     self.iri()
                 } else {
-                    (*self.rng.pick(DATATYPES)).to_owned()
+                    (*self.rng.pick::<&str>(DATATYPES)).to_owned()
                 };
                 Term::typed(value, &dt)
             }
@@ -619,7 +619,7 @@ fn property_unicode_and_escapes_in_literals() {
     for i in 0..300 {
         let mut value = String::new();
         for _ in 0..rng.below(12) {
-            value.push_str(rng.pick(LITERAL_CHARS));
+            value.push_str(rng.pick::<&str>(LITERAL_CHARS));
         }
         let mut g = Graph::new();
         g.add_iri(

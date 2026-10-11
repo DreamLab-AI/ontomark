@@ -13,13 +13,16 @@
 //! The fixture lives here, never in `knowledge/`: which classes get a
 //! definition is the owner's call.
 
+#[cfg(feature = "whelk-el")]
 use ontomark_compile::build::turtle::{self, iri_to_uri};
 use ontomark_compile::check::validate;
 use ontomark_compile::input::page::{Page, Vault, VaultKind};
 use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::ir::model::Corpus;
 use ontomark_compile::profile::Profile;
+#[cfg(feature = "whelk-el")]
 use ontomark_compile::reason::{self, Restrictions};
+#[cfg(feature = "whelk-el")]
 use ontomark_compile::whelk::WhelkEl;
 
 fn profile() -> Profile {
@@ -98,6 +101,7 @@ fn fixture(with_definition: bool) -> Vault {
     ])
 }
 
+#[cfg(feature = "whelk-el")]
 fn arm_under_gripping_robot(r: &reason::Reasoning) -> bool {
     r.inferred.contains(&(
         iri_to_uri(&profile(), "urn:ngm:class:arm"),
@@ -119,6 +123,7 @@ fn the_definition_fixture_validates_cleanly() {
 }
 
 #[test]
+#[cfg(feature = "whelk-el")]
 fn one_defines_as_page_yields_a_named_subsumption_absent_from_the_asserted_graph() {
     let vault = fixture(true);
     let vocab = vocab();
@@ -152,6 +157,7 @@ fn one_defines_as_page_yields_a_named_subsumption_absent_from_the_asserted_graph
 }
 
 #[test]
+#[cfg(feature = "whelk-el")]
 fn the_same_fixture_forced_to_skip_loses_the_subsumption() {
     let vault = fixture(true);
     let vocab = vocab();
@@ -169,6 +175,7 @@ fn the_same_fixture_forced_to_skip_loses_the_subsumption() {
 }
 
 #[test]
+#[cfg(feature = "whelk-el")]
 fn without_the_definition_the_corpus_reasons_with_skip_and_derives_nothing_new() {
     let vault = fixture(false);
     let vocab = vocab();
