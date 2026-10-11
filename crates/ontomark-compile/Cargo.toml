@@ -33,6 +33,11 @@ time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"
 
 [dev-dependencies]
 tempfile = "3"
+# W3C conformance and writer round-trip tests (conformance/w3c).
+oxttl = "0.2.4"
+oxrdf = { version = "0.3.4", features = ["rdfc-10"] }
+oxrdfxml = "0.2.4"
+oxiri = "0.3.1"
 
 [lints]
 workspace = true
