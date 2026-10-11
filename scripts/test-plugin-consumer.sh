@@ -7,7 +7,7 @@ engine="${CARGO_TARGET_DIR:-$root/target}/plugin-engine"
 export ONTOMARK_ENGINE_OUT="$engine"
 node "$root/scripts/build-plugin-engine.mjs"
 bundle="$engine/candidate.tar.gz"
-tar -czf "$bundle" -C "$engine" web node ontomark.wasm engine-manifest.json
+tar -czf "$bundle" -C "$engine" web node ontomark.wasm engine-manifest.json LICENSE-MIT LICENSE-APACHE NOTICE THIRD-PARTY-NOTICES.md
 export ONTOMARK_ENGINE_BUNDLE="$bundle"
 export ONTOMARK_ENGINE_SHA256
 ONTOMARK_ENGINE_SHA256=$(sha256sum "$bundle" | cut -d ' ' -f 1)

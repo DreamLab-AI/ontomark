@@ -20,7 +20,7 @@ Published crates include `whelk-el` 0.1.1, `ontomark-reason` 0.1.1,
 packages preserve the Rust MIT and original Scala BSD notices. Historical
 published versions and release assets remain immutable.
 
-The locked workspace declares Rust 1.89. Native tests, Clippy, strict rustdoc,
+Ontomark’s locked workspace declares Rust 1.89. Native tests, Clippy, strict rustdoc,
 WASM builds and complete-history secret scanning pass in hosted core CI at
 `7fd8ae2` (run `38175300206`). Compiler all/no-default-feature tests, opt-in
 projection WASM compilation and locked registry package verification passed
@@ -35,12 +35,12 @@ flag is a comparison mechanism; default public exports retain privacy tests.
 | CLI | GitHub `v0.1.0-rc.1`, clean source `21cd9ff`; Linux x86-64 binary verified on Debian 12 without networking. |
 | Plugin engine | Same prerelease, SHA-256 `f810962b1b71e28653737f2cbbe3a06a5e1a8e6c059e452a2292b6af05b2023a`; embedded in the plugin. |
 | Shared renderer | `ontomark-graph-v0.1.0`, immutable npm-format tarball, SHA-256 `de491e2d7d947503d3c49c140193c88a9d17cfec5fbb334166002049c8d56aa5`. |
-| Obsidian | Separate `DreamLab-AI/ontomark-obsidian`; tested installable Linux ZIP, release publication being completed. |
+| Obsidian | Separate `DreamLab-AI/ontomark-obsidian`; released installable Linux ZIP at tag `0.1.0`; real desktop and offline gates pass. |
 | VOWL | crates.io `vowl-wasm` 0.2.0 and GitHub browser tarball; all 17 hosted checks pass. npm trusted-publisher configuration still prevents npm registry publication. |
 | Narrative Goldmine | CLI pin already deployed at `366236b38`; shared renderer and WASM codec adoption passed 88 tests and built-browser acceptance, final deployment being monitored. |
 | Loom | Main `eef1bec`, shared C3 contracts and registry compiler 0.1.1; 441 tests, Clippy, rustdoc and hosted Rust 1.98 checks passed. ADR-142 remains partial/inactive; no first served activation claimed. |
 
-The released CLI ELF was built with Rust 1.96.1 in the Bookworm image and uses
+Released CLI ELF was built with Rust 1.96.1 in the Bookworm image and uses
 the ordinary Linux loader. Its SHA-256 is
 `7b15c2858f1715e561c0889dbaa50164e5a404ee7f8ed1d6cfd9da41daeb1d45`.
 Do not replace it with the local Nix binary. Dependency licence inventories are
@@ -67,7 +67,7 @@ execution need their dedicated harnesses. See [nightly docs](dream-cycle/README.
 
 ## Remaining estate work
 
-The broader removal plan is still open: corpus-wide typed/profile migration,
+Broader estate removals remain open: corpus-wide typed/profile migration,
 other consumer replacements and the migration guard's original 876 residues
 are not declared complete. VisionFlow/Agentbox ADR reconciliation is part of
 this release continuation. Security agent analysis was unavailable; functional

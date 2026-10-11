@@ -44,3 +44,7 @@ writeFileSync(join(out, "engine-manifest.json"), JSON.stringify({
   version: "candidate", source: execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim(),
   wasm_bindgen: "0.2.127", binaryen: "132",
 }, null, 2) + "\n");
+// Engine archives carry licence notices alongside their immutable source receipt.
+for (const notice of ["LICENSE-MIT", "LICENSE-APACHE", "NOTICE", "THIRD-PARTY-NOTICES.md"]) {
+  copyFileSync(join(root, notice), join(out, notice));
+}

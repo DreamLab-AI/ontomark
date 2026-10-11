@@ -1,7 +1,7 @@
 ---
 id: DEPRECATION-001
 title: Estate deprecation inventory and removal plan (EXP-10)
-status: phase-1-census
+status: phase-2-partial
 date: 2026-10-11
 owner: spec-estate (WP-D)
 census_at: 2026-10-11T17:55:26Z
@@ -10,10 +10,7 @@ census_baseline: VisionClaw ontomark-census-baseline = 1044b0722e6166c8936caec7a
 
 # Estate deprecation inventory and removal plan
 
-This is the EXP-10 inventory. It lists every semantic implementation in the estate that an ontomark crate will own, and every pin of the
-`vault` producer or of vowl-wasm. Each row names the code, its size, consumers and covering tests, the ontomark crate that replaces it,
-and the acceptance test that gates its removal. Phase 2 (removal) runs per responsibility once `spec-compile` signals parity. Nothing has
-been removed yet, and no ontomark crate has reached parity: every crate under `crates/` is still a `lib.rs` skeleton.
+This inventory records the original EXP-10 census and acceptance criteria. Its tables cite the interrupted sprint’s source baseline; they are not a claim that released crates remain skeletons. Core parity and a first consumer release batch are now landed. The remaining estate replacements stay open. See [current hand-off](HANDOFF.md) and the dated continuation below.
 
 ## 1. Census basis
 
@@ -443,3 +440,16 @@ Category tables, executed: a Python regex over both declarations (multi-line tup
 Limits: responsibility labels for some `crates/vault/src/build/*` modules came from symbol names, not full reads. Test counts are attribute
 counts, not executed passes. Consumer lists for Loom LM-02 and VisionClaw VC-49 are incomplete ("not traced"). This is a same-family census;
 the Codex evidence audit applies to the Phase 2 removals, not to this inventory.
+
+## 12. Release continuation: 2026-10-11
+
+The recovered core is implemented and tested. Its native legacy adapter delegates to `ontomark-reason`, with zero differences against the complete committed corpus over 32 artefact lines and 12 command outputs. The opt-in typed projection is published in `ontomark-compile` 0.1.2. It does not apply a corpus-wide vocabulary/schema migration to legacy CLI callers.
+
+- **visionGraph producer**: main consumes the checksum-pinned `v0.1.0-rc.1` Linux CLI, after 17 publishing contracts and a successful deployment.
+- **NGG1**: the reusable codec is `ontomark-ngg1` 0.1.0. Published `vowl-wasm` 0.2.0 exposes the browser compatibility API and preserves physics/layout ownership. visionGraph deletes its independent JavaScript encoder/decoder and uses the immutable GitHub browser bundle because npm trusted-publisher authentication remains unresolved.
+- **Graph view**: [ADR-OM-002](adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md) places framework-neutral rendering, traversal and interaction in Ontomark `packages/graph`. Narrative Goldmine’s old node/edge/label renderers are removed; its store, palette, navigation and worker layout remain host-owned. The Obsidian plugin consumes the same released package.
+- **Obsidian distribution**: [standalone public repo](https://github.com/DreamLab-AI/ontomark-obsidian), released offline Linux ZIP and real Obsidian 1.14.4 acceptance; mobile remains unsupported.
+- **Loom contracts**: main eef1bec consumes shared typed C3 readers and registry compiler 0.1.1. Real contracts, reload/receipt races and linked-worktree build identity pass. The runtime ingestion/first-served activation gate remains partial/inactive.
+- **Attribution**: corrected crate versions and complete frozen WASM/native CLI notices are published with source links; see [UPSTREAMS](UPSTREAMS.md). Historical release assets and licence texts are preserved.
+
+This batch does not close the original removal inventory or declare its 876 baseline residues eliminated. The 690 SKOS-only class declaration rule has synthetic typed-model coverage; applying it to the normative corpus needs a distinct reversible migration and consumer evidence. Other VisionClaw, knowledgeGraph, taxonomy and Agentbox producer replacements retain their recorded acceptance gates.

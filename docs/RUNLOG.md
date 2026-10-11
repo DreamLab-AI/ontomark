@@ -295,3 +295,5 @@ The standalone Obsidian consumer and installed-sidecar acceptance are underway.
 - Loom main landed non-force at eef1bec after 441 tests, Clippy, rustdoc and hosted pinned-toolchain contracts. The runtime migration remains explicitly partial/inactive, without a first-served activation claim.
 - Ontomark nightly nomination landed through root `dream.config.json`: four native slots, mandatory build/tests/Clippy/rustdoc, no automatic merge. Canonical discovery and dispatch-free baked-engine dry run passed; daemon restored RUNNING. No real cycle or nightly findings have been fabricated.
 - Remaining corpus-profile/schema migration and estate removals stay open in DEPRECATION. Independent security-agent analysis was unavailable; functional/secret/dependency checks are not a substitute claim. Original dirty estate worktrees remain preserved.
+
+- Obsidian 0.1.0 release workflow 38175779812 passed and published the Linux-ready ZIP, runtime files and full WASM notices. Public ZIP SHA-256: `d2fac297fb7de6b8ea2e670c4499f17a2ab7f53c6e0980b5270bd7da9fc1fd4b`. Graph, ontology-panel and SPARQL screenshots are displayed in the standalone README at 003956f.

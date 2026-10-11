@@ -96,3 +96,7 @@ regressions were reproduced red before fixes. This branch is held from main:
 LM-04/LM-09 publishing contracts still have five failures (two tests pass), and
 the existing build-info library test reports an unknown Loom revision in linked
 worktrees. No host build, service restart or timer activation occurred.
+
+## Final release continuation
+
+The holds above are historical recovery checkpoints. Loom’s subsequent C3 registry adoption and linked-worktree build-identity correction passed 441 tests, Clippy, rustdoc and hosted contracts; main landed at eef1bec. Core integration, typed projection, shared graph releases and the standalone Obsidian distribution are now landed. visionGraph main 1d4553145 adopts the shared renderer and Rust/WASM codec after 88 local tests and built-browser acceptance. See [HANDOFF](HANDOFF.md) for activation status, release links and remaining estate work. Dirty original worktrees and the recovered preparation branches remain preserved.
