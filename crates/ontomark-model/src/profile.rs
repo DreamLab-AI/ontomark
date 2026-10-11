@@ -184,6 +184,20 @@ pub trait Profile {
     fn reference_candidates(&self, _target: &str) -> Vec<Iri> {
         Vec::new()
     }
+    /// Offer an IRI for a new entity the author is explicitly creating.
+    ///
+    /// The only minter in the workspace. `None` means the profile has no
+    /// rule for this kind, the title yields no identifier, or the candidate
+    /// is already claimed in `ctx`: the caller must then supply an IRI.
+    /// Never called when reading or indexing a vault. Default: `None`.
+    fn mint_iri(
+        &self,
+        _kind: Kind,
+        _title: &str,
+        _ctx: &crate::mint::MintContext<'_>,
+    ) -> Option<Iri> {
+        None
+    }
     /// The public URL for an entity, when the profile maps one explicitly.
     fn publication_url(&self, _iri: &Iri) -> Option<String> {
         None
@@ -319,6 +333,9 @@ pub struct ProfileSpec {
     /// Subclass-cycle policy.
     #[serde(default)]
     pub cycle_policy: CyclePolicy,
+    /// Minting rule (`namespace(kind) + slugify(title)`); absent = never mint.
+    #[serde(default)]
+    pub mint: Option<crate::mint::MintSpec>,
 }
 
 fn d_type() -> String {
@@ -412,6 +429,14 @@ impl DeclarativeProfile {
                 },
             );
         }
+        if let Some(m) = &spec.mint {
+            for ns in [&m.class, &m.individual, &m.property].into_iter().flatten() {
+                Iri::parse(format!("{ns}x")).map_err(|source| ProfileError::Iri {
+                    context: "mint namespace".into(),
+                    source,
+                })?;
+            }
+        }
         for ns in &spec.reference_namespaces {
             Iri::parse(format!("{ns}x")).map_err(|source| ProfileError::Iri {
                 context: "reference namespace".into(),
@@ -475,6 +500,7 @@ impl DeclarativeProfile {
             reference_namespaces: Vec::new(),
             publication: None,
             cycle_policy: CyclePolicy::Warn,
+            mint: None,
         };
         Self::new(spec).expect("the generic profile is valid")
     }
@@ -627,6 +653,11 @@ impl Profile for DeclarativeProfile {
             .iter()
             .filter_map(|ns| Iri::parse(format!("{ns}{target}")).ok())
             .collect()
+    }
+
+    fn mint_iri(&self, kind: Kind, title: &str, ctx: &crate::mint::MintContext<'_>) -> Option<Iri> {
+        let m = self.spec.mint.as_ref()?;
+        crate::mint::mint_slug(m.namespace(kind), title, ctx)
     }
 
     fn publication_url(&self, iri: &Iri) -> Option<String> {

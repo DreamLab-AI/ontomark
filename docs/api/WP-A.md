@@ -115,6 +115,11 @@ Axiom::{SubClassOf{sub,sup}, EquivalentClasses{classes}, DisjointClasses{classes
   Transitive{property}, ClassAssertion{individual,class}, ObjectAssertion{subject,property,object}, SameIndividual{individuals}}
 ClassExpr::{Named(Iri), Thing, Nothing, And(Vec), Some{property, filler: Box}}   // Iri::as_str() is free
 Profile::predicates() -> Vec<PredicateDef>   // default empty
+// The one minter (explicit creation only; never called when reading a vault)
+Profile::mint_iri(&self, kind: Kind, title: &str, ctx: &MintContext{model: Option<&Model>}) -> Option<Iri>  // default None
+ProfileSpec.mint: Option<MintSpec{class, individual, property: Option<namespace>}>  // namespace(kind) + slugify(title)
+slugify(&str) -> String   // estate rule re.sub('[^a-z0-9]+','-',lower).strip('-'); None on empty slug or claimed IRI
+m.is_claimed(&iri) -> bool
 m.resolve_with(&profile, target) -> Reference;  m.entity_of(&DocId);  m.resolution_counts()
 ```
 

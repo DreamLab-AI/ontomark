@@ -33,6 +33,7 @@ fn estate_like(cycles: &str) -> DeclarativeProfile {
         "reserved": ["generated", "links", "quality", "domain", "maturity"],
         "reference_namespaces": ["urn:ngm:class:"],
         "publication": {{ "namespace": "urn:ngm:class:", "base_url": "https://narrativegoldmine.com/", "suffix": ".html" }},
+        "mint": {{ "class": "urn:ngm:class:", "individual": "urn:ngm:individual:" }},
         "cycle_policy": "{cycles}"
     }}"#
     );
@@ -646,5 +647,44 @@ fn axioms_project_only_supported_statements() {
             },
         ],
         "unresolved and annotation statements are not axioms"
+    );
+}
+
+#[test]
+fn minting_is_explicit_single_sourced_and_collision_safe() {
+    use ontomark_model::{MintContext, PropertyKind};
+    let p = estate_like("warn");
+    let none = MintContext::default();
+    assert_eq!(
+        p.mint_iri(Kind::Class, "3D Gaussian Splatting", &none),
+        Some(iri("urn:ngm:class:3d-gaussian-splatting"))
+    );
+    assert_eq!(
+        p.mint_iri(Kind::Individual, "Rex", &none),
+        Some(iri("urn:ngm:individual:rex"))
+    );
+    assert_eq!(
+        p.mint_iri(Kind::Property(PropertyKind::Object), "part of", &none),
+        None,
+        "no property namespace"
+    );
+    assert_eq!(p.mint_iri(Kind::Class, "***", &none), None, "empty slug");
+    // A claimed IRI is never re-minted (no silent suffixing).
+    let v = Vault::new(&[("A.md", &page("Class", "urn:ngm:class:animal", ""))]);
+    let m = v.model(&p);
+    assert_eq!(
+        p.mint_iri(Kind::Class, "Animal", &MintContext { model: Some(&m) }),
+        None
+    );
+    // Generic profile: the caller must supply an IRI.
+    assert_eq!(
+        DeclarativeProfile::generic().mint_iri(Kind::Class, "Animal", &none),
+        None
+    );
+    // Building a model never mints: a typed page without an IRI stays NoIdentity.
+    let v = Vault::new(&[("B.md", "---\ntype: Class\n---\n")]);
+    assert_eq!(
+        v.model(&p).documents[&DocId::new("B")].disposition,
+        DocDisposition::NoIdentity
     );
 }

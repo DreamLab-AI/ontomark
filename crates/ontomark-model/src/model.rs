@@ -729,6 +729,12 @@ impl Model {
         }
     }
 
+    /// `true` when some document claims `iri` (uniquely or in conflict).
+    #[must_use]
+    pub fn is_claimed(&self, iri: &Iri) -> bool {
+        self.claimed.contains(iri)
+    }
+
     /// The entity a document declares.
     #[must_use]
     pub fn entity_of(&self, doc: &DocId) -> Option<&Entity> {
