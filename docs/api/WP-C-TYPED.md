@@ -24,8 +24,10 @@ The typed route intentionally changes these rc1 conventions:
 ADR-OM-001 records 690 legacy classes typed only as SKOS concepts. The typed API's
 class-declaration test establishes the intended rule for those declarations;
 this release does not claim a full estate rebuild through a normative estate
-profile, or change that count in the legacy bundle. Native CLI golden parity
-remains a separate gate. `--no-redact-private-links` continues to select the
+profile, or change that count in the legacy bundle. The shared native adapter
+at `6c040a5` passes full golden parity on committed visionGraph `b5e36abd1`:
+zero differences across 32 artefact hashes and 12 command outputs.
+`--no-redact-private-links` continues to select the
 recorded legacy comparison mode; it does not enable phantom identities in the
 typed API.
 

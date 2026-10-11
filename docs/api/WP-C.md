@@ -53,6 +53,11 @@ and shared native reasoner adoption on `resume/integration`, pending its review
 and publication. See [typed API migration](WP-C-TYPED.md) for the explicit
 identity, privacy and supported-profile semantics.
 
+The shared native adapter at `6c040a5` also passes the full committed corpus
+comparison: zero differences across the same 32 artefact lines and 12 command
+outputs for visionGraph `b5e36abd1`. This receipt covers the native adapter;
+the typed model route has separate synthetic migration tests.
+
 Remaining estate migrations include applying the typed projection through a
 normative estate profile, the native bundle's 690 SKOS-only class declarations,
 and the remaining estate CLI commands. The typed API declares every model class
