@@ -997,3 +997,23 @@ fn data_sub_properties_are_kept_not_projected_as_object_ones() {
     ));
     assert!(m.axioms(&p).is_empty());
 }
+
+// ---------- Codex cross-vendor audit (gpt-6-astra, 4cc0810) ----------
+
+#[test]
+fn paths_that_differ_only_by_case_are_ambiguous_in_either_order() {
+    let p = DeclarativeProfile::generic();
+    let a = "---\ntype: Class\niri: urn:test:a\n---\n";
+    let b = "---\ntype: Class\niri: urn:test:b\n---\n";
+    for order in [
+        [("dir/A.md", a), ("DIR/a.md", b)],
+        [("DIR/a.md", b), ("dir/A.md", a)],
+    ] {
+        let v = Vault::new(&order);
+        let m = v.model(&p);
+        assert_eq!(
+            m.resolve_with(&p, "dir/a").state,
+            Resolution::Ambiguous(vec![iri("urn:test:a"), iri("urn:test:b")])
+        );
+    }
+}

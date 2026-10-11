@@ -92,7 +92,8 @@ fn exp03_every_public_page() {
         // block's style and read it back.
         for e in &fm.entries {
             t.entries += 1;
-            let text = ontomark_parse::emit_entry(&e.key, &e.value, &fm.style);
+            let text = ontomark_parse::emit_entry(&e.key, &e.value, &fm.style)
+                .expect("corpus values are representable");
             if text == e.raw(&src) {
                 t.emit_byte_identical += 1;
             }

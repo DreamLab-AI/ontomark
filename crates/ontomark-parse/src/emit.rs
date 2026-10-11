@@ -11,16 +11,52 @@
 use crate::frontmatter::{resolve_plain, BlockStyle};
 use crate::value::Value;
 
+/// A value [`entry`] cannot write so that it reads back equal.
+///
+/// Today the only case is a [`Value::Float`] whose text the reader would
+/// not type as a float (`1_0.0`, `nan`): written plain or quoted, it reads
+/// back as a string.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Unrepresentable(pub String);
+
+impl std::fmt::Display for Unrepresentable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "float text `{}` does not read back as a float", self.0)
+    }
+}
+
+impl std::error::Error for Unrepresentable {}
+
+/// Refuse any value (at any depth) that would not read back equal.
+///
+/// # Errors
+/// [`Unrepresentable`] naming the first offending float text.
+pub fn check(v: &Value) -> Result<(), Unrepresentable> {
+    match v {
+        Value::Float(raw) => match resolve_plain(raw) {
+            Value::Float(r) if &r == raw => Ok(()),
+            _ => Err(Unrepresentable(raw.clone())),
+        },
+        Value::Seq(items) => items.iter().try_for_each(check),
+        Value::Map(m) => m.values().try_for_each(check),
+        _ => Ok(()),
+    }
+}
+
 /// Render `key: value` as one or more complete lines (final line break
 /// included) using `style`.
-#[must_use]
-pub fn entry(key: &str, value: &Value, style: &BlockStyle) -> String {
+///
+/// # Errors
+/// [`Unrepresentable`] when `value` holds a float the reader would not
+/// type as one; nothing is emitted rather than text that reads back wrong.
+pub fn entry(key: &str, value: &Value, style: &BlockStyle) -> Result<String, Unrepresentable> {
+    check(value)?;
     let nl = if style.crlf { "\r\n" } else { "\n" };
     let mut out = String::new();
     out.push_str(&scalar_text(key));
     out.push(':');
     write_value_after_key(&mut out, value, 0, style, nl);
-    out
+    Ok(out)
 }
 
 /// Write a value that follows `key:` at indentation `indent`.
@@ -195,15 +231,21 @@ mod tests {
     fn corpus_house_style() {
         let v = Value::strings(["[[Computer Vision Task]]", "plain"]);
         assert_eq!(
-            entry("is-a", &v, &st()),
+            entry("is-a", &v, &st()).expect("representable"),
             "is-a:\n- '[[Computer Vision Task]]'\n- plain\n"
         );
-        assert_eq!(entry("links", &Value::Seq(vec![]), &st()), "links: []\n");
         assert_eq!(
-            entry("quality", &Value::Float("0.70".into()), &st()),
+            entry("links", &Value::Seq(vec![]), &st()).expect("representable"),
+            "links: []\n"
+        );
+        assert_eq!(
+            entry("quality", &Value::Float("0.70".into()), &st()).expect("representable"),
             "quality: 0.70\n"
         );
-        assert_eq!(entry("public", &Value::Bool(true), &st()), "public: true\n");
+        assert_eq!(
+            entry("public", &Value::Bool(true), &st()).expect("representable"),
+            "public: true\n"
+        );
     }
 
     #[test]
@@ -225,12 +267,12 @@ mod tests {
         g.insert("by".to_owned(), Value::string("agent:x/1"));
         g.insert("at".to_owned(), Value::string("2026-09-22T12:41:39Z"));
         assert_eq!(
-            entry("generated", &Value::Map(g.clone()), &st()),
+            entry("generated", &Value::Map(g.clone()), &st()).expect("representable"),
             "generated:\n  by: agent:x/1\n  at: 2026-09-22T12:41:39Z\n"
         );
         let seq = Value::Seq(vec![Value::Map(g)]);
         assert_eq!(
-            entry("sources", &seq, &st()),
+            entry("sources", &seq, &st()).expect("representable"),
             "sources:\n- by: agent:x/1\n  at: 2026-09-22T12:41:39Z\n"
         );
     }
@@ -243,7 +285,7 @@ mod tests {
             crlf: true,
         };
         assert_eq!(
-            entry("a", &Value::strings(["x"]), &style),
+            entry("a", &Value::strings(["x"]), &style).expect("representable"),
             "a:\r\n  - x\r\n"
         );
     }

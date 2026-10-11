@@ -172,3 +172,61 @@ fn a_reversed_span_has_no_utf16_range() {
     assert_eq!(ix.span(Span { start: 2, end: 0 }), None);
     assert_eq!(ix.span(Span::new(0, 2)), Some((0, 2)));
 }
+
+// ---------- Codex cross-vendor audit (gpt-6-astra, 4cc0810) ----------
+
+#[test]
+fn a_comment_after_a_keep_chomped_scalar_survives_a_set_of_that_key() {
+    let src = "---\na: |+\n  x\n# keep\n\nb: 1\n---\n";
+    let doc = Document::parse(src);
+    let out = doc
+        .apply(&Patch::new(doc.digest()).set("a", Value::Int(2)))
+        .expect("patch applies");
+    assert_eq!(out.document.source(), "---\na: 2\n# keep\n\nb: 1\n---\n");
+}
+
+#[test]
+fn keep_chomped_blank_lines_before_a_comment_stay_with_the_value() {
+    let src = "---\na: |+\n  x\n\n# keep\nb: 1\n---\n";
+    let doc = Document::parse(src);
+    let fm = doc.frontmatter().expect("fm");
+    let a = fm.get("a").expect("a");
+    assert_eq!(a.raw(src), "a: |+\n  x\n\n");
+}
+
+#[test]
+fn direct_emission_refuses_a_float_the_reader_would_not_type_as_one() {
+    let style = ontomark_parse::BlockStyle::default();
+    assert!(ontomark_parse::emit_entry("k", &Value::Float("1_0.0".into()), &style).is_err());
+    assert!(
+        ontomark_parse::emit_entry("k", &Value::Seq(vec![Value::Float("nan".into())]), &style)
+            .is_err()
+    );
+    assert_eq!(
+        ontomark_parse::emit_entry("k", &Value::Float("0.70".into()), &style).expect("ok"),
+        "k: 0.70\n"
+    );
+}
+
+#[test]
+fn utf16_index_handles_empty_crlf_and_out_of_range() {
+    let empty = Document::parse("");
+    let u = empty.utf16_index();
+    assert_eq!(u.offset(0), Some(0));
+    assert_eq!(u.offset(1), None);
+    assert_eq!(u.byte(0), Some(0));
+    assert_eq!(u.byte(1), None);
+
+    let crlf = Document::parse("a\r\n𝄞\r\n");
+    let u = crlf.utf16_index();
+    // a \r \n = 3 units; 𝄞 = 2 units (4 bytes); \r \n.
+    assert_eq!(u.offset(3), Some(3));
+    assert_eq!(u.offset(7), Some(5));
+    assert_eq!(u.offset(5), None, "inside a 4-byte char");
+    assert_eq!(u.offset(9), Some(7), "end of source");
+    assert_eq!(u.offset(10), None);
+    assert_eq!(u.byte(4), None, "between surrogates");
+    assert_eq!(u.byte(5), Some(7));
+    assert_eq!(u.byte(7), Some(9));
+    assert_eq!(u.byte(8), None);
+}

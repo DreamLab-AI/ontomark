@@ -297,8 +297,9 @@ pub struct Model {
     prefixes: PrefixMap,
     /// lower-cased label/alias/name → IRIs.
     names: BTreeMap<String, BTreeSet<Iri>>,
-    /// lower-cased doc path → document.
-    paths: BTreeMap<String, DocId>,
+    /// lower-cased doc path → every document with that path (paths that
+    /// differ only by case are distinct files on a case-sensitive disk).
+    paths: BTreeMap<String, Vec<DocId>>,
     /// document → claimed IRI (unique or conflicted).
     claims: BTreeMap<DocId, Iri>,
     /// Every claimed IRI.
@@ -376,7 +377,10 @@ impl Model {
         let mut pending: Vec<Pending<'a>> = Vec::new();
         let mut claimants: BTreeMap<Iri, Vec<DocId>> = BTreeMap::new();
         for (id, doc) in docs {
-            m.paths.insert(id.as_str().to_lowercase(), id.clone());
+            m.paths
+                .entry(id.as_str().to_lowercase())
+                .or_default()
+                .push(id.clone());
             let public = profile.is_public(doc);
             let disposition = m.classify(profile, &id, doc, &mut pending, &mut claimants);
             m.documents.insert(
@@ -713,12 +717,14 @@ impl Model {
             }
         }
         let mut doc_without_identity = None;
-        if let Some(id) = self.paths.get(&key) {
+        for id in self.paths.get(&key).into_iter().flatten() {
             match self.claims.get(id) {
                 Some(iri) => {
                     cands.insert(iri.clone());
                 }
-                None => doc_without_identity = Some(id.clone()),
+                None => {
+                    doc_without_identity.get_or_insert_with(|| id.clone());
+                }
             }
         }
         for c in profile.reference_candidates(t) {

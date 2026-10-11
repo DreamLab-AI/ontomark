@@ -565,7 +565,16 @@ fn build_entries(fm: &mut Frontmatter, source: &str, content: Span, raw: Vec<Raw
     let mut style_map: Option<usize> = None;
     for (i, r) in raw.iter().enumerate() {
         let next_start = raw.get(i + 1).map_or(text.len(), |n| n.key_at);
-        let end = trim_trailing_trivia(text, r.key_at, next_start, keep_chomped(text, r.key_at));
+        let keep = keep_chomped(text, r.key_at);
+        // A keep-chomped scalar ends at the first column-0 comment: the
+        // blank lines before it are value, the comment and all after it
+        // are trivia that patches of this key must not touch.
+        let bound = if keep {
+            first_comment_line(text, r.key_at, next_start).unwrap_or(next_start)
+        } else {
+            next_start
+        };
+        let end = trim_trailing_trivia(text, r.key_at, bound, keep);
         if r.key_at > cursor {
             fm.gaps.push(Span::new(base + cursor, base + r.key_at));
         }
@@ -684,6 +693,18 @@ fn item_spans(text: &str, item_at: &[usize], entry_end: usize) -> Vec<Span> {
 
 /// `true` when the entry starting at `key_at` holds a keep-chomped block
 /// scalar: its header (after `key:`) is `|` or `>` with a `+` indicator.
+/// Start of the first line in `(key line, end)` that begins with `#`.
+fn first_comment_line(text: &str, key_at: usize, end: usize) -> Option<usize> {
+    let mut at = text[key_at..end].find('\n').map(|i| key_at + i + 1)?;
+    while at < end {
+        if text[at..end].starts_with('#') {
+            return Some(at);
+        }
+        at = text[at..end].find('\n').map(|i| at + i + 1)?;
+    }
+    None
+}
+
 fn keep_chomped(text: &str, key_at: usize) -> bool {
     let line_end = text[key_at..].find('\n').map_or(text.len(), |i| key_at + i);
     let rest = &text[key_end_or(text, key_at, line_end)..line_end];

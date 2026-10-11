@@ -369,7 +369,8 @@ impl Document {
                     }
                     named.push((key.clone(), i));
                     set_values.push((key.clone(), value.clone()));
-                    let text = emit::entry(key, value, &style);
+                    let text = emit::entry(key, value, &style)
+                        .map_err(|e| PatchError::Unrepresentable(e.0))?;
                     let Some(f) = fm else {
                         order.push(key.clone());
                         new_block.push((i, text));
@@ -611,15 +612,7 @@ impl Document {
 }
 
 fn check_value(v: &Value) -> Result<(), PatchError> {
-    match v {
-        Value::Float(raw) => match crate::frontmatter::resolve_plain(raw) {
-            Value::Float(r) if &r == raw => Ok(()),
-            _ => Err(PatchError::Unrepresentable(raw.clone())),
-        },
-        Value::Seq(items) => items.iter().try_for_each(check_value),
-        Value::Map(m) => m.values().try_for_each(check_value),
-        _ => Ok(()),
-    }
+    emit::check(v).map_err(|e| PatchError::Unrepresentable(e.0))
 }
 
 fn check_key(key: &str) -> Result<(), PatchError> {
