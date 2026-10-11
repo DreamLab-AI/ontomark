@@ -617,3 +617,34 @@ fn the_model_serialises() {
     let json = serde_json::to_string(&m.entities).unwrap();
     assert!(json.contains("\"urn:ngm:class:a\""));
 }
+
+#[test]
+fn axioms_project_only_supported_statements() {
+    use ontomark_model::{Axiom, ClassExpr};
+    let v = Vault::new(&[
+        ("Wheel.md", &page("Class", "urn:ngm:class:wheel", "")),
+        ("Vehicle.md", &page("Class", "urn:ngm:class:vehicle", "")),
+        ("Car.md", &page("Class", "urn:ngm:class:car", "is-a:\n- '[[Vehicle]]'\n- '[[Nowhere]]'\nhas-part:\n- '[[Wheel]]'\nrelated-to:\n- '[[Wheel]]'\n")),
+    ]);
+    let p = estate_like("warn");
+    let m = v.model(&p);
+    let ax: Vec<Axiom> = m.axioms(&p).into_iter().map(|a| a.axiom).collect();
+    let n = |s: &str| ClassExpr::Named(iri(s));
+    assert_eq!(
+        ax,
+        vec![
+            Axiom::SubClassOf {
+                sub: n("urn:ngm:class:car"),
+                sup: n("urn:ngm:class:vehicle")
+            },
+            Axiom::SubClassOf {
+                sub: n("urn:ngm:class:car"),
+                sup: ClassExpr::Some {
+                    property: iri("https://narrativegoldmine.com/ns/v1#hasPart"),
+                    filler: Box::new(n("urn:ngm:class:wheel"))
+                }
+            },
+        ],
+        "unresolved and annotation statements are not axioms"
+    );
+}

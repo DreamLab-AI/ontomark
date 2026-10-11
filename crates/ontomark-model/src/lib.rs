@@ -36,12 +36,14 @@
 //! assert_eq!(e.kind, Kind::Property(PropertyKind::Object));
 //! ```
 
+mod axiom;
 mod iri;
 mod kind;
 mod model;
 mod policy;
 mod profile;
 
+pub use axiom::{Axiom, ClassExpr, SourcedAxiom};
 pub use iri::{Iri, IriError, PrefixMap};
 pub use kind::{Kind, PropertyKind};
 pub use model::Disposition;

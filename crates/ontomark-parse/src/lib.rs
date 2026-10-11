@@ -41,6 +41,7 @@ mod emit;
 mod frontmatter;
 mod patch;
 mod span;
+mod utf16;
 mod value;
 
 pub use body::{BodyIndex, BodyLink, FootnoteDef, FootnoteRef, InlineFootnote};
@@ -49,4 +50,5 @@ pub use emit::{entry as emit_entry, scalar_text as emit_scalar};
 pub use frontmatter::{BlockStyle, Entry, Frontmatter, FrontmatterLink, FrontmatterState};
 pub use patch::{Applied, Edit, Patch, PatchError, PatchOp, Placement, Receipt};
 pub use span::{SourceDigest, Span};
+pub use utf16::Utf16Index;
 pub use value::{Subpath, Value, Wikilink};

@@ -32,6 +32,7 @@ Value::{Null, Bool, Int(i64), Float(String /*lexical*/), String, Seq(Vec<Value>)
 Wikilink { target, subpath: Option<Subpath::{Heading,Block}>, alias, embed } ; Wikilink::parse("[[..]]")
 BodyLink { span, link }; FootnoteRef { span, label }; FootnoteDef { span, label, text }
 Span { start, end } (byte offsets into the document source)
+doc.utf16_index() -> Utf16Index; .offset(byte) -> Option<usize>; .span(Span) -> Option<(usize, usize)>  // JS hosts
 
 // Writing — the only write path
 let patch = Patch::new(doc.digest())
@@ -108,6 +109,12 @@ Statement{predicate: Iri, form: StatementForm, object: Object::{Reference(Refere
           origin: Origin{document, key, item, span}}
 Reference{written, link: Option<Wikilink>, state: Resolution, document: Option<DocId>}
 Resolution::{Resolved(Iri), Ambiguous(Vec<Iri>), Unresolved, External(Iri)}
+// Reasoner input (WP-B): EL axioms from Supported statements only, plus profile-declared transitivity
+m.axioms(&profile) -> Vec<SourcedAxiom{axiom: Axiom, origin: Option<Origin>}>
+Axiom::{SubClassOf{sub,sup}, EquivalentClasses{classes}, DisjointClasses{classes}, SubPropertyOf{sub,sup},
+  Transitive{property}, ClassAssertion{individual,class}, ObjectAssertion{subject,property,object}, SameIndividual{individuals}}
+ClassExpr::{Named(Iri), Thing, Nothing, And(Vec), Some{property, filler: Box}}   // Iri::as_str() is free
+Profile::predicates() -> Vec<PredicateDef>   // default empty
 m.resolve_with(&profile, target) -> Reference;  m.entity_of(&DocId);  m.resolution_counts()
 ```
 

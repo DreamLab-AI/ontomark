@@ -170,6 +170,11 @@ pub trait Profile {
     fn lifecycle_def(&self, status: &str) -> Option<&LifecycleDef>;
     /// The predicate a frontmatter key asserts, if any.
     fn predicate(&self, key: &str) -> Option<PredicateDef>;
+    /// Every predicate the profile declares by key (not CURIE keys), in
+    /// declaration order. Used for property axioms. Default: none.
+    fn predicates(&self) -> Vec<PredicateDef> {
+        Vec::new()
+    }
     /// `true` for keys the profile consumes as metadata (identity, type,
     /// labels, provenance…) rather than as assertions.
     fn is_reserved(&self, key: &str) -> bool;
@@ -595,6 +600,10 @@ impl Profile for DeclarativeProfile {
             return well_known(&self.prefixes, key);
         }
         None
+    }
+
+    fn predicates(&self) -> Vec<PredicateDef> {
+        self.predicates.values().cloned().collect()
     }
 
     fn is_reserved(&self, key: &str) -> bool {

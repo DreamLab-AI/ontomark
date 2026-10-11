@@ -125,6 +125,12 @@ impl Document {
         &self.body_index
     }
 
+    /// A byte → UTF-16 offset table for this source, for JavaScript hosts.
+    #[must_use]
+    pub fn utf16_index(&self) -> crate::Utf16Index {
+        crate::Utf16Index::new(&self.source)
+    }
+
     /// The 1-based line and column (in characters) of byte `offset`.
     ///
     /// # Panics
