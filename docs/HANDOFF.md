@@ -85,3 +85,5 @@ container bind paths do not address the edited container filesystem.
 ## Typed projection privacy correction
 
 Compiler 0.1.3 corrects private literal filtering for Unicode case variants, using the model resolver’s comparison rule. Sharp-s and final-sigma canaries failed before the fix; authoring and unrelated-public-value controls pass afterwards. All 413 compiler unit tests and integration suites pass, including 10 typed projection cases; 36 doctests, strict Clippy/rustdoc and wasm32 compilation pass. An initial doctest link failure came from the full workspace temporary filesystem; rerunning those doctests with the roomy executable TMPDIR passed.
+
+Compiler 0.1.3 passed locked registry verification and is published. Version 0.1.2 is yanked so new dependency resolution selects the corrected implementation. Existing pinned users should upgrade. Hosted implementation CI at 49c6325 passed; compiler all/no-default-feature suites are now explicit CI gates.

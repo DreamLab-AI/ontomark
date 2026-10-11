@@ -349,3 +349,7 @@ Rust source is generally MIT OR Apache-2.0, with the recorded component exceptio
 Native Cargo metadata SHA-256: `20581602c3855db965e95156193d5c972af3abbc88cba32850eb14f207126569`. All 33 scanner licence groups are accounted for: first-party terms use the project licence files, while registry/Whelk notices are reproduced in the native addendum. Ryu’s actual packaged Apache licence replaces the scanner’s generic text. Packaged selected-licence texts are checked separately from scanner grouping; differing texts are retained. Ryu’s inherited source copyright and the exact libyaml source notice are also preserved.
 
 Audit date: 2026-10-11. This addendum does not alter the rc1 assets or the engine-only notice snapshot already included in the standalone plugin ZIP. Future native releases require a fresh inventory bound to their source, features, target, toolchain and digest.
+
+## Compiler privacy correction
+
+`ontomark-compile` 0.1.3 fixes Unicode private-name case variants in the opt-in typed public projection. Version 0.1.2 is yanked from new resolution; its historical publication is retained. Whelk/reasoner versions and frozen CLI/WASM assets are unchanged.
