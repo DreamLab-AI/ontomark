@@ -11,7 +11,7 @@
 //! meant to prevent publication.
 //!
 //! ```
-//! use crate::input::secrets::{scan, CredentialKind};
+//! use ontomark_compile::input::secrets::{scan, CredentialKind};
 //!
 //! let findings = scan("notes\nkey: sk-abcdefghijklmnopqrstuvwxyz012345\n");
 //! assert_eq!(findings.len(), 1);

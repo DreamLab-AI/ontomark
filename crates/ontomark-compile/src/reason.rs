@@ -680,6 +680,17 @@ mod tests {
     use super::*;
     use crate::build::turtle::{Subject as S, Term as T};
 
+    // The legacy tests, verbatim, against the default classifier.
+    fn reason(graph: &Graph) -> Result<Reasoning, ReasoningError> {
+        super::reason(graph, &crate::whelk::WhelkEl)
+    }
+    fn reason_capped(graph: &Graph, cap: usize) -> Result<Reasoning, ReasoningError> {
+        super::reason_capped(graph, cap, &crate::whelk::WhelkEl)
+    }
+    fn reason_with(graph: &Graph, restrictions: Restrictions) -> Reasoning {
+        super::reason_with(graph, restrictions, &crate::whelk::WhelkEl)
+    }
+
     fn class(g: &mut Graph, iri: &str) {
         g.add_iri(iri, RDF_TYPE, T::Iri(OWL_CLASS.to_owned()));
     }

@@ -14,7 +14,6 @@ path = "src/main.rs"
 
 [dependencies]
 ontomark-compile = { path = "../ontomark-compile" }
-whelk-el = { path = "../whelk-el" }
 anyhow = "1"
 clap = { version = "4.5", features = ["derive", "env"] }
 serde_json = { workspace = true, features = ["preserve_order"] }

@@ -21,7 +21,7 @@ fn non_slug_re() -> &'static Regex {
 /// trim leading and trailing `-`.
 ///
 /// ```
-/// # use crate::input::slug::slugify;
+/// # use ontomark_compile::input::slug::slugify;
 /// assert_eq!(slugify("Knowledge Graph"), "knowledge-graph");
 /// assert_eq!(slugify("ISO/IEC 9075"), "iso-iec-9075");
 /// ```
@@ -39,7 +39,7 @@ pub fn slugify(s: &str) -> String {
 /// colon, exactly as `pipeline/reason.py` does.
 ///
 /// ```
-/// # use crate::input::slug::ref_slug;
+/// # use ontomark_compile::input::slug::ref_slug;
 /// assert_eq!(ref_slug("urn:ngm:class:knowledge-graph"), "knowledge-graph");
 /// assert_eq!(ref_slug("bare-slug"), "bare-slug");
 /// ```
@@ -58,7 +58,7 @@ pub fn ref_slug(iri: &str) -> String {
 /// something else.
 ///
 /// ```
-/// # use crate::input::slug::target_slug;
+/// # use ontomark_compile::input::slug::target_slug;
 /// assert_eq!(target_slug("3-d-animation"), "3-d-animation");
 /// assert_eq!(target_slug("3D Animation"), "3d-animation");
 /// ```
@@ -78,7 +78,7 @@ pub fn target_slug(target: &str) -> String {
 /// Build the canonical class IRI for a page title under `namespace`.
 ///
 /// ```
-/// # use crate::input::slug::iri_for;
+/// # use ontomark_compile::input::slug::iri_for;
 /// assert_eq!(
 ///     iri_for("urn:ngm:class:", "Knowledge Graph"),
 ///     "urn:ngm:class:knowledge-graph"

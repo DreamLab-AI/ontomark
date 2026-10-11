@@ -247,7 +247,7 @@ impl Page {
     /// the definition is prose, and a `# Title` or `- item` is not.
     ///
     /// ```
-    /// # use crate::input::page::Page;
+    /// # use ontomark_compile::input::page::Page;
     /// let page = Page::parse("/p.md", "pages/p.md", "p",
     ///     "---\ntype: Class\n---\nA graph of entities.\n\n## Detail\nmore\n").unwrap();
     /// assert_eq!(page.leading_paragraph(), "A graph of entities.");

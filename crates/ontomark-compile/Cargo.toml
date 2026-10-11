@@ -10,7 +10,13 @@ authors.workspace = true
 keywords = ["ontology", "owl", "rdf", "obsidian", "shacl"]
 categories = ["compilers", "science"]
 
+[features]
+default = ["whelk-el"]
+# The OWL 2 EL classifier the build and the gate reason with.
+whelk-el = ["dep:whelk-el"]
+
 [dependencies]
+whelk-el = { path = "../whelk-el", optional = true }
 serde = { workspace = true }
 # preserve_order: every JSON artefact's key order is part of the byte contract.
 serde_json = { workspace = true, features = ["preserve_order"] }

@@ -615,6 +615,11 @@ pub fn read_artifact(out: &Path, name: &str) -> anyhow::Result<Value> {
 mod tests {
     use super::*;
 
+    // The legacy tests, verbatim, against the default classifier.
+    fn run(options: &Options, vocab: &Vocabulary) -> anyhow::Result<Report> {
+        super::run(options, vocab, &crate::whelk::WhelkEl)
+    }
+
     fn fixture_vault(dir: &Path) {
         let pages = dir.join("knowledge/pages");
         std::fs::create_dir_all(&pages).unwrap();

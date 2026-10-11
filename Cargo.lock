@@ -550,7 +550,6 @@ dependencies = [
  "clap",
  "ontomark-compile",
  "serde_json",
- "whelk-el",
 ]
 
 [[package]]
@@ -569,6 +568,7 @@ dependencies = [
  "thiserror 2.0.21",
  "time",
  "walkdir",
+ "whelk-el",
 ]
 
 [[package]]

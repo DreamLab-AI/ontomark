@@ -45,7 +45,7 @@
 //! `--check` on a converted corpus reports nothing.
 //!
 //! ```
-//! use vault::bodies::convert_body;
+//! use ontomark_compile::check::bodies::convert_body;
 //!
 //! let logseq = "- ### Overview\n  - First point.\n    - Detail.\n  - Second point.\n";
 //! assert_eq!(
@@ -76,7 +76,7 @@ const TAB_WIDTH: usize = 2;
 /// working vault's own templates write it.
 ///
 /// ```
-/// use vault::bodies::convert;
+/// use ontomark_compile::check::bodies::convert;
 ///
 /// let page = "---\ntype: Note\n---\n- # Title\n\t- Point\n";
 /// assert_eq!(convert(page), "---\ntype: Note\n---\n# Title\n\n- Point\n");
@@ -643,7 +643,7 @@ fn width_regex() -> &'static regex::Regex {
 /// Replace Logseq image sizing with Obsidian's `![alt|width](src)`.
 ///
 /// ```
-/// use vault::bodies::fix_images;
+/// use ontomark_compile::check::bodies::fix_images;
 ///
 /// assert_eq!(
 ///     fix_images("![a.png](assets/a.png){:height 841, :width 800}"),
@@ -711,7 +711,7 @@ fn macro_regexes() -> &'static [(regex::Regex, &'static str)] {
 /// written.
 ///
 /// ```
-/// use vault::bodies::fix_macros;
+/// use ontomark_compile::check::bodies::fix_macros;
 ///
 /// assert_eq!(
 ///     fix_macros("{{video https://www.youtube.com/watch?v=AJWTUvXA0Wc}}"),
@@ -746,7 +746,7 @@ pub fn fix_macros(line: &str) -> String {
 /// lines at the end.
 ///
 /// ```
-/// use vault::bodies::same_but_trailing_whitespace;
+/// use ontomark_compile::check::bodies::same_but_trailing_whitespace;
 ///
 /// assert!(same_but_trailing_whitespace("- a\n- \n\n", "- a\n-\n"));
 /// assert!(!same_but_trailing_whitespace("- a\n", "  - a\n"));

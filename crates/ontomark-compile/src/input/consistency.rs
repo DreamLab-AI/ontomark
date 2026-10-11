@@ -16,7 +16,7 @@
 //!   naming the unsatisfiable class.
 //!
 //! ```
-//! use crate::input::consistency::{check_disjoint_pair, DISJOINT_NOT_SIBLINGS};
+//! use ontomark_compile::input::consistency::{check_disjoint_pair, DISJOINT_NOT_SIBLINGS};
 //!
 //! let parent = ["urn:ngm:class:vehicle".to_owned()];
 //! // Siblings under one parent: allowed.
@@ -121,7 +121,7 @@ pub const CATEGORY_SLUGS: &[&str] = &[
 /// `foo`, which is how the corpus identifies a class across its IRI forms.
 ///
 /// ```
-/// use crate::input::consistency::class_key;
+/// use ontomark_compile::input::consistency::class_key;
 /// assert_eq!(class_key("urn:ngm:class:Ai-Technique"), "ai-technique");
 /// assert_eq!(class_key("https://narrativegoldmine.com/class/robotics"), "robotics");
 /// ```
@@ -138,7 +138,7 @@ pub fn class_key(reference: &str) -> String {
 /// `true` when the reference names a domain root or a taxonomy category.
 ///
 /// ```
-/// use crate::input::consistency::is_taxonomic;
+/// use ontomark_compile::input::consistency::is_taxonomic;
 /// assert!(is_taxonomic("urn:ngm:class:robotics"));
 /// assert!(is_taxonomic("https://narrativegoldmine.com/class/ai-technique"));
 /// assert!(!is_taxonomic("urn:ngm:class:knowledge-graph"));
@@ -198,7 +198,7 @@ pub fn check_disjoint_pair(
 /// shape both write paths report.
 ///
 /// ```
-/// use crate::input::consistency::{whelk_inconsistent, WHELK_INCONSISTENT};
+/// use ontomark_compile::input::consistency::{whelk_inconsistent, WHELK_INCONSISTENT};
 /// let b = whelk_inconsistent("urn:ngm:class:p");
 /// assert_eq!(b.code, WHELK_INCONSISTENT);
 /// assert_eq!(b.to_string(), "[WHELK_INCONSISTENT] urn:ngm:class:p is subsumed by owl:Nothing");

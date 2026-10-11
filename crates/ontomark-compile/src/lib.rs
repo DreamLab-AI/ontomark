@@ -19,3 +19,5 @@ pub mod input;
 pub mod ir;
 pub mod json;
 pub mod reason;
+#[cfg(feature = "whelk-el")]
+pub mod whelk;

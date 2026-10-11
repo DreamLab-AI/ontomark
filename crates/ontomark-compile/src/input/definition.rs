@@ -35,8 +35,8 @@
 //! requirement belongs in a `vault validate` rule (ADR-2126), not here.
 //!
 //! ```
-//! use crate::input::definition::{parse, Conjunct};
-//! use crate::input::vocabulary::Vocabulary;
+//! use ontomark_compile::input::definition::{parse, Conjunct};
+//! use ontomark_compile::input::vocabulary::Vocabulary;
 //!
 //! let vocab = Vocabulary::from_yaml_str(r#"
 //! version: 1
@@ -104,7 +104,7 @@ pub const NON_EL_KEYWORDS: &[&str] = &[
 /// [`NON_EL_DEFINITION`].
 ///
 /// ```
-/// use crate::input::definition::{refusal_code, NON_EL_DEFINITION};
+/// use ontomark_compile::input::definition::{refusal_code, NON_EL_DEFINITION};
 /// assert_eq!(refusal_code("DEFINITION_OVER_TRANSITIVE: …"), "DEFINITION_OVER_TRANSITIVE");
 /// assert_eq!(refusal_code("`only` is outside OWL 2 EL"), NON_EL_DEFINITION);
 /// ```

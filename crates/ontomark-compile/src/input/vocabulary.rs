@@ -22,7 +22,7 @@
 //! # Example
 //!
 //! ```
-//! use crate::input::vocabulary::Vocabulary;
+//! use ontomark_compile::input::vocabulary::Vocabulary;
 //!
 //! let vocab = Vocabulary::from_yaml_str(r#"
 //! version: 1
@@ -726,7 +726,7 @@ impl Vocabulary {
     /// rather than a corpus object property.
     ///
     /// ```
-    /// # use crate::input::vocabulary::Vocabulary;
+    /// # use ontomark_compile::input::vocabulary::Vocabulary;
     /// let v = Vocabulary::from_yaml_str(r#"
     /// version: 1
     /// relations:
@@ -792,7 +792,7 @@ impl Vocabulary {
     /// independent of IRI spelling.
     ///
     /// ```
-    /// # use crate::input::vocabulary::Vocabulary;
+    /// # use ontomark_compile::input::vocabulary::Vocabulary;
     /// let v = Vocabulary::from_yaml_str(r#"
     /// version: 1
     /// relations:

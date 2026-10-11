@@ -43,7 +43,7 @@ impl Wikilink {
     /// Parse one `[[…]]` token. Returns `None` if `raw` is not a wikilink.
     ///
     /// ```
-    /// # use crate::input::frontmatter::Wikilink;
+    /// # use ontomark_compile::input::frontmatter::Wikilink;
     /// let w = Wikilink::parse("[[Ontology|the ontology]]").unwrap();
     /// assert_eq!(w.target, "Ontology");
     /// assert_eq!(w.label(), "the ontology");
@@ -107,7 +107,7 @@ pub struct Split<'a> {
 /// for a frontmatter delimiter.
 ///
 /// ```
-/// # use crate::input::frontmatter::split;
+/// # use ontomark_compile::input::frontmatter::split;
 /// let s = split("---\npublic: true\n---\n# Title\n");
 /// assert_eq!(s.yaml.unwrap().trim(), "public: true");
 /// assert_eq!(s.body, "# Title\n");
@@ -264,7 +264,7 @@ impl Frontmatter {
     /// not `[[…]]`.
     ///
     /// ```
-    /// # use crate::input::frontmatter::Frontmatter;
+    /// # use ontomark_compile::input::frontmatter::Frontmatter;
     /// let fm = Frontmatter::parse("requires: [\"[[Ontology]]\", \"plain\"]").unwrap();
     /// let links = fm.wikilinks("requires");
     /// assert_eq!(links.len(), 1);
@@ -291,7 +291,7 @@ impl Frontmatter {
     /// the same place as the same key added next year.
     ///
     /// ```
-    /// # use crate::input::frontmatter::Frontmatter;
+    /// # use ontomark_compile::input::frontmatter::Frontmatter;
     /// let mut fm = Frontmatter::parse("topic: x\nstatus: stable\ntype: Class\n").unwrap();
     /// fm.sort_canonical();
     /// assert_eq!(fm.keys().collect::<Vec<_>>(), vec!["type", "status", "topic"]);

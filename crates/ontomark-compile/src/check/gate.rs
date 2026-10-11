@@ -312,7 +312,12 @@ relations:
     fn whelk_runs_when_a_graph_is_supplied() {
         let (report, corpus) = setup(vec![("A", GOOD)]);
         let graph = crate::build::turtle::build_graph(&corpus, &vocab(), true);
-        let v = run(&report, &corpus, Some(&graph), Tier::Full);
+        let v = run(
+            &report,
+            &corpus,
+            Some((&graph, &crate::whelk::WhelkEl)),
+            Tier::Full,
+        );
         assert_eq!(v.checks[2].status, "pass");
         assert!(v.checks[2].detail.contains("unsatisfiable"));
     }

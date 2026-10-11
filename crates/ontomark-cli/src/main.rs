@@ -1,4 +1,4 @@
-//! The `ontomark` binary: a drop-in for VisionClaw's `vault` on the verbs the
+//! The `ontomark` binary: a drop-in for `VisionClaw`'s `vault` on the verbs the
 //! publication workflow and the corpus gates use (`build`, `validate`, `gate`,
 //! `conflicts`, `repair bodies|fences`), plus `migrate`.
 //!
@@ -8,14 +8,12 @@
 //! claiming one path, a definition the reasoner would not finish on) or an
 //! invalid argument.
 //!
-//! Relocated from VisionClaw `crates/vault/src/main.rs` at `1044b0722`; the
+//! Relocated from `VisionClaw` `crates/vault/src/main.rs` at `1044b0722`; the
 //! governance verbs (`propose`, `apply`, `panel`, `edit`, `create`) and the
-//! graph queries (`find`, `retrieve`, `tree`) stay in VisionClaw.
+//! graph queries (`find`, `retrieve`, `tree`) stay in `VisionClaw`.
 
 #![deny(unsafe_code)]
 #![warn(clippy::pedantic)]
-
-mod classifier;
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -298,7 +296,7 @@ fn run() -> anyhow::Result<ExitCode> {
             let report = validate::validate(&vault, &corpus, &vocab);
             let graph = (tier == gate::Tier::Full && report.errors().is_empty())
                 .then(|| build::turtle::build_graph(&corpus, &vocab, false));
-            let classifier = classifier::WhelkEl;
+            let classifier = ontomark_compile::whelk::WhelkEl;
             let verdict = gate::run(
                 &report,
                 &corpus,
@@ -373,7 +371,7 @@ fn run() -> anyhow::Result<ExitCode> {
                     .map(|commit| (commit, args.source_dirty)),
                 stale_after: args.stale_after.clone(),
             };
-            let report = match build::run(&options, &vocab, &classifier::WhelkEl) {
+            let report = match build::run(&options, &vocab, &ontomark_compile::whelk::WhelkEl) {
                 Ok(report) => report,
                 Err(e) => {
                     // A credential on a page selected for publication is not a

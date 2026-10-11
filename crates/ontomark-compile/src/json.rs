@@ -122,7 +122,7 @@ impl<F: Formatter> Formatter for EnsureAscii<F> {
 /// Serialise as `CPython`'s `json.dumps(value, separators=(",", ":"))`.
 ///
 /// ```
-/// # use crate::json::to_compact;
+/// # use ontomark_compile::json::to_compact;
 /// let v = serde_json::json!({ "t": "Caf\u{e9}", "n": [1, 2] });
 /// let expected = concat!("{\"t\":\"Caf", "\\u00e9", "\",\"n\":[1,2]}");
 /// assert_eq!(to_compact(&v).unwrap(), expected);
@@ -144,7 +144,7 @@ pub fn to_compact<T: Serialize + ?Sized>(value: &T) -> serde_json::Result<String
 /// Serialise as `CPython`'s `json.dumps(value, indent=2)`.
 ///
 /// ```
-/// # use crate::json::to_indented;
+/// # use ontomark_compile::json::to_indented;
 /// let v = serde_json::json!({ "a": 1 });
 /// assert_eq!(to_indented(&v).unwrap(), "{\n  \"a\": 1\n}");
 /// ```
@@ -196,7 +196,7 @@ impl Formatter for PythonDefault {
 /// `ontology.json` and `overview.json`.
 ///
 /// ```
-/// # use crate::json::to_default_ascii;
+/// # use ontomark_compile::json::to_default_ascii;
 /// let v = serde_json::json!({ "a": 1, "b": "Caf\u{e9}" });
 /// let expected = concat!("{\"a\": 1, \"b\": \"Caf", "\\u00e9", "\"}");
 /// assert_eq!(to_default_ascii(&v).unwrap(), expected);
@@ -218,7 +218,7 @@ pub fn to_default_ascii<T: Serialize + ?Sized>(value: &T) -> serde_json::Result<
 /// separators, raw UTF-8. This is the setting `prose_index.py` uses.
 ///
 /// ```
-/// # use crate::json::to_default_utf8;
+/// # use ontomark_compile::json::to_default_utf8;
 /// let v: serde_json::Value = serde_json::from_str(r#"{"a":1,"b":[1,2]}"#).unwrap();
 /// assert_eq!(to_default_utf8(&v).unwrap(), r#"{"a": 1, "b": [1, 2]}"#);
 /// ```

@@ -1,10 +1,10 @@
-//! The [`Classifier`] the CLI hands the compiler: `whelk-el` over the
-//! compiler's extracted EL axioms.
+//! [`WhelkEl`]: the compiler's [`Classifier`] over `whelk-el` (feature
+//! `whelk-el`, on by default).
 //!
-//! Temporary until `ontomark-reason` exports its own implementation (WP-B);
-//! this is a one-to-one axiom mapping, not a second reasoner.
+//! A one-to-one mapping of [`ElInput`] onto `whelk-el` axioms, not a second
+//! reasoner. It moves to `ontomark-reason` when WP-B exports a classifier.
 
-use ontomark_compile::reason::{Classifier, DefinitionTerm, ElInput};
+use crate::reason::{Classifier, DefinitionTerm, ElInput};
 use whelk_el::{ClassExpr, ElAxiom};
 
 /// `whelk-el`, single-threaded.

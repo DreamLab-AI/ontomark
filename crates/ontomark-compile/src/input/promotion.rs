@@ -203,8 +203,8 @@ pub struct Outcome {
 /// # Examples
 ///
 /// ```
-/// use crate::input::okf::{Actor, Status};
-/// use crate::input::promotion::{apply, PromotionState, Transition};
+/// use ontomark_compile::input::okf::{Actor, Status};
+/// use ontomark_compile::input::promotion::{apply, PromotionState, Transition};
 ///
 /// let human = Actor::Human("npub1abc".into());
 /// let out = apply(

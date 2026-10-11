@@ -40,7 +40,7 @@
 //! reported on every run until a human resolves it.
 //!
 //! ```
-//! use vault::repair::{classify, Action, Verdict};
+//! use ontomark_compile::check::repair::{classify, Action, Verdict};
 //!
 //! // A stray marker with nothing but prose after it.
 //! assert_eq!(
