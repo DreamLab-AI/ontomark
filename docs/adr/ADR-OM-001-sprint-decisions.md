@@ -100,6 +100,20 @@ them.
     publication carries no licence or API risk. The queen publishes it from a
     clean worktree of the commit the compile slice names.
 
+20. **Redaction is strict.** A private title must never appear on any public
+    surface, so a bare `[[Private]]` renders as `(private link)`, an aliased
+    link keeps its alias only when the alias differs from the title, embeds are
+    removed, and frontmatter entries are removed. The permanent canary (every
+    private title or alias grepped over `out/` and `publish/` must have zero
+    hits) is the contract; an earlier "else the target text" wording was wrong.
+
+21. **Divergences from legacy output are numbered.** 1: private-link redaction.
+    2: `--version` prints `ontomark`. 3: the 690 classes legacy typed only as
+    `skos:Concept` gain `owl:Class` (valid EL either way; strict DL readers
+    rejected the old form), post-rc.1. 4: the two off-by-default compatibility
+    adapters (phantom parents; first-claimant IRI resolution). Each is listed
+    in `docs/api/WP-C.md` with its test.
+
 ## Facts established by the census (2026-10-11)
 
 - `vault` 20.5k lines and `vault-core` 6.3k lines, both AGPL-3.0-only at the
