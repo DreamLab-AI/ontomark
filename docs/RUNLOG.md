@@ -215,3 +215,10 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   the shared cargo home (env.sh redirects CARGO_HOME to the repo-local one,
   which holds no credentials). vowl-wasm step 5 unblocked; spec-estate told
   to swap the pin.
+- 20:55 queen: WP-A delta-audit fixes MERGED (`wp-a-delta-fixes` `d454740`).
+  Codex delta audit found 4 defects (2 HIGH: doubly-claimed predicate still
+  reasoned; Unicode case fold wrong for ß; 2 MEDIUM: lone CR line break;
+  emit_entry read-back under caller styles), all fixed test-first. Gate:
+  clean-worktree `just check` exit 0, 100 tests, 0 warnings; EXP-03 unchanged.
+  WP-A CLOSED: both Codex verdicts recorded, no pending gates. API note:
+  `PatchError::Unrepresentable` may now carry a key, not only float text.
