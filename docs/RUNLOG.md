@@ -181,3 +181,13 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   ontomark (`bd00ffa`) and must be in visionGraph too (routed to spec-estate).
   Remaining before rc.1: CLI wiring of migrate, JSON-LD/SHACL doctest fixes,
   redaction with count, fmt/lockfile tidy, Codex audit.
+- 20:15 spec-estate: Codex audit of visionGraph `ontomark/publish-cli` PASS WITH
+  FINDINGS; fixed at `ea812a287` (unpushed), re-audit running. Majors: contract
+  test checked command text only (commented checksum, wrong asset, removed
+  download all stayed green); now it extracts the fetch step shell block and
+  runs it against a fake `gh` with a fake binary; backslash-continued `vault`
+  calls now folded before the check. Evidence: 11/11 red on main, 10/11 green
+  on branch (release pin red by design), 11/11 Codex mutations caught.
+  Method note: Codex sandbox cannot start in this container (bwrap); audits
+  run unsandboxed on checksummed scratch copies, never on worktrees. Batch
+  audits of 29 prep branches running per repo.
