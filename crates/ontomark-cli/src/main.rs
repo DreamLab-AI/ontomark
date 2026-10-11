@@ -25,6 +25,8 @@ use ontomark_compile::input::page::{load_vault, Vault, VaultKind};
 use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::ir::model::Corpus;
 use ontomark_compile::profile::Profile;
+
+mod migrate_cmd;
 use ontomark_compile::{build, reason};
 
 /// Markdown ontology vaults to standard artefacts.
@@ -63,6 +65,12 @@ enum Command {
     /// Fix corpus defects in place.
     #[command(subcommand)]
     Repair(RepairCommand),
+    /// Plan, apply, roll back and inspect corpus migrations (reversible,
+    /// idempotent, page-level report).
+    Migrate {
+        #[command(subcommand)]
+        command: migrate_cmd::MigrateCommand,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -280,6 +288,7 @@ fn run() -> anyhow::Result<ExitCode> {
     let profile = resolve_profile(cli.profile.as_deref(), &root)?;
 
     match &cli.command {
+        Command::Migrate { command } => migrate_cmd::run(command, &root, &profile, cli.json),
         Command::Validate(args) => {
             let mut failed = false;
             let mut reports = serde_json::Map::new();

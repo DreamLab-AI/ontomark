@@ -37,11 +37,6 @@ fn repo() -> (tempfile::TempDir, std::path::PathBuf) {
         &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance/fixtures/estate-small"),
         &root,
     );
-    fs::copy(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../profiles/estate/profile.yaml"),
-        root.join("profile.yaml"),
-    )
-    .unwrap();
     let page = root.join("knowledge/pages/5G.md");
     let mut text = fs::read_to_string(&page).unwrap();
     text.push_str("\n- ## Overview\n\t- A point\n");
@@ -53,7 +48,13 @@ fn run(root: &Path, args: &[&str]) -> ExitCode {
     let mut argv = vec!["migrate"];
     argv.extend_from_slice(args);
     let cli = Cli::try_parse_from(argv).unwrap();
-    migrate_cmd::run(&cli.command, root, true).unwrap()
+    migrate_cmd::run(
+        &cli.command,
+        root,
+        &ontomark_profile_estate::profile(),
+        true,
+    )
+    .unwrap()
 }
 
 #[test]
@@ -127,7 +128,6 @@ fn a_stale_plan_exits_one_and_leaves_the_edited_page() {
 
 /// Needs the `Migrate` variant in `main.rs`.
 #[test]
-#[ignore = "enabled when main.rs wires migrate"]
 fn the_binary_runs_migrate_end_to_end() {
     let (_d, root) = repo();
     let exe = env!("CARGO_BIN_EXE_ontomark");

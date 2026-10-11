@@ -30,10 +30,6 @@ pub enum MigrateCommand {
         /// Vaults to consider: `knowledge`, `working` or `all`.
         #[arg(long, default_value = "all", value_parser = ["knowledge", "working", "all"])]
         vault: String,
-        /// Profile document for the compile (default: `<repo>/profile.yaml`,
-        /// else the generic profile).
-        #[arg(long)]
-        profile: Option<PathBuf>,
         /// Write the plan JSON here (needed to apply it).
         #[arg(long)]
         out: Option<PathBuf>,
@@ -68,27 +64,6 @@ fn kinds(value: &str) -> Vec<VaultKind> {
     }
 }
 
-fn load_profile(repo_root: &Path, explicit: Option<&Path>) -> anyhow::Result<Profile> {
-    let path = match explicit {
-        Some(p) => p.to_path_buf(),
-        None => repo_root.join("profile.yaml"),
-    };
-    if path.is_file() {
-        let text = std::fs::read_to_string(&path)
-            .with_context(|| format!("reading {}", path.display()))?;
-        return Profile::from_yaml(&text).with_context(|| format!("parsing {}", path.display()));
-    }
-    if explicit.is_some() {
-        bail!("profile {} does not exist", path.display());
-    }
-    eprintln!(
-        "ontomark: warning: no profile given and {} not found; using the generic profile, \
-         whose compile deltas may differ from the estate's (pass --profile)",
-        path.display()
-    );
-    Ok(Profile::generic())
-}
-
 fn emit(json: bool, value: &serde_json::Value, prose: impl FnOnce()) -> anyhow::Result<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(value)?);
@@ -98,14 +73,22 @@ fn emit(json: bool, value: &serde_json::Value, prose: impl FnOnce()) -> anyhow::
     Ok(())
 }
 
-/// Run one `migrate` subcommand against the repository at `repo_root`.
+/// Run one `migrate` subcommand against the repository at `repo_root`,
+/// compiling with `profile` (the global `--profile`) for the semantic deltas.
 ///
 /// Exit codes: `0` success; `1` the run left conflicts; `2` the plan is
 /// refused.
 ///
 /// # Errors
 /// An unknown migration, an unreadable plan or vault, or an I/O failure.
-pub fn run(cmd: &MigrateCommand, repo_root: &Path, json: bool) -> anyhow::Result<ExitCode> {
+// One arm per subcommand, mirroring the dispatch table in `main.rs`.
+#[allow(clippy::too_many_lines)]
+pub fn run(
+    cmd: &MigrateCommand,
+    repo_root: &Path,
+    profile: &Profile,
+    json: bool,
+) -> anyhow::Result<ExitCode> {
     match cmd {
         MigrateCommand::List => {
             let all = migrate::registry();
@@ -136,13 +119,11 @@ pub fn run(cmd: &MigrateCommand, repo_root: &Path, json: bool) -> anyhow::Result
         MigrateCommand::Plan {
             migration,
             vault,
-            profile,
             out,
         } => {
             let m = migrate::lookup(migration)
                 .with_context(|| format!("no migration `{migration}` (see `migrate list`)"))?;
-            let profile = load_profile(repo_root, profile.as_deref())?;
-            let plan = migrate::plan(repo_root, &kinds(vault), m.as_ref(), &profile)?;
+            let plan = migrate::plan(repo_root, &kinds(vault), m.as_ref(), profile)?;
             if let Some(path) = out {
                 std::fs::write(path, plan.to_json()?)
                     .with_context(|| format!("writing {}", path.display()))?;
