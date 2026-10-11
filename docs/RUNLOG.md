@@ -222,3 +222,8 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   clean-worktree `just check` exit 0, 100 tests, 0 warnings; EXP-03 unchanged.
   WP-A CLOSED: both Codex verdicts recorded, no pending gates. API note:
   `PatchError::Unrepresentable` may now carry a key, not only float text.
+- 21:20 queen: wrap-up at user request. spec-compile estimates rc.1 at about
+  90 minutes; checkpoint pushed at `d5c1188` (unverified), last verified
+  `291e0de`. rc.1 is handed off as pending with its ordered steps in
+  `docs/HANDOFF.md`. The first HANDOFF.md commit (`44d600e`) was a truncated
+  file; rewritten in full at this commit.
