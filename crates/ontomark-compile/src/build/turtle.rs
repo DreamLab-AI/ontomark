@@ -1048,7 +1048,6 @@ mod tests {
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:     { owl: "rdfs:subClassOf" }
   requires: { owl: "vc:requires", restriction: true }
@@ -1065,7 +1064,6 @@ relations:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:     { owl: "rdfs:subClassOf" }
   requires: { owl: "vc:requires" }
@@ -1299,7 +1297,6 @@ relations:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:          { owl: "rdfs:subClassOf" }
   requires:      { owl: "vc:requires", restriction: true }
@@ -1373,7 +1370,6 @@ relations:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:       { owl: "rdfs:subClassOf" }
   has-part:   { owl: "vc:hasPart", restriction: true }
@@ -1706,7 +1702,6 @@ relations:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:     { owl: "rdfs:subClassOf" }
   requires: { owl: "vc:requires", domain: a, range: b }
@@ -1755,7 +1750,6 @@ relations:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 relations:
   is-a:    { owl: "rdfs:subClassOf" }
   governs: { owl: "vc:governs", domain: a, range: b }

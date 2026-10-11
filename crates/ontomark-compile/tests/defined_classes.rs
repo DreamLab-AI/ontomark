@@ -30,7 +30,6 @@ fn profile() -> Profile {
 const VOCABULARY: &str = r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource, status] }
 relations:

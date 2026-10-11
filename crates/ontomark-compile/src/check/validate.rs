@@ -816,7 +816,6 @@ mod tests {
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource, status] }
 working_types: [Note]
@@ -1068,7 +1067,6 @@ scalars:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource, status] }
 relations:
@@ -1174,7 +1172,6 @@ relations:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Class: { owl: "owl:Class", required: [resource, status] }
   Individual: { owl: "owl:NamedIndividual", required: [resource, status] }
@@ -1350,7 +1347,6 @@ relations:
             r#"
 version: 1
 namespace: "urn:ngm:class:"
-prefixes: { vc: 'https://narrativegoldmine.com/ns/v1#' }
 types:
   Individual: { owl: "owl:NamedIndividual", required: [resource, status] }
   Class: { owl: "owl:Class", required: [resource, status] }
