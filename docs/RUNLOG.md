@@ -106,3 +106,11 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   are writing failing consumer tests and staged doc edits on
   `ontomark/<responsibility>` branches in worktrees under ~/workspace/wt-ontomark.
   Diagram topics are restamped only after code lands (no citing unlanded code).
+- 19:05 queen: EXP-04 decision REDACT. Measured leak on visionGraph `b5e36abd1`:
+  50 frontmatter relation entries in 46 public pages and 77 body wikilinks in
+  50 public pages name non-public pages, only in the Quartz `publish/` staging
+  (machine artefacts already redact). ontomark staging drops those frontmatter
+  entries and renders such wikilinks as unlinked display text; default on under
+  the estate profile, `--no-redact-private-links` for parity runs. Divergence 1,
+  about 96 pages on narrativegoldmine.com/notes. EXP-04 canary extended to the
+  staging tree.
