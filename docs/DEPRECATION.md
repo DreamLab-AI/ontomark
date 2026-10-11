@@ -5,7 +5,7 @@ status: phase-1-census
 date: 2026-10-11
 owner: spec-estate (WP-D)
 census_at: 2026-10-11T17:55:26Z
-census_baseline: VisionClaw ontomark-census-baseline = 1044b0722e6166c8936caec7aacf0ed4c9f7647b
+census_baseline: VisionClaw ontomark-census-baseline = 1044b0722e6166c8936caec7aacf0ed4c9f7647b; ontomark-census-baseline-1 = de33ca538289e3b1384a5a1e23ed0a8178f0b54d
 ---
 
 # Estate deprecation inventory and removal plan
@@ -19,13 +19,13 @@ been removed yet, and no ontomark crate has reached parity: every crate under `c
 
 | Repo | Path | HEAD | Dirty | Notes |
 |---|---|---|---|---|
-| VisionClaw | `project/` | `30169a41694f23d4bdc4dca42b3a475974eb9fee` | 2 (submodule `agentbox`, untracked `GH`) | `git diff 1044b0722 HEAD -- crates/vault crates/vault-core` is empty, so citations below hold at the census baseline |
+| VisionClaw | `project/` | `30169a41694f23d4bdc4dca42b3a475974eb9fee` | 2 (submodule `agentbox`, untracked `GH`) | `git diff 1044b0722 HEAD -- crates/vault crates/vault-core` is empty, so citations below hold at the census baseline. `ontomark-census-baseline-1` (`de33ca538`) adds only 9 lines at the end of `graph_tiers.rs` (the category set guard), so all citations also hold there |
 | visionGraph | `visionGraph/` | `b5e36abd172052cfb0d1dd8a904983f604e1b641` | 15 (vault pages and journals only) | No tooling file dirty |
 | vowl-wasm | `vowl-wasm/` | `c662aaa5f98cee3b1468ccac1a67400f38c34ac7` | 0 | crate and npm 0.1.2 |
 | Loom | `loom/` | `2f8866622bc230c8e3985cdb7f51ca4bbd67f259` | 2 (untracked local settings) | |
 | Agentbox | `agentbox/` | `4f25bd01a9c209c9f5295d26328b7ec7d0f992bb` | 0 | |
 | VisionFlow | `VisionFlow/` | `33ece3856b6f8f37d3379b512bb19bb9cb9d80a0` | 2 (untracked review ledger) | estate diagram corpus |
-| knowledgeGraph | `knowledgeGraph/` | `4ed9ac159daf402b4fb252ce559dbeb894a8d91e` | 0 | **not in the WP-D brief**; fourth NGG1 copy and a vowl-wasm 0.1.1 tarball pin (decision D3) |
+| knowledgeGraph | `knowledgeGraph/` | `4ed9ac159daf402b4fb252ce559dbeb894a8d91e` | 0 | **in scope (queen, 2026-10-11)**: the published corpus and deploy target. Its explorer copy (fourth NGG1 codec, `FORMAT-NGG1.md`, vowl-wasm 0.1.1 tarball pin) is retired by fixing the source in visionGraph (D3) |
 | WasmVOWL (standalone) | `WasmVOWL/` | last commit 2026-09-07 | — | **not in the WP-D brief**; vowl-wasm 0.1.1 tarball pin at `modern/package.json:19`, no NGG1 code (decision D3) |
 
 An estate-wide sweep of `/home/devuser/workspace/*` (excluding `node_modules`, `target`, `archive`, `dist`) for vowl-wasm manifest
@@ -40,26 +40,17 @@ Agentbox and VisionFlow; VisionClaw docs), then a specialist pass. LOC is `wc -l
 `path:line` anchors against the files: all 48 resolve to the named symbol (command and output in §11). Paths are relative to
 `/home/devuser/workspace`.
 
-### Licence boundary (precondition for every extraction)
+### Licence boundary (resolved)
 
-`project/crates/vault-core/Cargo.toml:7` and `project/crates/vault/Cargo.toml:7` declare `AGPL-3.0-only`, as does every
-`visionclaw-*` crate except `visionclaw-tri-layout` and `visionclaw-xr-presence` (MIT). Lineage, as far as git shows it:
-- `git shortlog -sne HEAD -- crates/vault crates/vault-core` gives 23 commits from "Claude Code" and 1 from "Dream Machine".
-- `git log --follow` on `frontmatter.rs`, `page.rs`, `whelk.rs`, `ngg1.rs` and `turtle.rs` adds no other author. Those files first appear on
-  2026-09-22 in `f9720fbcb` and `0c195f760`.
-- Five build modules say they are ports of the Python pipeline. `gate.rs:1`, `build/turtle.rs:1`, `build/webvowl.rs:1` and
-  `build/graph_tiers.rs:1` each name their source (`pipeline/gate.py`, `jsonld_to_turtle.py`, `jsonld_to_webvowl.py`, `emit_graph_tiers.py`).
-- That pipeline is `AGPL-3.0-or-later` (`knowledgeGraph/LICENSING.md:18`). Its history in `jjohare/logseq` shows 23 commits from "Claude Code"
-  and 3 from the owner.
-- No solid-pod or sidestr derivation marker appears in either crate outside `nostr.rs`.
+`project/crates/vault-core/Cargo.toml:7` and `project/crates/vault/Cargo.toml:7` declare `AGPL-3.0-only`. Several build modules are ports of
+the knowledgeGraph Python pipeline (`gate.rs:1`, `build/turtle.rs:1`, `build/webvowl.rs:1`, `build/graph_tiers.rs:1`), which is
+`AGPL-3.0-or-later` (`knowledgeGraph/LICENSING.md:18`). Every author in both histories is the owner or the owner's agents
+(`git shortlog -sne`; `git log --follow` on the key files), so these licences were chosen by the owner, not inherited from anyone else.
 
-The evidence therefore points to the owner as the sole rights holder, able to relicense the extracted code as MIT OR Apache-2.0. Git cannot
-prove that, so it is **for the owner to confirm**. Non-negotiable 5 bars only solid-pod and sidestr descendants: `vault/src/nostr.rs`
-(659 LOC) and governance posting.
-
-**Decision D1:** the owner confirms provenance and records a relicensing grant for code extracted from `vault-core`, `vault` and the
-`pipeline/*.py` lineage. The grant goes in ontomark `NOTICE` plus a line in ADR-2014, and must exist before any ontomark crate publishes.
-Until then, extracted code must not be pushed to a public remote.
+**Rights-holder decision, confirmed by the owner on 2026-10-11 and relayed by the queen:** `vault` and `vault-core`, together with their
+`pipeline/*.py` lineage, are relicensed MIT OR Apache-2.0 for extraction into ontomark. The only AGPL carve-out is code descending from
+solid-pod or sidestr, which in practice means `vault/src/nostr.rs` (659 LOC) and governance posting. That code stays in VisionClaw and calls
+the ontomark crates. Phase 2 records the grant in ontomark `NOTICE` and in ADR-2014.
 
 ## 2. Responsibility map and removal gates
 
@@ -329,9 +320,9 @@ are the compatibility contract (ADR-2136 verification).
 
 | # | Decision | Recommendation | Blocks |
 |---|---|---|---|
-| D1 | Relicensing grant for code extracted from AGPL `vault-core`/`vault` into MIT OR Apache-2.0 crates | Owner records the grant in ontomark `NOTICE` and ADR-2014 now. The owner is the sole author per `git log`. `nostr.rs` and governance posting stay AGPL | any public push or crates.io publish |
-| D2 | *Withdrawn.* The first census pass counted 48 rows in `graph_tiers.rs:87` because rustfmt wraps five long tuples across lines. A recount gives 53, the same set as `consistency.rs:62` but in a different order. Only `CATEGORY_ORDER`'s order is semantic (NGG1 category id). `CATEGORY_SLUGS` is used for membership only (collected into a `BTreeSet` at `turtle.rs:243-247`), and set equality is already guarded by the test at `graph_tiers.rs:1303-1304` | The profile holds **one** ordered registry; the id order is `CATEGORY_ORDER`'s. Golden `python/graph/overview.json` encodes the legacy 34, and `golden_parity.rs:508-509,545-556` truncates to 34 and asserts 53, so space-category tiers are covered only by those assertions and the full-corpus tier diff | — |
-| D3 | Two repos outside the brief carry duplicates. **knowledgeGraph** has `explorer/modern/src/lib/ngg1.ts`, `explorer/FORMAT-NGG1.md` and `scope.ts`, with vowl-wasm pinned to the `v0.1.1` GitHub tarball at `explorer/modern/package.json:20`: a fourth NGG1 implementation. **WasmVOWL** (standalone, last commit 2026-09-07) pins the same `v0.1.1` tarball at `modern/package.json:19` | Bring both into WP-D, or archive both explorers, since visionGraph's copy is the one that ships (VisionFlow VG-06 documents the drift). Either way their pins leave 0.1.1 or the repos are archived | EXP-10 completeness |
+| D1 | Relicensing of extracted `vault`, `vault-core` and `pipeline/*.py` code | **Resolved**: owner decision, MIT OR Apache-2.0; `nostr.rs` and governance posting stay AGPL (§1) | NOTICE and ADR-2014 entry in Phase 2 |
+| D2 | Two category tables, one truth (`graph_tiers.rs:87` `CATEGORY_ORDER`, `consistency.rs:62` `CATEGORY_SLUGS`): both hold the same 53 slugs. Only `CATEGORY_ORDER`'s order is semantic (position = NGG1 category id); `CATEGORY_SLUGS` is used for membership (a `BTreeSet` at `turtle.rs:243-247`). Set equality is now asserted at `graph_tiers.rs:1303-1304` (`de33ca538`, tag `ontomark-census-baseline-1`). This is the drift risk the single-owner rule removes: a census pass and the queen both miscounted `CATEGORY_ORDER` as 48 with a single-line regex, because rustfmt wraps five tuples | **Resolved by design**: `profiles/estate` holds **one** ordered table, and membership is derived from it. Golden `python/graph/overview.json` encodes the legacy 34 and `golden_parity.rs:508-509,545-556` truncates to 34 while asserting 53, so the space categories are covered by those assertions and the full-corpus tier diff | step 3 |
+| D3 | Repos outside the original brief. **knowledgeGraph** is in scope (queen): it is the published corpus and deploy target, and its explorer is a copy of visionGraph `publishing-tools/WasmVOWL/modern` (fourth NGG1 codec at `explorer/modern/src/lib/ngg1.ts`, `explorer/FORMAT-NGG1.md`, `scope.ts`, vowl-wasm `v0.1.1` tarball at `explorer/modern/package.json:20`). **WasmVOWL** (standalone, last commit 2026-09-07) pins the same tarball at `modern/package.json:19` | knowledgeGraph: fix the source in visionGraph, then redeploy so the copy is replaced and `FORMAT-NGG1.md` points at the ontomark spec. WasmVOWL: **still open**; I recommend archiving it | step 5 |
 | D4 | The `vault` binary is AGPL only because of `nostr.rs`. `ontomark-cli` is a drop-in for build, validate, gate, conflicts and repair. The governance verbs (propose, apply, panel publish) post to the forum | Keep a thin AGPL `vault` adapter in VisionClaw that depends on ontomark crates and owns only the governance verbs. agentbox bakes both `ontomark` and that adapter; `vault <non-governance verb>` execs `ontomark`. find, retrieve, tree, edit and create move to `ontomark` | AB-P4, VC-32, agentbox callers |
 | D5 | VisionClaw server reasoners VC-47 and VC-49 feed physics and the inferred-edge view | Delete VC-47, and VC-48 with VC-41 (test-only). Rewrite VC-49 as a projection over ontomark-reason's inferred set, keeping physics constraints as an explicit projection (ADR-2137 §3) | WP-B parity |
 | D6 | Explorer TS: NGG1 codec (VG-01) and display markdown (VG-08) | Decode and ego-encode through vowl-wasm (re-exporting ontomark). TS keeps typed views over generated constants. VG-08 stays as display-only until ontomark-wasm ships a body view | spec-plugin and spec-compile coordination |
@@ -350,7 +341,7 @@ touched repo, never on main, and is reported to team-lead with the diff summary 
 | 2 | `ontomark/iri` | VC-04, 54, 55; LM-01, 02, 03; AB-02; VG-06, VG-24 identity rewrite removed | EXP-02 on golden and full public build (IRI multiset diff = ∅); Loom `model_tests`, scaffold `tests.rs` |
 | 3 | `ontomark/taxonomy` | VC-05, 06 (tables), 18 (tables), 56; VW-03; VG-03, 04, 05; colour tables repinned to generated slugs | EXP-05; golden tiers byte-identical (one ordered 53-slug registry; position = category id); `check-space-domains.mjs`; `domain_palette_parity.rs`; `spaceDomains.test.ts` |
 | 4 | `ontomark/reason` | VC-06 (checks), 15, 16, 46, 47, 48, 49 (D5); VG-26, 27 | EXP-01; `el_profile`, `defined_classes`, `probe_consistency`, `whelk_scaling`; `tests/inference/*`; `semantic_physics_integration_test`, `pipeline_test` |
-| 5 | `ontomark/ngg1` | VC-17; VW-01 (re-export, API frozen); VG-01, 02 (D6); knowledgeGraph per D3 | golden `graph/*.bin` byte-identical; vowl-wasm 214 tests plus wasm-pack bundle check; TS reads the shared fixture; explorer `vitest run` |
+| 5 | `ontomark/ngg1` | VC-17; VW-01 (re-export, API frozen); VG-01, 02 (D6); knowledgeGraph redeployed from the fixed visionGraph source (D3) | golden `graph/*.bin` byte-identical; vowl-wasm 214 tests plus wasm-pack bundle check; TS reads the shared fixture; explorer `vitest run` |
 | 6 | `ontomark/rdf` | VC-19, 20, 22, 28, 50, 52, 53; VG-09; LM-08 | EXP-02, 04, 09; `golden_parity.rs` 15; Loom `exp013_bundle`, `served_identity`, graph integration |
 | 7 | `ontomark/validate` | VC-09, 10, 12, 25, 26, 27, 51; VG-21, 22, 23 (D7); AB-05 | EXP-05; `publish_gate.rs`; `vault validate/conflicts/gate --json` identical on the full corpus at one visionGraph sha |
 | 8 | `ontomark/attribution` | VC-21, VC-18 (constants), VC-44 (generator); VG-28 | per-class `prov:wasAttributedTo` identical (EXP-02/04) |
@@ -399,7 +390,7 @@ These topics describe the shape being replaced and must be re-read, redrawn and 
 |---|---|---|
 | visionclaw | VC-11, VC-16 (`vault-core/src/domains.rs` as domain source); VC-20 (Whelk adapter, `visionclaw_domain::vault::parse` `:58`); VC-21 (domain vault parser); VC-23 (`urn:ngm:class` mint in `visionclaw-domain/src/uri.rs`); VC-24, VC-05, VC-07 (Whelk gate and adapter); VC-25 (vault-core Vocabulary); VC-01, VC-26 (vault CLI, ontology-publish) | ontomark crates as parse, model, reason and IRI owners; adapters only |
 | visiongraph | VG-01 (`vault.toml` read by crates/vault), VG-03 (publish.yml builds vault; vowl-wasm pinned), VG-04 (pull model), VG-06 (explorer duplication; NGG1 domain id) | released `ontomark` tag; single NGG1 owner |
-| knowledgegraph | KG-01, KG-04, KG-05, KG-06, KG-07 (NGG1 reader, vowl-wasm 0.1.1, vault build) | per D3: updated or marked archived |
+| knowledgegraph | KG-01, KG-04, KG-05, KG-06, KG-07 (NGG1 reader, vowl-wasm 0.1.1, vault build) | deploy target of the visionGraph explorer; NGG1 owned by ontomark (D3) |
 | vowl-wasm | VW-01 to VW-05 (`src/ngg1.rs` reader, OWL parse, bundle features) | NGG1 re-exported from ontomark; parser per D8 |
 | agentbox | AB-01 (vault pin, **anchor drift: cites `flake.nix:26-29`, actual `:41-42`**), AB-02 (5d(ii) gate), AB-03, AB-04, AB-14, AB-17, AB-22, AB-24, AB-25, AB-28 | ontomark package and the governance adapter |
 | estate | ES-01, ES-05, ES-06, ES-09 (`cargo build -p vault`), ES-11 (vault sole producer; two VOWL bundle pins), ES-90 | ontomark as producer; one vowl-wasm pin |
@@ -421,7 +412,7 @@ Loom `model.rs:32`, `stage_corpus.rs:101`, `hnsw.rs:446`, `loom-graph-oxigraph/s
 `pack-pod-resources.py:31`.
 
 Category tables, executed: a Python regex over both declarations (multi-line tuples included) gives 53 and 53, equal as sets, with positions
-6-33 ordered differently. A first single-line `awk` count gave 48 because it missed wrapped tuples; D2 records the withdrawal. The fixture page
+6-33 ordered differently. A first single-line `awk` count gave 48 because it missed wrapped tuples (see D2). Rule for every later count: parse the declaration, never count lines. The fixture page
 `3D Scene Exchange Protocol (SXP).md` is the only golden page naming one of the five long-slug categories (`sc-standards-and-interop`).
 
 Limits: responsibility labels for some `crates/vault/src/build/*` modules came from symbol names, not full reads. Test counts are attribute
