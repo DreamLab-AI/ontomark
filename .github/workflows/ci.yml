@@ -36,12 +36,12 @@ jobs:
           echo '195ddc94f9bc89f45abdabb0b9eea86023d727ba90eac8b35b80f2544fc30572  binaryen-version_132-x86_64-linux.tar.gz' | sha256sum --check --strict
           tar -xf binaryen-version_132-x86_64-linux.tar.gz
           echo "$RUNNER_TEMP/binaryen/binaryen-version_132/bin" >> "$GITHUB_PATH"
-      - run: npm ci --include=dev
-        working-directory: plugin
-      - run: npm run build && npm test && npm run test:wasm && npm run check:bundle
-        working-directory: plugin
-      - run: npm run test:offline
-        working-directory: plugin
+      - uses: actions/checkout@v4
+        with:
+          repository: DreamLab-AI/ontomark-obsidian
+          ref: eabf48758919a26ef7ada99d1dd5ade91d9600e8
+          path: .plugin-consumer
+      - run: bash scripts/test-plugin-consumer.sh .plugin-consumer
   secrets:
     runs-on: ubuntu-latest
     steps:

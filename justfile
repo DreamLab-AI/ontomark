@@ -30,8 +30,8 @@ exp03 corpus="../visionGraph/knowledge/pages":
     ONTOMARK_CORPUS={{absolute_path(corpus)}} cargo test --release -p ontomark-parse --test exp03_corpus -- --nocapture
 
 # Plugin build and offline worker acceptance.
-plugin:
-    cd plugin && npm ci --include=dev && npm run build && npm test && npm run test:wasm && npm run check:bundle && npm run test:offline
+plugin consumer="../ontomark-obsidian":
+    bash scripts/test-plugin-consumer.sh {{absolute_path(consumer)}}
 
 # EXP-01/EXP-06 on wasm32 under Node; the runner (wasm-bindgen-test-runner
 # 0.2.127) must match the locked wasm-bindgen.

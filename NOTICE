@@ -10,3 +10,15 @@ under MIT OR Apache-2.0. The grant does not cover, and this repository must not
 contain, code derived from the solid-pod or sidestr lineages or from
 `vault/src/nostr.rs` and its governance posting, which remain AGPL-3.0-only in
 VisionClaw.
+
+## Upstream attribution
+
+The portable reasoner derives from Whelk (Scala), by Jim Balhoff and contributors
+(BSD-3-Clause), and whelk-rs (Rust), by Björn (b-gehrke) and contributors (MIT),
+through the jjohare fork. Both inherited notices are preserved in
+crates/whelk-el/LICENSE-WHELK-BSD and crates/whelk-el/LICENSE-WHELK.
+The project relicensing grant above does not replace these upstream terms.
+
+The released engine also includes third-party libraries, including MPL-licensed
+im, bitmaps and sized-chunks. See THIRD-PARTY-NOTICES.md for their licence texts
+and source availability, and docs/UPSTREAMS.md for the audited dependency scope.

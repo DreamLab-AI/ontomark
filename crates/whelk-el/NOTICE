@@ -1,5 +1,13 @@
 whelk-el derives from:
-  Whelk (Scala), Jim Balhoff, https://github.com/balhoff/whelk, MIT
-  whelk-rs (Rust port), Jim Balhoff and contributors, https://github.com/jjohare/whelk-rs, MIT
-The inherited MIT notice is in LICENSE-WHELK. Changes in this crate are under the
-workspace licence (MIT OR Apache-2.0).
+  Whelk (Scala), Jim Balhoff and contributors,
+    https://github.com/INCATools/whelk, BSD-3-Clause
+    (the former https://github.com/balhoff/whelk URL redirects here).
+  whelk-rs (Rust port), Björn (b-gehrke) and contributors,
+    https://github.com/b-gehrke/whelk-rs, MIT,
+    through https://github.com/jjohare/whelk-rs at revision
+    79a1ee21789add5a66faa0ec1a830c32dba9b539.
+
+The Scala BSD-3-Clause notice is preserved in LICENSE-WHELK-BSD.
+The inherited Rust MIT notice is preserved in LICENSE-WHELK.
+Changes in this crate are under MIT OR Apache-2.0; these project terms do not
+replace the upstream notices.
