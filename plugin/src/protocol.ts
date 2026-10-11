@@ -137,6 +137,10 @@ export interface Classification {
   equivalences: string[][];
   unsatisfiable: string[];
   unsupported: { axiom: unknown; reason: string }[];
+  /** Existential policy used: "all" (complete) or "relevant" (budget fallback). */
+  policy: "all" | "relevant";
+  /** No axiom refused and the complete policy finished. */
+  complete: boolean;
 }
 
 export interface IndexResult {

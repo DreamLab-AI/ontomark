@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { OntomarkClient, OntomarkError } from "../src/client";
 import type { WorkerToHost } from "../src/protocol";
-import { InProcWorker, chainVault, readVault, tick } from "./helpers";
+import { InProcWorker, chainVault, readVault, tick, wasmGlue } from "./helpers";
 
 function setup(opts: { budget?: number; timeouts?: Record<string, number> } = {}) {
   const workers: InProcWorker[] = [];
@@ -48,7 +48,7 @@ describe("OntomarkClient generation guard (EXP-06)", () => {
   });
 
   it("an edit during classification discards the old run and the new generation classifies cleanly", async () => {
-    const { client, progress } = setup({ budget: 1 });
+    const { client, progress } = setup({ budget: 500 });
     await client.start(chainVault(400), "generic");
     const first = client.classify();
     while (progress.length < 3) await tick(1); // the run is demonstrably in flight
@@ -62,7 +62,7 @@ describe("OntomarkClient generation guard (EXP-06)", () => {
   });
 
   it("a delete during classification: the deleted page's entities never reappear", async () => {
-    const { client } = setup({ budget: 1 });
+    const { client } = setup({ budget: 500 });
     await client.start(chainVault(300), "generic");
     const first = client.classify();
     await tick(3);
@@ -76,7 +76,7 @@ describe("OntomarkClient generation guard (EXP-06)", () => {
   });
 
   it("kill and respawn during classify, then a late old-epoch result is rejected", async () => {
-    const { client, workers, restarts } = setup({ budget: 1 });
+    const { client, workers, restarts } = setup({ budget: 500 });
     await client.start(chainVault(300), "generic");
     const oldEpoch = client.epoch;
     const first = code(client.classify());
@@ -178,7 +178,7 @@ describe("OntomarkClient generation guard (EXP-06)", () => {
   });
 
   it("two classify requests for the same generation share one run (no self-cancellation)", async () => {
-    const { client, workers } = setup({ budget: 1 });
+    const { client, workers } = setup({ budget: 500 });
     await client.start(chainVault(200), "generic");
     const a = client.classify();
     const b = client.classify();
@@ -190,8 +190,62 @@ describe("OntomarkClient generation guard (EXP-06)", () => {
     client.dispose();
   });
 
+  it("a mutation issued while a restart is in progress lands after the replay (no empty-engine window)", async () => {
+    const { client } = setup();
+    await client.start(readVault(), "generic");
+    // Nothing is awaited until all three are posted, as a burst of vault
+    // events would do: the read must not be answered by an engine that has
+    // seen the mutation but not yet the replay.
+    const restarting = client.restart("race probe");
+    const mutated = client.upsert("New page.md", "---\ntype: class\n---\n");
+    const indexed = client.index();
+    const [index] = await Promise.all([indexed, mutated, restarting]);
+    expect(index.documents).toBe(readVault().length + 1);
+    expect(index.entities).toHaveLength(11);
+    client.dispose();
+  });
+
+  it("restarts are capped: an engine that traps every time ends in engine_failed, not a respawn loop", async () => {
+    const spawned: InProcWorker[] = [];
+    let clock = 0;
+    const failures: string[] = [];
+    const client = new OntomarkClient({
+      spawn: () => {
+        const w = new InProcWorker(() => {
+          const inner = new wasmGlue.WasmEngine();
+          return {
+            handle: (r: string) => {
+              if (r.includes('"kind":"index"')) throw new Error("RuntimeError: unreachable");
+              return inner.handle(r);
+            },
+          };
+        });
+        spawned.push(w);
+        return w;
+      },
+      wasmBytes: () => new ArrayBuffer(8),
+      now: () => clock,
+      maxRestarts: 3,
+      onFailed: (r) => failures.push(r),
+    });
+    await client.start(readVault(), "generic");
+    const codes: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      codes.push(await code(client.index()));
+      await tick(10);
+      clock += 1000;
+    }
+    expect(codes.slice(0, 4)).toEqual(["worker_fatal", "worker_fatal", "worker_fatal", "worker_fatal"]);
+    expect(codes.slice(4)).toEqual(["engine_failed", "engine_failed"]);
+    expect(client.failed).toBe(true);
+    expect(failures).toHaveLength(1);
+    expect(spawned.length).toBe(4); // the first worker plus three restarts
+    expect(spawned.every((w) => w.terminated || w === spawned[3])).toBe(true);
+    client.dispose();
+  });
+
   it("dispose terminates the worker and rejects pending work; later calls reject", async () => {
-    const { client, workers } = setup({ budget: 1 });
+    const { client, workers } = setup({ budget: 500 });
     await client.start(chainVault(200), "generic");
     const running = client.classify();
     client.dispose();

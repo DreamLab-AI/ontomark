@@ -21,7 +21,9 @@
 
 use std::collections::BTreeMap;
 
-use oxrdf::{Dataset, GraphName, NamedNode, Quad, Term, Triple};
+use oxrdf::Term;
+#[cfg(test)]
+use oxrdf::{Dataset, GraphName, NamedNode, Quad, Triple};
 use serde::{Deserialize, Serialize};
 use spareval::{QueryEvaluator, QueryResults};
 use spargebra::algebra::{
@@ -303,19 +305,130 @@ fn check_expr(e: &Expression) -> Result<(), QueryError> {
     }
 }
 
-/// Build the query dataset: `selection` as the default graph, plus both named graphs.
+/// `true` when the query names a graph (`GRAPH ?g { … }` anywhere, including
+/// inside `EXISTS`), so the named graphs must be materialised.
 #[must_use]
-pub fn dataset(asserted: &[Triple], inferred: &[Triple], selection: DatasetSelection) -> Dataset {
+pub fn uses_graph(query: &Query) -> bool {
+    let pattern = match query {
+        Query::Select { pattern, .. }
+        | Query::Ask { pattern, .. }
+        | Query::Construct { pattern, .. } => pattern,
+        Query::Describe { pattern, .. } => pattern,
+    };
+    let mut found = false;
+    pattern_uses_graph(pattern, &mut found);
+    found
+}
+
+fn pattern_uses_graph(p: &GraphPattern, found: &mut bool) {
+    if *found {
+        return;
+    }
+    match p {
+        GraphPattern::Graph { .. } => *found = true,
+        GraphPattern::Bgp { .. } | GraphPattern::Path { .. } | GraphPattern::Values { .. } => {}
+        GraphPattern::Join { left, right }
+        | GraphPattern::Union { left, right }
+        | GraphPattern::Minus { left, right } => {
+            pattern_uses_graph(left, found);
+            pattern_uses_graph(right, found);
+        }
+        GraphPattern::LeftJoin {
+            left,
+            right,
+            expression,
+        } => {
+            pattern_uses_graph(left, found);
+            pattern_uses_graph(right, found);
+            if let Some(e) = expression {
+                expr_uses_graph(e, found);
+            }
+        }
+        GraphPattern::Filter { expr, inner } => {
+            expr_uses_graph(expr, found);
+            pattern_uses_graph(inner, found);
+        }
+        GraphPattern::Extend {
+            inner, expression, ..
+        } => {
+            expr_uses_graph(expression, found);
+            pattern_uses_graph(inner, found);
+        }
+        GraphPattern::OrderBy { inner, .. }
+        | GraphPattern::Group { inner, .. }
+        | GraphPattern::Project { inner, .. }
+        | GraphPattern::Distinct { inner }
+        | GraphPattern::Reduced { inner }
+        | GraphPattern::Slice { inner, .. }
+        | GraphPattern::Service { inner, .. } => pattern_uses_graph(inner, found),
+        // Any other (feature-gated) form: assume it may name graphs.
+        #[allow(unreachable_patterns)]
+        _ => *found = true,
+    }
+}
+
+fn expr_uses_graph(e: &Expression, found: &mut bool) {
+    if *found {
+        return;
+    }
+    match e {
+        Expression::Exists(p) => pattern_uses_graph(p, found),
+        Expression::Or(a, b)
+        | Expression::And(a, b)
+        | Expression::Equal(a, b)
+        | Expression::SameTerm(a, b)
+        | Expression::Greater(a, b)
+        | Expression::GreaterOrEqual(a, b)
+        | Expression::Less(a, b)
+        | Expression::LessOrEqual(a, b)
+        | Expression::Add(a, b)
+        | Expression::Subtract(a, b)
+        | Expression::Multiply(a, b)
+        | Expression::Divide(a, b) => {
+            expr_uses_graph(a, found);
+            expr_uses_graph(b, found);
+        }
+        Expression::UnaryPlus(a) | Expression::UnaryMinus(a) | Expression::Not(a) => {
+            expr_uses_graph(a, found)
+        }
+        Expression::If(a, b, c) => {
+            expr_uses_graph(a, found);
+            expr_uses_graph(b, found);
+            expr_uses_graph(c, found);
+        }
+        Expression::In(a, list) => {
+            expr_uses_graph(a, found);
+            list.iter().for_each(|x| expr_uses_graph(x, found));
+        }
+        Expression::Coalesce(list) | Expression::FunctionCall(_, list) => {
+            list.iter().for_each(|x| expr_uses_graph(x, found));
+        }
+        _ => {}
+    }
+}
+
+/// Reference dataset built with [`oxrdf::Dataset`], used only by the
+/// differential tests that check [`crate::store::Store`] against it.
+#[cfg(test)]
+#[must_use]
+pub fn dataset(
+    asserted: &[Triple],
+    inferred: &[Triple],
+    selection: DatasetSelection,
+    named_graphs: bool,
+) -> Dataset {
     let mut ds = Dataset::new();
     let named = |iri: &str| GraphName::NamedNode(NamedNode::new_unchecked(iri));
-    for t in asserted {
+    for t in asserted.iter().filter(|_| named_graphs) {
         ds.insert(&Quad::new(
             t.subject.clone(),
             t.predicate.clone(),
             t.object.clone(),
             named(ASSERTED_GRAPH),
         ));
-        if selection != DatasetSelection::Inferred {
+    }
+    if selection != DatasetSelection::Inferred {
+        for t in asserted {
             ds.insert(&Quad::new(
                 t.subject.clone(),
                 t.predicate.clone(),
@@ -324,14 +437,16 @@ pub fn dataset(asserted: &[Triple], inferred: &[Triple], selection: DatasetSelec
             ));
         }
     }
-    for t in inferred {
+    for t in inferred.iter().filter(|_| named_graphs) {
         ds.insert(&Quad::new(
             t.subject.clone(),
             t.predicate.clone(),
             t.object.clone(),
             named(INFERRED_GRAPH),
         ));
-        if selection != DatasetSelection::Asserted {
+    }
+    if selection != DatasetSelection::Asserted {
+        for t in inferred {
             ds.insert(&Quad::new(
                 t.subject.clone(),
                 t.predicate.clone(),
@@ -347,7 +462,11 @@ pub fn dataset(asserted: &[Triple], inferred: &[Triple], selection: DatasetSelec
 ///
 /// # Errors
 /// [`QueryError::Evaluation`] when `spareval` fails.
-pub fn evaluate(query: &Query, ds: &Dataset, limit: usize) -> Result<QueryOutput, QueryError> {
+pub fn evaluate<'a>(
+    query: &Query,
+    ds: impl spareval::QueryableDataset<'a>,
+    limit: usize,
+) -> Result<QueryOutput, QueryError> {
     let limit = limit.clamp(1, MAX_ROW_LIMIT);
     let eval_err = |e: spareval::QueryEvaluationError| QueryError::Evaluation(e.to_string());
     let results = QueryEvaluator::new()
@@ -469,7 +588,7 @@ mod tests {
         .unwrap();
         let out = evaluate(
             &q,
-            &dataset(&asserted, &inferred, DatasetSelection::Asserted),
+            &dataset(&asserted, &inferred, DatasetSelection::Asserted, true),
             10,
         )
         .unwrap();
@@ -494,7 +613,7 @@ mod tests {
         assert!(!truncated);
         // Inferred-only selection does not see asserted triples, but the named graph does.
         let ask = parse_checked("ASK { <urn:a> <urn:q> ?v }").unwrap();
-        let inf = dataset(&asserted, &inferred, DatasetSelection::Inferred);
+        let inf = dataset(&asserted, &inferred, DatasetSelection::Inferred, true);
         assert_eq!(
             evaluate(&ask, &inf, 1).unwrap(),
             QueryOutput::Ask { boolean: false }
@@ -510,6 +629,21 @@ mod tests {
     }
 
     #[test]
+    fn graph_detection_finds_nested_graph_patterns() {
+        let yes = [
+            "SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }",
+            "ASK { ?s ?p ?o FILTER EXISTS { GRAPH <urn:ontomark:graph:inferred> { ?s ?p ?o } } }",
+            "SELECT * WHERE { ?s ?p ?o OPTIONAL { GRAPH ?g { ?s ?q ?r } } }",
+        ];
+        for q in yes {
+            assert!(uses_graph(&parse_checked(q).unwrap()), "{q}");
+        }
+        assert!(!uses_graph(
+            &parse_checked("SELECT * WHERE { ?s ?p ?o }").unwrap()
+        ));
+    }
+
+    #[test]
     fn row_cap_truncates() {
         let asserted: Vec<_> = (0..20)
             .map(|i| t(&format!("urn:s{i}"), "urn:p", iri("urn:o")))
@@ -517,12 +651,80 @@ mod tests {
         let q = parse_checked("SELECT ?s WHERE { ?s ?p ?o }").unwrap();
         let QueryOutput::Select {
             rows, truncated, ..
-        } = evaluate(&q, &dataset(&asserted, &[], DatasetSelection::Asserted), 7).unwrap()
+        } = evaluate(
+            &q,
+            &dataset(&asserted, &[], DatasetSelection::Asserted, false),
+            7,
+        )
+        .unwrap()
         else {
             panic!()
         };
         assert_eq!(rows.len(), 7);
         assert!(truncated);
+    }
+
+    /// Differential test: the compact store answers exactly like oxrdf::Dataset.
+    #[test]
+    fn store_matches_oxrdf_dataset_on_every_pattern_shape() {
+        use crate::store::Store;
+        let lit =
+            |v: &str| -> Term { Literal::new_typed_literal(v, oxrdf::vocab::xsd::DECIMAL).into() };
+        let mut asserted = Vec::new();
+        for i in 0..30 {
+            asserted.push(t(
+                &format!("urn:s{i}"),
+                "urn:p",
+                iri(&format!("urn:s{}", (i + 1) % 30)),
+            ));
+            asserted.push(t(&format!("urn:s{i}"), "urn:q", lit(&format!("0.{i}"))));
+            if i % 3 == 0 {
+                asserted.push(t(&format!("urn:s{i}"), "urn:r", iri("urn:s0")));
+            }
+        }
+        let inferred: Vec<_> = (0..10)
+            .map(|i| t(&format!("urn:s{i}"), "urn:sub", iri("urn:top")))
+            .collect();
+        let queries = [
+            "SELECT * WHERE { ?s ?p ?o }",
+            "SELECT * WHERE { <urn:s3> ?p ?o }",
+            "SELECT * WHERE { <urn:s3> <urn:p> ?o }",
+            "SELECT * WHERE { <urn:s3> ?p <urn:s0> }",
+            "SELECT * WHERE { ?s <urn:p> ?o }",
+            "SELECT * WHERE { ?s <urn:r> <urn:s0> }",
+            "SELECT * WHERE { ?s ?p <urn:s0> }",
+            "ASK { <urn:s3> <urn:r> <urn:s0> }",
+            "SELECT ?s WHERE { ?s <urn:q> ?v FILTER(?v > 0.15) } ORDER BY ?s",
+            "SELECT ?a ?c WHERE { ?a <urn:p> ?b . ?b <urn:p> ?c . OPTIONAL { ?a <urn:r> ?x } }",
+            "SELECT (COUNT(*) AS ?n) WHERE { ?s <urn:p>+ <urn:s0> }",
+            "SELECT * WHERE { { ?s <urn:r> ?o } UNION { ?s <urn:sub> ?o } }",
+            "SELECT * WHERE { GRAPH ?g { ?s <urn:sub> ?o } }",
+            "SELECT ?g (COUNT(*) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g ORDER BY ?g",
+            "SELECT * WHERE { GRAPH <urn:ontomark:graph:asserted> { ?s <urn:r> ?o } }",
+            "CONSTRUCT { ?o <urn:inv> ?s } WHERE { ?s <urn:r> ?o }",
+            "SELECT ?s (CONCAT(STR(?s), \"!\") AS ?x) WHERE { ?s <urn:r> ?o } ORDER BY ?x",
+        ];
+        for sel in [
+            DatasetSelection::Asserted,
+            DatasetSelection::Inferred,
+            DatasetSelection::Combined,
+        ] {
+            let reference = dataset(&asserted, &inferred, sel, true);
+            let store = Store::build(&asserted, &inferred, sel, true);
+            for q in queries {
+                let parsed = parse_checked(q).unwrap();
+                let mut want = evaluate(&parsed, &reference, 10_000).unwrap();
+                let mut got = evaluate(&parsed, &store, 10_000).unwrap();
+                for out in [&mut want, &mut got] {
+                    match out {
+                        QueryOutput::Select { rows, .. } => rows.sort(),
+                        QueryOutput::Construct { triples, .. } => triples.sort(),
+                        QueryOutput::Ask { .. } => {}
+                    }
+                }
+                assert_eq!(got, want, "{sel:?}: {q}");
+            }
+        }
     }
 
     #[test]
@@ -531,7 +733,7 @@ mod tests {
             t("urn:a", "urn:p", iri("urn:b")),
             t("urn:c", "urn:r", iri("urn:d")),
         ];
-        let ds = dataset(&asserted, &[], DatasetSelection::Combined);
+        let ds = dataset(&asserted, &[], DatasetSelection::Combined, false);
         let q = parse_checked("SELECT ?s ?o WHERE { { ?s <urn:p> ?o } UNION { ?s <urn:r> ?o } OPTIONAL { ?s <urn:none> ?x } }").unwrap();
         let QueryOutput::Select { rows, .. } = evaluate(&q, &ds, 10).unwrap() else {
             panic!()

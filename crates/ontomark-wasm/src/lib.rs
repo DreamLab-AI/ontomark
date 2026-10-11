@@ -26,15 +26,17 @@
 //! assert!(engine.handle_json(stale).contains(r#""code":"stale""#));
 //! ```
 //!
-//! Modules [`profile`], [`projection`] and the [`reason::ToldClosure`]
-//! reasoner are interim stand-ins for `ontomark-model`, `ontomark-compile` and
-//! `ontomark-reason`; their removal criteria are in their module docs.
+//! Classification is `ontomark-reason` (OWL 2 EL over `whelk-el`) behind the
+//! stepped [`reason::Reasoner`] seam. Modules [`profile`] and [`projection`]
+//! are interim stand-ins for `ontomark-model` and `ontomark-compile`; their
+//! removal criteria are in their module docs.
 
 pub mod engine;
 pub mod profile;
 pub mod projection;
 pub mod query;
 pub mod reason;
+pub mod store;
 pub mod text;
 
 use wasm_bindgen::prelude::wasm_bindgen;

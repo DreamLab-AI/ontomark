@@ -103,6 +103,16 @@ export class EntityView extends ItemView {
         text: `Reasoner is not OWL 2 EL complete: ${index.reasoner.note}`,
       });
     }
+    const cls = index.classification;
+    if (cls && !cls.complete) {
+      const warn = header.createDiv({ cls: "ontomark-warning", attr: { "data-ontomark": "incomplete" } });
+      const why: string[] = [];
+      if (cls.unsupported.length > 0) why.push(`${cls.unsupported.length} axiom(s) not used`);
+      if (cls.policy === "relevant") why.push("complete policy ran out of budget; named subsumptions only");
+      warn.createDiv({ text: `Classification is incomplete: ${why.join("; ")}.` });
+      const list = warn.createEl("ul");
+      for (const u of cls.unsupported) list.createEl("li", { text: u.reason });
+    }
     const actions = header.createDiv({ cls: "ontomark-actions" });
     const classify = actions.createEl("button", { text: "Classify", cls: "mod-cta", attr: { "data-ontomark-action": "classify" } });
     const refresh = actions.createEl("button", { text: "Refresh", attr: { "data-ontomark-action": "refresh" } });

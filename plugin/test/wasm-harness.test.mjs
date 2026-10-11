@@ -94,3 +94,35 @@ test("bundle check is not vacuous: it flags the raw web glue, which loads wasm b
   }
   assert.ok(failed, "check-bundle must exit non-zero on the raw glue");
 });
+
+test("wasm-only runtime paths: entropy (RAND, UUID, STRUUID, BNODE, CONSTRUCT bnodes) and clock (NOW) execute", async () => {
+  // These reach getrandom / js-sys Date at run time and would trap on
+  // wasm32-unknown-unknown without the wasm_js / js features; the golden
+  // transcript does not exercise them, and native tests cannot.
+  const glue = await import(join(generated, "web/ontomark_wasm.js"));
+  glue.initSync({ module: readFileSync(join(generated, "ontomark.wasm")) });
+  const engine = new glue.WasmEngine();
+  const call = (req) => JSON.parse(engine.handle(JSON.stringify(req)));
+  const files = [
+    { path: "A.md", text: "---\ntype: class\n---\n" },
+    { path: "B.md", text: '---\ntype: class\nsubclass-of: ["[[A]]"]\n---\n' },
+  ];
+  assert.equal(call({ kind: "load", generation: 1, files }).ok, true);
+  const q = (sparql) => call({ kind: "query", generation: 1, sparql });
+  const r = q("SELECT (RAND() AS ?r) (UUID() AS ?u) (STRUUID() AS ?s) (BNODE() AS ?b) (NOW() AS ?n) WHERE {}");
+  assert.equal(r.ok, true, JSON.stringify(r));
+  const row = r.result.rows[0];
+  assert.match(row.u.value, /^urn:uuid:[0-9a-f-]{36}$/);
+  assert.match(row.s.value, /^[0-9a-f-]{36}$/);
+  assert.equal(row.b.type, "bnode");
+  const year = Number(row.n.value.slice(0, 4));
+  assert.ok(year >= 2024, `NOW() from the JS clock, got ${row.n.value}`);
+  const r2 = q("SELECT (RAND() AS ?r) WHERE {}");
+  assert.notEqual(r2.result.rows[0].r.value, row.r.value, "RAND() draws fresh entropy");
+  const c = q("CONSTRUCT { ?c <urn:x:note> [ <urn:x:label> ?l ] } WHERE { ?c <http://www.w3.org/2000/01/rdf-schema#label> ?l }");
+  assert.equal(c.ok, true, JSON.stringify(c));
+  assert.equal(c.result.triples.length, 4);
+  assert.ok(c.result.triples.some((t) => t[0].type === "bnode"));
+  const cls = call({ kind: "classify", generation: 1 });
+  assert.equal(cls.result.classification.reasoner.id, "ontomark-reason/whelk-el");
+});

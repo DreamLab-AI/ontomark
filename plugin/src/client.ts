@@ -51,6 +51,13 @@ export interface ClientOptions {
   budget?: number;
   onProgress?: (p: { generation: number; steps: number; total: number | null }) => void;
   onRestart?: (reason: string, epoch: number) => void;
+  /** Called once when restarts exceed the cap and the client stops respawning. */
+  onFailed?: (reason: string) => void;
+  /** Most automatic restarts allowed within `restartWindowMs` (default 3 in 60 s). */
+  maxRestarts?: number;
+  restartWindowMs?: number;
+  /** Clock for the restart cap (tests). */
+  now?: () => number;
   timers?: Timers;
 }
 
@@ -82,6 +89,8 @@ export class OntomarkClient {
   private activeClassifyGeneration = -1;
   private activeClassifyPromise: Promise<ClassifyDone> | null = null;
   private disposed = false;
+  private failedReason: string | null = null;
+  private restarts: number[] = [];
   private readonly timers: Timers;
   private readonly timeouts: Record<"default" | "query" | "classify", number>;
 
@@ -116,9 +125,13 @@ export class OntomarkClient {
   async start(files: FileText[], profile: ProfileId): Promise<void> {
     this.files = new Map(files.map((f) => [f.path, f.text]));
     this.profile = profile;
-    const generation = this.guard.bump();
-    await this.spawn();
-    await this.send({ kind: "load", generation, profile, files: this.snapshot() });
+    this.guard.bump();
+    await this.spawnAndLoad();
+  }
+
+  /** `true` once restarts exceeded the cap; every request then rejects with `engine_failed`. */
+  get failed(): boolean {
+    return this.failedReason !== null;
   }
 
   async upsert(path: string, text: string): Promise<void> {
@@ -194,7 +207,7 @@ export class OntomarkClient {
       id,
       op: "classify",
       generation,
-      budget: this.options.budget ?? 256,
+      budget: this.options.budget ?? 20_000,
     }) as Promise<ClassifyDone>;
     this.activeClassifyPromise = promise;
     return promise;
@@ -217,13 +230,28 @@ export class OntomarkClient {
     this.rejectAll("disposed", "the client was disposed");
   }
 
-  /** Terminate and respawn, replaying the mirror at the current generation. */
+  /**
+   * Terminate and respawn, replaying the mirror at the current generation.
+   * More than `maxRestarts` within `restartWindowMs` puts the client in the
+   * failed state instead of respawning again (a page that traps the engine
+   * every time must not cause an endless respawn loop).
+   */
   async restart(reason: string): Promise<void> {
+    if (this.disposed || this.failedReason !== null) return;
     this.killWorker();
     this.rejectAll("worker_restarted", `worker restarted: ${reason}`);
-    await this.spawn();
+    const now = (this.options.now ?? Date.now)();
+    const windowMs = this.options.restartWindowMs ?? 60_000;
+    this.restarts = this.restarts.filter((t) => now - t < windowMs);
+    this.restarts.push(now);
+    if (this.restarts.length > (this.options.maxRestarts ?? 3)) {
+      this.failedReason = `too many restarts (last: ${reason})`;
+      this.options.onFailed?.(this.failedReason);
+      return;
+    }
+    const ready = this.spawnAndLoad();
     this.options.onRestart?.(reason, this.epoch);
-    await this.send({ kind: "load", generation: this.generation, profile: this.profile, files: this.snapshot() });
+    await ready;
   }
 
   /** Test hook and internal entry point for every worker message. */
@@ -276,8 +304,19 @@ export class OntomarkClient {
     await this.send(build(generation));
   }
 
-  private async spawn(): Promise<void> {
-    if (this.disposed) throw new OntomarkError("disposed", "the client was disposed");
+  /**
+   * Spawn a worker and post `init` and the mirror `load` back to back before
+   * awaiting either: the worker handles messages in order, so the replay is in
+   * place before any mutation or read posted after this call (EXP-06).
+   */
+  private spawnAndLoad(): Promise<void> {
+    const init = this.spawn();
+    const load = this.send({ kind: "load", generation: this.generation, profile: this.profile, files: this.snapshot() });
+    return Promise.all([init, load]).then(() => undefined);
+  }
+
+  private spawn(): Promise<unknown> {
+    if (this.disposed) return Promise.reject(new OntomarkError("disposed", "the client was disposed"));
     const epoch = this.guard.newEpoch();
     const worker = this.options.spawn();
     this.worker = worker;
@@ -289,7 +328,7 @@ export class OntomarkClient {
     };
     const id = this.nextId++;
     const wasm = this.options.wasmBytes();
-    await this.dispatch(id, "init", false, this.timeouts.default, null, { v: 1, epoch, id, op: "init", wasm }, [wasm]);
+    return this.dispatch(id, "init", false, this.timeouts.default, null, { v: 1, epoch, id, op: "init", wasm }, [wasm]);
   }
 
   private send(request: EngineRequest, channel?: string): Promise<unknown> {
@@ -330,6 +369,7 @@ export class OntomarkClient {
 
   private track(id: number, kind: string, read: boolean, timeoutMs: number, channel: string | null): Promise<unknown> {
     if (this.disposed) return Promise.reject(new OntomarkError("disposed", "the client was disposed"));
+    if (this.failedReason !== null) return Promise.reject(new OntomarkError("engine_failed", this.failedReason));
     if (channel !== null) this.guard.issued(channel, id);
     return new Promise((resolve, reject) => {
       const timer = this.timers.set(() => {

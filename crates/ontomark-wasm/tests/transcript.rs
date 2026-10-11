@@ -145,10 +145,20 @@ fn transcript_semantics() {
     // Inferred dataset refused before classification, available after.
     assert_eq!(step(&l, 4)["error"]["code"], "not_classified");
     let classified = step(&l, 5);
-    assert_eq!(
-        classified["result"]["classification"]["reasoner"]["el_complete"],
-        false
-    );
+    let cls = &classified["result"]["classification"];
+    assert_eq!(cls["reasoner"]["id"], "ontomark-reason/whelk-el");
+    assert_eq!(cls["reasoner"]["el_complete"], true);
+    assert_eq!(cls["policy"], "all");
+    // The `range` on `has owner` is EL but not implemented by whelk-el: refused
+    // whole, reported, and the result is marked incomplete.
+    assert_eq!(cls["complete"], false);
+    let refused = cls["unsupported"].as_array().unwrap();
+    assert_eq!(refused.len(), 1);
+    assert_eq!(refused[0]["axiom"]["t"], "range");
+    assert!(refused[0]["reason"]
+        .as_str()
+        .unwrap()
+        .starts_with("EL_NOT_IMPLEMENTED"));
     let unsat = classified["result"]["classification"]["unsatisfiable"]
         .as_array()
         .unwrap();

@@ -6,12 +6,11 @@
 //! its message queue, and an edit that arrives in the meantime makes the next
 //! step stale (EXP-06). No step reads a clock.
 //!
-//! The production reasoner is `ontomark-reason` over `whelk-el` (WP-B).
-//! [`ToldClosure`] is the **interim** implementation used until that crate
-//! publishes a stepped API: it computes the reflexive-transitive closure of
-//! named `SubClassOf`/`EquivalentClasses` and the disjointness clashes that
-//! follow, reports every other axiom as unsupported, and declares itself
-//! `el_complete: false`. It is never presented as EL classification (EXP-01).
+//! The reasoner is [`WhelkEl`]: `ontomark-reason`'s OWL 2 EL classifier over
+//! `whelk-el` (WP-B), driven through its sliced `session::Job`. Axioms outside
+//! the profile, or in EL but not implemented, are refused whole and reported
+//! in [`Classification::unsupported`]; [`Classification::complete`] is `false`
+//! whenever anything was refused or the complete policy ran out of budget.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -49,13 +48,6 @@ impl ClassExpr {
     #[must_use]
     pub fn named(iri: impl Into<String>) -> Self {
         Self::Named { iri: iri.into() }
-    }
-
-    fn as_named(&self) -> Option<&str> {
-        match self {
-            Self::Named { iri } => Some(iri),
-            _ => None,
-        }
     }
 }
 
@@ -150,6 +142,12 @@ pub struct Classification {
     pub unsatisfiable: Vec<String>,
     /// Axioms outside the reasoner's supported fragment.
     pub unsupported: Vec<Unsupported>,
+    /// Existential policy actually used: `all` (complete) or `relevant`
+    /// (named subsumptions complete; unsatisfiability through dropped
+    /// existentials not propagated), the latter only after `all` ran out of budget.
+    pub policy: String,
+    /// `true` when nothing was refused and the complete policy finished.
+    pub complete: bool,
 }
 
 /// Progress of a [`ReasonerRun`].
@@ -164,6 +162,13 @@ pub enum Progress {
     },
     /// The run finished.
     Done(Classification),
+    /// The run stopped without a result.
+    Stopped {
+        /// Stable code: `reasoning_budget_exceeded` or `cancelled`.
+        code: String,
+        /// Work done before stopping.
+        steps: u64,
+    },
 }
 
 /// A classification in progress.
@@ -180,232 +185,234 @@ pub trait Reasoner {
     fn start(&self, axioms: &[ElAxiom]) -> Box<dyn ReasonerRun>;
 }
 
-/// The interim told-closure reasoner. See the module documentation.
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ToldClosure;
+/// `ontomark-reason`'s OWL 2 EL classifier, stepped. See the module documentation.
+#[derive(Debug, Clone, Copy)]
+pub struct WhelkEl {
+    /// Saturation-step budget for the complete (`All`) policy.
+    pub complete_budget: u64,
+    /// Saturation-step budget for the `Relevant` fallback.
+    pub relevant_budget: u64,
+}
 
-impl Reasoner for ToldClosure {
+impl Default for WhelkEl {
+    fn default() -> Self {
+        // WP-B: a 20,000-step slice is ~25 ms natively; the estate corpus needs
+        // ~0.3 M steps under Relevant and does not finish under All.
+        Self {
+            complete_budget: 5_000_000,
+            relevant_budget: 20_000_000,
+        }
+    }
+}
+
+impl Reasoner for WhelkEl {
     fn info(&self) -> ReasonerInfo {
         ReasonerInfo {
-            id: "interim-told-closure".into(),
+            id: "ontomark-reason/whelk-el".into(),
             version: env!("CARGO_PKG_VERSION").into(),
-            el_complete: false,
-            note: "Interim, not OWL 2 EL: transitive closure of named subclass and \
-                   equivalence assertions plus disjointness clashes. Existential and \
-                   intersection axioms are reported as unsupported. Replaced by \
-                   ontomark-reason (whelk-el)."
+            el_complete: true,
+            note: "OWL 2 EL classification (whelk-el). Refused constructs are listed, never \
+                   weakened; individuals are typed from the class hierarchy."
                 .into(),
         }
     }
 
     fn start(&self, axioms: &[ElAxiom]) -> Box<dyn ReasonerRun> {
-        Box::new(ToldRun::new(self.info(), axioms))
+        let input: Vec<ElAxiom> = axioms.to_vec();
+        let converted: Vec<ra::Axiom> = input.iter().map(to_reason_axiom).collect();
+        let job = new_job(&converted, ExistentialPolicy::All, self.complete_budget);
+        Box::new(WhelkRun {
+            info: self.info(),
+            input,
+            converted,
+            job,
+            relevant: false,
+            relevant_budget: self.relevant_budget,
+            done: None,
+        })
     }
 }
 
-struct ToldRun {
+use ontomark_reason::axiom as ra;
+use ontomark_reason::classify::Stopped;
+use ontomark_reason::session::{Job, Session, Step};
+use ontomark_reason::{ExistentialPolicy, Options};
+
+fn new_job(axioms: &[ra::Axiom], policy: ExistentialPolicy, budget: u64) -> Job {
+    let ticket = Session::new().begin();
+    Job::new(
+        ticket,
+        axioms,
+        Options {
+            existentials: policy,
+            max_steps: Some(budget),
+        },
+    )
+}
+
+fn to_class(c: &ClassExpr) -> ra::ClassExpression {
+    match c {
+        ClassExpr::Named { iri } => ra::ClassExpression::Class(iri.clone()),
+        ClassExpr::Top => ra::ClassExpression::Thing,
+        ClassExpr::Bottom => ra::ClassExpression::Nothing,
+        ClassExpr::Some { property, filler } => ra::ClassExpression::Some {
+            property: ra::Property::named(property.clone()),
+            filler: Box::new(to_class(filler)),
+        },
+        ClassExpr::And { operands } => {
+            ra::ClassExpression::And(operands.iter().map(to_class).collect())
+        }
+    }
+}
+
+fn to_reason_axiom(a: &ElAxiom) -> ra::Axiom {
+    match a {
+        ElAxiom::SubClassOf { sub, sup } => ra::Axiom::SubClassOf {
+            sub: to_class(sub),
+            sup: to_class(sup),
+        },
+        ElAxiom::EquivalentClasses { members } => {
+            ra::Axiom::EquivalentClasses(members.iter().map(to_class).collect())
+        }
+        ElAxiom::DisjointClasses { members } => {
+            ra::Axiom::DisjointClasses(members.iter().map(to_class).collect())
+        }
+        ElAxiom::SubPropertyOf { sub, sup } => ra::Axiom::SubPropertyOf {
+            sub: ra::Property::named(sub.clone()),
+            sup: ra::Property::named(sup.clone()),
+        },
+        ElAxiom::Domain { property, class } => ra::Axiom::PropertyDomain {
+            property: ra::Property::named(property.clone()),
+            class: to_class(class),
+        },
+        ElAxiom::Range { property, class } => ra::Axiom::PropertyRange {
+            property: ra::Property::named(property.clone()),
+            class: to_class(class),
+        },
+    }
+}
+
+struct WhelkRun {
     info: ReasonerInfo,
-    classes: Vec<String>,
-    told_up: BTreeMap<String, BTreeSet<String>>,
-    disjoint: Vec<(String, String)>,
-    unsupported: Vec<Unsupported>,
-    ancestors: BTreeMap<String, BTreeSet<String>>,
-    cursor: usize,
+    input: Vec<ElAxiom>,
+    converted: Vec<ra::Axiom>,
+    job: Job,
+    relevant: bool,
+    relevant_budget: u64,
     done: Option<Classification>,
 }
 
-impl ToldRun {
-    fn new(info: ReasonerInfo, axioms: &[ElAxiom]) -> Self {
-        let mut told_up: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-        let mut classes = BTreeSet::new();
-        let mut disjoint = Vec::new();
-        let mut unsupported = Vec::new();
-        let unsupported_reason = "outside the interim told-closure fragment";
-        for axiom in axioms {
-            match axiom {
-                ElAxiom::SubClassOf { sub, sup } => match (sub.as_named(), sup) {
-                    (Some(a), ClassExpr::Named { iri: b }) => {
-                        classes.insert(a.to_owned());
-                        classes.insert(b.clone());
-                        told_up.entry(a.to_owned()).or_default().insert(b.clone());
-                    }
-                    (Some(a), ClassExpr::Bottom) => {
-                        classes.insert(a.to_owned());
-                        told_up
-                            .entry(a.to_owned())
-                            .or_default()
-                            .insert(NOTHING.into());
-                    }
-                    (Some(a), ClassExpr::Top) => {
-                        classes.insert(a.to_owned());
-                    }
-                    _ => unsupported.push(Unsupported {
-                        axiom: axiom.clone(),
-                        reason: unsupported_reason.into(),
-                    }),
-                },
-                ElAxiom::EquivalentClasses { members } => {
-                    let named: Option<Vec<&str>> =
-                        members.iter().map(ClassExpr::as_named).collect();
-                    match named {
-                        Some(named) if named.len() >= 2 => {
-                            for &a in &named {
-                                classes.insert(a.to_owned());
-                                for &b in &named {
-                                    if a != b {
-                                        told_up
-                                            .entry(a.to_owned())
-                                            .or_default()
-                                            .insert(b.to_owned());
-                                    }
-                                }
-                            }
-                        }
-                        _ => unsupported.push(Unsupported {
-                            axiom: axiom.clone(),
-                            reason: unsupported_reason.into(),
-                        }),
-                    }
-                }
-                ElAxiom::DisjointClasses { members } => {
-                    let named: Option<Vec<&str>> =
-                        members.iter().map(ClassExpr::as_named).collect();
-                    match named {
-                        Some(named) => {
-                            for (i, a) in named.iter().enumerate() {
-                                classes.insert((*a).to_owned());
-                                for b in &named[i + 1..] {
-                                    disjoint.push(((*a).to_owned(), (*b).to_owned()));
-                                }
-                            }
-                        }
-                        None => unsupported.push(Unsupported {
-                            axiom: axiom.clone(),
-                            reason: unsupported_reason.into(),
-                        }),
-                    }
-                }
-                ElAxiom::SubPropertyOf { .. } | ElAxiom::Domain { .. } | ElAxiom::Range { .. } => {
-                    unsupported.push(Unsupported {
-                        axiom: axiom.clone(),
-                        reason: unsupported_reason.into(),
-                    });
-                }
-            }
-        }
-        classes.remove(NOTHING);
-        unsupported.sort();
-        Self {
-            info,
-            classes: classes.into_iter().collect(),
-            told_up,
-            disjoint,
-            unsupported,
-            ancestors: BTreeMap::new(),
-            cursor: 0,
-            done: None,
-        }
-    }
-
-    fn ancestors_of(&self, class: &str) -> BTreeSet<String> {
-        let mut seen = BTreeSet::new();
-        let mut stack = vec![class.to_owned()];
-        while let Some(c) = stack.pop() {
-            if let Some(ups) = self.told_up.get(&c) {
-                for up in ups {
-                    if seen.insert(up.clone()) {
-                        stack.push(up.clone());
-                    }
-                }
-            }
-        }
-        seen.remove(class);
-        seen
-    }
-
-    fn finish(&mut self) -> Classification {
-        let mut unsatisfiable = BTreeSet::new();
-        for class in &self.classes {
-            let ups = &self.ancestors[class];
-            let in_self = |x: &String| x == class || ups.contains(x);
-            let clash = ups.contains(NOTHING)
-                || self.disjoint.iter().any(|(a, b)| in_self(a) && in_self(b));
-            if clash {
-                unsatisfiable.insert(class.clone());
-            }
-        }
-        let mut subsumptions = Vec::new();
-        let mut equivalences: BTreeSet<Vec<String>> = BTreeSet::new();
-        for class in &self.classes {
-            let told = self.told_up.get(class);
-            for sup in &self.ancestors[class] {
-                if sup == NOTHING {
-                    continue;
-                }
-                subsumptions.push(Subsumption {
-                    sub: class.clone(),
-                    sup: sup.clone(),
-                    told: told.is_some_and(|t| t.contains(sup)),
-                });
-            }
-            let mut group: Vec<String> = self.ancestors[class]
-                .iter()
-                .filter(|sup| {
-                    *sup != NOTHING && self.ancestors.get(*sup).is_some_and(|a| a.contains(class))
-                })
-                .cloned()
-                .collect();
-            if !group.is_empty() {
-                group.push(class.clone());
-                group.sort();
-                equivalences.insert(group);
-            }
-        }
+impl WhelkRun {
+    fn finish(&self, c: &ontomark_reason::Classification) -> Classification {
+        let inferred: BTreeSet<(&str, &str)> = c
+            .inferred
+            .iter()
+            .map(|(a, b)| (a.as_str(), b.as_str()))
+            .collect();
+        let all: BTreeSet<(&str, &str)> = c
+            .subsumptions
+            .iter()
+            .map(|(a, b)| (a.as_str(), b.as_str()))
+            .collect();
+        let mut subsumptions: Vec<Subsumption> = c
+            .subsumptions
+            .iter()
+            .map(|(sub, sup)| Subsumption {
+                sub: sub.clone(),
+                sup: sup.clone(),
+                told: !inferred.contains(&(sub.as_str(), sup.as_str())),
+            })
+            .collect();
         subsumptions.sort();
+        let mut groups: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
+        for &(a, b) in &all {
+            if all.contains(&(b, a)) {
+                groups.entry(a).or_default().insert(b);
+            }
+        }
+        let equivalences: BTreeSet<Vec<String>> = groups
+            .iter()
+            .map(|(a, rest)| {
+                let mut g: Vec<String> = rest.iter().map(|s| (*s).to_owned()).collect();
+                g.push((*a).to_owned());
+                g.sort();
+                g
+            })
+            .collect();
+        let mut unsupported: Vec<Unsupported> = c
+            .refusals
+            .iter()
+            .filter_map(|r| {
+                self.input.get(r.index).map(|axiom| Unsupported {
+                    axiom: axiom.clone(),
+                    reason: format!("{}: {} ({})", r.code(), r.reason, r.construct),
+                })
+            })
+            .collect();
+        unsupported.sort();
+        let mut unsatisfiable = c.unsatisfiable.clone();
+        unsatisfiable.sort();
         Classification {
             reasoner: self.info.clone(),
             subsumptions,
             equivalences: equivalences.into_iter().collect(),
-            unsatisfiable: unsatisfiable.into_iter().collect(),
-            unsupported: self.unsupported.clone(),
+            unsatisfiable,
+            complete: unsupported.is_empty() && !self.relevant,
+            unsupported,
+            policy: if self.relevant { "relevant" } else { "all" }.into(),
         }
     }
 }
 
-const NOTHING: &str = "http://www.w3.org/2002/07/owl#Nothing";
-
-impl ReasonerRun for ToldRun {
+impl ReasonerRun for WhelkRun {
     fn step(&mut self, budget: u64) -> Progress {
         if let Some(done) = &self.done {
             return Progress::Done(done.clone());
         }
-        let budget = usize::try_from(budget.max(1)).unwrap_or(usize::MAX);
-        let end = self.cursor.saturating_add(budget).min(self.classes.len());
-        while self.cursor < end {
-            let class = self.classes[self.cursor].clone();
-            let ups = self.ancestors_of(&class);
-            self.ancestors.insert(class, ups);
-            self.cursor += 1;
+        match self.job.step(budget.max(1)) {
+            Step::Pending { steps } => Progress::Pending { steps, total: None },
+            Step::Done(outcome) => {
+                let done = self.finish(&outcome.classification);
+                self.done = Some(done.clone());
+                Progress::Done(done)
+            }
+            Step::Stopped(Stopped::OverBudget { steps }) if !self.relevant => {
+                // The complete policy did not fit: classify named subsumptions with Relevant.
+                self.relevant = true;
+                self.job = new_job(
+                    &self.converted,
+                    ExistentialPolicy::Relevant,
+                    self.relevant_budget,
+                );
+                Progress::Pending { steps, total: None }
+            }
+            Step::Stopped(Stopped::OverBudget { steps }) => Progress::Stopped {
+                code: "reasoning_budget_exceeded".into(),
+                steps,
+            },
+            Step::Stopped(Stopped::Cancelled { steps }) => Progress::Stopped {
+                code: "cancelled".into(),
+                steps,
+            },
+            Step::Spent => Progress::Stopped {
+                code: "cancelled".into(),
+                steps: 0,
+            },
         }
-        if self.cursor < self.classes.len() {
-            return Progress::Pending {
-                steps: self.cursor as u64,
-                total: Some(self.classes.len() as u64),
-            };
-        }
-        let done = self.finish();
-        self.done = Some(done.clone());
-        Progress::Done(done)
     }
 }
 
 /// Run `reasoner` to completion on `axioms` (for hosts that do not need stepping).
-#[must_use]
-pub fn classify_all(reasoner: &dyn Reasoner, axioms: &[ElAxiom]) -> Classification {
+///
+/// # Errors
+/// The stop code when the run stopped without a result.
+pub fn classify_all(reasoner: &dyn Reasoner, axioms: &[ElAxiom]) -> Result<Classification, String> {
     let mut run = reasoner.start(axioms);
     loop {
-        if let Progress::Done(c) = run.step(u64::MAX) {
-            return c;
+        match run.step(u64::MAX) {
+            Progress::Done(c) => return Ok(c),
+            Progress::Stopped { code, .. } => return Err(code),
+            Progress::Pending { .. } => {}
         }
     }
 }
@@ -414,16 +421,31 @@ pub fn classify_all(reasoner: &dyn Reasoner, axioms: &[ElAxiom]) -> Classificati
 mod tests {
     use super::*;
 
+    fn named(a: &str) -> ClassExpr {
+        ClassExpr::named(a)
+    }
+
     fn sub(a: &str, b: &str) -> ElAxiom {
         ElAxiom::SubClassOf {
-            sub: ClassExpr::named(a),
-            sup: ClassExpr::named(b),
+            sub: named(a),
+            sup: named(b),
+        }
+    }
+
+    fn some(p: &str, c: ClassExpr) -> ClassExpr {
+        ClassExpr::Some {
+            property: p.into(),
+            filler: Box::new(c),
         }
     }
 
     #[test]
-    fn closure_is_transitive_and_marks_told_edges() {
-        let c = classify_all(&ToldClosure, &[sub("a", "b"), sub("b", "c")]);
+    fn subsumption_is_transitive_and_marks_told_edges() {
+        let c = classify_all(
+            &WhelkEl::default(),
+            &[sub("urn:a", "urn:b"), sub("urn:b", "urn:c")],
+        )
+        .unwrap();
         let pairs: Vec<_> = c
             .subsumptions
             .iter()
@@ -431,60 +453,136 @@ mod tests {
             .collect();
         assert_eq!(
             pairs,
-            vec![("a", "b", true), ("a", "c", false), ("b", "c", true)]
+            vec![
+                ("urn:a", "urn:b", true),
+                ("urn:a", "urn:c", false),
+                ("urn:b", "urn:c", true)
+            ]
         );
-        assert!(!c.reasoner.el_complete);
+        assert!(c.reasoner.el_complete && c.complete);
+        assert_eq!(c.policy, "all");
     }
 
     #[test]
-    fn disjoint_ancestors_make_a_class_unsatisfiable() {
+    fn existential_reasoning_goes_beyond_a_told_closure() {
+        // A ⊑ ∃p.B, B ⊑ C, D ≡ ∃p.C  ⊢  A ⊑ D (a closure over told edges cannot derive it).
+        let axioms = [
+            ElAxiom::SubClassOf {
+                sub: named("urn:A"),
+                sup: some("urn:p", named("urn:B")),
+            },
+            sub("urn:B", "urn:C"),
+            ElAxiom::EquivalentClasses {
+                members: vec![named("urn:D"), some("urn:p", named("urn:C"))],
+            },
+        ];
+        let c = classify_all(&WhelkEl::default(), &axioms).unwrap();
+        assert!(
+            c.subsumptions
+                .iter()
+                .any(|s| s.sub == "urn:A" && s.sup == "urn:D" && !s.told),
+            "{:?}",
+            c.subsumptions
+        );
+    }
+
+    #[test]
+    fn disjoint_superclasses_make_a_class_unsatisfiable() {
         let disj = ElAxiom::DisjointClasses {
-            members: vec![ClassExpr::named("b"), ClassExpr::named("c")],
+            members: vec![named("urn:b"), named("urn:c")],
         };
         let c = classify_all(
-            &ToldClosure,
-            &[sub("a", "b"), sub("a", "c"), sub("d", "a"), disj],
+            &WhelkEl::default(),
+            &[
+                sub("urn:a", "urn:b"),
+                sub("urn:a", "urn:c"),
+                sub("urn:d", "urn:a"),
+                disj,
+            ],
+        )
+        .unwrap();
+        assert_eq!(
+            c.unsatisfiable,
+            vec!["urn:a".to_owned(), "urn:d".to_owned()]
         );
-        assert_eq!(c.unsatisfiable, vec!["a".to_owned(), "d".to_owned()]);
     }
 
     #[test]
     fn cycles_are_equivalences() {
-        let c = classify_all(&ToldClosure, &[sub("a", "b"), sub("b", "a")]);
-        assert_eq!(c.equivalences, vec![vec!["a".to_owned(), "b".to_owned()]]);
+        let c = classify_all(
+            &WhelkEl::default(),
+            &[sub("urn:a", "urn:b"), sub("urn:b", "urn:a")],
+        )
+        .unwrap();
+        assert_eq!(
+            c.equivalences,
+            vec![vec!["urn:a".to_owned(), "urn:b".to_owned()]]
+        );
     }
 
     #[test]
-    fn existentials_are_reported_unsupported_not_dropped() {
-        let ex = ElAxiom::SubClassOf {
-            sub: ClassExpr::named("a"),
-            sup: ClassExpr::Some {
-                property: "p".into(),
-                filler: Box::new(ClassExpr::named("b")),
-            },
+    fn refused_axioms_are_reported_and_mark_the_result_incomplete() {
+        let range = ElAxiom::Range {
+            property: "urn:p".into(),
+            class: named("urn:b"),
         };
-        let c = classify_all(&ToldClosure, std::slice::from_ref(&ex));
+        let c = classify_all(&WhelkEl::default(), &[sub("urn:a", "urn:b"), range.clone()]).unwrap();
         assert_eq!(c.unsupported.len(), 1);
-        assert_eq!(c.unsupported[0].axiom, ex);
+        assert_eq!(c.unsupported[0].axiom, range);
+        assert!(
+            c.unsupported[0].reason.starts_with("EL_NOT_IMPLEMENTED"),
+            "{}",
+            c.unsupported[0].reason
+        );
+        assert!(!c.complete);
     }
 
     #[test]
-    fn stepping_reports_progress_then_the_same_result_as_one_shot() {
-        let axioms: Vec<_> = (0..10)
-            .map(|i| sub(&format!("c{i}"), &format!("c{}", i + 1)))
+    fn stepping_gives_the_same_result_as_one_shot() {
+        let axioms: Vec<_> = (0..40)
+            .map(|i| sub(&format!("urn:c{i}"), &format!("urn:c{}", i + 1)))
             .collect();
-        let mut run = ToldClosure.start(&axioms);
+        let mut run = WhelkEl::default().start(&axioms);
         let mut pendings = 0;
         let stepped = loop {
             match run.step(3) {
                 Progress::Pending { .. } => pendings += 1,
                 Progress::Done(c) => break c,
+                Progress::Stopped { code, .. } => panic!("{code}"),
             }
         };
         assert!(
             pendings >= 3,
-            "budget 3 over 11 classes must yield pending steps"
+            "a budget of 3 steps must take several slices"
         );
-        assert_eq!(stepped, classify_all(&ToldClosure, &axioms));
+        assert_eq!(stepped, classify_all(&WhelkEl::default(), &axioms).unwrap());
+    }
+
+    #[test]
+    fn complete_policy_over_budget_falls_back_to_relevant() {
+        let axioms: Vec<_> = (0..40)
+            .map(|i| sub(&format!("urn:c{i}"), &format!("urn:c{}", i + 1)))
+            .collect();
+        let tight = WhelkEl {
+            complete_budget: 5,
+            relevant_budget: 10_000_000,
+        };
+        let c = classify_all(&tight, &axioms).unwrap();
+        assert_eq!(c.policy, "relevant");
+        assert!(!c.complete);
+        assert_eq!(
+            c.subsumptions,
+            classify_all(&WhelkEl::default(), &axioms)
+                .unwrap()
+                .subsumptions
+        );
+        let none = WhelkEl {
+            complete_budget: 5,
+            relevant_budget: 5,
+        };
+        assert_eq!(
+            classify_all(&none, &axioms).unwrap_err(),
+            "reasoning_budget_exceeded"
+        );
     }
 }

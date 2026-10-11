@@ -25,11 +25,13 @@ use serde_json::{json, Value as Json};
 use crate::profile::ProfileId;
 use crate::projection::{self, owl, Compiled};
 use crate::query::{self, DatasetSelection, WireTerm};
-use crate::reason::{Classification, Progress, Reasoner, ReasonerRun, ToldClosure};
+use crate::reason::{Classification, Progress, Reasoner, ReasonerRun, WhelkEl};
+use crate::store::Store;
 use crate::text::{unified_diff, HostSpan, TripleSet};
 
 /// Default number of reasoner work units per classify step.
-pub const DEFAULT_STEP_BUDGET: u64 = 256;
+/// One slice is about 25 ms of saturation natively (WP-B measurement).
+pub const DEFAULT_STEP_BUDGET: u64 = 20_000;
 
 /// A vault file as the host read it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -192,6 +194,8 @@ pub struct Engine {
     reasoner: Box<dyn Reasoner>,
     run: Option<Box<dyn ReasonerRun>>,
     classified: Option<Classified>,
+    /// Query stores built for this generation, keyed by (selection, named graphs).
+    datasets: Vec<(DatasetSelection, bool, Store)>,
 }
 
 impl Default for Engine {
@@ -201,10 +205,10 @@ impl Default for Engine {
 }
 
 impl Engine {
-    /// An empty engine at generation 0 with the generic profile and the interim reasoner.
+    /// An empty engine at generation 0 with the generic profile and the EL reasoner.
     #[must_use]
     pub fn new() -> Self {
-        Self::with_reasoner(Box::new(ToldClosure))
+        Self::with_reasoner(Box::new(WhelkEl::default()))
     }
 
     /// An empty engine using `reasoner`.
@@ -218,6 +222,7 @@ impl Engine {
             reasoner,
             run: None,
             classified: None,
+            datasets: Vec::new(),
         }
     }
 
@@ -355,6 +360,7 @@ impl Engine {
         self.compiled = None;
         self.run = None;
         self.classified = None;
+        self.datasets.clear();
     }
 
     fn mutate(&mut self, generation: u64, f: impl FnOnce(&mut Self)) -> Response {
@@ -511,7 +517,17 @@ impl Engine {
                     classification,
                     inferred,
                 });
+                // Inferred and combined datasets depended on the old (absent) result.
+                self.datasets
+                    .retain(|(sel, _, _)| *sel == DatasetSelection::Asserted);
                 Ok(result)
+            }
+            Progress::Stopped { code, steps } => {
+                self.run = None;
+                Err(wire(
+                    &code,
+                    format!("classification stopped after {steps} steps"),
+                ))
             }
         }
     }
@@ -578,23 +594,38 @@ impl Engine {
         limit: Option<usize>,
     ) -> Result<Json, WireError> {
         let parsed = query::parse_checked(sparql).map_err(|e| wire(e.code(), e.to_string()))?;
-        let inferred = match (&self.classified, selection) {
-            (_, DatasetSelection::Asserted) => self
-                .classified
-                .as_ref()
-                .map(|c| c.inferred.clone())
-                .unwrap_or_default(),
-            (Some(c), _) => c.inferred.clone(),
-            (None, _) => {
-                return Err(wire(
-                    "not_classified",
-                    "the inferred dataset needs a classification of the current generation",
-                ))
+        if selection != DatasetSelection::Asserted && self.classified.is_none() {
+            return Err(wire(
+                "not_classified",
+                "the inferred dataset needs a classification of the current generation",
+            ));
+        }
+        let named = query::uses_graph(&parsed);
+        // A query without GRAPH can reuse a dataset that also has named graphs.
+        let cached = self
+            .datasets
+            .iter()
+            .position(|(sel, n, _)| *sel == selection && (*n || !named));
+        let at = match cached {
+            Some(i) => i,
+            None => {
+                self.compiled();
+                let asserted = self.compiled.as_ref().map_or(&[][..], |c| &c.triples[..]);
+                let inferred = self
+                    .classified
+                    .as_ref()
+                    .map_or(&[][..], |c| &c.inferred[..]);
+                let ds = Store::build(asserted, inferred, selection, named);
+                self.datasets.push((selection, named, ds));
+                self.datasets.len() - 1
             }
         };
-        let ds = query::dataset(&self.compiled().triples, &inferred, selection);
-        let out = query::evaluate(&parsed, &ds, limit.unwrap_or(query::DEFAULT_ROW_LIMIT))
-            .map_err(|e| wire(e.code(), e.to_string()))?;
+        let out = query::evaluate(
+            &parsed,
+            &self.datasets[at].2,
+            limit.unwrap_or(query::DEFAULT_ROW_LIMIT),
+        )
+        .map_err(|e| wire(e.code(), e.to_string()))?;
         serde_json::to_value(out).map_err(|e| wire("internal", e.to_string()))
     }
 

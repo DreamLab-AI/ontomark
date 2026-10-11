@@ -121,16 +121,19 @@ async function main() {
   await waitFor(() => entityLeaf?.view?.contentEl?.textContent.includes("Animal"));
   const panelText = entityLeaf.view.contentEl.textContent;
   check("panel lists classes, individuals and properties", ["Animal", "Rex", "has owner"].every((s) => panelText.includes(s)), panelText.slice(0, 300));
-  check("panel warns the interim reasoner is not EL complete", /not.*EL|EL.*not|interim/i.test(panelText));
+  check("panel names the EL reasoner", panelText.includes("ontomark-reason/whelk-el"), panelText.slice(0, 200));
   const animalItem = entityLeaf.view.contentEl.find((el) => el.attrs["data-iri"] === "urn:ontomark:page:Ontology/Animal");
   check("panel item carries its IRI", !!animalItem);
 
   // ---- classify in the worker (real thread) ----
   const done = await api.classify();
   check("classify: unsatisfiable class found", JSON.stringify(done.classification.unsatisfiable) === JSON.stringify(["urn:ontomark:page:Ontology/Catdog"]), done.classification.unsatisfiable);
-  check("classify: reasoner declares el_complete false (interim)", done.classification.reasoner.el_complete === false);
+  check("classify: OWL 2 EL reasoner (whelk-el), complete policy", done.classification.reasoner.el_complete === true && done.classification.policy === "all", done.classification.reasoner);
+  check("classify: refused range axiom reported, result marked incomplete", done.classification.complete === false && done.classification.unsupported.length === 1 && done.classification.unsupported[0].reason.startsWith("EL_NOT_IMPLEMENTED"), done.classification.unsupported);
   await waitFor(() => entityLeaf.view.contentEl.textContent.includes("inferred"));
   check("panel shows inferred superclasses after classification", entityLeaf.view.contentEl.textContent.includes("inferred"));
+  const incomplete = entityLeaf.view.contentEl.find((el) => el.attrs["data-ontomark"] === "incomplete");
+  check("panel explains why the classification is incomplete", !!incomplete && incomplete.textContent.includes("EL_NOT_IMPLEMENTED"), incomplete?.textContent);
 
   // ---- cancel-on-edit through real vault events (EXP-06) ----
   const genBefore = api.status().generation;
