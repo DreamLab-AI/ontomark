@@ -68,7 +68,8 @@ them.
     listed as divergences, used solely by the golden-parity test.
 12. **One IRI minter.** `Model::mint_iri(profile, kind, title)` is the only
     entry point; building a model never mints. It returns
-    `Result<Iri, MintRefusal>` and refuses any title an entity already has
+    `Result<Iri, MintRefusal>` with refusals `TitleTaken { existing }`,
+    `NoRule` and `IriClaimed`, and refuses any title an entity already has
     (case-insensitive, aliases included), naming the existing IRI, so a fresh
     mint can never create a second IRI beside a legacy-rule one such as
     `3-d-animation`. The 418 legacy-rule pairs are the fixture.
