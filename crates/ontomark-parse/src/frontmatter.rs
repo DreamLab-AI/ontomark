@@ -257,6 +257,15 @@ pub(crate) fn parse_block(source: &str, open: Span, content: Span, close: Span) 
         fm.state = FrontmatterState::Unsupported("document-end marker `...` in frontmatter".into());
         return fm;
     }
+    // A carriage return that is not part of CRLF is a YAML line break the
+    // line scanner does not see; lock rather than mis-span entries.
+    if text
+        .match_indices('\r')
+        .any(|(i, _)| text.as_bytes().get(i + 1) != Some(&b'\n'))
+    {
+        fm.state = FrontmatterState::Unsupported("lone carriage return in frontmatter".into());
+        return fm;
+    }
     match read_events(text) {
         Ok(Read::Empty) => {
             if !text.is_empty() {

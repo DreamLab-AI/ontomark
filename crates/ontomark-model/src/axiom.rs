@@ -187,12 +187,14 @@ impl Model {
                 p.form,
                 PredicateForm::Existential | PredicateForm::ObjectAssertion
             );
-            // A predicate IRI that is a page of another kind is not an
-            // object property: no characteristic is asserted for it.
-            let not_object = self
-                .entities
-                .get(&p.iri)
-                .is_some_and(|e| e.kind != Kind::Property(PropertyKind::Object));
+            // A predicate IRI that is a page of another kind, or that several
+            // pages claim, is not a known object property: no characteristic
+            // is asserted for it.
+            let not_object = self.conflicts.contains_key(&p.iri)
+                || self
+                    .entities
+                    .get(&p.iri)
+                    .is_some_and(|e| e.kind != Kind::Property(PropertyKind::Object));
             if p.transitive && object && !not_object && seen.insert(p.iri.clone()) {
                 out.push(SourcedAxiom {
                     axiom: Axiom::Transitive { property: p.iri },

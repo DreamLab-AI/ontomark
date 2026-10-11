@@ -13,15 +13,16 @@ use crate::value::Value;
 
 /// A value [`entry`] cannot write so that it reads back equal.
 ///
-/// Today the only case is a [`Value::Float`] whose text the reader would
-/// not type as a float (`1_0.0`, `nan`): written plain or quoted, it reads
-/// back as a string.
+/// The payload is the text that does not survive: the raw text of a
+/// [`Value::Float`] the reader would not type as a float (`1_0.0`, `nan`),
+/// or the key whose emitted entry does not read back equal under the
+/// caller's [`BlockStyle`](crate::BlockStyle).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Unrepresentable(pub String);
 
 impl std::fmt::Display for Unrepresentable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "float text `{}` does not read back as a float", self.0)
+        write!(f, "`{}` does not read back as written", self.0)
     }
 }
 
@@ -56,6 +57,19 @@ pub fn entry(key: &str, value: &Value, style: &BlockStyle) -> Result<String, Unr
     out.push_str(&scalar_text(key));
     out.push(':');
     write_value_after_key(&mut out, value, 0, style, nl);
+    // Prove the text reads back as the same key and value under a plain
+    // block. A caller-supplied style (say `map_indent: 0`) can otherwise
+    // change structure.
+    let mut probe = format!("---{nl}{out}");
+    if !out.ends_with('\n') {
+        probe.push_str(nl);
+    }
+    probe.push_str("---");
+    probe.push_str(nl);
+    let back = crate::Document::parse(&probe);
+    if back.value(key) != Some(value) || back.frontmatter().map_or(0, |f| f.entries.len()) != 1 {
+        return Err(Unrepresentable(key.to_owned()));
+    }
     Ok(out)
 }
 
