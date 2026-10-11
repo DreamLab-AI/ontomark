@@ -384,7 +384,7 @@ dependencies = [
  "indexmap 1.9.3",
  "lazy_static",
  "log",
- "oxiri",
+ "oxiri 0.2.11",
  "oxrdf",
  "oxrdfio",
  "pest",
@@ -549,7 +549,9 @@ dependencies = [
  "anyhow",
  "clap",
  "ontomark-compile",
+ "ontomark-profile-estate",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]
@@ -560,6 +562,11 @@ dependencies = [
  "hex",
  "indexmap 2.14.2",
  "ontomark-ngg1",
+ "oxiri 0.3.1",
+ "oxjsonld",
+ "oxrdf",
+ "oxrdfxml",
+ "oxttl",
  "regex",
  "serde",
  "serde_json",
@@ -624,13 +631,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54b4ed3a7192fa19f5f48f99871f2755047fabefd7f222f12a1df1773796a102"
 
 [[package]]
+name = "oxiri"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b6bd0ef560f078e41ce2ebf370cce217e7fb2c3695ffa87541151c9de94e83a"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "oxjsonld"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86a3e89e005662e60327027f45ec7cefd0472404e01831b5d83a3ac522cfabe0"
 dependencies = [
  "json-event-parser",
- "oxiri",
+ "oxiri 0.2.11",
  "oxrdf",
  "ryu-js",
  "thiserror 2.0.21",
@@ -642,9 +658,11 @@ version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4be15186205eb60ddbdc2fb47cb25df472c7f399bbe119b68c0972b6b6dd46ea"
 dependencies = [
+ "hex",
  "oxilangtag",
- "oxiri",
+ "oxiri 0.2.11",
  "rand",
+ "sha2",
  "thiserror 2.0.21",
 ]
 
@@ -668,7 +686,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71853d12051879f3e424c6864e978f5f5cbecd8e86a9817adbccaefccac9d61d"
 dependencies = [
  "oxilangtag",
- "oxiri",
+ "oxiri 0.2.11",
  "oxrdf",
  "quick-xml 0.37.5",
  "thiserror 2.0.21",
@@ -682,7 +700,7 @@ checksum = "b1d0fe19fa62a6a102f85b052bbd86e3cdc3360cd6a338d01bab1a6743bf1d8e"
 dependencies = [
  "memchr",
  "oxilangtag",
- "oxiri",
+ "oxiri 0.2.11",
  "oxrdf",
  "thiserror 2.0.21",
 ]

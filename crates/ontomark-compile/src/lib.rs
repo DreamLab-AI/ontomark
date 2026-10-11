@@ -18,6 +18,7 @@ pub mod check;
 pub mod input;
 pub mod ir;
 pub mod json;
+pub mod jsonld;
 pub mod migrate;
 /// The NGG1 graph-tier format: constants, encoder and zero-copy reader.
 pub use ontomark_ngg1 as ngg1;
