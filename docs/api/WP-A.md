@@ -42,7 +42,7 @@ let patch = Patch::new(doc.digest())
     .replace_body(span, expected_text, replacement);
 let Applied { document, receipt } = doc.apply(&patch)?;  // Result<Applied, PatchError>
 Receipt { before, after: SourceDigest, edits: Vec<Edit { op, before: Span, after: Span }>, preserved_bytes }
-PatchError::{DigestMismatch, FrontmatterLocked, AnchorNotFound, InvalidKey, Overlap, BadRange, BodyGuard, Verification}
+PatchError::{DigestMismatch, FrontmatterLocked, AnchorNotFound, InvalidKey, Unrepresentable, Overlap, BadRange, BodyGuard, Verification}
 emit_entry(key, &value, &BlockStyle) -> String; emit_scalar(&str) -> String   // house-style YAML
 ```
 
