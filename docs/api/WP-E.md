@@ -1,6 +1,9 @@
 # WP-E API: `ontomark-wasm` and the plugin worker protocol
 
-Owner: `spec-plugin`. Branch `wp-e-plugin`. Status: stable for the plugin; usable by any host (browser, Node, native Rust).
+The portable engine lives in Ontomark; the worker and vault host live in the
+[standalone plugin](https://github.com/DreamLab-AI/ontomark-obsidian).
+The released plugin 0.1.0 consumes the checksum-pinned engine prerelease.
+These protocol contracts are usable by browser, Node and native Rust hosts.
 
 ## One protocol, three surfaces
 
@@ -57,8 +60,12 @@ unsatisfiable classes below every other class.
 Host → worker: `{v: 1, epoch, id, op}` with `op` one of `init` (transferred wasm `ArrayBuffer`), `engine` (`request`), `classify` (`generation`, `budget`) or `cancel` (`target`).
 Worker → host: `reply` (`response`), `progress` (`generation`, `steps`) or `fatal` (`message`).
 
-The host owns the generation and the epoch (`plugin/src/guard.ts`). It accepts a reply only from the live epoch, at the current generation, and, for requests sent on a named channel, only the latest on that channel. A respawn posts `init` and the replay `load` back to back.
+The host owns the generation and the epoch ([plugin guard](https://github.com/DreamLab-AI/ontomark-obsidian/blob/0.1.0/src/guard.ts)). It accepts a reply only from the live epoch, at the current generation, and, for requests sent on a named channel, only the latest on that channel. A respawn posts `init` and the replay `load` back to back.
 
 ## Seams for WP-A and WP-C
 
-`profile` and `projection` (documents → entities, triples, EL axioms) are interim. They are deleted when `ontomark-model` and `ontomark-compile` publish an in-memory projection (EXP-10); the wire shapes above do not change.
+The engine's `profile` and `projection` modules currently adapt documents into
+entities, triples and EL axioms. Compiler 0.1.3 now provides the separate
+[typed in-memory projection](WP-C-TYPED.md). Replacing the engine adapters still
+requires explicit generic/estate profile mapping and native/WASM wire parity;
+this release does not claim that replacement is complete.

@@ -55,7 +55,7 @@ Each crate has its own README and inline rustdoc, including executable examples.
 | [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | Shared binary graph encoder and zero-copy reader. |
 | [ontomark-wasm](crates/ontomark-wasm) | Release asset | Worker-friendly index, update, classify, query and patch protocol. |
 | [ontomark-cli](crates/ontomark-cli) | Release asset | Native publication commands. |
-| [ontomark-graph](packages/graph) | Workspace JS package | Shared offline graph renderer, hierarchy adapter and focus traversal for desktop and web hosts. |
+| [ontomark-graph](packages/graph) | [0.1.0 release](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.1.0) | Shared offline graph renderer, hierarchy adapter and focus traversal for desktop and web hosts. |
 
 Parser, model and reasoner crates support native and `wasm32` targets. The compiler's portable feature set disables its optional native backend. The [estate profile](profiles/estate) owns DreamLab vocabulary and policy; applications can provide their own profile.
 
@@ -71,11 +71,11 @@ RUSTDOCFLAGS='-D warnings' cargo doc --locked --workspace --no-deps
 cargo build --locked -p ontomark-wasm --target wasm32-unknown-unknown --release
 ```
 
-`just check`, `just wasm-test` and `just conformance` provide the repository gates. CI checks formatting, Clippy, native tests, WASM, strict rustdoc, plugin contracts and complete Git history for secrets. The plugin tests include actual WASM/native transcript parity and an offline Obsidian API shim; that shim does not substitute for installed Obsidian acceptance.
+`just check`, `just wasm-test` and `just conformance` provide the repository gates. CI checks formatting, Clippy, native tests, compiler all/no-default-feature tests, WASM, strict rustdoc, plugin contracts and complete Git history for secrets. The plugin tests include actual WASM/native transcript parity and an offline Obsidian API shim; that shim does not substitute for installed Obsidian acceptance.
 
 ## Current limits
 
-This is experimental software. The reasoner implements a subset of OWL 2 EL and reports unsupported constructs explicitly. Dropped existential restrictions make a classification incomplete. The publication compiler still uses its legacy classification path while adoption of the shared facade is developed. General in-memory projection and additional CLI commands remain in progress.
+This is experimental software. The reasoner implements a subset of OWL 2 EL and reports unsupported constructs explicitly. Dropped existential restrictions make a classification incomplete. The native publication compiler retains its legacy estate profile semantics while using the shared reasoner. Typed in-memory projection is available through the compiler's `model-projection` feature; adopting it across estate consumers requires explicit profile and identity migration.
 
 Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surface. Public projections omit private content and sanitise links to private targets. Conformance and privacy tests record the supported behaviour; no claim of complete OWL 2 EL or universal standards conformance is made.
 
@@ -88,6 +88,7 @@ Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surfac
 - [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md): credited sources and distribution licences.
 - [Estate migration plan](docs/DEPRECATION.md) and [branch recovery](docs/BRANCH-RECOVERY.md): consumer replacements and preserved interrupted work.
 - [Run log](docs/RUNLOG.md) and [evidence](docs/evidence/resume/): reproducible checks and historical receipts.
+- [Nightly dreaming](docs/dream-cycle/README.md): native contract evaluation in the existing estate cycle, with required checks and automatic merging disabled.
 
 Maintained by [John O'Hare](https://github.com/jjohare) and [DreamLab AI](https://github.com/DreamLab-AI).
 

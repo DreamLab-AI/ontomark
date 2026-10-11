@@ -1,8 +1,10 @@
 # WP-C — compiler, profiles and CLI
 
-Status: recovered into local `main` through `resume/integration` at `21cd9ff`.
-The compiler and CLI checks pass; the portable CLI release and later API work
-remain open. Current receipts are in `docs/evidence/resume/`.
+Status: the portable CLI prerelease is published from `21cd9ff`. The recovered
+typed projection and shared native reasoner are integrated into public `main`;
+current compiler 0.1.3 is published. Current receipts are in
+`docs/evidence/resume/`; remaining consumer adoption is recorded in
+[DEPRECATION](../DEPRECATION.md).
 
 ## Crates
 
@@ -30,7 +32,7 @@ The NGG1 reader descends from `vowl-wasm` 0.1.2 (MIT); its notice is kept.
 
 ## Resume verification
 
-`just check` passes across the integrated workspace: 746 tests, 7 ignored,
+The initial recovered source at `21cd9ff` passed `just check`: 746 tests, 7 ignored,
 formatting and clippy with warnings denied. This includes the fixture parity
 tests and ten public-export privacy canaries. Previously ignored Turtle writer
 tests now run, including 400 random graph seeds per profile. Additional
@@ -48,9 +50,9 @@ portable asset also passes the same full corpus parity gate (see
 `corpus-parity-portable.log`) and builds the synthetic fixture offline on Debian 12.
 
 Compiler 0.1.1 now publishes the strict C3 marker and shared scaffold/prose
-reader contracts. Compiler 0.1.2 adds an opt-in typed/in-memory projection API
-and shared native reasoner adoption on `resume/integration`, pending its review
-and publication. See [typed API migration](WP-C-TYPED.md) for the explicit
+reader contracts. Current compiler 0.1.3 provides the opt-in typed/in-memory
+projection API and shared native reasoner. Its initial 0.1.2 release is yanked
+after correcting Unicode private-name filtering. See [typed API migration](WP-C-TYPED.md) for the explicit
 identity, privacy and supported-profile semantics.
 
 The shared native adapter at `6c040a5` also passes the full committed corpus
@@ -60,5 +62,5 @@ the typed model route has separate synthetic migration tests.
 
 Remaining estate migrations include applying the typed projection through a
 normative estate profile, the native bundle's 690 SKOS-only class declarations,
-and the remaining estate CLI commands. The typed API declares every model class
+and other estate consumer replacements. The typed API declares every model class
 as `owl:Class`; this does not claim a completed full-corpus native migration.
