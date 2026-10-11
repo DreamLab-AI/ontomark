@@ -81,6 +81,11 @@ fn load_profile(repo_root: &Path, explicit: Option<&Path>) -> anyhow::Result<Pro
     if explicit.is_some() {
         bail!("profile {} does not exist", path.display());
     }
+    eprintln!(
+        "ontomark: warning: no profile given and {} not found; using the generic profile, \
+         whose compile deltas may differ from the estate's (pass --profile)",
+        path.display()
+    );
     Ok(Profile::generic())
 }
 

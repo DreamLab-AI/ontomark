@@ -12,8 +12,16 @@ git -C visionGraph archive HEAD knowledge working ontology vault.toml ':(exclude
 
 Source commit `b5e36abd172052cfb0d1dd8a904983f604e1b641`
 (`docs(ontology): plan shared Rust/WASM core and local Obsidian tooling`),
-11,314 files in the snapshot, 11,278 pages considered (`pages/` and `journals/`
-of both vaults). Binary: `ontomark migrate` (commit `f8b7a84`) release build; profile
+11,314 markdown files in the snapshot, 11,278 pages considered (`pages/` and `journals/`
+of both vaults). 
+How it was run: `ontomark` has no `migrate` subcommand yet (main.rs is being
+edited by another worker). Plan, apply, status and rollback were driven through
+a throwaway example binary that compiled `crates/ontomark-cli/src/migrate_cmd.rs`
+unchanged and called its `run`; the example is not committed. Release build,
+LTO off, from commit `f8b7a84` plus the follow-up in the next commit. The
+`repair bodies`, `validate` and `gate` checks used the repository's `ontomark`
+binary built from a working tree that also held other workers' uncommitted
+edits, so they corroborate the result but are not pinned to a commit. Profile:
 `profiles/estate/profile.yaml`.
 
 ## 1. Plan (dry run), 2026-10-11T18:30:32Z, 11 s
@@ -35,9 +43,14 @@ migrate plan m0001-obsidian-bodies --profile profiles/estate/profile.yaml --out 
 | newly unsatisfiable classes | 0 |
 | identity changes (resource, slug, title) | 0; resources added 0, removed 0 |
 
-53 matches the 53 pages `ontomark repair bodies --vault all --check` reports on
-the same snapshot. The knowledge vault was compiled twice in memory (asserted
+`ontomark repair bodies --vault all --check` on the same pristine snapshot
+prints `11278 page(s) examined, 53 need converting` and exits 1, which agrees
+with the plan's 53. The knowledge vault was compiled twice in memory (asserted
 graph, then Whelk classification); both compiles succeeded.
+
+Run again without `--profile` (generic profile, with the stderr warning): the
+same input digest and the same zero deltas, so the profile does not change the
+result on this migration.
 
 ## 2. Apply, 2026-10-11T18:30:50Z
 

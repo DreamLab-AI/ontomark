@@ -371,7 +371,8 @@ pub struct JournalStatus {
     pub conflicts: usize,
     /// Pages restored by a rollback.
     pub restored: usize,
-    /// `complete`, `interrupted`, `rolled-back` or `rollback-partial`.
+    /// `complete`, `complete-with-conflicts`, `interrupted`, `rolled-back` or
+    /// `rollback-partial`.
     pub state: String,
 }
 
@@ -398,11 +399,30 @@ pub fn status(repo_root: &Path) -> Result<Vec<JournalStatus>, MigrateError> {
                 continue;
             }
             let events = journal::read(&dir)?;
-            let count = |f: fn(&Event) -> bool| events.iter().filter(|e| f(e)).count();
-            let intents = count(|e| matches!(e, Event::Intent { .. }));
-            let applied = count(|e| matches!(e, Event::Applied { .. }));
-            let conflicts = count(|e| matches!(e, Event::Conflict { .. }));
-            let restored = count(|e| matches!(e, Event::Restored { .. }));
+            // Distinct pages, so re-runs of one plan do not inflate the counts.
+            let paths = |f: fn(&Event) -> Option<&str>| {
+                events
+                    .iter()
+                    .filter_map(f)
+                    .collect::<BTreeSet<&str>>()
+                    .len()
+            };
+            let intents = paths(|e| match e {
+                Event::Intent { path, .. } => Some(path),
+                _ => None,
+            });
+            let applied = paths(|e| match e {
+                Event::Applied { path, .. } | Event::Recovered { path, .. } => Some(path),
+                _ => None,
+            });
+            let conflicts = paths(|e| match e {
+                Event::Conflict { path, .. } => Some(path),
+                _ => None,
+            });
+            let restored = paths(|e| match e {
+                Event::Restored { path, .. } => Some(path),
+                _ => None,
+            });
             let last_rollback = events
                 .iter()
                 .rposition(|e| matches!(e, Event::RollbackBegin { .. }));
@@ -414,8 +434,11 @@ pub fn status(repo_root: &Path) -> Result<Vec<JournalStatus>, MigrateError> {
                     Some(0) => "rolled-back",
                     _ => "rollback-partial",
                 },
-                None if matches!(events.last(), Some(Event::Complete { .. })) => "complete",
-                None => "interrupted",
+                None => match events.last() {
+                    Some(Event::Complete { conflicts: 0, .. }) => "complete",
+                    Some(Event::Complete { .. }) => "complete-with-conflicts",
+                    _ => "interrupted",
+                },
             };
             out.push(JournalStatus {
                 migration: id_dir

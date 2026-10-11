@@ -286,6 +286,77 @@ fn rollback_restores_byte_identical_originals() {
 }
 
 #[test]
+fn rollback_after_a_crash_between_rename_and_commit_restores_the_page_in_the_window() {
+    let (_d, root) = seeded();
+    let pristine = tree(&root);
+    let p = plan_m1(&root);
+    let opts = ApplyOptions {
+        stop_after: Some(2),
+        die_before_commit_record: true,
+        ..ApplyOptions::default()
+    };
+    apply_with(&root, &p, &ObsidianBodies, &opts).unwrap_err();
+    // Three pages differ from the originals: two committed, one in the window.
+    let changed = tree(&root)
+        .iter()
+        .filter(|(k, v)| pristine.get(*k) != Some(*v))
+        .count();
+    assert_eq!(changed, 3);
+
+    let j = &status(&root).unwrap()[0];
+    assert_eq!((j.intents, j.applied), (3, 2));
+    let r = rollback(&root, &j.dir).unwrap();
+    assert!(r.conflicts.is_empty(), "{:?}", r.conflicts);
+    assert_eq!(r.restored, 3);
+    assert_eq!(tree(&root), pristine);
+}
+
+#[test]
+fn a_stale_run_is_reported_as_complete_with_conflicts() {
+    let (_d, root) = seeded();
+    let p = plan_m1(&root);
+    fs::write(
+        root.join("knowledge/pages/5G.md"),
+        "---\ntype: Note\n---\nedited\n",
+    )
+    .unwrap();
+    apply(&root, &p).unwrap();
+    let s = &status(&root).unwrap()[0];
+    assert_eq!(s.state, "complete-with-conflicts");
+    assert_eq!((s.conflicts, s.applied), (1, p.changes - 1));
+}
+
+#[test]
+fn a_replan_with_nothing_to_do_reports_zero_inferred_not_unknown() {
+    let (_d, root) = seeded();
+    apply(&root, &plan_m1(&root)).unwrap();
+    let again = plan_m1(&root);
+    let i = again.deltas.inferred.expect("zero, not absent");
+    assert_eq!((i.added, i.removed), (0, 0));
+}
+
+#[test]
+fn a_syntax_migration_that_changes_the_page_iri_is_refused() {
+    let (_d, root) = seeded();
+    fn change_page_iri(s: &str) -> Option<String> {
+        s.contains("page_resource: urn:visionflow:page:5-g\n")
+            .then(|| {
+                s.replace(
+                    "page_resource: urn:visionflow:page:5-g\n",
+                    "page_resource: urn:visionflow:page:5-g-x\n",
+                )
+            })
+    }
+    let m = Edit {
+        kind: Kind::Syntax,
+        f: change_page_iri,
+    };
+    let p = plan(&root, &BOTH, &m, &profile()).unwrap();
+    assert_eq!(p.status, PlanStatus::Refused);
+    assert!(p.deltas.identity.iter().any(|c| c.field == "page_resource"));
+}
+
+#[test]
 fn rollback_refuses_a_page_edited_after_apply() {
     let (_d, root) = seeded();
     let pristine = tree(&root);

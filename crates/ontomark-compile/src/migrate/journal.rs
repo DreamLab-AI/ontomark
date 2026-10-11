@@ -112,9 +112,7 @@ impl Writer {
         let mut w = Self { file, path };
         // A crash can leave a truncated final line; terminate it so the next
         // record starts on its own line (the reader skips the damaged one).
-        if !created
-            && std::fs::read(&w.path).is_ok_and(|b| b.last().is_some_and(|c| *c != b'\n'))
-        {
+        if !created && std::fs::read(&w.path).is_ok_and(|b| b.last().is_some_and(|c| *c != b'\n')) {
             w.file
                 .write_all(b"\n")
                 .map_err(|e| MigrateError::io(&w.path, e))?;

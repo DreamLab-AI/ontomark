@@ -126,7 +126,7 @@ pub struct VisibilityChange {
 pub struct IdentityChange {
     /// Repository-relative path.
     pub path: String,
-    /// `resource`, `slug` or `title`.
+    /// `resource`, `page_resource`, `slug` or `title`.
     pub field: String,
     /// The value before.
     pub before: String,
@@ -149,7 +149,7 @@ pub struct SemanticDelta {
     pub visibility: Vec<VisibilityChange>,
     /// Classes unsatisfiable after and not before.
     pub newly_unsatisfiable: Vec<String>,
-    /// Changed resource IRIs, slugs and titles.
+    /// Changed resource IRIs, page IRIs, slugs and titles.
     pub identity: Vec<IdentityChange>,
     /// Resource IRIs present after and not before.
     pub resources_added: Vec<String>,
@@ -328,7 +328,7 @@ fn read_considered(repo_root: &Path, kinds: &[VaultKind]) -> Result<Vec<Consider
 }
 
 /// A page's identity-bearing fields and `public` flag, from its source.
-fn identity_of(vocab: &Vocabulary, rel: &str, text: &str) -> Option<(bool, [(String, String); 3])> {
+fn identity_of(vocab: &Vocabulary, rel: &str, text: &str) -> Option<(bool, [(String, String); 4])> {
     let under = rel.split_once('/').map_or(rel, |(_, r)| r);
     let id = under
         .split_once('/')
@@ -339,6 +339,10 @@ fn identity_of(vocab: &Vocabulary, rel: &str, text: &str) -> Option<(bool, [(Str
         page.is_public(),
         [
             ("resource".to_owned(), page.resource(&vocab.namespace)),
+            (
+                "page_resource".to_owned(),
+                page.frontmatter.text("page_resource").unwrap_or_default(),
+            ),
             ("slug".to_owned(), page.slug()),
             ("title".to_owned(), page.title()),
         ],
@@ -530,6 +534,11 @@ pub fn plan(
     })
 }
 
+/// A zero inferred delta, when a classifier is built in.
+fn zero_inferred() -> Option<InferredDelta> {
+    cfg!(feature = "whelk-el").then(InferredDelta::default)
+}
+
 fn semantic_delta(
     repo_root: &Path,
     vocab: &Vocabulary,
@@ -541,6 +550,7 @@ fn semantic_delta(
     let mut d = SemanticDelta::default();
     if after_text.is_empty() {
         d.compiled = true;
+        d.inferred = zero_inferred();
         d.notes
             .push("no page changes: nothing to compile".to_owned());
         return d;
@@ -601,6 +611,7 @@ fn semantic_delta(
         .collect();
     if !after_text.keys().any(|r| r.starts_with("knowledge/")) {
         d.compiled = true;
+        d.inferred = zero_inferred();
         d.notes
             .push("no knowledge page changes: ontology compile deltas are zero".to_owned());
         return d;
