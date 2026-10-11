@@ -1,107 +1,83 @@
-# Hand-off: resumed ontomark sprint
+# Ontomark: release and estate hand-off
 
-Read [the branch census](BRANCH-RECOVERY.md), [RUNLOG](RUNLOG.md),
-[ADR-OM-001](adr/ADR-OM-001-sprint-decisions.md) and
-[the removal plan](DEPRECATION.md). The older WP-D tables describe the original
-interruption; the branch census records what was recovered and what can land.
+Ontomark is the public home of the parser, typed model, supported reasoner,
+compiler, NGG1 codec and shared interactive graph. The Obsidian plugin has its
+own public repository. Narrative Goldmine consumes the same graph package.
+Read [ADR-OM-002](adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md),
+[upstream credits](UPSTREAMS.md), [branch recovery](BRANCH-RECOVERY.md) and
+[remaining removals](DEPRECATION.md).
 
-## Integrated core
+## Landed core
 
-Local `main` was fast-forwarded from `506e401` to `21cd9ff` after the recovered
-WP-B/C/D/E merges. WP-A remains the canonical parser/model. All original
-ontomark sprint refs and detached worktree tips are ancestors of this code;
-there is no omitted committed core slice.
+All recovered committed core sprint work is integrated. Compiler native
+classification now delegates to the shared reasoner. Its opt-in typed
+`model-projection` API takes a caller model/profile and explicit public or
+authoring scope, with privacy omissions and unsupported-profile refusals.
+It does not silently change the legacy estate CLI semantics.
 
-| Slice | Current state |
-|---|---|
-| WP-A model/parse | Original audited slice retained; later branch copies do not overwrite it. |
-| WP-B reasoner | Audited facade merged. Unsupported assertion/role constructs are refused; dropped existentials make classification incomplete. Partial EL capability is explicit. |
-| WP-C compiler/CLI | Public projection, alias/link privacy and Turtle writer corrections merged; JSON-LD/SHACL conformance work recovered. Legacy corpus parity passes. Shared reasoner adoption is pending. |
-| WP-D estate | Census, removal plan and guard merged. Estate migrations remain open. |
-| WP-E engine/plugin | Offline plugin merged, capability metadata corrected, JSON ordering stable with combined workspace features. Desktop Obsidian acceptance remains open. |
+Published crates include `whelk-el` 0.1.1, `ontomark-reason` 0.1.1,
+`ontomark-compile` 0.1.2 and `ontomark-ngg1` 0.1.0. The corrected Whelk
+packages preserve the Rust MIT and original Scala BSD notices. Historical
+published versions and release assets remain immutable.
 
-`ontomark-ngg1` 0.1.0 was already published from `291e0de`, with tag
-`ontomark-ngg1-v0.1.0`. The CLI prerelease `v0.1.0-rc.1` is published on GitHub with the portable binary, checksum and pinned WASM engine bundle.
+The locked workspace declares Rust 1.89. Native tests, Clippy, strict rustdoc,
+WASM builds and complete-history secret scanning pass in hosted core CI at
+`7fd8ae2` (run `38175300206`). Compiler all/no-default-feature tests, opt-in
+projection WASM compilation and locked registry package verification passed
+separately. The complete committed corpus comparison reports zero differences
+over 32 artefact lines and 12 command outputs. Its explicit compatibility
+flag is a comparison mechanism; default public exports retain privacy tests.
 
-## Verified checks
+## Releases and consumers
 
-`just check`: 746 tests passed, 7 ignored; fmt and clippy pass. Reasoner WASM:
-47 tests passed. Plugin: 17 unit tests, 4 WASM/harness tests, bundle checks and
-40 offline Docker checks passed. The Docker plugin harness uses an Obsidian
-runtime shim. Legacy fixture parity and full committed corpus parity pass;
-full corpus receipt reports zero differences over 32 artefact lines and
-12 verb outputs. Current logs are in [evidence/resume](evidence/resume/).
+| Component | Release and status |
+| --- | --- |
+| CLI | GitHub `v0.1.0-rc.1`, clean source `21cd9ff`; Linux x86-64 binary verified on Debian 12 without networking. |
+| Plugin engine | Same prerelease, SHA-256 `f810962b1b71e28653737f2cbbe3a06a5e1a8e6c059e452a2292b6af05b2023a`; embedded in the plugin. |
+| Shared renderer | `ontomark-graph-v0.1.0`, immutable npm-format tarball, SHA-256 `de491e2d7d947503d3c49c140193c88a9d17cfec5fbb334166002049c8d56aa5`. |
+| Obsidian | Separate `DreamLab-AI/ontomark-obsidian`; tested installable Linux ZIP, release publication being completed. |
+| VOWL | crates.io `vowl-wasm` 0.2.0 and GitHub browser tarball; all 17 hosted checks pass. npm trusted-publisher configuration still prevents npm registry publication. |
+| Narrative Goldmine | CLI pin already deployed at `366236b38`; shared renderer and WASM codec adoption passed 88 tests and built-browser acceptance, final deployment being monitored. |
+| Loom | Main `eef1bec`, shared C3 contracts and registry compiler 0.1.1; 441 tests, Clippy, rustdoc and hosted Rust 1.98 checks passed. ADR-142 remains partial/inactive; no first served activation claimed. |
 
-Default-redaction corpus counts, from committed visionGraph `b5e36abd1`:
-258 knowledge publication pages changed, 301 frontmatter entries removed,
-5 keys removed and 50 body links rewritten; 63 working publication pages
-changed with 195 body links rewritten; 32 mirror pages changed with 50 links.
-Public example titles: 1Hive, 1inch, 2D LiDAR. Private page bodies and target
-names are not included in the evidence bundle.
-
-## CLI release
-
-A clean source archive of `21cd9ff` was built using `rust:1.96-bookworm`.
-The resulting `ontomark-x86_64-unknown-linux-gnu` uses the ordinary Linux ELF
-loader; the local Nix release binary must not be uploaded. The portable asset
-runs and builds the synthetic fixture on Debian 12 with networking disabled.
-Its SHA-256 is
+The released CLI ELF was built with Rust 1.96.1 in the Bookworm image and uses
+the ordinary Linux loader. Its SHA-256 is
 `7b15c2858f1715e561c0889dbaa50164e5a404ee7f8ed1d6cfd9da41daeb1d45`.
+Do not replace it with the local Nix binary. Dependency licence inventories are
+scoped to the exact release assets; see UPSTREAMS and THIRD-PARTY-NOTICES.
 
-Parity of that exact asset also passes: zero differences over 32 artefact lines
-and 12 verb outputs. The release is published, and visionGraph main `366236b38`
-now pins its tag and checksum. All 17 consumer contract tests passed before the
-authorised push. Its GitHub deployment is being monitored. The owner has
-explicitly authorised pushes, repins and experimental deployment throughout
-the estate in this session; this overrides the earlier no-agent-push restriction.
+## Obsidian evidence
 
-## Estate branch work
+Installed Obsidian 1.14.4 on Linux passed real Blob-worker initialisation,
+indexing, classification, query UI, guarded edit preview/application,
+concurrent-edit refusal and unload/reload. The graph passed search, keyboard
+selection/activation, zoom, neighbourhood focus, inferred-edge filtering,
+note opening and view cleanup. Screenshots and receipts live in the plugin
+repository. The separate network-isolated shim passed 40 checks; unit tests
+passed 17 and actual WASM harness tests passed four. Mobile remains unsupported.
 
-Thirty-one estate migration branches were checked. Twenty-four dirty test/audit
-preparations were preserved as `resume/prep-*` commits without changing their
-original worktrees or indexes. WP-E historical evidence was preserved separately.
-See the census for every recovery commit and landing blocker. Preparation tests
-remain deliberately red until their consumer implementations are replaced.
+## Nightly dreaming
 
-VOWL NGG1 implementation `da21468` passes its functional gates and actual WASM
-smoke/bundle tests. Its security review was unavailable, not passed. Taxonomy is
-still preparation. Loom's Rust reloader is reconciled with its hardened CLI
-parent on `resume/reload-integration` (`739f71a`). Marker, receipt and
-concurrent-publication regressions are fixed; 61 integration tests plus one unit
-test pass with fmt/clippy. Shared typed bundle/prose/scaffold adoption now passes the parent publishing contracts;
-the build-info regression is fixed for linked worktrees. Registry repinning and final landing are in progress. VisionFlow main has diverged from origin/main and needs
-reconciliation before its diagram migration plan can land.
+[dream.config.json](../dream.config.json) nominates the canonical checkout in
+the existing 01:00–05:00 UTC cycle. Four native contract slots require workspace
+and compiler feature tests, Clippy and strict rustdoc. Automatic merging is
+disabled. Discovery/admission and the baked engine's dispatch-free dry run were
+verified; a real nightly cycle has not been claimed. Browser, Obsidian and WASM
+execution need their dedicated harnesses. See [nightly docs](dream-cycle/README.md).
 
-The guard still reports the original 876 residues. Estate completion requires
-that count to reach zero with each consumer's behavioural gates passing.
+## Remaining estate work
 
-## Next implementation work
+The broader removal plan is still open: corpus-wide typed/profile migration,
+other consumer replacements and the migration guard's original 876 residues
+are not declared complete. VisionFlow/Agentbox ADR reconciliation is part of
+this release continuation. Security agent analysis was unavailable; functional
+and dependency checks are not described as an independent security approval.
 
-After the CLI prerelease, replace compiler legacy classification with the shared
-reasoner, add the typed/in-memory projection API, declare the 690 SKOS-only
-classes as `owl:Class`, and implement the remaining CLI commands. Follow the
-consumer removal order in DEPRECATION section 9; repin importers in the same
-change as removing their old library.
+Original dirty operator worktrees, branches and private corpus content remain
+preserved. The user has explicitly authorised estate pushes, repins and
+experimental deployments; no new permission is required for those actions.
 
-Use `CARGO_TARGET_DIR` and `TMPDIR` under the roomy
-`/home/devuser/workspace/project/.git/` mount. The workspace volume is nearly full;
-`/tmp` accepts logs/data but is mounted without execution permission. Stream
-source archives into Docker rather than binding container paths on the host.
-
-## Public release continuation
-
-Core main `409cffe` includes shared typed C3 readers, crate-local READMEs and
-licences, and precise optional-backend test gates. `whelk-el` 0.1.0 and
-`ontomark-compile` 0.1.1 were published after locked package verification.
-The locked workspace requires Rust 1.89; its all-target check passed using
-the actual 1.89 toolchain. GitHub CI exposed an old distro WASM optimiser and
-a broken rustdoc link; both have fixes. Binaryen 132 is checksum-pinned.
-The licence-dependent Gitleaks action was replaced with the pinned open-source
-scanner; 109 commits scanned with no leaks after narrow review of synthetic
-fixtures and hash-pin false positives.
-
-The Obsidian plugin is being extracted to `DreamLab-AI/ontomark-obsidian`,
-with a pinned engine asset rather than a copy of the Rust workspace. VOWL 0.2.0
-adds shared WASM graph encoding/decoding and is undergoing hosted checks.
-Installed Obsidian browser-sidecar acceptance and live consumer checks remain
-part of the release work.
+Build targets and temporary executables belong under the roomy
+`/home/devuser/workspace/project` mount. `/tmp` is suitable for logs/data but
+is mounted without execution permission. Stream archives to host Docker;
+container bind paths do not address the edited container filesystem.

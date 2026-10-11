@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-11
-- Implementation: consumer acceptance and release in progress
+- Implementation: shared package0.1.0 released; real Obsidian and mounted publisher acceptance passed; consumer deployment being completed
 - Related: [ADR-OM-001](ADR-OM-001-sprint-decisions.md), [estate removal plan](../DEPRECATION.md)
 
 ## Context

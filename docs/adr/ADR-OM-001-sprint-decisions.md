@@ -154,11 +154,16 @@ them.
 
 ## Open
 
-- First release version and the exact two-release compatibility window.
-- Whether `whelk-el` is published to crates.io before or after the first
-  ontomark release.
+- Exact two-release compatibility window; initial CLI prerelease is `v0.1.0-rc.1`.
+- Remaining estate callers and adapter removals tracked in DEPRECATION; the Whelk crate is now published.
 - Mobile Obsidian support (out of scope for this sprint; desktop only).
 
 ## Shared graph and plugin distribution continuation
 
 [ADR-OM-002](ADR-OM-002-shared-graph-and-obsidian-boundary.md) updates the original directory and graph ownership decisions: the Obsidian plugin has its own public repository and installable deployment, while Ontomark owns the shared graph module consumed by both the plugin and Narrative Goldmine. The Rust/WASM graph codec remains shared through `ontomark-ngg1`; each application owns its host integration. Upstream attribution is tracked in [UPSTREAMS](../UPSTREAMS.md) with full distribution notices.
+
+## Compiler and nightly continuation
+
+The compiler now delegates legacy native classification to `ontomark-reason`; its complete committed-corpus parity receipt reports zero differences. The opt-in `model-projection` API consumes an existing typed model, explicit authoring/public scope and caller profile. It does not invent identities or silently apply the typed migration to the legacy CLI. Privacy and unsupported-profile refusals have native, no-default-feature and WASM compilation coverage. Published corrected dependencies are `whelk-el`0.1.1, `ontomark-reason`0.1.1 and `ontomark-compile`0.1.2.
+
+Ontomark joins the existing nightly Dream Machine through [dream.config.json](../../dream.config.json), with four native contract slots and mandatory workspace/compiler tests, Clippy and strict rustdoc. Automatic merging is disabled; releases, estate repins and browser/WASM acceptance remain outside nightly patch scope. See [nightly documentation](../dream-cycle/README.md).
