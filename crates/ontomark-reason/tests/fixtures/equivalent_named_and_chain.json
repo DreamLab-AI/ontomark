@@ -1,0 +1,164 @@
+{
+ "name": "equivalent_named_and_chain",
+ "source": "synthetic: equivalence and a three-link property chain",
+ "note": "",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:car"
+  },
+  {
+   "declare_class": "urn:ngm:class:automobile"
+  },
+  {
+   "declare_class": "urn:ngm:class:saloon"
+  },
+  {
+   "declare_class": "urn:ngm:class:c"
+  },
+  {
+   "declare_class": "urn:ngm:class:d"
+  },
+  {
+   "declare_class": "urn:ngm:class:e"
+  },
+  {
+   "declare_class": "urn:ngm:class:f"
+  },
+  {
+   "declare_class": "urn:ngm:class:g"
+  },
+  {
+   "equivalent_classes": [
+    {
+     "class": "urn:ngm:class:car"
+    },
+    {
+     "class": "urn:ngm:class:automobile"
+    }
+   ]
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:saloon"
+    },
+    "sup": {
+     "class": "urn:ngm:class:car"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:p"
+      },
+      "filler": {
+       "class": "urn:ngm:class:d"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:d"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:q"
+      },
+      "filler": {
+       "class": "urn:ngm:class:e"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:e"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:s"
+      },
+      "filler": {
+       "class": "urn:ngm:class:f"
+      }
+     }
+    }
+   }
+  },
+  {
+   "property_chain": {
+    "chain": [
+     {
+      "named": "urn:ngm:prop:p"
+     },
+     {
+      "named": "urn:ngm:prop:q"
+     },
+     {
+      "named": "urn:ngm:prop:s"
+     }
+    ],
+    "sup": {
+     "named": "urn:ngm:prop:t"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:t"
+      },
+      "filler": {
+       "class": "urn:ngm:class:f"
+      }
+     }
+    },
+    "sup": {
+     "class": "urn:ngm:class:g"
+    }
+   }
+  }
+ ],
+ "must_include": [
+  [
+   "urn:ngm:class:saloon",
+   "urn:ngm:class:automobile"
+  ],
+  [
+   "urn:ngm:class:automobile",
+   "urn:ngm:class:car"
+  ],
+  [
+   "urn:ngm:class:c",
+   "urn:ngm:class:g"
+  ]
+ ],
+ "must_exclude": [
+  [
+   "urn:ngm:class:d",
+   "urn:ngm:class:g"
+  ]
+ ],
+ "unsatisfiable": [],
+ "root_causes": null,
+ "refused": []
+}

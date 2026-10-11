@@ -1,6 +1,6 @@
 [package]
 name = "ontomark-reason"
-description = "ontomark: reason"
+description = "ontomark: OWL 2 EL profile check and classification facade over whelk-el"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,7 +8,27 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+# Native-only: the corpus benchmark example (reads Turtle with oxttl, times
+# classification, runs whelk-el's parallel path). Never needed by consumers.
+corpus-bench = ["dep:oxttl", "dep:oxrdf", "whelk-el/parallel"]
+
 [dependencies]
+whelk-el = { path = "../whelk-el", version = "0.1.0" }
+serde = { workspace = true }
+oxttl = { version = "0.2", optional = true }
+oxrdf = { version = "0.3", optional = true }
+
+[[example]]
+name = "corpus_bench"
+required-features = ["corpus-bench"]
+
+[dev-dependencies]
+serde_json = { workspace = true }
+sha2 = "0.10"
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = "0.3"
 
 [lints]
 workspace = true

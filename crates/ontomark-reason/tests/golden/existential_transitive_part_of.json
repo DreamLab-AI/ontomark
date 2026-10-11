@@ -1,0 +1,39 @@
+{
+  "profile": "owl2-el/whelk-el",
+  "existentials": "all",
+  "subsumptions": [
+    [
+      "urn:ngm:class:arm",
+      "urn:ngm:class:body-part"
+    ],
+    [
+      "urn:ngm:class:finger",
+      "urn:ngm:class:body-part"
+    ],
+    [
+      "urn:ngm:class:hand",
+      "urn:ngm:class:body-part"
+    ]
+  ],
+  "inferred": [
+    [
+      "urn:ngm:class:arm",
+      "urn:ngm:class:body-part"
+    ],
+    [
+      "urn:ngm:class:finger",
+      "urn:ngm:class:body-part"
+    ],
+    [
+      "urn:ngm:class:hand",
+      "urn:ngm:class:body-part"
+    ]
+  ],
+  "unsatisfiable": [],
+  "root_causes": [],
+  "disjointness_violations": [],
+  "refusals": [],
+  "classes": 5,
+  "existentials_dropped": 0,
+  "steps": 0
+}

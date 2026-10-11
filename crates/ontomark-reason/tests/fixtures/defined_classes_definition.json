@@ -1,0 +1,123 @@
+{
+ "name": "defined_classes_definition",
+ "source": "vault/tests/defined_classes.rs one_defines_as_page_yields_a_named_subsumption_absent_from_the_asserted_graph",
+ "note": "",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:robot"
+  },
+  {
+   "declare_class": "urn:ngm:class:gripper"
+  },
+  {
+   "declare_class": "urn:ngm:class:small-gripper"
+  },
+  {
+   "declare_class": "urn:ngm:class:arm"
+  },
+  {
+   "declare_class": "urn:ngm:class:gripping-robot"
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:small-gripper"
+    },
+    "sup": {
+     "class": "urn:ngm:class:gripper"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "class": "urn:ngm:class:robot"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:hasPart"
+      },
+      "filler": {
+       "class": "urn:ngm:class:small-gripper"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:relatedTo"
+      },
+      "filler": {
+       "class": "urn:ngm:class:gripper"
+      }
+     }
+    }
+   }
+  },
+  {
+   "equivalent_classes": [
+    {
+     "class": "urn:ngm:class:gripping-robot"
+    },
+    {
+     "and": [
+      {
+       "class": "urn:ngm:class:robot"
+      },
+      {
+       "some": {
+        "property": {
+         "named": "urn:ngm:prop:hasPart"
+        },
+        "filler": {
+         "class": "urn:ngm:class:gripper"
+        }
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "must_include": [
+  [
+   "urn:ngm:class:arm",
+   "urn:ngm:class:gripping-robot"
+  ],
+  [
+   "urn:ngm:class:small-gripper",
+   "urn:ngm:class:gripper"
+  ]
+ ],
+ "must_exclude": [
+  [
+   "urn:ngm:class:robot",
+   "urn:ngm:class:gripping-robot"
+  ]
+ ],
+ "unsatisfiable": [],
+ "root_causes": [],
+ "refused": []
+}

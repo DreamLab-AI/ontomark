@@ -1,0 +1,112 @@
+{
+ "name": "existential_role_hierarchy",
+ "source": "synthetic; vault/src/whelk.rs relevant_keeps_restrictions_over_sub_and_super_properties_only",
+ "note": "",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:service"
+  },
+  {
+   "declare_class": "urn:ngm:class:database"
+  },
+  {
+   "declare_class": "urn:ngm:class:storage"
+  },
+  {
+   "declare_class": "urn:ngm:class:data-dependent"
+  },
+  {
+   "declare_class": "urn:ngm:class:x"
+  },
+  {
+   "sub_property_of": {
+    "sub": {
+     "named": "urn:ngm:prop:requires"
+    },
+    "sup": {
+     "named": "urn:ngm:prop:dependsOn"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:database"
+    },
+    "sup": {
+     "class": "urn:ngm:class:storage"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:service"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:requires"
+      },
+      "filler": {
+       "class": "urn:ngm:class:database"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:x"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:relatedTo"
+      },
+      "filler": {
+       "class": "urn:ngm:class:database"
+      }
+     }
+    }
+   }
+  },
+  {
+   "equivalent_classes": [
+    {
+     "class": "urn:ngm:class:data-dependent"
+    },
+    {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:dependsOn"
+      },
+      "filler": {
+       "class": "urn:ngm:class:storage"
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "must_include": [
+  [
+   "urn:ngm:class:service",
+   "urn:ngm:class:data-dependent"
+  ]
+ ],
+ "must_exclude": [
+  [
+   "urn:ngm:class:x",
+   "urn:ngm:class:data-dependent"
+  ]
+ ],
+ "unsatisfiable": [],
+ "root_causes": null,
+ "refused": []
+}

@@ -44,10 +44,10 @@
 //!
 //! # Features
 //!
-//! * `parallel` (off by default): [`classify_parallel`] splits the input into
+//! * `parallel` (off by default): `classify_parallel` splits the input into
 //!   independent components and saturates them on the `rayon` pool. Native
 //!   only in practice; the result is identical to [`classify`].
-//! * `horned-owl` (off by default): [`owl`] converts `horned-owl` components
+//! * `horned-owl` (off by default): the `owl` module converts `horned-owl` components
 //!   into [`ElAxiom`]s. `horned-owl` does not build for
 //!   `wasm32-unknown-unknown` (its RDF stack requires `getrandom`), which is
 //!   why the core input type is this crate's own.
