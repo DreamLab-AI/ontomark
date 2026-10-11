@@ -24,5 +24,6 @@ pub mod migrate;
 pub use ontomark_ngg1 as ngg1;
 pub mod profile;
 pub mod reason;
+pub mod shacl;
 #[cfg(feature = "whelk-el")]
 pub mod whelk;
