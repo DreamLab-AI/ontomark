@@ -3,3 +3,6 @@
 
 # Migration journals hold original page bytes (possibly private pages)
 .ontomark/
+
+# Isolated, pinned Obsidian consumer checkout used by CI
+/.plugin-consumer
