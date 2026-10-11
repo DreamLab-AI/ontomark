@@ -208,3 +208,10 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   was wrong. Crude count now ~240 pages; definitive count from the resolver
   pending. Post-rc.1: writer `shorten` fixes (no divergence); 690 classes
   typed only skos:Concept get owl:Class as divergence 3 (adapters become 4).
+- 20:45 queen: `ontomark-ngg1` 0.1.0 PUBLISHED to crates.io from a clean
+  worktree of `291e0de` (tag `ontomark-ngg1-v0.1.0`). Gates run by the queen:
+  `cargo package` verified (16 files, 74.6 KiB), 31/31 tests from the extracted
+  tarball, `cargo publish --dry-run` clean. Token supplied per-command from
+  the shared cargo home (env.sh redirects CARGO_HOME to the repo-local one,
+  which holds no credentials). vowl-wasm step 5 unblocked; spec-estate told
+  to swap the pin.
