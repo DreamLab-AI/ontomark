@@ -129,3 +129,15 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   (parse) repins crates/vault in the same change; VC-54 six slugifiers, VC-55
   five PROV definitions. First release v0.1.0-rc.1 to be cut from wp-c-compile
   when compile confirms readiness.
+- 19:25 spec-compile status: reasoner swap to whelk-el leaves
+  `ontology-inferred.ttl` byte-identical (81,238 inferred pairs, 0
+  unsatisfiable); `profiles/estate` crate holds taxonomy, IRI rules and estate
+  data with a test that its tables equal the legacy constants; 386 unit tests
+  and 30 doc examples pass; `just conformance` runs the fixture comparison.
+  Five workers in flight (profile threading with one taxonomy table, NGG1
+  single owner, JSON-LD and SHACL, reversible migrate with per-page report,
+  W3C Turtle and OWL 2 EL conformance). Divergence list: 1 private-link
+  redaction (approved); 2 `--version` string (accepted); 3 two compatibility
+  adapters, off by default, when compile moves onto WP-A's model
+  (phantom parents; first-claimant IRI for the 9 multiply-claimed IRIs).
+  rc.1 sha follows profile threading, redaction, Codex audit.
