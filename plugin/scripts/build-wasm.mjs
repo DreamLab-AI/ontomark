@@ -17,6 +17,12 @@ const cargoHome =
   [resolve(root, ".cargo-home"), resolve(root, "../ontomark/.cargo-home")].find((p) => existsSync(p)) ??
   process.env.CARGO_HOME;
 const env = { ...process.env, CARGO_HOME: cargoHome };
+// Older distro optimisers can cap wasm-bindgen's growable externref table.
+// Keep the optimiser used locally and in CI reproducible.
+const optimizer = execFileSync("wasm-opt", ["--version"], { encoding: "utf8" }).trim();
+if (optimizer !== "wasm-opt version 132") {
+  throw new Error(`Binaryen 132 required, found ${optimizer}`);
+}
 run("cargo", ["build", "-p", "ontomark-wasm", "--target", "wasm32-unknown-unknown", "--release"], { env });
 const target = resolve(root, process.env.CARGO_TARGET_DIR ?? "target");
 const wasm = join(target, "wasm32-unknown-unknown/release/ontomark_wasm.wasm");
