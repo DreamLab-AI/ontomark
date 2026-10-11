@@ -1,0 +1,132 @@
+{
+  "profile": "owl2-el/whelk-el",
+  "existentials": "all",
+  "subsumptions": [
+    [
+      "urn:ngm:class:c",
+      "urn:ngm:class:d"
+    ]
+  ],
+  "inferred": [
+    [
+      "urn:ngm:class:c",
+      "urn:ngm:class:d"
+    ]
+  ],
+  "unsatisfiable": [],
+  "root_causes": [],
+  "disjointness_violations": [],
+  "refusals": [
+    {
+      "index": 2,
+      "kind": "outside_el",
+      "construct": "ObjectAllValuesFrom",
+      "reason": "OWL 2 EL has no universal restriction; use an existential (ObjectSomeValuesFrom) if that is what is meant"
+    },
+    {
+      "index": 3,
+      "kind": "outside_el",
+      "construct": "ObjectExactCardinality",
+      "reason": "OWL 2 EL has no cardinality restrictions; a minimum of one is an existential (ObjectSomeValuesFrom)"
+    },
+    {
+      "index": 4,
+      "kind": "outside_el",
+      "construct": "ObjectMinCardinality",
+      "reason": "OWL 2 EL has no cardinality restrictions; a minimum of one is an existential (ObjectSomeValuesFrom)"
+    },
+    {
+      "index": 5,
+      "kind": "outside_el",
+      "construct": "ObjectMaxCardinality",
+      "reason": "OWL 2 EL has no cardinality restrictions; a minimum of one is an existential (ObjectSomeValuesFrom)"
+    },
+    {
+      "index": 6,
+      "kind": "outside_el",
+      "construct": "ObjectOneOf",
+      "reason": "OWL 2 EL allows an enumeration of exactly one individual"
+    },
+    {
+      "index": 7,
+      "kind": "outside_el",
+      "construct": "DisjointObjectProperties",
+      "reason": "OWL 2 EL has no disjoint object properties"
+    },
+    {
+      "index": 8,
+      "kind": "outside_el",
+      "construct": "InverseObjectProperties",
+      "reason": "OWL 2 EL has no inverse properties; keep the inverse as an annotation hint"
+    },
+    {
+      "index": 9,
+      "kind": "outside_el",
+      "construct": "ObjectInverseOf",
+      "reason": "OWL 2 EL has no inverse properties; state the property in the forward direction"
+    },
+    {
+      "index": 10,
+      "kind": "outside_el",
+      "construct": "ObjectComplementOf",
+      "reason": "OWL 2 EL has no negation; state disjointness with DisjointClasses instead"
+    },
+    {
+      "index": 11,
+      "kind": "outside_el",
+      "construct": "SymmetricObjectProperty",
+      "reason": "OWL 2 EL has no symmetric properties; assert both directions where both hold"
+    },
+    {
+      "index": 12,
+      "kind": "outside_el",
+      "construct": "ObjectUnionOf",
+      "reason": "OWL 2 EL has no disjunction; give each alternative its own subclass axiom"
+    },
+    {
+      "index": 13,
+      "kind": "outside_el",
+      "construct": "DisjointUnion",
+      "reason": "OWL 2 EL has no disjunction, so no disjoint union; use subclass and DisjointClasses axioms"
+    },
+    {
+      "index": 14,
+      "kind": "outside_el",
+      "construct": "FunctionalObjectProperty",
+      "reason": "OWL 2 EL has no functional object properties"
+    },
+    {
+      "index": 15,
+      "kind": "not_implemented",
+      "construct": "ObjectPropertyRange",
+      "reason": "ranges are OWL 2 EL but whelk-el does not implement them; the range is not used for classification"
+    },
+    {
+      "index": 16,
+      "kind": "not_implemented",
+      "construct": "ReflexiveObjectProperty",
+      "reason": "reflexivity is OWL 2 EL but whelk-el does not implement it"
+    },
+    {
+      "index": 17,
+      "kind": "not_implemented",
+      "construct": "ObjectHasSelf",
+      "reason": "self restrictions are OWL 2 EL but whelk-el does not implement them"
+    },
+    {
+      "index": 18,
+      "kind": "not_implemented",
+      "construct": "DataPropertyRange",
+      "reason": "whelk-el reasons over object properties only; data-property axioms are not implemented"
+    },
+    {
+      "index": 19,
+      "kind": "not_implemented",
+      "construct": "DataSomeValuesFrom",
+      "reason": "whelk-el reasons over object properties only; data-property class expressions are not implemented"
+    }
+  ],
+  "classes": 2,
+  "existentials_dropped": 0,
+  "steps": 0
+}

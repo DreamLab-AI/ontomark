@@ -1,0 +1,81 @@
+{
+ "name": "disjointness_through_existential_filler",
+ "source": "synthetic: an unsatisfiable filler makes the restricted class unsatisfiable (the whelk-rs rule_bottom_left defect)",
+ "note": "",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:c"
+  },
+  {
+   "declare_class": "urn:ngm:class:d"
+  },
+  {
+   "declare_class": "urn:ngm:class:a"
+  },
+  {
+   "declare_class": "urn:ngm:class:b"
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:hasPart"
+      },
+      "filler": {
+       "class": "urn:ngm:class:d"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:d"
+    },
+    "sup": {
+     "class": "urn:ngm:class:a"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:d"
+    },
+    "sup": {
+     "class": "urn:ngm:class:b"
+    }
+   }
+  },
+  {
+   "disjoint_classes": [
+    {
+     "class": "urn:ngm:class:a"
+    },
+    {
+     "class": "urn:ngm:class:b"
+    }
+   ]
+  }
+ ],
+ "must_include": [],
+ "must_exclude": [],
+ "unsatisfiable": [
+  "urn:ngm:class:c",
+  "urn:ngm:class:d"
+ ],
+ "root_causes": [
+  "urn:ngm:class:c",
+  "urn:ngm:class:d"
+ ],
+ "refused": []
+}

@@ -1,0 +1,51 @@
+{
+  "profile": "owl2-el/whelk-el",
+  "existentials": "all",
+  "subsumptions": [
+    [
+      "urn:ngm:class:automobile",
+      "urn:ngm:class:car"
+    ],
+    [
+      "urn:ngm:class:c",
+      "urn:ngm:class:g"
+    ],
+    [
+      "urn:ngm:class:car",
+      "urn:ngm:class:automobile"
+    ],
+    [
+      "urn:ngm:class:saloon",
+      "urn:ngm:class:automobile"
+    ],
+    [
+      "urn:ngm:class:saloon",
+      "urn:ngm:class:car"
+    ]
+  ],
+  "inferred": [
+    [
+      "urn:ngm:class:automobile",
+      "urn:ngm:class:car"
+    ],
+    [
+      "urn:ngm:class:c",
+      "urn:ngm:class:g"
+    ],
+    [
+      "urn:ngm:class:car",
+      "urn:ngm:class:automobile"
+    ],
+    [
+      "urn:ngm:class:saloon",
+      "urn:ngm:class:automobile"
+    ]
+  ],
+  "unsatisfiable": [],
+  "root_causes": [],
+  "disjointness_violations": [],
+  "refusals": [],
+  "classes": 8,
+  "existentials_dropped": 0,
+  "steps": 0
+}

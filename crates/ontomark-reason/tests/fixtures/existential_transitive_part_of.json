@@ -1,0 +1,125 @@
+{
+ "name": "existential_transitive_part_of",
+ "source": "synthetic",
+ "note": "",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:finger"
+  },
+  {
+   "declare_class": "urn:ngm:class:hand"
+  },
+  {
+   "declare_class": "urn:ngm:class:arm"
+  },
+  {
+   "declare_class": "urn:ngm:class:body"
+  },
+  {
+   "declare_class": "urn:ngm:class:body-part"
+  },
+  {
+   "characteristic": {
+    "property": {
+     "named": "urn:ngm:prop:partOf"
+    },
+    "characteristic": "transitive"
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:finger"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:partOf"
+      },
+      "filler": {
+       "class": "urn:ngm:class:hand"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:hand"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:partOf"
+      },
+      "filler": {
+       "class": "urn:ngm:class:arm"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:partOf"
+      },
+      "filler": {
+       "class": "urn:ngm:class:body"
+      }
+     }
+    }
+   }
+  },
+  {
+   "equivalent_classes": [
+    {
+     "class": "urn:ngm:class:body-part"
+    },
+    {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:partOf"
+      },
+      "filler": {
+       "class": "urn:ngm:class:body"
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "must_include": [
+  [
+   "urn:ngm:class:finger",
+   "urn:ngm:class:body-part"
+  ],
+  [
+   "urn:ngm:class:hand",
+   "urn:ngm:class:body-part"
+  ],
+  [
+   "urn:ngm:class:arm",
+   "urn:ngm:class:body-part"
+  ]
+ ],
+ "must_exclude": [
+  [
+   "urn:ngm:class:body",
+   "urn:ngm:class:body-part"
+  ]
+ ],
+ "unsatisfiable": [],
+ "root_causes": null,
+ "refused": []
+}

@@ -1,0 +1,137 @@
+{
+ "name": "two_independent_clashes",
+ "source": "vault/src/whelk.rs two_independent_clashes_are_two_root_causes",
+ "note": "",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:parent"
+  },
+  {
+   "declare_class": "urn:ngm:class:a"
+  },
+  {
+   "declare_class": "urn:ngm:class:b"
+  },
+  {
+   "declare_class": "urn:ngm:class:p"
+  },
+  {
+   "declare_class": "urn:ngm:class:q"
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:a"
+    },
+    "sup": {
+     "class": "urn:ngm:class:parent"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:b"
+    },
+    "sup": {
+     "class": "urn:ngm:class:parent"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:p"
+    },
+    "sup": {
+     "class": "urn:ngm:class:a"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:p"
+    },
+    "sup": {
+     "class": "urn:ngm:class:b"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:q"
+    },
+    "sup": {
+     "class": "urn:ngm:class:p"
+    }
+   }
+  },
+  {
+   "disjoint_classes": [
+    {
+     "class": "urn:ngm:class:a"
+    },
+    {
+     "class": "urn:ngm:class:b"
+    }
+   ]
+  },
+  {
+   "declare_class": "urn:ngm:class:x"
+  },
+  {
+   "declare_class": "urn:ngm:class:y"
+  },
+  {
+   "declare_class": "urn:ngm:class:z"
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:z"
+    },
+    "sup": {
+     "class": "urn:ngm:class:x"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:z"
+    },
+    "sup": {
+     "class": "urn:ngm:class:y"
+    }
+   }
+  },
+  {
+   "disjoint_classes": [
+    {
+     "class": "urn:ngm:class:x"
+    },
+    {
+     "class": "urn:ngm:class:y"
+    }
+   ]
+  }
+ ],
+ "must_include": [],
+ "must_exclude": [],
+ "unsatisfiable": [
+  "urn:ngm:class:p",
+  "urn:ngm:class:q",
+  "urn:ngm:class:z"
+ ],
+ "root_causes": [
+  "urn:ngm:class:p",
+  "urn:ngm:class:z"
+ ],
+ "refused": []
+}

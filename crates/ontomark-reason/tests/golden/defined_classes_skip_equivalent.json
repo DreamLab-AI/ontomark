@@ -1,0 +1,31 @@
+{
+  "profile": "owl2-el/whelk-el",
+  "existentials": "all",
+  "subsumptions": [
+    [
+      "urn:ngm:class:arm",
+      "urn:ngm:class:robot"
+    ],
+    [
+      "urn:ngm:class:gripping-robot",
+      "urn:ngm:class:robot"
+    ],
+    [
+      "urn:ngm:class:small-gripper",
+      "urn:ngm:class:gripper"
+    ]
+  ],
+  "inferred": [
+    [
+      "urn:ngm:class:gripping-robot",
+      "urn:ngm:class:robot"
+    ]
+  ],
+  "unsatisfiable": [],
+  "root_causes": [],
+  "disjointness_violations": [],
+  "refusals": [],
+  "classes": 5,
+  "existentials_dropped": 0,
+  "steps": 0
+}

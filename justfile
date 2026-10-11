@@ -24,3 +24,12 @@ exp03 corpus="../visionGraph/knowledge/pages":
 # WP-E: plugin build and acceptance (wasm, unit, parity, static, offline in docker --network none)
 plugin:
     cd plugin && npm ci --include=dev && npm run build && npm test && npm run test:wasm && npm run check:bundle && npm run test:offline
+
+# EXP-01/EXP-06 on wasm32 under Node; the runner (wasm-bindgen-test-runner
+# 0.2.127) must match the locked wasm-bindgen.
+wasm-test *ARGS:
+    CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER=wasm-bindgen-test-runner cargo test -p whelk-el -p ontomark-reason --target wasm32-unknown-unknown {{ARGS}}
+
+# EXP-01 native; then compare the `EXP-01 <name> sha256=` lines with `just wasm-test -- --nocapture`.
+exp01:
+    cargo test -p ontomark-reason --test exp01 -- --nocapture

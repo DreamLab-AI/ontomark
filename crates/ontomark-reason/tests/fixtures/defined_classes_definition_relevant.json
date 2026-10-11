@@ -1,0 +1,114 @@
+{
+ "name": "defined_classes_definition_relevant",
+ "source": "vault/tests/defined_classes.rs + vault/src/whelk.rs relevant_and_include_give_the_same_closure_and_skip_loses_the_entailment",
+ "note": "relatedTo restriction is dropped (existentials_dropped=1); entailments equal the 'all' fixture",
+ "options": {
+  "existentials": "relevant",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:robot"
+  },
+  {
+   "declare_class": "urn:ngm:class:gripper"
+  },
+  {
+   "declare_class": "urn:ngm:class:small-gripper"
+  },
+  {
+   "declare_class": "urn:ngm:class:arm"
+  },
+  {
+   "declare_class": "urn:ngm:class:gripping-robot"
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:small-gripper"
+    },
+    "sup": {
+     "class": "urn:ngm:class:gripper"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "class": "urn:ngm:class:robot"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:hasPart"
+      },
+      "filler": {
+       "class": "urn:ngm:class:small-gripper"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:relatedTo"
+      },
+      "filler": {
+       "class": "urn:ngm:class:gripper"
+      }
+     }
+    }
+   }
+  },
+  {
+   "equivalent_classes": [
+    {
+     "class": "urn:ngm:class:gripping-robot"
+    },
+    {
+     "and": [
+      {
+       "class": "urn:ngm:class:robot"
+      },
+      {
+       "some": {
+        "property": {
+         "named": "urn:ngm:prop:hasPart"
+        },
+        "filler": {
+         "class": "urn:ngm:class:gripper"
+        }
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "must_include": [
+  [
+   "urn:ngm:class:arm",
+   "urn:ngm:class:gripping-robot"
+  ]
+ ],
+ "must_exclude": [],
+ "unsatisfiable": [],
+ "root_causes": null,
+ "refused": []
+}

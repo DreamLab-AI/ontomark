@@ -1,0 +1,78 @@
+{
+ "name": "defined_class_intersection_of_named",
+ "source": "synthetic; vault/src/whelk.rs named-only definition",
+ "note": "",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:a"
+  },
+  {
+   "declare_class": "urn:ngm:class:b"
+  },
+  {
+   "declare_class": "urn:ngm:class:ab"
+  },
+  {
+   "declare_class": "urn:ngm:class:c"
+  },
+  {
+   "equivalent_classes": [
+    {
+     "class": "urn:ngm:class:ab"
+    },
+    {
+     "and": [
+      {
+       "class": "urn:ngm:class:a"
+      },
+      {
+       "class": "urn:ngm:class:b"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "class": "urn:ngm:class:a"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "class": "urn:ngm:class:b"
+    }
+   }
+  }
+ ],
+ "must_include": [
+  [
+   "urn:ngm:class:c",
+   "urn:ngm:class:ab"
+  ],
+  [
+   "urn:ngm:class:ab",
+   "urn:ngm:class:a"
+  ],
+  [
+   "urn:ngm:class:ab",
+   "urn:ngm:class:b"
+  ]
+ ],
+ "must_exclude": [],
+ "unsatisfiable": [],
+ "root_causes": null,
+ "refused": []
+}
