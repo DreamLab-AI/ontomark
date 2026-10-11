@@ -44,7 +44,13 @@ writer `shorten` fixes, the in-memory projection API for WP-E, then
 ## WP-D: landing Phase 2
 
 Each `ontomark/<responsibility>` branch in each estate repo has a red
-consumer test. Order is `docs/DEPRECATION.md` section 9. First to land:
+consumer test. Round-one Codex audits failed all 29 (the tests checked
+spelling, not behaviour); fix workers are rewriting them to parse manifests,
+strip comments, never self-scan, and carry a mutation suite. The visionGraph
+branches live only in the worktrees under `~/workspace/wt-ontomark/`; the
+repo rule forbids agents pushing visionGraph, so the owner pushes those.
+VisionClaw branches push to remote `dreamlab-github`. See
+`docs/HANDOFF-WP-D.md` on `wp-d-estate` for the per-branch table. Order is `docs/DEPRECATION.md` section 9. First to land:
 visionGraph `ontomark/publish-cli` (`ea812a287`): fill
 `ONTOMARK_RELEASE_TAG` and `ONTOMARK_SHA256` from rc.1, run its contract
 test (11 of 11), push visionGraph, watch the deploy. Done when
