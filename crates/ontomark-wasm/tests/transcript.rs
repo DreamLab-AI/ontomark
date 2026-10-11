@@ -182,9 +182,9 @@ fn transcript_semantics() {
     assert_eq!(step(&l, 17)["error"]["code"], "stale_base");
     assert_eq!(step(&l, 18)["error"]["code"], "patch_refused");
     // Delete: Rex's types vanish from every dataset.
-    assert_eq!(step(&l, 21)["result"]["rows"].as_array().unwrap().len(), 0);
+    assert_eq!(step(&l, 23)["result"]["rows"].as_array().unwrap().len(), 0);
     // Rename keeps resolution by stem: Dog still reaches Animal through Mammal.
-    let renamed = step(&l, 23);
+    let renamed = step(&l, 25);
     let subs = renamed["result"]["classification"]["subsumptions"]
         .as_array()
         .unwrap();
@@ -193,9 +193,17 @@ fn transcript_semantics() {
         .any(|s| s["sub"] == "urn:ontomark:page:Ontology/Dog"
             && s["sup"] == "urn:ontomark:page:Ontology/Animal"));
     // EXP-05: estate profile refuses pages without `resource`.
-    let estate = step(&l, 25);
+    let estate = step(&l, 27);
     assert_eq!(estate["result"]["entities"].as_array().unwrap().len(), 0);
-    assert_eq!(step(&l, 26)["error"]["code"], "bad_request");
+    assert_eq!(step(&l, 28)["error"]["code"], "bad_request");
+    // Frontmatter read: values in the parse crate's wire form; absent block reported.
+    let fm = step(&l, 19);
+    assert_eq!(fm["result"]["entries"][2]["key"], "aliases");
+    assert_eq!(
+        fm["result"]["entries"][2]["value"],
+        json!({"t": "seq", "v": [{"t": "string", "v": "Creature"}]})
+    );
+    assert_eq!(step(&l, 20)["result"]["state"], "absent");
 }
 
 #[test]

@@ -26,7 +26,7 @@ use crate::profile::ProfileId;
 use crate::projection::{self, owl, Compiled};
 use crate::query::{self, DatasetSelection, WireTerm};
 use crate::reason::{Classification, Progress, Reasoner, ReasonerRun, ToldClosure};
-use crate::text::{unified_diff, TripleSet};
+use crate::text::{unified_diff, HostSpan, TripleSet};
 
 /// Default number of reasoner work units per classify step.
 pub const DEFAULT_STEP_BUDGET: u64 = 256;
@@ -118,6 +118,13 @@ pub enum Request {
     Classify {
         /// Current generation.
         generation: u64,
+    },
+    /// One page's parsed frontmatter (read-only), for building patch operations.
+    Frontmatter {
+        /// Current generation.
+        generation: u64,
+        /// Path.
+        path: String,
     },
     /// Run a read-only SPARQL query.
     Query {
@@ -305,6 +312,9 @@ impl Engine {
                 e.classified = None;
                 e.step(Some(u64::MAX))
             }),
+            Request::Frontmatter { generation, path } => {
+                self.read(generation, |e| e.frontmatter(&path))
+            }
             Request::Query {
                 generation,
                 sparql,
@@ -405,6 +415,12 @@ impl Engine {
         let c = self.compiled();
         Ok(json!({
             "profile": profile,
+            "keys": {
+                "type": profile.profile().type_key,
+                "iri": profile.profile().iri_key,
+                "subclass": profile.profile().subclass_keys[0],
+                "instance": profile.profile().instance_keys[0],
+            },
             "documents": documents,
             "entities": c.entities,
             "triples": c.triples.len(),
@@ -413,6 +429,36 @@ impl Engine {
             "reasoner": reasoner,
             "classification": classification,
         }))
+    }
+
+    fn frontmatter(&self, path: &str) -> Result<Json, WireError> {
+        let doc = self
+            .docs
+            .get(path)
+            .ok_or_else(|| wire("not_found", format!("no document {path}")))?;
+        let source = doc.source();
+        let (state, entries) = match doc.frontmatter() {
+            None => (json!("absent"), Vec::new()),
+            Some(fm) => {
+                let entries = fm
+                    .entries
+                    .iter()
+                    .map(|e| {
+                        json!({
+                            "key": e.key,
+                            "value": e.value,
+                            "span": HostSpan::of(source, e.span.start, e.span.end),
+                        })
+                    })
+                    .collect();
+                let state =
+                    serde_json::to_value(&fm.state).map_err(|e| wire("internal", e.to_string()))?;
+                (state, entries)
+            }
+        };
+        Ok(
+            json!({ "path": path, "digest": doc.digest().to_string(), "state": state, "entries": entries }),
+        )
     }
 
     fn describe(&mut self, iri: &str) -> Result<Json, WireError> {

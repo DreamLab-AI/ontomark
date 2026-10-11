@@ -20,3 +20,7 @@ doc:
 # EXP-03: lossless round-trip over every public page of a vault (read-only).
 exp03 corpus="../visionGraph/knowledge/pages":
     ONTOMARK_CORPUS={{corpus}} cargo test --release -p ontomark-parse --test exp03_corpus -- --nocapture
+
+# WP-E: plugin build and acceptance (wasm, unit, parity, static, offline in docker --network none)
+plugin:
+    cd plugin && npm ci --include=dev && npm run build && npm test && npm run test:wasm && npm run check:bundle && npm run test:offline

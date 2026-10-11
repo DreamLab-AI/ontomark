@@ -18,6 +18,8 @@
   {"kind": "propose_patch", "generation": 2, "path": "Ontology/Animal.md", "base_digest": "@digest", "ops": [{"op": "set", "key": "description", "value": {"t": "string", "v": "Living organism — révisé"}}, {"op": "set", "key": "subclass-of", "value": {"t": "seq", "v": [{"t": "string", "v": "[[Thing]]"}]}}]},
   {"kind": "propose_patch", "generation": 2, "path": "Ontology/Animal.md", "base_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "ops": []},
   {"kind": "propose_patch", "generation": 2, "path": "Broken.md", "base_digest": "@digest", "ops": [{"op": "set", "key": "type", "value": {"t": "string", "v": "class"}}]},
+  {"kind": "frontmatter", "generation": 2, "path": "Ontology/Animal.md"},
+  {"kind": "frontmatter", "generation": 2, "path": "Welcome.md"},
   {"kind": "remove", "generation": 3, "path": "People/Rex.md"},
   {"kind": "classify", "generation": 3},
   {"kind": "query", "generation": 3, "dataset": "combined", "sparql": "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?t WHERE { ?rex rdfs:label \"Rex\" . ?rex a ?t }"},
