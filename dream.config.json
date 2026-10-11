@@ -1,0 +1,60 @@
+{
+  "repo": "DreamLab-AI/ontomark",
+  "slots": [
+    {
+      "deep": "typed-identity",
+      "scan": ["crates/ontomark-parse/", "crates/ontomark-model/", "profiles/estate/", "docs/api/"]
+    },
+    {
+      "deep": "public-projection",
+      "scan": ["crates/ontomark-compile/src/projection.rs", "crates/ontomark-compile/src/build/", "crates/ontomark-compile/tests/model_projection.rs", "crates/ontomark-cli/tests/exp04_private_canary.rs"]
+    },
+    {
+      "deep": "reasoning-contract",
+      "scan": ["crates/ontomark-reason/", "crates/ontomark-compile/src/reason.rs", "crates/ontomark-compile/src/whelk.rs", "crates/whelk-el/", "docs/api/WP-C-TYPED.md"]
+    },
+    {
+      "deep": "bundle-and-rdf",
+      "scan": ["crates/ontomark-compile/src/bundle.rs", "crates/ontomark-compile/tests/bundle_contract.rs", "crates/ontomark-compile/tests/w3c_turtle.rs", "crates/ontomark-compile/tests/jsonld_matches_turtle.rs", "conformance/"]
+    }
+  ],
+  "buildStep": {
+    "cmd": "cargo build --locked --workspace",
+    "degradeOnWasmFailure": false
+  },
+  "evaluatorEntrypoints": {
+    "workspace-tests": {
+      "cmd": "cargo test --locked --workspace",
+      "required": true,
+      "timeoutSecs": 1800
+    },
+    "compiler-feature-tests": {
+      "cmd": "cargo test --locked -p ontomark-compile --all-features && cargo test --locked -p ontomark-compile --no-default-features",
+      "required": true,
+      "timeoutSecs": 1800
+    },
+    "compiler-lints": {
+      "cmd": "cargo clippy --locked -p ontomark-compile --all-features --all-targets -- -D warnings && cargo clippy --locked -p ontomark-compile --no-default-features --all-targets -- -D warnings",
+      "required": true,
+      "timeoutSecs": 1800
+    },
+    "compiler-rustdoc": {
+      "cmd": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p ontomark-compile --all-features --no-deps",
+      "required": true,
+      "timeoutSecs": 900
+    }
+  },
+  "annexeInclude": [],
+  "adrConvention": "ADR-OM-NNN",
+  "extraDisciplines": [
+    "Change only Ontomark-owned parser, model, profile, compiler, RDF and supported reasoner contracts. Hand off Loom ingestion/runtime/scaffolding, VisionGraph page governance, VisionClaw deployment, Agentbox scheduling and VisionFlow integration to their owning repositories.",
+    "Browser, Obsidian plugin and wasm32 execution changes require their dedicated acceptance harness; hand off those hypotheses rather than treating these native Rust evaluators as browser or WebAssembly execution evidence.",
+    "Use committed synthetic and standards fixtures only. Do not archive, quote, copy or add private estate page bodies, credentials or generated private bundles to reports or patches.",
+    "Preserve explicit legacy CLI compatibility. Typed-model migration deviations require a failing witness, documented semantics and consumer migration evidence; no phantom identities, silently fabricated defaults or unsupported-profile success claims.",
+    "Preserve dependency licence notices. Do not publish crates, release tags, repin consumers or deploy as part of a nightly patch. Accepted patches require human review and merge."
+  ],
+  "ledgerPath": "docs/dream-cycle/LEDGER.md",
+  "branchPrefix": "dream/",
+  "labels": ["dream-machine", "ontomark"],
+  "autoMerge": false
+}
