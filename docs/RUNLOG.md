@@ -141,3 +141,12 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   adapters, off by default, when compile moves onto WP-A's model
   (phantom parents; first-claimant IRI for the 9 multiply-claimed IRIs).
   rc.1 sha follows profile threading, redaction, Codex audit.
+- 19:32 spec-model: review cycle one closed (`177e5b9`, `2b99203`, pushed
+  through `4cc0810`): 11 confirmed defects fixed with regression tests proven
+  red on old code; corpus results unchanged (9,244/9,244 round-trip, 163,645
+  entries, 20,180 unresolved). New finding: 418 existing `urn:ngm:class:` IRIs
+  follow an older slug rule (`2-d-li-dar`), so a fresh mint for an existing
+  title could create a second IRI. Queen decision: mint_iri refuses when any
+  existing IRI already maps to the same title (case-insensitive title index),
+  returning None with the existing IRI named; the 418 become the fixture.
+  Codex audit still to run on this slice (channel restored 19:12).
