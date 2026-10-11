@@ -1,0 +1,90 @@
+{
+ "name": "defined_classes_without_definition",
+ "source": "vault/tests/defined_classes.rs without_the_definition_the_corpus_reasons_with_skip_and_derives_nothing_new",
+ "note": "",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:robot"
+  },
+  {
+   "declare_class": "urn:ngm:class:gripper"
+  },
+  {
+   "declare_class": "urn:ngm:class:small-gripper"
+  },
+  {
+   "declare_class": "urn:ngm:class:arm"
+  },
+  {
+   "declare_class": "urn:ngm:class:gripping-robot"
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:small-gripper"
+    },
+    "sup": {
+     "class": "urn:ngm:class:gripper"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "class": "urn:ngm:class:robot"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:hasPart"
+      },
+      "filler": {
+       "class": "urn:ngm:class:small-gripper"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:relatedTo"
+      },
+      "filler": {
+       "class": "urn:ngm:class:gripper"
+      }
+     }
+    }
+   }
+  }
+ ],
+ "must_include": [],
+ "must_exclude": [
+  [
+   "urn:ngm:class:arm",
+   "urn:ngm:class:gripping-robot"
+  ]
+ ],
+ "unsatisfiable": [],
+ "root_causes": [],
+ "refused": []
+}

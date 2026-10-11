@@ -1,0 +1,67 @@
+{
+  "profile": "owl2-el/whelk-el",
+  "existentials": "all",
+  "subsumptions": [
+    [
+      "urn:ngm:class:a",
+      "urn:ngm:class:parent"
+    ],
+    [
+      "urn:ngm:class:b",
+      "urn:ngm:class:parent"
+    ],
+    [
+      "urn:ngm:class:p",
+      "urn:ngm:class:a"
+    ],
+    [
+      "urn:ngm:class:p",
+      "urn:ngm:class:b"
+    ],
+    [
+      "urn:ngm:class:p",
+      "urn:ngm:class:parent"
+    ],
+    [
+      "urn:ngm:class:q",
+      "urn:ngm:class:a"
+    ],
+    [
+      "urn:ngm:class:q",
+      "urn:ngm:class:b"
+    ],
+    [
+      "urn:ngm:class:q",
+      "urn:ngm:class:p"
+    ],
+    [
+      "urn:ngm:class:q",
+      "urn:ngm:class:parent"
+    ]
+  ],
+  "inferred": [
+    [
+      "urn:ngm:class:p",
+      "urn:ngm:class:parent"
+    ],
+    [
+      "urn:ngm:class:q",
+      "urn:ngm:class:a"
+    ],
+    [
+      "urn:ngm:class:q",
+      "urn:ngm:class:b"
+    ],
+    [
+      "urn:ngm:class:q",
+      "urn:ngm:class:parent"
+    ]
+  ],
+  "unsatisfiable": [],
+  "root_causes": [],
+  "disjointness_violations": [],
+  "refusals": [],
+  "classes": 5,
+  "existentials_dropped": 0,
+  "steps": 0
+}

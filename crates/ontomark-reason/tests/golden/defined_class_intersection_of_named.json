@@ -1,0 +1,47 @@
+{
+  "profile": "owl2-el/whelk-el",
+  "existentials": "all",
+  "subsumptions": [
+    [
+      "urn:ngm:class:ab",
+      "urn:ngm:class:a"
+    ],
+    [
+      "urn:ngm:class:ab",
+      "urn:ngm:class:b"
+    ],
+    [
+      "urn:ngm:class:c",
+      "urn:ngm:class:a"
+    ],
+    [
+      "urn:ngm:class:c",
+      "urn:ngm:class:ab"
+    ],
+    [
+      "urn:ngm:class:c",
+      "urn:ngm:class:b"
+    ]
+  ],
+  "inferred": [
+    [
+      "urn:ngm:class:ab",
+      "urn:ngm:class:a"
+    ],
+    [
+      "urn:ngm:class:ab",
+      "urn:ngm:class:b"
+    ],
+    [
+      "urn:ngm:class:c",
+      "urn:ngm:class:ab"
+    ]
+  ],
+  "unsatisfiable": [],
+  "root_causes": [],
+  "disjointness_violations": [],
+  "refusals": [],
+  "classes": 4,
+  "existentials_dropped": 0,
+  "steps": 0
+}

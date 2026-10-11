@@ -1,0 +1,27 @@
+{
+  "profile": "owl2-el/whelk-el",
+  "existentials": "all",
+  "subsumptions": [
+    [
+      "urn:ngm:class:database",
+      "urn:ngm:class:storage"
+    ],
+    [
+      "urn:ngm:class:service",
+      "urn:ngm:class:data-dependent"
+    ]
+  ],
+  "inferred": [
+    [
+      "urn:ngm:class:service",
+      "urn:ngm:class:data-dependent"
+    ]
+  ],
+  "unsatisfiable": [],
+  "root_causes": [],
+  "disjointness_violations": [],
+  "refusals": [],
+  "classes": 5,
+  "existentials_dropped": 0,
+  "steps": 0
+}

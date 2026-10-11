@@ -1,0 +1,79 @@
+{
+ "name": "disjointness_through_existential_filler_relevant",
+ "source": "synthetic: Relevant does not carry unsatisfiability back through a dropped restriction; the filler is still reported",
+ "note": "",
+ "options": {
+  "existentials": "relevant",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:c"
+  },
+  {
+   "declare_class": "urn:ngm:class:d"
+  },
+  {
+   "declare_class": "urn:ngm:class:a"
+  },
+  {
+   "declare_class": "urn:ngm:class:b"
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:hasPart"
+      },
+      "filler": {
+       "class": "urn:ngm:class:d"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:d"
+    },
+    "sup": {
+     "class": "urn:ngm:class:a"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:d"
+    },
+    "sup": {
+     "class": "urn:ngm:class:b"
+    }
+   }
+  },
+  {
+   "disjoint_classes": [
+    {
+     "class": "urn:ngm:class:a"
+    },
+    {
+     "class": "urn:ngm:class:b"
+    }
+   ]
+  }
+ ],
+ "must_include": [],
+ "must_exclude": [],
+ "unsatisfiable": [
+  "urn:ngm:class:d"
+ ],
+ "root_causes": [
+  "urn:ngm:class:d"
+ ],
+ "refused": []
+}

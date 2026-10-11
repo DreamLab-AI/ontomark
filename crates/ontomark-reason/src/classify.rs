@@ -1,0 +1,507 @@
+//! Classification: the profile check, the existential policy and the
+//! saturation, packaged as a [`Classification`] that says what was entailed,
+//! what is unsatisfiable and why, and what was not reasoned over.
+
+use std::collections::{BTreeMap, BTreeSet};
+
+use serde::{Deserialize, Serialize};
+use whelk_el::reasoner::{Progress, Saturation};
+use whelk_el::{ClassExpr, ElAxiom, BOTTOM, TOP};
+
+use crate::axiom::Axiom;
+use crate::profile::{self, Refusal};
+
+/// The profile every [`Classification`] is computed under.
+pub const PROFILE: &str = "owl2-el/whelk-el";
+
+/// Which existential restrictions in the superclass position are given to
+/// the saturation.
+///
+/// An axiom `C ⊑ ∃R.D` contributes to a *named* subsumption only when some
+/// restriction over `R` or a property `R` reaches through the property
+/// hierarchy, chains or transitivity occurs on the left of an inclusion (a
+/// definition `A ≡ … ⊓ ∃S.E`, a GCI `∃S.E ⊑ B`, a property domain). On a
+/// corpus whose restrictions are mostly descriptive, such axioms dominate the
+/// cost of saturation and entail nothing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ExistentialPolicy {
+    /// Saturate every axiom admitted by the supported fragment.
+    #[default]
+    All,
+    /// Drop the existential conjuncts `∃R.D` (named or `⊤` filler `D`) of
+    /// `C ⊑ …` (named `C`, no `owl:Nothing` on the right) whose property cannot reach any
+    /// left-position restriction; other conjuncts are kept, and `C` and the
+    /// classes in a dropped filler stay declared.
+    ///
+    /// Named subsumptions between satisfiable classes are the same as under
+    /// [`ExistentialPolicy::All`]. Unsatisfiability is not carried back from an
+    /// unsatisfiable filler `D` to `C` through a dropped axiom; `D` itself is
+    /// still reported, so a clash is never hidden, only its derived
+    /// casualties. [`Classification::existentials_dropped`] counts the
+    /// dropped conjuncts.
+    Relevant,
+}
+
+/// Options for [`classify_with`] and [`Job::new`](crate::session::Job::new).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct Options {
+    /// The existential policy.
+    pub existentials: ExistentialPolicy,
+    /// Abandon the saturation after this many steps instead of running on.
+    /// `None` runs to the fixpoint.
+    pub max_steps: Option<u64>,
+}
+
+/// One unsatisfiable class explained by a disjointness axiom.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct DisjointnessViolation {
+    /// The unsatisfiable class.
+    pub class: String,
+    /// The two classes it falls under that are declared disjoint.
+    pub disjoint: (String, String),
+    /// Index of the `DisjointClasses` axiom in the input.
+    pub axiom: usize,
+}
+
+/// What classification concluded.
+///
+/// Every list is sorted and deduplicated. Equal inputs give byte-equal
+/// serialisations on every target after the hash-order-dependent `steps`
+/// count is excluded.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct Classification {
+    /// The profile and backend, [`PROFILE`].
+    pub profile: String,
+    /// The existential policy the saturation ran under.
+    pub existentials: ExistentialPolicy,
+    /// Derived `(sub, sup)` pairs between distinct named classes, excluding
+    /// `owl:Thing` and `owl:Nothing` on either side. Unsatisfiable classes
+    /// are listed in [`Self::unsatisfiable`] rather than expanded below
+    /// every class.
+    pub subsumptions: Vec<(String, String)>,
+    /// The [`Self::subsumptions`] not asserted as `SubClassOf(Class, Class)`.
+    pub inferred: Vec<(String, String)>,
+    /// Named classes entailed to be `owl:Nothing`. Includes `owl:Thing`
+    /// when it is unsatisfiable, witnessing a contradiction even on an
+    /// input with no declared named classes.
+    pub unsatisfiable: Vec<String>,
+    /// The unsatisfiable classes that are not explained by an unsatisfiable
+    /// asserted `SubClassOf(Class, Class)` superclass (the estate's
+    /// `WHELK_INCONSISTENT` rule). A class made unsatisfiable only through an
+    /// unsatisfiable restriction filler is listed too, alongside the filler.
+    pub root_causes: Vec<String>,
+    /// For each unsatisfiable class, each declared disjoint pair it falls
+    /// under.
+    pub disjointness_violations: Vec<DisjointnessViolation>,
+    /// Axioms refused by the profile check and not reasoned over.
+    pub refusals: Vec<Refusal>,
+    /// Named classes classified (excluding `owl:Thing` and `owl:Nothing`).
+    pub classes: usize,
+    /// Superclass-position existential conjuncts dropped by the policy.
+    pub existentials_dropped: usize,
+    /// Saturation steps taken.
+    pub steps: u64,
+}
+
+impl Classification {
+    /// `true` when every input axiom was admitted by the supported fragment
+    /// and saturated, with no refused axioms or dropped existentials. This
+    /// does not imply consistency or expansion of bottom entailments into
+    /// every subsumption pair.
+    #[must_use]
+    pub fn is_complete(&self) -> bool {
+        self.refusals.is_empty() && self.existentials_dropped == 0
+    }
+
+    /// `true` when classification is complete and no named class (including
+    /// `owl:Thing`) is unsatisfiable. `false` also covers incomplete classifications; inspect
+    /// [`Self::unsatisfiable`], [`Self::refusals`] and
+    /// [`Self::existentials_dropped`] to distinguish them.
+    ///
+    /// This checks named-class coherence, not full ontology consistency.
+    #[must_use]
+    pub fn is_consistent(&self) -> bool {
+        self.is_complete() && self.unsatisfiable.is_empty()
+    }
+}
+
+/// Why a classification did not finish.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Stopped {
+    /// The step budget in [`Options::max_steps`] ran out.
+    OverBudget {
+        /// Steps taken before stopping.
+        steps: u64,
+    },
+    /// The job's [`crate::session::CancelToken`] was cancelled.
+    Cancelled {
+        /// Steps taken before stopping.
+        steps: u64,
+    },
+}
+
+impl std::fmt::Display for Stopped {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Stopped::OverBudget { steps } => write!(
+                f,
+                "reasoning stopped at the step budget after {steps} steps"
+            ),
+            Stopped::Cancelled { steps } => write!(f, "reasoning cancelled after {steps} steps"),
+        }
+    }
+}
+
+impl std::error::Error for Stopped {}
+
+/// Classify `axioms` with default [`Options`]: every axiom, to the fixpoint.
+#[must_use]
+pub fn classify(axioms: &[Axiom]) -> Classification {
+    match classify_with(axioms, Options::default()) {
+        Ok(c) => c,
+        Err(_) => unreachable!("no budget and no cancellation"),
+    }
+}
+
+/// Classify `axioms` under `options`.
+///
+/// # Errors
+/// [`Stopped::OverBudget`] when [`Options::max_steps`] runs out first.
+pub fn classify_with(axioms: &[Axiom], options: Options) -> Result<Classification, Stopped> {
+    let mut job = Prepared::new(axioms, options);
+    let budget = options.max_steps.unwrap_or(u64::MAX);
+    match job.saturation.run(budget) {
+        Progress::Done => Ok(job.finish()),
+        Progress::Pending => Err(Stopped::OverBudget {
+            steps: job.saturation.steps(),
+        }),
+    }
+}
+
+/// The checked input and the saturation over it.
+pub(crate) struct Prepared {
+    pub(crate) saturation: Saturation,
+    options: Options,
+    refusals: Vec<Refusal>,
+    asserted: BTreeSet<(String, String)>,
+    disjoint: Vec<(usize, Vec<String>)>,
+    classes: BTreeSet<String>,
+    existentials_dropped: usize,
+}
+
+impl Prepared {
+    pub(crate) fn new(axioms: &[Axiom], options: Options) -> Prepared {
+        let report = profile::check(axioms);
+        let mut asserted = BTreeSet::new();
+        let mut disjoint = Vec::new();
+        let mut classes = BTreeSet::new();
+        for (index, axiom) in &report.accepted {
+            collect_classes(axiom, &mut classes);
+            match axiom {
+                ElAxiom::SubClassOf {
+                    sub: ClassExpr::Named(a),
+                    sup: ClassExpr::Named(b),
+                } => {
+                    asserted.insert((a.clone(), b.clone()));
+                }
+                ElAxiom::DisjointClasses(cs) => {
+                    let named: Vec<String> = cs
+                        .iter()
+                        .filter_map(|c| match c {
+                            ClassExpr::Named(iri) => Some(iri.clone()),
+                            _ => None,
+                        })
+                        .collect();
+                    disjoint.push((*index, named));
+                }
+                _ => {}
+            }
+        }
+        let el: Vec<ElAxiom> = report.accepted.into_iter().map(|(_, a)| a).collect();
+        let (el, existentials_dropped) = apply_policy(el, options.existentials);
+        Prepared {
+            saturation: Saturation::new(&whelk_el::translate(&el)),
+            options,
+            refusals: report.refusals,
+            asserted,
+            disjoint,
+            classes,
+            existentials_dropped,
+        }
+    }
+
+    pub(crate) fn finish(self) -> Classification {
+        let steps = self.saturation.steps();
+        let state = match self.saturation.into_state() {
+            Ok(state) => state,
+            Err(_) => unreachable!("finish is only called on a finished saturation"),
+        };
+        let mut subsumptions = Vec::new();
+        let mut unsatisfiable = BTreeSet::new();
+        for (sub, sup) in state.named_subsumption_ids() {
+            if sub == BOTTOM {
+                continue;
+            }
+            if sup == BOTTOM {
+                unsatisfiable.insert(sub);
+                continue;
+            }
+            if sub == TOP || sub == sup || sup == TOP {
+                continue;
+            }
+            subsumptions.push((sub, sup));
+        }
+        let inferred = subsumptions
+            .iter()
+            .filter(|pair| !self.asserted.contains(*pair))
+            .cloned()
+            .collect();
+        let root_causes = unsatisfiable
+            .iter()
+            .filter(|c| {
+                !self
+                    .asserted
+                    .range(((*c).clone(), String::new())..)
+                    .take_while(|(sub, _)| sub == *c)
+                    .any(|(_, sup)| unsatisfiable.contains(sup))
+            })
+            .cloned()
+            .collect();
+        let mut disjointness_violations = Vec::new();
+        for class in &unsatisfiable {
+            // `subsumptions` is sorted by subclass: this class's superclasses
+            // are one contiguous run.
+            let start = subsumptions.partition_point(|(sub, _)| sub < class);
+            let above: BTreeSet<&String> = subsumptions[start..]
+                .iter()
+                .take_while(|(sub, _)| sub == class)
+                .map(|(_, sup)| sup)
+                .collect();
+            let falls_under = |x: &String| x == class || above.contains(x);
+            for (axiom, operands) in &self.disjoint {
+                for (i, a) in operands.iter().enumerate() {
+                    for b in &operands[i + 1..] {
+                        if falls_under(a) && falls_under(b) {
+                            let pair = if a <= b {
+                                (a.clone(), b.clone())
+                            } else {
+                                (b.clone(), a.clone())
+                            };
+                            disjointness_violations.push(DisjointnessViolation {
+                                class: class.clone(),
+                                disjoint: pair,
+                                axiom: *axiom,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        disjointness_violations.sort();
+        disjointness_violations.dedup();
+        Classification {
+            profile: PROFILE.to_owned(),
+            existentials: self.options.existentials,
+            subsumptions,
+            inferred,
+            unsatisfiable: unsatisfiable.into_iter().collect(),
+            root_causes,
+            disjointness_violations,
+            refusals: self.refusals,
+            classes: self.classes.len(),
+            existentials_dropped: self.existentials_dropped,
+            steps,
+        }
+    }
+}
+
+fn collect_classes(axiom: &ElAxiom, out: &mut BTreeSet<String>) {
+    fn walk(c: &ClassExpr, out: &mut BTreeSet<String>) {
+        match c {
+            ClassExpr::Named(iri) if iri != TOP && iri != BOTTOM => {
+                out.insert(iri.clone());
+            }
+            ClassExpr::And(ops) => ops.iter().for_each(|o| walk(o, out)),
+            ClassExpr::Some { filler, .. } => walk(filler, out),
+            _ => {}
+        }
+    }
+    match axiom {
+        ElAxiom::DeclareClass(iri) if iri != TOP && iri != BOTTOM => {
+            out.insert(iri.clone());
+        }
+        ElAxiom::SubClassOf { sub, sup } => {
+            walk(sub, out);
+            walk(sup, out);
+        }
+        ElAxiom::EquivalentClasses(cs) | ElAxiom::DisjointClasses(cs) => {
+            cs.iter().for_each(|c| walk(c, out))
+        }
+        ElAxiom::PropertyDomain { class, .. } | ElAxiom::ClassAssertion { class, .. } => {
+            walk(class, out)
+        }
+        _ => {}
+    }
+}
+
+/// Properties mentioned anywhere inside `c`.
+fn properties_in(c: &ClassExpr, out: &mut BTreeSet<String>) {
+    match c {
+        ClassExpr::Some { property, filler } => {
+            out.insert(property.clone());
+            properties_in(filler, out);
+        }
+        ClassExpr::And(ops) => ops.iter().for_each(|o| properties_in(o, out)),
+        _ => {}
+    }
+}
+
+fn mentions_nothing(c: &ClassExpr) -> bool {
+    match c {
+        ClassExpr::Nothing => true,
+        ClassExpr::Named(iri) => iri == BOTTOM,
+        ClassExpr::And(ops) => ops.iter().any(mentions_nothing),
+        ClassExpr::Some { filler, .. } => mentions_nothing(filler),
+        _ => false,
+    }
+}
+
+/// Filter checked axioms by `policy`, returning the axioms to saturate and
+/// the number of existential conjuncts dropped: unchanged for
+/// [`ExistentialPolicy::All`]; see [`ExistentialPolicy::Relevant`] for the
+/// other.
+#[must_use]
+pub fn apply_policy(axioms: Vec<ElAxiom>, policy: ExistentialPolicy) -> (Vec<ElAxiom>, usize) {
+    match policy {
+        ExistentialPolicy::All => (axioms, 0),
+        ExistentialPolicy::Relevant => relevant_only(axioms),
+    }
+}
+
+fn conjuncts(c: ClassExpr, out: &mut Vec<ClassExpr>) {
+    match c {
+        ClassExpr::And(ops) => ops.into_iter().for_each(|o| conjuncts(o, out)),
+        other => out.push(other),
+    }
+}
+
+fn named_classes_in(c: &ClassExpr, out: &mut Vec<String>) {
+    match c {
+        ClassExpr::Named(iri) if iri != TOP && iri != BOTTOM => out.push(iri.clone()),
+        ClassExpr::And(ops) => ops.iter().for_each(|o| named_classes_in(o, out)),
+        ClassExpr::Some { filler, .. } => named_classes_in(filler, out),
+        _ => {}
+    }
+}
+
+/// [`ExistentialPolicy::Relevant`]: in `Named ⊑ C₁ ⊓ … ⊓ Cₙ` (no `owl:Nothing`
+/// anywhere on the right), drop each conjunct `∃R.D` none of whose properties
+/// is relevant, keeping the other conjuncts. The subject and every named class
+/// in a dropped filler are declared instead, so they are still classified,
+/// as they would be under [`ExistentialPolicy::All`] (where a link target is
+/// initialised).
+///
+/// A property is relevant when it occurs in a left-position restriction (a
+/// GCI's subclass, any operand of an equivalence or disjointness, a domain,
+/// an assertion), or reaches a relevant property through sub-property
+/// inclusions, a chain or transitivity, in either direction (the
+/// super-property direction is a safety margin, as in the estate reasoner).
+fn relevant_only(axioms: Vec<ElAxiom>) -> (Vec<ElAxiom>, usize) {
+    let mut relevant: BTreeSet<String> = BTreeSet::new();
+    // Property graph edges, undirected: sub/super, chain member/super.
+    let mut edges: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut link = |a: &str, b: &str| {
+        edges.entry(a.to_owned()).or_default().insert(b.to_owned());
+        edges.entry(b.to_owned()).or_default().insert(a.to_owned());
+    };
+    for axiom in &axioms {
+        match axiom {
+            ElAxiom::SubClassOf { sub, .. } => properties_in(sub, &mut relevant),
+            ElAxiom::EquivalentClasses(cs) | ElAxiom::DisjointClasses(cs) => {
+                cs.iter().for_each(|c| properties_in(c, &mut relevant));
+            }
+            ElAxiom::PropertyDomain { property, class } => {
+                relevant.insert(property.clone());
+                properties_in(class, &mut relevant);
+            }
+            ElAxiom::ClassAssertion { class, .. } => properties_in(class, &mut relevant),
+            ElAxiom::PropertyAssertion { property, .. } => {
+                relevant.insert(property.clone());
+            }
+            ElAxiom::SubPropertyOf { sub, sup } => link(sub, sup),
+            ElAxiom::PropertyChain { chain, sup } => chain.iter().for_each(|p| link(p, sup)),
+            ElAxiom::EquivalentProperties(ps) => {
+                for w in ps.windows(2) {
+                    link(&w[0], &w[1]);
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut frontier: Vec<String> = relevant.iter().cloned().collect();
+    while let Some(p) = frontier.pop() {
+        if let Some(next) = edges.get(&p) {
+            for q in next {
+                if relevant.insert(q.clone()) {
+                    frontier.push(q.clone());
+                }
+            }
+        }
+    }
+    // Only `∃R.D` with a named (or ⊤) filler is dropped: an unsatisfiable
+    // named filler is still reported itself, whereas a clash inside an
+    // anonymous filler (`∃R.(B ⊓ C)` with B, C disjoint) would vanish.
+    let irrelevant = |c: &ClassExpr| -> bool {
+        match c {
+            ClassExpr::Some { property, filler } => {
+                matches!(**filler, ClassExpr::Named(_) | ClassExpr::Thing)
+                    && !relevant.contains(property)
+            }
+            _ => false,
+        }
+    };
+    let mut out = Vec::with_capacity(axioms.len());
+    let mut dropped = 0;
+    for axiom in axioms {
+        match axiom {
+            ElAxiom::SubClassOf {
+                sub: ClassExpr::Named(subject),
+                sup,
+            } if !mentions_nothing(&sup) => {
+                let mut parts = Vec::new();
+                conjuncts(sup, &mut parts);
+                let (gone, kept): (Vec<ClassExpr>, Vec<ClassExpr>) =
+                    parts.into_iter().partition(irrelevant);
+                if gone.is_empty() {
+                    out.push(ElAxiom::SubClassOf {
+                        sub: ClassExpr::Named(subject),
+                        sup: rejoin(kept),
+                    });
+                    continue;
+                }
+                dropped += gone.len();
+                let mut declared = vec![subject.clone()];
+                gone.iter().for_each(|g| named_classes_in(g, &mut declared));
+                out.extend(declared.into_iter().map(ElAxiom::DeclareClass));
+                if !kept.is_empty() {
+                    out.push(ElAxiom::SubClassOf {
+                        sub: ClassExpr::Named(subject),
+                        sup: rejoin(kept),
+                    });
+                }
+            }
+            other => out.push(other),
+        }
+    }
+    (out, dropped)
+}
+
+fn rejoin(mut kept: Vec<ClassExpr>) -> ClassExpr {
+    if kept.len() == 1 {
+        kept.pop().unwrap_or(ClassExpr::Thing)
+    } else {
+        ClassExpr::And(kept)
+    }
+}

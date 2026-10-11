@@ -1,0 +1,326 @@
+{
+ "name": "el_profile_refusals",
+ "source": "vault/tests/el_profile.rs NON_EL constructs (allValuesFrom, cardinalities, hasValue, oneOf, propertyDisjointWith, inverseOf, complementOf, SymmetricProperty, unionOf) plus the EL-but-unimplemented set",
+ "note": "hasValue and a one-individual oneOf are OWL 2 EL but refused (EL_NOT_IMPLEMENTED): whelk-el has no nominal merging; owl:bottomObjectProperty has built-in semantics whelk-el does not implement",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:c"
+  },
+  {
+   "declare_class": "urn:ngm:class:d"
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "only": {
+      "property": {
+       "named": "urn:ngm:prop:r"
+      },
+      "filler": {
+       "class": "urn:ngm:class:d"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "cardinality": {
+      "bound": "exact",
+      "n": 2,
+      "property": {
+       "named": "urn:ngm:prop:r"
+      },
+      "filler": null
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "cardinality": {
+      "bound": "min",
+      "n": 1,
+      "property": {
+       "named": "urn:ngm:prop:r"
+      },
+      "filler": {
+       "class": "urn:ngm:class:d"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "cardinality": {
+      "bound": "max",
+      "n": 3,
+      "property": {
+       "named": "urn:ngm:prop:r"
+      },
+      "filler": {
+       "class": "urn:ngm:class:d"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "one_of": [
+      "urn:i:a",
+      "urn:i:b"
+     ]
+    }
+   }
+  },
+  {
+   "disjoint_properties": [
+    {
+     "named": "urn:ngm:prop:r"
+    },
+    {
+     "named": "urn:ngm:prop:s"
+    }
+   ]
+  },
+  {
+   "inverse_properties": [
+    {
+     "named": "urn:ngm:prop:r"
+    },
+    {
+     "named": "urn:ngm:prop:s"
+    }
+   ]
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "inverse": "urn:ngm:prop:r"
+      },
+      "filler": {
+       "class": "urn:ngm:class:d"
+      }
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "not": {
+      "class": "urn:ngm:class:d"
+     }
+    }
+   }
+  },
+  {
+   "characteristic": {
+    "property": {
+     "named": "urn:ngm:prop:r"
+    },
+    "characteristic": "symmetric"
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "or": [
+      {
+       "class": "urn:ngm:class:d"
+      },
+      {
+       "class": "urn:ngm:class:e"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "disjoint_union": {
+    "class": "urn:ngm:class:c",
+    "operands": [
+     {
+      "class": "urn:ngm:class:d"
+     },
+     {
+      "class": "urn:ngm:class:e"
+     }
+    ]
+   }
+  },
+  {
+   "characteristic": {
+    "property": {
+     "named": "urn:ngm:prop:r"
+    },
+    "characteristic": "functional"
+   }
+  },
+  {
+   "property_range": {
+    "property": {
+     "named": "urn:ngm:prop:r"
+    },
+    "class": {
+     "class": "urn:ngm:class:d"
+    }
+   }
+  },
+  {
+   "characteristic": {
+    "property": {
+     "named": "urn:ngm:prop:r"
+    },
+    "characteristic": "reflexive"
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "has_self": {
+      "named": "urn:ngm:prop:r"
+     }
+    }
+   }
+  },
+  {
+   "data": {
+    "constructor": "DataPropertyRange"
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "data": {
+      "constructor": "DataSomeValuesFrom",
+      "property": "urn:ngm:prop:age"
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "has_value": {
+      "property": {
+       "named": "urn:ngm:prop:livesIn"
+      },
+      "individual": "urn:i:london"
+     }
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "some": {
+      "property": {
+       "named": "urn:ngm:prop:livesIn"
+      },
+      "filler": {
+       "one_of": [
+        "urn:i:london"
+       ]
+      }
+     }
+    },
+    "sup": {
+     "class": "urn:ngm:class:d"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:c"
+    },
+    "sup": {
+     "some": {
+      "property": {
+       "named": "http://www.w3.org/2002/07/owl#bottomObjectProperty"
+      },
+      "filler": "thing"
+     }
+    }
+   }
+  }
+ ],
+ "must_include": [],
+ "must_exclude": [
+  [
+   "urn:ngm:class:c",
+   "urn:ngm:class:d"
+  ]
+ ],
+ "unsatisfiable": [],
+ "root_causes": null,
+ "refused": [
+  "ObjectAllValuesFrom",
+  "ObjectExactCardinality",
+  "ObjectMinCardinality",
+  "ObjectMaxCardinality",
+  "ObjectOneOf",
+  "DisjointObjectProperties",
+  "InverseObjectProperties",
+  "ObjectInverseOf",
+  "ObjectComplementOf",
+  "SymmetricObjectProperty",
+  "ObjectUnionOf",
+  "DisjointUnion",
+  "FunctionalObjectProperty",
+  "ObjectPropertyRange",
+  "ReflexiveObjectProperty",
+  "ObjectHasSelf",
+  "DataPropertyRange",
+  "DataSomeValuesFrom",
+  "ObjectHasValue",
+  "ObjectOneOf",
+  "owl:bottomObjectProperty"
+ ]
+}

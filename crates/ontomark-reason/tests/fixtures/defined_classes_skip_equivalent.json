@@ -1,0 +1,80 @@
+{
+ "name": "defined_classes_skip_equivalent",
+ "source": "vault/tests/defined_classes.rs the_same_fixture_forced_to_skip_loses_the_subsumption",
+ "note": "the restrictions removed by hand (vault Skip mode) lose the entailment",
+ "options": {
+  "existentials": "all",
+  "max_steps": null
+ },
+ "axioms": [
+  {
+   "declare_class": "urn:ngm:class:robot"
+  },
+  {
+   "declare_class": "urn:ngm:class:gripper"
+  },
+  {
+   "declare_class": "urn:ngm:class:small-gripper"
+  },
+  {
+   "declare_class": "urn:ngm:class:arm"
+  },
+  {
+   "declare_class": "urn:ngm:class:gripping-robot"
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:small-gripper"
+    },
+    "sup": {
+     "class": "urn:ngm:class:gripper"
+    }
+   }
+  },
+  {
+   "sub_class_of": {
+    "sub": {
+     "class": "urn:ngm:class:arm"
+    },
+    "sup": {
+     "class": "urn:ngm:class:robot"
+    }
+   }
+  },
+  {
+   "equivalent_classes": [
+    {
+     "class": "urn:ngm:class:gripping-robot"
+    },
+    {
+     "and": [
+      {
+       "class": "urn:ngm:class:robot"
+      },
+      {
+       "some": {
+        "property": {
+         "named": "urn:ngm:prop:hasPart"
+        },
+        "filler": {
+         "class": "urn:ngm:class:gripper"
+        }
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "must_include": [],
+ "must_exclude": [
+  [
+   "urn:ngm:class:arm",
+   "urn:ngm:class:gripping-robot"
+  ]
+ ],
+ "unsatisfiable": [],
+ "root_causes": null,
+ "refused": []
+}
