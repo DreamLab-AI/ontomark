@@ -55,6 +55,7 @@ Each crate has its own README and inline rustdoc, including executable examples.
 | [ontomark-ngg1](crates/ontomark-ngg1) | Shared binary graph encoder and zero-copy reader. |
 | [ontomark-wasm](crates/ontomark-wasm) | Worker-friendly index, update, classify, query and patch protocol. |
 | [ontomark-cli](crates/ontomark-cli) | Native publication commands. |
+| [ontomark-graph](packages/graph) | Shared offline graph renderer, hierarchy adapter and focus traversal for desktop and web hosts. |
 
 Parser, model and reasoner crates support native and `wasm32` targets. The compiler's portable feature set disables its optional native backend. The [estate profile](profiles/estate) owns DreamLab vocabulary and policy; applications can provide their own profile.
 
@@ -83,6 +84,8 @@ Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surfac
 - [Current hand-off](docs/HANDOFF.md): verified results, outstanding work and integration boundaries.
 - [API documentation](docs/api/): crate contracts and capabilities.
 - [Design decisions](docs/adr/ADR-OM-001-sprint-decisions.md): profiles, licensing and reasoner choices.
+- [Shared graph and plugin boundary](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md): code ownership and consumer contracts.
+- [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md): credited sources and distribution licences.
 - [Estate migration plan](docs/DEPRECATION.md) and [branch recovery](docs/BRANCH-RECOVERY.md): consumer replacements and preserved interrupted work.
 - [Run log](docs/RUNLOG.md) and [evidence](docs/evidence/resume/): reproducible checks and historical receipts.
 

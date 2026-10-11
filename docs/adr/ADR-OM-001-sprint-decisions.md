@@ -158,3 +158,7 @@ them.
 - Whether `whelk-el` is published to crates.io before or after the first
   ontomark release.
 - Mobile Obsidian support (out of scope for this sprint; desktop only).
+
+## Shared graph and plugin distribution continuation
+
+[ADR-OM-002](ADR-OM-002-shared-graph-and-obsidian-boundary.md) updates the original directory and graph ownership decisions: the Obsidian plugin has its own public repository and installable deployment, while Ontomark owns the shared graph module consumed by both the plugin and Narrative Goldmine. The Rust/WASM graph codec remains shared through `ontomark-ngg1`; each application owns its host integration. Upstream attribution is tracked in [UPSTREAMS](../UPSTREAMS.md) with full distribution notices.

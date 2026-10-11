@@ -1,0 +1,12 @@
+Ontomark graph
+Copyright 2026 DreamLab-AI and contributors
+Licensed under MIT OR Apache-2.0.
+
+This framework-neutral renderer adapts the orthographic interaction, degree
+scaling and focus behaviour of Narrative Goldmine's graph application:
+https://github.com/jjohare/visionGraph/tree/main/publishing-tools/WasmVOWL/modern
+The publisher's corpus, routing, stores and simulation remain in that repository.
+The implementation uses browser Canvas APIs and has no third-party runtime
+JavaScript dependency. Rust/WASM engine and codec notices are maintained in
+Ontomark's THIRD-PARTY-NOTICES.md and travel with their binary distributions:
+https://github.com/DreamLab-AI/ontomark/blob/main/THIRD-PARTY-NOTICES.md

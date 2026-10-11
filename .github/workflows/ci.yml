@@ -9,6 +9,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with: { targets: wasm32-unknown-unknown, components: "rustfmt, clippy" }
       - uses: Swatinem/rust-cache@v2
+      - run: node --test packages/graph/test/*.test.mjs
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
