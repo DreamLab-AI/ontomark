@@ -127,14 +127,17 @@ loop {
     }
 }
 // controller:
-session.accept(outcome)?;                  // Err(Rejected::Stale{..}) if a newer generation began
+session.accept(outcome)?;                  // Err(Rejected::Stale{..}) if a newer generation began,
+                                           // Err(Rejected::ForeignSession{..}) if another Session issued the ticket
 ```
 
 `CancelToken` is an `Arc<AtomicBool>`: a host thread can cancel. In a
 single-threaded wasm worker, cancellation arrives as a message handled between
 slices (call `ticket.cancel.cancel()` or just drop the job). An outcome is
-accepted only for the current generation, so an old result that raced to
-completion cannot replace a newer one.
+accepted only by the session that issued its ticket (`SessionId`, unique
+within the process) and only for that session's current generation, so an
+old result that raced to completion cannot replace a newer one, and a
+result from a discarded session cannot be mistaken for a current one.
 
 Latency: a slice of 20,000 saturation steps is about 25 ms on the corpus
 natively (302,861 steps in about 340 ms), but two phases are not sliced:
@@ -150,10 +153,24 @@ next slice boundary, so its worst-case latency is one of those phases, not
 Vec<(String, String)>` (all named pairs incl. reflexive, `⊤`, `⊥`),
 `reasoner::Saturation::{new, append, run(budget) -> Progress, into_state}`,
 `ReasonerState::{named_subsumption_ids, subsumers}`, `assert`, `assert_append`,
-`components`, and `classify_parallel` (feature `parallel`). Defects fixed
-against whelk-rs 79a1ee2: ⊥ propagation back along existing links
-(`rule_bottom_left`), chain super-properties lost by adjacent-only grouping,
-an unsound complement rule (removed with the unused disjunction/self variants).
+`components`, and `classify_parallel` (feature `parallel`).
+
+Defects fixed against whelk-rs 79a1ee2, each pinned by a test that fails on
+the upstream behaviour:
+
+| Defect | Effect upstream | Test |
+|---|---|---|
+| `rule_bottom_left` tested the subclass for `⊥` | an unsatisfiable filler derived after its link left the subject satisfiable (missed unsatisfiability) | `an_unsatisfiable_filler_makes_its_restricted_class_unsatisfiable` |
+| chain ids joined with `:` | `[p:q, r, …]` and `[p, q:r, …]` shared an intermediate role: **unsound** links between unrelated chains | `colliding_chain_prefixes_do_not_share_an_intermediate_role` |
+| composition pruning on any distinct super-role | equivalent roles pruned each other; chain lost | `a_chain_into_equivalent_roles_survives_pruning` |
+| `group_by` over a hash set | a chain super-property could be dropped | `a_chain_with_two_super_properties_implies_both` |
+| complement rule asserted `C ⊑ ⊥` for every `¬C` | unsound; removed with the unused disjunction/self variants (non-EL input is refused instead) | profile refusal of `ObjectComplementOf` |
+
+Consequence for consumers moving from whelk-rs (WP-D): under `All`, whelk-el
+can report unsatisfiable classes whelk-rs missed. The estate today runs
+Skip/Relevant with no definitions, where nothing changes (corpus parity
+above), and its only chains are transitivity (length 2), so the chain-id
+defect never fired there.
 
 ## Evidence
 
@@ -167,6 +184,19 @@ an unsound complement rule (removed with the unused disjunction/self variants).
 | Corpus | `cargo run --release -p ontomark-reason --features corpus-bench --example corpus_bench -- data/ontology.ttl data/ontology-inferred.ttl` | 9,936 classes; Relevant: classify median 589 ms, saturation 336 ms (estate whelk-rs 360 ms); `inferred` = estate's 81,238, 0 missing, 0 extra |
 | Corpus, All | same, mode `all` | did not finish within 900 s wall clock (14 min 51 s CPU; 23,040 existentials over 15 properties, 2 transitive), as the estate measured for whelk-rs `Include`. Hosts must use `Relevant` or a `max_steps` budget on this corpus |
 | `parallel` on the corpus | `corpus_bench` components line | 5 components, the largest 22,763 of 22,771 axioms: the taxonomy is one component, so `classify_parallel` gives no speed-up here; it helps only on inputs with independent modules |
+
+## Audit
+
+Cross-vendor audit by Codex (gpt-6-astra) in two rounds, with source given
+inline because the Codex sandbox cannot start in this container. Round 1
+confirmed the `rule_bottom_left` fix and refuted four claims (chain pruning
+with equivalent roles, `⊥ ⊑ B` components, Relevant dropping whole
+conjunctions and uninitialised classes, generation wrap-around). Round 2
+refuted three more (chain-id collision, `DisjointClasses(⊤, ⊤)` components,
+cross-session outcomes) and confirmed the rest. All seven are fixed, each
+with its counterexample as a regression test (`whelk-el/tests/entailments.rs`,
+`ontomark-reason/tests/audit_regressions.rs`, `exp06.rs`) that fails on the
+earlier code. A third round on the final code has not been run.
 
 Toolchain note: the lock pins `wasm-bindgen = 0.2.127` and
 `wasm-bindgen-test = 0.3.77` to match the baked `wasm-bindgen-test-runner`;

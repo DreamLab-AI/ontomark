@@ -18,6 +18,8 @@ pub const TOP: &str = "http://www.w3.org/2002/07/owl#Thing";
 /// IRI of `owl:Nothing`, the bottom concept.
 pub const BOTTOM: &str = "http://www.w3.org/2002/07/owl#Nothing";
 /// Prefix of the synthetic roles that binarise property chains longer than two.
+/// The full id is this prefix, the first role's id, a space and the second
+/// role's IRI.
 pub const COMPOSITION_ROLE_PREFIX: &str = "urn:whelk:composition_role:";
 
 /// Anything that mentions entities.

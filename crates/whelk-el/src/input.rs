@@ -218,14 +218,16 @@ impl ElAxiom {
     }
 
     /// `true` when the axiom relates classes that share no entity: `owl:Thing`
-    /// on the left of an inclusion (`⊤ ⊑ C`, or an equivalence with `⊤`)
-    /// reaches every class, and `owl:Nothing` on the left (`⊥ ⊑ C`) reaches
-    /// every unsatisfiable class.
+    /// on the left of an inclusion (`⊤ ⊑ C`, an equivalence with `⊤`, or a
+    /// disjointness between two `⊤` operands) reaches every class, and
+    /// `owl:Nothing` on the left (`⊥ ⊑ C`) reaches every unsatisfiable class.
     #[must_use]
     pub fn constrains_everything(&self) -> bool {
         match self {
             ElAxiom::SubClassOf { sub, .. } => sub.is_thing() || sub.is_nothing(),
             ElAxiom::EquivalentClasses(cs) => cs.iter().any(ClassExpr::is_thing),
+            // (⊤ ⊓ ⊤) ⊑ ⊥ makes every class unsatisfiable.
+            ElAxiom::DisjointClasses(cs) => cs.iter().filter(|c| c.is_thing()).count() >= 2,
             _ => false,
         }
     }
@@ -372,7 +374,11 @@ fn translate_chain(chain: &[String], sup: &str, out: &mut HashSet<Rc<Axiom>>) {
             }))));
         }
         [first, second, rest @ ..] => {
-            let composition = format!("{COMPOSITION_ROLE_PREFIX}{first}:{second}");
+            // A space cannot occur in an IRI and only `first` can itself be
+            // synthetic, so this id is unambiguous. Upstream joined with `:`,
+            // which IRIs contain, so `[p:q, r, …]` and `[p, q:r, …]` shared an
+            // intermediate role and leaked links between unrelated chains.
+            let composition = format!("{COMPOSITION_ROLE_PREFIX}{first} {second}");
             translate_chain(&[first.clone(), second.clone()], &composition, out);
             let mut shorter = Vec::with_capacity(rest.len() + 1);
             shorter.push(composition);

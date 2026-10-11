@@ -34,7 +34,7 @@
 //! assert!(session.accept(outcome).is_ok());
 //! ```
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
@@ -42,6 +42,13 @@ use whelk_el::Progress;
 
 use crate::axiom::Axiom;
 use crate::classify::{Classification, Options, Prepared, Stopped};
+
+/// Identifies one [`Session`] within the process, so an outcome cannot be
+/// accepted by a session other than the one that issued its ticket.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct SessionId(pub u64);
+
+static NEXT_SESSION: AtomicU64 = AtomicU64::new(1);
 
 /// A monotonically increasing source generation.
 #[derive(
@@ -77,6 +84,8 @@ impl CancelToken {
 /// to wherever the job runs.
 #[derive(Debug, Clone)]
 pub struct Ticket {
+    /// The session that issued the ticket.
+    pub session: SessionId,
     /// The generation the job reasons for.
     pub generation: Generation,
     /// Cancelled when a newer generation begins.
@@ -86,6 +95,8 @@ pub struct Ticket {
 /// A finished classification, stamped with the generation it belongs to.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Outcome {
+    /// The session whose ticket the job ran under.
+    pub session: SessionId,
     /// The generation the input belonged to.
     pub generation: Generation,
     /// The result.
@@ -103,6 +114,13 @@ pub enum Rejected {
         /// The session's current generation.
         current: Generation,
     },
+    /// The outcome was produced under another session's ticket.
+    ForeignSession {
+        /// The session that issued the outcome's ticket.
+        outcome: SessionId,
+        /// This session.
+        session: SessionId,
+    },
 }
 
 impl std::fmt::Display for Rejected {
@@ -113,6 +131,11 @@ impl std::fmt::Display for Rejected {
                 "result for generation {} is stale: generation {} has begun",
                 outcome.0, current.0
             ),
+            Rejected::ForeignSession { outcome, session } => write!(
+                f,
+                "result belongs to session {}, not session {}",
+                outcome.0, session.0
+            ),
         }
     }
 }
@@ -120,18 +143,30 @@ impl std::fmt::Display for Rejected {
 impl std::error::Error for Rejected {}
 
 /// The host's view of the current source and its accepted classification.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Session {
+    id: SessionId,
     generation: Generation,
     live: Option<CancelToken>,
     current: Option<Outcome>,
 }
 
 impl Session {
-    /// A session at generation 0 with no result.
+    /// A session at generation 0 with no result and a process-unique id.
     #[must_use]
     pub fn new() -> Session {
-        Session::default()
+        Session {
+            id: SessionId(NEXT_SESSION.fetch_add(1, Ordering::Relaxed)),
+            generation: Generation::default(),
+            live: None,
+            current: None,
+        }
+    }
+
+    /// This session's id.
+    #[must_use]
+    pub fn id(&self) -> SessionId {
+        self.id
     }
 
     /// The source changed: begin a new generation, cancel the job for the
@@ -140,21 +175,23 @@ impl Session {
     /// # Panics
     /// After `u64::MAX` generations, rather than reuse a generation number.
     pub fn begin(&mut self) -> Ticket {
-        if let Some(previous) = self.live.take() {
-            previous.cancel();
-        }
         // A wrapped counter could make an old outcome current again; 2^64
         // generations cannot be reached in practice, so exhaustion is a panic
-        // rather than a silent reuse.
-        self.generation = Generation(
+        // rather than a silent reuse, raised before any state changes.
+        let next = Generation(
             self.generation
                 .0
                 .checked_add(1)
                 .expect("generation counter exhausted"),
         );
+        if let Some(previous) = self.live.take() {
+            previous.cancel();
+        }
+        self.generation = next;
         let cancel = CancelToken::new();
         self.live = Some(cancel.clone());
         Ticket {
+            session: self.id,
             generation: self.generation,
             cancel,
         }
@@ -170,9 +207,16 @@ impl Session {
     /// generation.
     ///
     /// # Errors
-    /// [`Rejected::Stale`] when a newer generation has begun; the session's
-    /// result is unchanged.
+    /// [`Rejected::ForeignSession`] when another session issued the outcome's
+    /// ticket; [`Rejected::Stale`] when a newer generation has begun. The
+    /// session's result is unchanged either way.
     pub fn accept(&mut self, outcome: Outcome) -> Result<&Classification, Rejected> {
+        if outcome.session != self.id {
+            return Err(Rejected::ForeignSession {
+                outcome: outcome.session,
+                session: self.id,
+            });
+        }
         if outcome.generation != self.generation {
             return Err(Rejected::Stale {
                 outcome: outcome.generation,
@@ -189,6 +233,12 @@ impl Session {
     #[must_use]
     pub fn current(&self) -> Option<&Outcome> {
         self.current.as_ref()
+    }
+}
+
+impl Default for Session {
+    fn default() -> Session {
+        Session::new()
     }
 }
 
@@ -278,6 +328,7 @@ impl Job {
             },
             Progress::Done => match std::mem::replace(&mut self.state, JobState::Finished) {
                 JobState::Running(p) => Step::Done(Outcome {
+                    session: self.ticket.session,
                     generation: self.ticket.generation,
                     classification: p.finish(),
                 }),

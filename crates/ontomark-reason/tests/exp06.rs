@@ -168,3 +168,21 @@ fn sliced_jobs_equal_one_shot_classification() {
         assert_eq!(a, b, "slice {slice}");
     }
 }
+
+/// Cross-vendor audit counterexample: an outcome from another session with
+/// the same generation number must not be accepted.
+#[test]
+fn an_outcome_from_another_session_is_rejected() {
+    let mut first = Session::new();
+    let old = Job::new(first.begin(), &chain(2, "a"), Options::default())
+        .run(u64::MAX)
+        .expect("finishes");
+    let mut second = Session::new();
+    let _ticket = second.begin();
+    assert_eq!(old.generation, second.generation());
+    assert!(matches!(
+        second.accept(old),
+        Err(Rejected::ForeignSession { .. })
+    ));
+    assert!(second.current().is_none());
+}

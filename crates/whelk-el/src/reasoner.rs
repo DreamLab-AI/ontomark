@@ -2,7 +2,7 @@
 //! concept language.
 //!
 //! Ported from `whelk-rs` `src/whelk/reasoner.rs`. The rules, their indexes and
-//! their join orders are unchanged. Five things differ:
+//! their join orders are unchanged. Six things differ:
 //!
 //! * the work loop is a resumable [`Saturation`], so a host can run it in
 //!   bounded slices, observe progress and abandon it (no clocks or threads in
@@ -13,6 +13,9 @@
 //! * `index_role_compositions` pruned a composition whenever another with a
 //!   distinct super-role existed, so equivalent roles pruned each other;
 //!   it now prunes only strictly more general ones;
+//! * chains longer than two were binarised with ids joined by `:`, which
+//!   IRIs contain, so unrelated chains could share an intermediate role
+//!   (see [`crate::input`]);
 //! * `rule_bottom_left` tested the subclass instead of the superclass for
 //!   `⊥`, so unsatisfiability did not propagate back along an existing link;
 //! * the disjunction, complement and self-restriction rules are gone with
@@ -953,8 +956,10 @@ fn index_role_compositions(
         }
     }
     // Drop a composition when a strictly more specific one with the same pair
-    // exists: the saturation derives the super-role link from the sub-role
-    // link. Upstream dropped on any distinct super-role, so two equivalent
+    // exists. The super-role link itself is then never materialised, but no
+    // consequence is lost: existential matching and further compositions
+    // consult the role hierarchy (`rule_plus_some_*`, the `hier` expansion
+    // above). Upstream dropped on any distinct super-role, so two equivalent
     // roles (t ⊑ u, u ⊑ t) removed each other and the chain was lost.
     let mut hier_comps_remove: HashSet<RoleTriple> = HashSet::new();
     for (r1, r2, s) in &hier_comps_tuples {

@@ -456,3 +456,50 @@ fn nothing_on_the_left_forces_one_component() {
     assert_eq!(components(&axioms).len(), 1);
     assert!(entails(&classify(&axioms), "A", "B"));
 }
+
+/// Cross-vendor audit counterexample: `[p:q, r, x] ⊑ h` and `[p, q:r, t] ⊑ u`
+/// used to share one synthetic intermediate role, so A's `p:q`/`r` links fed
+/// the second chain and entailed `A ⊑ E`, which does not follow.
+#[test]
+fn colliding_chain_prefixes_do_not_share_an_intermediate_role() {
+    let p = |s: &str| s.to_owned();
+    let axioms = vec![
+        ElAxiom::PropertyChain {
+            chain: vec![p("urn:p:q"), p("urn:r"), p("urn:x")],
+            sup: p("urn:h"),
+        },
+        ElAxiom::PropertyChain {
+            chain: vec![p("urn:p"), p("q:urn:r"), p("urn:t")],
+            sup: p("urn:u"),
+        },
+        ElAxiom::SubClassOf {
+            sub: named("A"),
+            sup: ClassExpr::some("urn:p:q", named("B")),
+        },
+        ElAxiom::SubClassOf {
+            sub: named("B"),
+            sup: ClassExpr::some("urn:r", named("C")),
+        },
+        ElAxiom::SubClassOf {
+            sub: named("C"),
+            sup: ClassExpr::some("urn:t", named("D")),
+        },
+        ElAxiom::SubClassOf {
+            sub: ClassExpr::some("urn:u", named("D")),
+            sup: named("E"),
+        },
+    ];
+    assert!(!entails(&classify(&axioms), "A", "E"));
+}
+
+/// Cross-vendor audit counterexample: `DisjointClasses(⊤, ⊤)` makes every
+/// class unsatisfiable and must not be split off into its own component.
+#[test]
+fn disjointness_of_thing_with_itself_forces_one_component() {
+    let axioms = vec![
+        ElAxiom::DeclareClass(iri("A")),
+        ElAxiom::DisjointClasses(vec![ClassExpr::Thing, ClassExpr::Thing]),
+    ];
+    assert_eq!(components(&axioms).len(), 1);
+    assert!(unsatisfiable(&classify(&axioms), "A"));
+}
