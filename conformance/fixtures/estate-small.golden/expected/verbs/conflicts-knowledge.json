@@ -1,0 +1,9 @@
+{
+  "summary": {
+    "total": 0,
+    "by_kind": {},
+    "by_severity": {}
+  },
+  "severity_gate": "high",
+  "conflicts": []
+}

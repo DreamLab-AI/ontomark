@@ -2,14 +2,14 @@
 okf_version: "0.2"
 type: Index
 title: NarrativeGoldmine Knowledge Bundle
-generation: visionGraph@cfbc690da876d6c828a1934a2ac9b6e59ebf8a69
+generation: visionGraph@e09be63a0b0b95d088b8b99c2dc129e14444cdac
 vocabulary_version: 1
 concept_count: 52
 ---
 
 # NarrativeGoldmine Knowledge Bundle
 
-52 concepts, exported from generation `visionGraph@cfbc690da876d6c828a1934a2ac9b6e59ebf8a69`.
+52 concepts, exported from generation `visionGraph@e09be63a0b0b95d088b8b99c2dc129e14444cdac`.
 
 - [1Hive](concepts/1-hive.md) — `urn:ngm:class:1-hive`
 - [1inch](concepts/1-inch.md) — `urn:ngm:class:1-inch`

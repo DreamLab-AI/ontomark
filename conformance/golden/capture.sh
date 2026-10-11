@@ -33,6 +33,8 @@ gen=$BUILD/out/.generation.json
 {
   echo "vault_binary_sha256=$(sha256sum "$VAULT" | cut -d' ' -f1)"
   echo "vault_version=$("$VAULT" --version)"
+  [ -n "${VAULT_SOURCE_COMMIT:-}" ] && echo "vault_source_commit=$VAULT_SOURCE_COMMIT"
+  [ -n "${VAULT_SOURCE_NOTE:-}" ] && echo "vault_source_note=$VAULT_SOURCE_NOTE"
   echo "source_repo_head=$(git -C "$SRC" rev-parse HEAD 2>/dev/null || echo none)"
   echo "snapshot_commit=$(git -C "$SNAP" rev-parse HEAD)"
   echo "vault_kind=$KIND"
@@ -54,6 +56,28 @@ for tree in out publish; do
       echo "$(grep -E "  [0-9]+  $d/" "$WORK/$tree.list" | sha256sum | cut -d' ' -f1)  $n  $d/*"; done
   } > "$OUT/$tree.sha256"
 done
+# The other verbs the CLI must replace: prose and JSON, exit code recorded.
+# Stored as bytes only for fixtures (KEEP_OUTPUTS=1): corpus reports name
+# private working pages, so the corpus keeps hashes and exit codes.
+verbs=(
+  "validate-all|validate --vault all"
+  "validate-knowledge|validate --vault knowledge"
+  "conflicts-knowledge|conflicts --vault knowledge"
+  "gate-quick|gate --vault knowledge --tier quick"
+  "gate-full|gate --vault all --tier full"
+  "repair-bodies-check|repair bodies --vault all --check"
+)
+mkdir -p "$BUILD/verbs"; : > "$OUT/verbs.tsv"
+for v in "${verbs[@]}"; do
+  name=${v%%|*}; read -r -a cmd <<< "${v#*|}"
+  for fmt in prose json; do
+    flag=(); [ $fmt = json ] && flag=(--json)
+    set +e; (cd "$SNAP" && "$VAULT" "${flag[@]}" "${cmd[@]}") > "$BUILD/verbs/$name.$fmt" 2> "$BUILD/verbs/$name.$fmt.stderr"; rc=$?; set -e
+    printf '%s\t%s\t%s\t%s\n' "$name.$fmt" "$rc" "$(sha256sum < "$BUILD/verbs/$name.$fmt" | cut -d' ' -f1)" "${cmd[*]} ${flag[*]}" >> "$OUT/verbs.tsv"
+  done
+done
 # KEEP_OUTPUTS=1 also stores the bytes: only for synthetic or public fixtures.
 if [ "${KEEP_OUTPUTS:-0}" = 1 ]; then rm -rf "$OUT/expected"; cp -a "$BUILD" "$OUT/expected"; fi
+# KEEP_DIR=<path outside the repo> keeps every byte for local per-file diffs.
+if [ -n "${KEEP_DIR:-}" ]; then rm -rf "$KEEP_DIR"; mkdir -p "$KEEP_DIR"; cp -a "$BUILD/." "$KEEP_DIR/"; cp "$OUT/MANIFEST" "$KEEP_DIR/"; fi
 echo "golden captured in $OUT"

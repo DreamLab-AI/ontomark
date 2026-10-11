@@ -1,0 +1,22 @@
+{
+  "gate": "pass",
+  "tier": "full",
+  "caveat": "A passed gate proves graph consistency only, NOT enrichment correctness.",
+  "checks": [
+    {
+      "name": "validate",
+      "status": "pass",
+      "detail": "53 pages, 52 public, 0 errors, 867 warnings"
+    },
+    {
+      "name": "conflicts",
+      "status": "pass",
+      "detail": "0 conflicts, none blocking"
+    },
+    {
+      "name": "whelk",
+      "status": "pass",
+      "detail": "98 classes classified, 16 inferred subsumptions, 0 unsatisfiable"
+    }
+  ]
+}

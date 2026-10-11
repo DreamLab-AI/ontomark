@@ -1,0 +1,2 @@
+[gate:quick] PASS — A passed gate proves graph consistency only, NOT enrichment correctness.
+  [pass] validate: 53 pages, 52 public, 0 errors, 867 warnings

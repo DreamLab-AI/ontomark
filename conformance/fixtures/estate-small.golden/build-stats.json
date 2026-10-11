@@ -1,11 +1,11 @@
 {
   "generation": {
-    "id": "visionGraph@cfbc690da876d6c828a1934a2ac9b6e59ebf8a69",
-    "commit": "cfbc690da876d6c828a1934a2ac9b6e59ebf8a69",
+    "id": "visionGraph@e09be63a0b0b95d088b8b99c2dc129e14444cdac",
+    "commit": "e09be63a0b0b95d088b8b99c2dc129e14444cdac",
     "dirty": false,
-    "content_digest": "b01de727399e9bf618d43c3ec0dbc422720701c56bdb2ccc3fd8132d34bcc572",
+    "content_digest": "3313b5832ef3a7c4eb89dc340784ecd3541a46e9d4deb01d42b063a059799f5c",
     "ontology_digest": "sha256-12-80be0f5150b3",
-    "generated_at": "2026-10-11T17:51:22.444889+00:00",
+    "generated_at": "2026-10-11T17:54:33.990709+00:00",
     "class_count": 52,
     "page_count": 52,
     "vocabulary_version": 1,
@@ -17,17 +17,17 @@
       },
       {
         "name": "data/ontology-inferred.ttl",
-        "sha256": "3fb46febea80060548ec48bc39131b0906da2127a132d3fa99354bf68cd975b4",
+        "sha256": "129b3847793c72f5fe38d084835bd4614df8f6ed31965a51fafe01da547a667c",
         "bytes": 1510
       },
       {
         "name": "data/scaffold-index.json",
-        "sha256": "298c9ba612eaf39c502b5eb4bae6a34a894839a3b110018e4198d2b767533a29",
+        "sha256": "39d5079cb4d728fd23c253a490ded3bb9b20d03e3f1620b7173d5ca5efeb9362",
         "bytes": 46207
       },
       {
         "name": "data/prose-index.json",
-        "sha256": "e2d39531fbe35f270ada91b47c62eff7125ca5f9f826cc0e7ba622038798d5de",
+        "sha256": "505d134041be966d3c891545a234458d044020cd18b3c12cb3830d686a6be023",
         "bytes": 42595
       },
       {
@@ -662,7 +662,7 @@
       },
       {
         "name": "okf/index.md",
-        "sha256": "f0677df2f197b03e8ab81c6175165151da28f8e554bc1a3932bb0ea85b0b58e9",
+        "sha256": "dd0b3fd6f5d44492bff37f407da3e22d1bd274141b2974160d24e1807f3ba0b9",
         "bytes": 4537
       },
       {
@@ -949,5 +949,5 @@
     }
   },
   "written": 239,
-  "out": "/home/devuser/workspace/.tmp/ontomark-golden.arkCi1/build/out"
+  "out": "/home/devuser/workspace/.tmp/ontomark-golden.W1czvi/build/out"
 }
