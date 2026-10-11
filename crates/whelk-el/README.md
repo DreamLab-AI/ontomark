@@ -30,3 +30,7 @@ its notice is preserved in `LICENSE-WHELK-BSD`. The Rust port, by Björn
 `LICENSE-WHELK`. See `NOTICE` for the repositories and pinned source revision.
 Changes in this package are licensed under MIT OR Apache-2.0; see `LICENSE-MIT`
 and `LICENSE-APACHE`. These project terms do not replace the upstream notices.
+
+Version 0.1.1 corrects the upstream attribution and includes the Scala BSD notice.
+Reasoner implementation is unchanged. The immutable 0.1.0 package retains
+its incomplete attribution; this release does not rewrite that package.

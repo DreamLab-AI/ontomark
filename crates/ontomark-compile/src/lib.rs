@@ -24,6 +24,8 @@ pub mod migrate;
 /// The NGG1 graph-tier format: constants, encoder and zero-copy reader.
 pub use ontomark_ngg1 as ngg1;
 pub mod profile;
+#[cfg(feature = "model-projection")]
+pub mod projection;
 pub mod reason;
 pub mod shacl;
 #[cfg(feature = "whelk-el")]

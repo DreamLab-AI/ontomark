@@ -47,7 +47,18 @@ build, which cannot be shipped as an ordinary Linux asset. The clean Debian-buil
 portable asset also passes the same full corpus parity gate (see
 `corpus-parity-portable.log`) and builds the synthetic fixture offline on Debian 12.
 
-Remaining work: shared reasoner adoption, typed/in-memory projection APIs,
-explicit `owl:Class` declarations for the 690 SKOS-only classes, and the
-remaining estate CLI commands. This slice does not claim those migrations
-complete.
+Compiler 0.1.1 now publishes the strict C3 marker and shared scaffold/prose
+reader contracts. Compiler 0.1.2 adds an opt-in typed/in-memory projection API
+and shared native reasoner adoption on `resume/integration`, pending its review
+and publication. See [typed API migration](WP-C-TYPED.md) for the explicit
+identity, privacy and supported-profile semantics.
+
+The shared native adapter at `6c040a5` also passes the full committed corpus
+comparison: zero differences across the same 32 artefact lines and 12 command
+outputs for visionGraph `b5e36abd1`. This receipt covers the native adapter;
+the typed model route has separate synthetic migration tests.
+
+Remaining estate migrations include applying the typed projection through a
+normative estate profile, the native bundle's 690 SKOS-only class declarations,
+and the remaining estate CLI commands. The typed API declares every model class
+as `owl:Class`; this does not claim a completed full-corpus native migration.

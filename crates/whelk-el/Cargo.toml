@@ -1,7 +1,7 @@
 [package]
 name = "whelk-el"
 description = "OWL 2 EL reasoner derived from Whelk and whelk-rs; portable, no I/O, optional parallelism"
-version.workspace = true
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
