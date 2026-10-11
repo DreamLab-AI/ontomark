@@ -19,10 +19,10 @@ six defects were fixed test-first, no gates pending.
 | Slice | Branch | State at hand-off |
 |---|---|---|
 | WP-A model and parse | merged to main | closed |
-| WP-B reasoner | `wp-b-reason` | never reported; see `docs/api/WP-B.md` if present |
+| WP-B reasoner | `wp-b-reason` (`e773feb`, on origin) | whelk-el ported from whelk-rs 79a1ee2; ontomark-reason with EL profile check, classification facade, EXP-01 and EXP-06; two Codex rounds, seven defects fixed; `docs/api/WP-B.md` says stable for consumers; queen ran `just check` in a clean worktree: exit 0, 38 tests. Never reported to the queen; ready to merge after a last read of WP-B.md |
 | WP-C compile and CLI | `wp-c-compile` | parity proven at `291e0de`; checkpoint `d5c1188` unverified; rc.1 pending |
-| WP-D estate | `wp-d-estate` | census done; guard baseline 876; 29 prep branches with red tests |
-| WP-E plugin | `wp-e-plugin` | never reported; see `docs/api/WP-E.md` if present |
+| WP-D estate | `wp-d-estate` | census done; guard baseline 876; 29 prep branches with red tests, all round-one Codex FAIL, fixes in progress; `docs/HANDOFF-WP-D.md` |
+| WP-E plugin | `wp-e-plugin` (`acd6dd5` local; push requested) | ontomark-wasm engine with generation guard, local SPARQL and patch proposals (`2376d38`); offline Obsidian plugin (`03d7187`); evidence receipts for EXP-05, 06, 11, 12 and wasm parity (`65e3824`); merges WP-A and WP-B in. 17 uncommitted files at hand-off; never reported |
 
 ## WP-C: finishing rc.1 (about 90 minutes, in this order)
 
