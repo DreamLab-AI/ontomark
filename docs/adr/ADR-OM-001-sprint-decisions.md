@@ -93,6 +93,13 @@ them.
     audit verdict; while Codex was unavailable the row read NOT RUN, never
     "passed". Same-family Claude reviews are labelled degraded.
 
+19. **`ontomark-ngg1` publishes to crates.io ahead of rc.1.** vowl-wasm is a
+    crates.io crate and cannot depend on a git pin into a private repository,
+    nor can its CI fetch one. The codec crate has zero dependencies, is
+    MIT OR Apache-2.0, and its surface is frozen by byte parity, so early
+    publication carries no licence or API risk. The queen publishes it from a
+    clean worktree of the commit the compile slice names.
+
 ## Facts established by the census (2026-10-11)
 
 - `vault` 20.5k lines and `vault-core` 6.3k lines, both AGPL-3.0-only at the
