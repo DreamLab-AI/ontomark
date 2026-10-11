@@ -150,3 +150,11 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   existing IRI already maps to the same title (case-insensitive title index),
   returning None with the existing IRI named; the 418 become the fixture.
   Codex audit still to run on this slice (channel restored 19:12).
+- 19:38 queen decisions from the estate step tests: NGG1 codec gets its own
+  dependency-light crate `ontomark-ngg1` (no serde_yaml, no regex), re-exported
+  by ontomark-compile; vowl-wasm depends on it directly so its 232 KB bundle
+  does not grow; lands before rc.1 (EXP-09 owner). Loom D9 widened: the Python
+  reload timer is the whole reload path, so spec-estate owns a Rust
+  `reload_published_generation` in loom-facade with a fixture-bundle test;
+  Python deleted in the same branch once it passes (step 11). Tag format
+  `v0.1.0-rc.1` accepted by every estate test.
