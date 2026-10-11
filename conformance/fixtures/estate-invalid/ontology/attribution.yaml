@@ -1,0 +1,42 @@
+# Attribution roster for the published corpus (prov:wasAttributedTo).
+# Each generator is one secp256k1 keypair expressed as did:nostr:<hex x-only pubkey>,
+# the estate's identity spine. Public keys only; the secrets are held by the operator.
+# `kind: process` means an agent swarm directed by a human; it attests who directed
+# generation and when, never that a human wrote the page (VisionFlow terminology rule 6).
+# `window` is the first-commit range used to attribute the 8,310 pages migrated in
+# September 2026 whose generated.by read only `process:vault-migrate/1.0`.
+generators:
+  - did: did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246
+    label: jjohare
+    npub: npub16kv2h3hdalphuyzj8tkycq8cm9n54ymer23558ds80afkc9e7frqwrawzj
+    kind: human
+    note: Human direction of the whole corpus; author of the 2023-2024 Logseq seed pages.
+    window: ["2023-01-01", "2025-09-30"]
+  - did: did:nostr:569d6bce29b6d3e37810b9306215a9a6425bb43aa21d16075959eff8b8366399
+    label: ontology-mesh
+    version: "1"
+    npub: npub126wkhn3fkmf7x7qshycxy9df5ep9hdp65gw3vp6et8hl3wpkvwvs98q46z
+    kind: process
+    note: Multi-agent ontology build-out, October 2025 to February 2026.
+    window: ["2025-10-01", "2026-02-28"]
+  - did: did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0
+    label: enrichment-swarm
+    version: "6"
+    npub: npub1j3mn56veyldpa7rehyyy8zgtrlswvudw3xqk8apn0h97t7tfjtqqrfxfyk
+    kind: process
+    note: Phase 6 enrichment waves and gap-fill, March to June 2026.
+    window: ["2026-03-01", "2026-06-30"]
+  - did: did:nostr:2da6efde6ed7f8f7658934a30ade9697c4a151d1e190983d6c27f7686e3b7209
+    label: lcr-swarm
+    version: "1"
+    npub: npub19knwlhnw6lu0wevfxj3s4h5kjlz2z5w3uxgfs0tvylmksm3mwgyspe82u7
+    kind: process
+    note: Link, class and relation repair swarm, July to September 2026.
+    window: ["2026-07-01", "2026-09-30"]
+  - did: did:nostr:ddfa0441074f65158c8283902bea0e524e46a1aa246c95c1fca6245c51a01cff
+    label: space-corpus-research
+    version: "0.1.0"
+    npub: npub1mhaqgsg8faj3tryzswgzh6sw2f8ydgd2y3kfts0u5cj9c5dqrnlsaxjndk
+    kind: process
+    note: Space science and Earth observation research mesh, October 2026 (78 batches).
+    process: process:space-corpus-research/0.1.0

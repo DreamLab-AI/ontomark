@@ -72,16 +72,46 @@ fn load() -> (Profile, Vocabulary) {
     (estate(), vocab)
 }
 
-#[test]
-fn the_asserted_ontology_graph_is_the_same_in_both_syntaxes() {
-    let (profile, vocab) = load();
-    let vault = Vault::load(repo().join("knowledge"), VaultKind::Knowledge).expect("vault");
+fn check_ontology(repo: &Path, label: &str) {
+    let profile = estate();
+    let vocab = Vocabulary::load(repo.join("ontology/vocabulary.yaml")).expect("vocabulary");
+    let vault = Vault::load(repo.join("knowledge"), VaultKind::Knowledge).expect("vault");
     let raw = Corpus::build(&vault, &vocab);
     let corpus = projection::project(&profile, &raw, &Default::default()).expect("projection");
-    let roster = ontomark_compile::build::attribution::Roster::discover(&repo());
+    let roster = ontomark_compile::build::attribution::Roster::discover(repo);
     let graph = turtle::build_graph_attributed(&profile, &corpus, &vocab, true, &roster);
-    assert!(graph.len() > 1000, "a real fixture graph: {}", graph.len());
-    assert_equivalent("ontology", &graph, &profile, &vocab);
+    assert!(graph.len() > 1000, "a real graph: {}", graph.len());
+    assert_equivalent(label, &graph, &profile, &vocab);
+}
+
+#[test]
+fn the_asserted_ontology_graph_is_the_same_in_both_syntaxes() {
+    check_ontology(&repo(), "ontology");
+}
+
+/// The full corpus. Slow and outside the repository, so it is opt-in:
+/// `ONTOMARK_STANDARDS_CORPUS=/path/to/visionGraph cargo test -p ontomark-compile
+/// --test jsonld_matches_turtle -- --ignored --nocapture`.
+#[test]
+#[ignore = "needs ONTOMARK_STANDARDS_CORPUS pointing at a full corpus checkout"]
+fn the_full_corpus_is_the_same_in_both_syntaxes() {
+    let Some(corpus) = std::env::var_os("ONTOMARK_STANDARDS_CORPUS") else {
+        eprintln!("ONTOMARK_STANDARDS_CORPUS is not set; nothing to check");
+        return;
+    };
+    let corpus = PathBuf::from(corpus);
+    check_ontology(&corpus, "corpus ontology");
+    let profile = estate();
+    let vocab = Vocabulary::load(corpus.join("ontology/vocabulary.yaml")).expect("vocabulary");
+    for (name, kind) in [
+        ("knowledge", VaultKind::Knowledge),
+        ("working", VaultKind::Working),
+    ] {
+        let vault = Vault::load(corpus.join(name), kind).expect("vault");
+        let graph = frontmatter_graph(&vault, name, &profile, &vocab);
+        assert_equivalent(&format!("corpus {name} data"), &graph, &profile, &vocab);
+        eprintln!("corpus {name} data: {} triples isomorphic", graph.len());
+    }
 }
 
 #[test]
