@@ -1,0 +1,50 @@
+warning: failed to auto-clean cache data
+
+failed to clean entries from the global cache
+
+Caused by:
+  failed to remove file `/home/devuser/workspace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/protobuf-2.28.0/regenerate.sh`
+
+Caused by:
+  Permission denied (os error 13)
+   Compiling loom-facade v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-facade)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.15s
+     Running tests/reload_published_generation.rs (/home/devuser/workspace/project/.git/ontomark-loom-target/debug/deps/reload_published_generation-19b9185856ba46ad)
+
+running 1 test
+test an_empty_id_falls_back_to_the_legacy_shape ... FAILED
+
+failures:
+
+---- an_empty_id_falls_back_to_the_legacy_shape stdout ----
+
+thread 'an_empty_id_falls_back_to_the_legacy_shape' (631246) panicked at crates/loom-facade/tests/reload_published_generation.rs:707:5:
+assertion `left == right` failed
+  left: ""
+ right: "g1"
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: core::panicking::assert_failed_inner
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:452:17
+   3: core::panicking::assert_failed::<alloc::string::String, &str>
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/panicking.rs:407:5
+   4: reload_published_generation::an_empty_id_falls_back_to_the_legacy_shape
+             at ./tests/reload_published_generation.rs:707:5
+   5: reload_published_generation::an_empty_id_falls_back_to_the_legacy_shape::{closure#0}
+             at ./tests/reload_published_generation.rs:701:48
+   6: <reload_published_generation::an_empty_id_falls_back_to_the_legacy_shape::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   7: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    an_empty_id_falls_back_to_the_legacy_shape
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 40 filtered out; finished in 0.25s
+
+error: test failed, to rerun pass `-p loom-facade --test reload_published_generation`

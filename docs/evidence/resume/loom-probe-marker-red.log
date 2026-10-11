@@ -1,0 +1,416 @@
+warning: failed to auto-clean cache data
+
+failed to clean entries from the global cache
+
+Caused by:
+  failed to remove file `/home/devuser/workspace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/protobuf-2.28.0/regenerate.sh`
+
+Caused by:
+  Permission denied (os error 13)
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.24
+   Compiling libc v0.2.189
+   Compiling cfg-if v1.0.4
+   Compiling memchr v2.8.3
+   Compiling serde_core v1.0.229
+   Compiling bytes v1.12.1
+   Compiling itoa v1.0.18
+   Compiling once_cell v1.21.4
+   Compiling futures-core v0.3.34
+   Compiling pin-project-lite v0.2.17
+   Compiling smallvec v1.15.2
+   Compiling serde v1.0.229
+   Compiling find-msvc-tools v0.1.11
+   Compiling zerocopy v0.8.56
+   Compiling shlex v2.0.1
+   Compiling log v0.4.33
+   Compiling thiserror v2.0.20
+   Compiling stable_deref_trait v1.2.1
+   Compiling zmij v1.0.23
+   Compiling futures-sink v0.3.34
+   Compiling crossbeam-utils v0.8.22
+   Compiling serde_json v1.0.151
+   Compiling hashbrown v0.17.1
+   Compiling autocfg v1.5.1
+   Compiling slab v0.4.12
+   Compiling regex-syntax v0.8.11
+   Compiling equivalent v1.0.2
+   Compiling version_check v0.9.5
+   Compiling thiserror v1.0.69
+   Compiling futures-task v0.3.34
+   Compiling futures-io v0.3.34
+   Compiling bitflags v2.13.1
+   Compiling writeable v0.6.4
+   Compiling litemap v0.8.3
+   Compiling libm v0.2.16
+   Compiling either v1.17.0
+   Compiling typenum v1.20.1
+   Compiling icu_properties_data v2.3.0
+   Compiling oxiri v0.2.11
+   Compiling icu_normalizer_data v2.3.0
+   Compiling oxilangtag v0.1.6
+   Compiling utf8_iter v1.0.4
+   Compiling percent-encoding v2.3.2
+   Compiling glob v0.3.4
+   Compiling crossbeam-epoch v0.9.20
+   Compiling tower-service v0.3.3
+   Compiling httparse v1.10.1
+   Compiling crossbeam-deque v0.8.7
+   Compiling atomic-waker v1.1.2
+   Compiling try-lock v0.2.5
+   Compiling zeroize v1.9.0
+   Compiling parking_lot_core v0.9.12
+   Compiling prettyplease v0.2.37
+   Compiling futures-channel v0.3.34
+   Compiling fnv v1.0.7
+   Compiling lazy_static v1.5.0
+   Compiling getrandom v0.3.4
+   Compiling httpdate v1.0.3
+   Compiling minimal-lexical v0.2.1
+   Compiling scopeguard v1.2.0
+   Compiling tracing-core v0.1.36
+   Compiling aho-corasick v1.1.5
+   Compiling generic-array v0.14.7
+   Compiling form_urlencoded v1.2.2
+   Compiling want v0.3.1
+   Compiling untrusted v0.9.0
+   Compiling sync_wrapper v1.0.2
+   Compiling libloading v0.8.9
+   Compiling rayon-core v1.13.0
+   Compiling ipnet v2.12.1
+   Compiling utf8parse v0.2.2
+   Compiling base64 v0.22.1
+   Compiling rustls v0.23.43
+   Compiling rustc-hash v2.1.3
+   Compiling bindgen v0.71.1
+   Compiling http v1.5.0
+   Compiling num-traits v0.2.19
+   Compiling rustls-pki-types v1.15.1
+   Compiling lock_api v0.4.14
+   Compiling peg-runtime v0.8.6
+   Compiling clang-sys v1.9.1
+   Compiling cfg_aliases v0.2.2
+   Compiling cpufeatures v0.2.17
+   Compiling tower-layer v0.3.3
+   Compiling anstyle-parse v1.0.0
+   Compiling quick-xml v0.37.5
+   Compiling itertools v0.13.0
+   Compiling anyhow v1.0.104
+   Compiling shlex v1.3.0
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling colorchoice v1.0.5
+   Compiling heck v0.5.0
+   Compiling anstyle v1.0.14
+   Compiling getrandom v0.4.3
+   Compiling subtle v2.6.1
+   Compiling jiff-core v0.1.0
+   Compiling anstyle-query v1.1.5
+   Compiling same-file v1.0.6
+   Compiling json-event-parser v0.2.3
+   Compiling nom v7.1.3
+   Compiling nix v0.30.1
+   Compiling matrixmultiply v0.3.11
+   Compiling simdutf8 v0.1.5
+   Compiling byteorder v1.5.0
+   Compiling ryu v1.0.23
+   Compiling hashbrown v0.14.5
+   Compiling webpki-roots v1.0.9
+   Compiling combine v4.6.7
+   Compiling foldhash v0.1.5
+   Compiling virtue v0.0.18
+   Compiling redb v2.6.3
+   Compiling rawpointer v0.2.1
+   Compiling rustversion v1.0.23
+   Compiling allocator-api2 v0.2.21
+   Compiling iana-time-zone v0.1.65
+   Compiling hex v0.4.3
+   Compiling unty v0.0.4
+   Compiling mime v0.3.17
+   Compiling siphasher v1.0.3
+   Compiling tracing-log v0.2.0
+   Compiling sharded-slab v0.1.7
+   Compiling regex-automata v0.4.18
+   Compiling walkdir v2.5.0
+   Compiling anstream v1.0.0
+   Compiling thread_local v1.1.10
+   Compiling loom-facade v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-facade)
+   Compiling nu-ansi-term v0.50.3
+   Compiling matchit v0.7.3
+   Compiling rustix v1.1.4
+   Compiling deadpool-runtime v0.1.4
+   Compiling linux-raw-sys v0.12.1
+   Compiling http-body v1.1.0
+   Compiling crossbeam-channel v0.5.16
+   Compiling crossbeam-queue v0.3.13
+   Compiling fastrand v2.5.0
+   Compiling http-body-util v0.1.5
+   Compiling hashbrown v0.15.5
+   Compiling syn v3.0.3
+   Compiling syn v2.0.119
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling peg-macros v0.8.6
+   Compiling digest v0.10.7
+   Compiling bincode_derive v2.0.1
+   Compiling jiff v0.2.35
+   Compiling jobserver v0.1.35
+   Compiling sha2 v0.10.9
+   Compiling md-5 v0.10.6
+   Compiling sha1 v0.10.7
+   Compiling crossbeam v0.8.4
+   Compiling cc v1.4.3
+   Compiling rayon v1.12.0
+   Compiling getrandom v0.2.17
+   Compiling errno v0.3.14
+   Compiling mio v1.2.2
+   Compiling socket2 v0.6.5
+   Compiling num_cpus v1.17.0
+   Compiling cpu-time v1.0.0
+   Compiling memmap2 v0.9.11
+   Compiling signal-hook-registry v1.4.8
+   Compiling rand_core v0.6.4
+   Compiling rand_core v0.9.5
+   Compiling dashmap v6.2.1
+   Compiling parking_lot v0.12.5
+   Compiling num-complex v0.4.6
+   Compiling num-integer v0.1.47
+   Compiling chrono v0.4.45
+   Compiling peg v0.8.6
+   Compiling cexpr v0.6.0
+   Compiling indexmap v2.14.0
+   Compiling uuid v1.24.1
+   Compiling serde_path_to_error v0.1.20
+   Compiling regex v1.13.1
+   Compiling ring v0.17.14
+   Compiling simsimd v5.9.11
+   Compiling tempfile v3.27.0
+   Compiling matchers v0.2.0
+   Compiling ppv-lite86 v0.2.21
+   Compiling env_filter v2.0.0
+   Compiling env_logger v0.11.11
+   Compiling rand_chacha v0.3.1
+   Compiling rand_chacha v0.9.0
+   Compiling anndists v0.1.5
+   Compiling rand v0.9.5
+   Compiling rand v0.8.7
+   Compiling synstructure v0.13.2
+   Compiling serde_derive v1.0.229
+   Compiling thiserror-impl v2.0.20
+   Compiling zerovec-derive v0.11.4
+   Compiling tokio-macros v2.7.2
+   Compiling displaydoc v0.2.7
+   Compiling futures-macro v0.3.34
+   Compiling async-trait v0.1.92
+   Compiling ptr_meta_derive v0.3.2
+   Compiling bytecheck_derive v0.8.3
+   Compiling rkyv_derive v0.8.18
+   Compiling ptr_meta v0.3.2
+   Compiling zerofrom-derive v0.1.7
+   Compiling yoke-derive v0.8.2
+   Compiling tracing-attributes v0.1.31
+   Compiling thiserror-impl v1.0.69
+   Compiling enum-as-inner v0.6.1
+   Compiling munge_macro v0.4.7
+   Compiling rancor v0.1.3
+   Compiling rand_distr v0.4.3
+   Compiling tokio v1.53.1
+   Compiling bytecheck v0.8.3
+   Compiling futures-util v0.3.34
+   Compiling rend v0.5.4
+   Compiling munge v0.4.7
+   Compiling zerofrom v0.1.8
+   Compiling yoke v0.8.3
+   Compiling oxsdatatypes v0.2.2
+   Compiling sysctl v0.6.0
+   Compiling tracing v0.1.44
+   Compiling zerovec v0.11.7
+   Compiling zerotrie v0.2.5
+   Compiling mmap-rs v0.7.0
+   Compiling oxrdf v0.2.4
+   Compiling tinystr v0.8.4
+   Compiling potential_utf v0.1.6
+   Compiling icu_collections v2.3.0
+   Compiling icu_locale_core v2.3.0
+   Compiling spargebra v0.3.5
+   Compiling sparesults v0.2.5
+   Compiling oxrdfxml v0.1.7
+   Compiling oxttl v0.1.8
+   Compiling oxjsonld v0.1.0
+   Compiling rustls-webpki v0.103.14
+   Compiling loom-domain v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-domain)
+   Compiling serde_urlencoded v0.7.1
+   Compiling bincode v1.3.3
+   Compiling bincode v2.0.1
+   Compiling ndarray v0.16.1
+   Compiling tracing-serde v0.2.0
+   Compiling assert-json-diff v2.0.2
+   Compiling tracing-subscriber v0.3.23
+   Compiling hnsw_rs v0.3.4
+   Compiling icu_provider v2.3.0
+   Compiling oxrdfio v0.1.8
+   Compiling icu_normalizer v2.3.0
+   Compiling icu_properties v2.3.0
+   Compiling axum-core v0.4.5
+   Compiling futures-executor v0.3.34
+   Compiling futures v0.3.34
+   Compiling rkyv v0.8.18
+   Compiling loom-scaffold v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-scaffold)
+   Compiling loom-attest-proofgate v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-attest-proofgate)
+   Compiling loom-mcp v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-mcp)
+   Compiling idna_adapter v1.2.2
+   Compiling idna v1.1.0
+   Compiling sparopt v0.2.1
+   Compiling url v2.5.8
+   Compiling spareval v0.1.4
+   Compiling oxrocksdb-sys v0.4.11
+   Compiling tokio-util v0.7.19
+   Compiling deadpool v0.12.3
+   Compiling h2 v0.4.16
+   Compiling tower v0.5.3
+   Compiling tokio-rustls v0.26.4
+   Compiling tower-http v0.6.11
+   Compiling ruvector-core v2.0.5 (/home/devuser/workspace/wt-ontomark/loom/ruvector/crates/ruvector-core)
+   Compiling hyper v1.11.0
+   Compiling loom-vector-ruvector v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-vector-ruvector)
+   Compiling hyper-util v0.1.20
+   Compiling hyper-rustls v0.27.9
+   Compiling axum v0.7.9
+   Compiling reqwest v0.12.28
+   Compiling wiremock v0.6.5
+   Compiling loom-backend-openai v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-backend-openai)
+   Compiling loom-embed-xinference v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-embed-xinference)
+   Compiling oxigraph v0.4.11
+   Compiling loom-graph-oxigraph v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-graph-oxigraph)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 12s
+     Running tests/reload_published_generation.rs (/home/devuser/workspace/project/.git/ontomark-loom-target/debug/deps/reload_published_generation-19b9185856ba46ad)
+
+running 39 tests
+test an_empty_id_falls_back_to_the_legacy_shape ... ok
+test a_tampered_artifact_still_refuses_whatever_the_declared_digest ... ok
+test declared_corpus_digest_is_carried_not_compared ... ok
+test hash_tamper_prevents_restart ... ok
+test vault_build_bundle_is_accepted ... ok
+test missing_c3_field_is_refused ... ok
+test served_matches_requires_every_proof ... ok
+test indirect_and_traversal_artifacts_refused ... ok
+test c3_marker_with_a_duplicate_artifact_name_or_non_list_artifacts_is_refused ... ok
+test escaping_or_indirect_subpaths_are_refused ... ok
+test semantic_sidecar_must_declare_the_same_generation ... ok
+test missing_semantic_and_inflight_publication_refused ... ok
+test graph_tier_subdirectory_artifact_is_accepted ... ok
+test size_mismatch_is_refused ... ok
+test symlinked_marker_and_symlinked_artifact_are_refused ... ok
+test sidecar_model_and_dimensions_are_enforced ... ok
+test cli::a_second_invocation_cannot_take_the_lock ... ok
+test identity_must_name_its_own_commit ... ok
+test failed_reload_never_records_success ... ok
+test concurrent_publication_after_restart_not_acknowledged ... ok
+test cli::tampered_bundle_exits_one_before_any_restart_or_receipt ... ok
+test receipt_is_private_atomic_and_leaves_no_temp_file ... ok
+test matching_server_does_not_restart ... ok
+test wrong_generation_after_restart_is_not_acknowledged ... ok
+test pending_receipt_is_written_before_the_restart_runs ... ok
+test timeout_polls_every_second_until_the_deadline ... ok
+test cli::receipt_directory_is_created_private ... ok
+test cli::failing_restart_exits_one_and_leaves_pending ... ok
+test cli::verify_subcommand_checks_the_bundle_only ... ok
+test new_publication_reloads_then_records_verified_receipt ... ok
+test cli::restart_that_outlives_the_timeout_is_killed ... ok
+test cli::node_that_never_proves_the_bundle_times_out_with_exit_one ... ok
+test cli::matching_node_exits_zero_prints_current_and_runs_nothing ... ok
+test cli::usage_errors_exit_two ... ok
+test cli::stale_node_is_restarted_then_proved ... ok
+test c3_fields_require_their_declared_types ... FAILED
+test c3_identity_rejects_an_empty_or_partial_commit ... FAILED
+test publication_during_the_current_probe_is_not_acknowledged ... FAILED
+test publication_during_the_post_restart_probe_leaves_pending ... FAILED
+
+failures:
+
+---- c3_fields_require_their_declared_types stdout ----
+
+thread 'c3_fields_require_their_declared_types' (592780) panicked at crates/loom-facade/tests/reload_published_generation.rs:611:13:
+accepted content_digest=true
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: reload_published_generation::c3_fields_require_their_declared_types
+             at ./tests/reload_published_generation.rs:611:13
+   3: reload_published_generation::c3_fields_require_their_declared_types::{closure#0}
+             at ./tests/reload_published_generation.rs:600:44
+   4: <reload_published_generation::c3_fields_require_their_declared_types::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   5: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- c3_identity_rejects_an_empty_or_partial_commit stdout ----
+
+thread 'c3_identity_rejects_an_empty_or_partial_commit' (592781) panicked at crates/loom-facade/tests/reload_published_generation.rs:591:9:
+accepted partial commit "" for visionGraph@abc1234
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: reload_published_generation::c3_identity_rejects_an_empty_or_partial_commit
+             at ./tests/reload_published_generation.rs:591:9
+   3: reload_published_generation::c3_identity_rejects_an_empty_or_partial_commit::{closure#0}
+             at ./tests/reload_published_generation.rs:586:52
+   4: <reload_published_generation::c3_identity_rejects_an_empty_or_partial_commit::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   5: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- publication_during_the_current_probe_is_not_acknowledged stdout ----
+
+thread 'publication_during_the_current_probe_is_not_acknowledged' (592808) panicked at crates/loom-facade/tests/reload_published_generation.rs:378:5:
+Ok(Current)
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: reload_published_generation::publication_during_the_current_probe_is_not_acknowledged
+             at ./tests/reload_published_generation.rs:378:5
+   3: reload_published_generation::publication_during_the_current_probe_is_not_acknowledged::{closure#0}
+             at ./tests/reload_published_generation.rs:364:62
+   4: <reload_published_generation::publication_during_the_current_probe_is_not_acknowledged::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   5: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- publication_during_the_post_restart_probe_leaves_pending stdout ----
+
+thread 'publication_during_the_post_restart_probe_leaves_pending' (592810) panicked at crates/loom-facade/tests/reload_published_generation.rs:400:5:
+Ok(Reloaded)
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: reload_published_generation::publication_during_the_post_restart_probe_leaves_pending
+             at ./tests/reload_published_generation.rs:400:5
+   3: reload_published_generation::publication_during_the_post_restart_probe_leaves_pending::{closure#0}
+             at ./tests/reload_published_generation.rs:383:62
+   4: <reload_published_generation::publication_during_the_post_restart_probe_leaves_pending::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   5: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    c3_fields_require_their_declared_types
+    c3_identity_rejects_an_empty_or_partial_commit
+    publication_during_the_current_probe_is_not_acknowledged
+    publication_during_the_post_restart_probe_leaves_pending
+
+test result: FAILED. 35 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+error: test failed, to rerun pass `-p loom-facade --test reload_published_generation`

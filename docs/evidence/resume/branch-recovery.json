@@ -1,0 +1,329 @@
+[
+  {
+    "repo": "agentbox",
+    "source_branch": "ontomark/cli-publish",
+    "source_head": "2433159e559d4a848d1880885f08e4d5ad6eb22f",
+    "recovery_branch": "resume/prep-cli-publish",
+    "recovery_head": "177c2c959b4bb43410d35ed3cd4ec6a395672dd0",
+    "files": [
+      "management-api/tests/ontomark-cli-publish-migration.test.js",
+      "management-api/tests/ontomark-migration-lib.js"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "agentbox",
+    "source_branch": "ontomark/iri",
+    "source_head": "d77c9d8bece120d95639f4f1fa79441d301edca9",
+    "recovery_branch": "resume/prep-iri",
+    "recovery_head": "4082c989afec3ab55f95f0fc1516e7cbda943f8a",
+    "files": [
+      "management-api/tests/ontomark-iri-migration.test.js",
+      "management-api/tests/ontomark-migration-lib.js"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "agentbox",
+    "source_branch": "ontomark/parse",
+    "source_head": "b98297e5ae8ec6d927f0c8b8f226aa3678d14bd5",
+    "recovery_branch": "resume/prep-parse",
+    "recovery_head": "b864605d1e79550f7decc16a176949887e9403f1",
+    "files": [
+      "management-api/tests/ontomark-parse-migration.test.js",
+      "management-api/tests/ontomark-migration-lib.js"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "agentbox",
+    "source_branch": "ontomark/validate",
+    "source_head": "f9e8704f981d414e10cec266cb8cf357868d75e9",
+    "recovery_branch": "resume/prep-validate",
+    "recovery_head": "cd7eede392efb2d441667e5b971afad4017203c8",
+    "files": [
+      "management-api/tests/ontomark-validate-migration.test.js",
+      "management-api/tests/ontomark-migration-lib.js"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "agentbox",
+    "source_branch": "ontomark/write",
+    "source_head": "d104c22f83371cd1220fd61bbb44953650f59668",
+    "recovery_branch": "resume/prep-write",
+    "recovery_head": "e919f341895937d4a6b3c56c5615cb2f85faa873",
+    "files": [
+      "management-api/tests/ontomark-write-migration.test.js",
+      "management-api/tests/ontomark-migration-lib.js"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "loom",
+    "source_branch": "ontomark/rdf",
+    "source_head": "cf1a91acdd3d618bfb1fa4c57bda1dd422c4fffa",
+    "recovery_branch": "resume/prep-rdf",
+    "recovery_head": "47563eb1f493f486b93d23c20bb55a0314bc56a1",
+    "files": [
+      "crates/loom-domain/tests/ontomark_rdf_migration.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/attribution",
+    "source_head": "6078873d73342f0f3f25ddfde1a6021840e05546",
+    "recovery_branch": "resume/prep-attribution",
+    "recovery_head": "3a743f39758f1aa0fe07971fd2c6d4e6662088cc",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step08_attribution.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/cli-publish",
+    "source_head": "9039756ab3499639e865576ed84cc6bc03c2398a",
+    "recovery_branch": "resume/prep-cli-publish",
+    "recovery_head": "8715fbf016126ce837c55c8450e228c370da8ffd",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step10_cli_publish.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/iri",
+    "source_head": "2067d1e9c6bc53a7d29acb8dd95724d5262487d7",
+    "recovery_branch": "resume/prep-iri",
+    "recovery_head": "603b76af9d4b6a58bb96a76550ebbbc734738d3b",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step2_iri.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/ngg1",
+    "source_head": "c597e064ca7c79161f4cb61a7e9e134413a76d72",
+    "recovery_branch": "resume/prep-ngg1",
+    "recovery_head": "4d3ec16be6fd74e84a0233cbc0b9b9c7184c2d37",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step5_ngg1.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/parse",
+    "source_head": "cc29b82be59b0354119a93d110213f3edc765260",
+    "recovery_branch": "resume/prep-parse",
+    "recovery_head": "6cf10e011afba0897dac839f6529a093dae1d081",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step1_parse.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/rdf",
+    "source_head": "4cdadff936b1227b56ce32c01fcfbe3c66f67d44",
+    "recovery_branch": "resume/prep-rdf",
+    "recovery_head": "6f966345306372babb6f428d85abe4f9063db1d8",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step06_rdf.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/reason",
+    "source_head": "a493c1c26ce104d74cfd02d7c4b697fc36901706",
+    "recovery_branch": "resume/prep-reason",
+    "recovery_head": "53cbbf805ff0ee40c5dc85a0144caa81a31fa892",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step4_reason.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/taxonomy",
+    "source_head": "4fe6eba13ebb875e56acf1e6add83eff922e89fa",
+    "recovery_branch": "resume/prep-taxonomy",
+    "recovery_head": "3f13c6818e9d0f55ab479e273368b785fda86b09",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step3_taxonomy.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/validate",
+    "source_head": "da4bc4b99f3ed4fd2a327c4598688928ec9e7996",
+    "recovery_branch": "resume/prep-validate",
+    "recovery_head": "32378f900c98ec7912d4681eb2225b793651f671",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step07_validate.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "project",
+    "source_branch": "ontomark/write",
+    "source_head": "6cbe16a3bbaa2e8e5605d3b971b355f2f876691a",
+    "recovery_branch": "resume/prep-write",
+    "recovery_head": "00e4334bcb5a74bc5f96c6c0f4cd6260bb021071",
+    "files": [
+      "Cargo.lock",
+      "crates/visionclaw-domain/Cargo.toml",
+      "crates/visionclaw-domain/tests/ontomark_step09_write.rs",
+      "crates/visionclaw-domain/tests/common/mod.rs",
+      "crates/visionclaw-domain/tests/common/workflow.rs"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "visionGraph",
+    "source_branch": "ontomark/attribution",
+    "source_head": "867b0f366fcdcf41cd73af0b30093cf9eb9d5bbe",
+    "recovery_branch": "resume/prep-attribution",
+    "recovery_head": "174f5651563014072a344ddccad50d37ce4812aa",
+    "files": [
+      "publishing-tools/WasmVOWL/modern/tests/migration/helpers.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/ontomark-step8-attribution.test.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/fingerprints.json"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "visionGraph",
+    "source_branch": "ontomark/iri",
+    "source_head": "da5a9e4ec5bc3562af34d48c5f4bececd469b727",
+    "recovery_branch": "resume/prep-iri",
+    "recovery_head": "2fefcb7fcec95aa9998420ec38c221e3b8f58776",
+    "files": [
+      "publishing-tools/WasmVOWL/modern/tests/migration/helpers.ts"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "visionGraph",
+    "source_branch": "ontomark/ngg1",
+    "source_head": "96859622ecb6b49bfa504151c51367736bb47dc3",
+    "recovery_branch": "resume/prep-ngg1",
+    "recovery_head": "3743087fa793b7aad7113b615438a4ee41bf8a8a",
+    "files": [
+      "docs/adr/ADR-VG-004-space-and-earth-domains.md",
+      "publishing-tools/WasmVOWL/FORMAT-NGG1.md",
+      "publishing-tools/WasmVOWL/modern/tests/migration/helpers.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/ontomark-step5-ngg1.test.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/fingerprints.json"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "visionGraph",
+    "source_branch": "ontomark/parse",
+    "source_head": "0c0d8b340206a97525410abf418e830a3924e545",
+    "recovery_branch": "resume/prep-parse",
+    "recovery_head": "4af94692d162728d299f8e587440f148e88ece13",
+    "files": [
+      "publishing-tools/WasmVOWL/modern/tests/migration/helpers.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/ontomark-step1-parse.test.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/fingerprints.json",
+      "publishing-tools/WasmVOWL/modern/tests/migration/ontomark-step2-iri.test.ts"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "visionGraph",
+    "source_branch": "ontomark/rdf",
+    "source_head": "786f0d1ed2557253078920ec239339a542e71824",
+    "recovery_branch": "resume/prep-rdf",
+    "recovery_head": "cdc35b8e04173e0ad5ca12f8a82663930884961e",
+    "files": [
+      "publishing-tools/WasmVOWL/modern/tests/migration/helpers.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/ontomark-step6-rdf.test.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/fingerprints.json"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "visionGraph",
+    "source_branch": "ontomark/reason",
+    "source_head": "56611f79a52a3316fa333012f4dcf0cee6537b23",
+    "recovery_branch": "resume/prep-reason",
+    "recovery_head": "236748f7cbe1690db01785deacb06fa26238e95d",
+    "files": [
+      "publishing-tools/WasmVOWL/modern/tests/migration/helpers.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/ontomark-step4-reason.test.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/fingerprints.json"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "visionGraph",
+    "source_branch": "ontomark/taxonomy",
+    "source_head": "3eaca0ae2acf57f9f382bb0aa669c2bc265fd743",
+    "recovery_branch": "resume/prep-taxonomy",
+    "recovery_head": "0442fb88c6f10d054b0d834ba6fe1e9125d7db0b",
+    "files": [
+      "publishing-tools/WasmVOWL/modern/tests/migration/helpers.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/ontomark-step3-taxonomy.test.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/fingerprints.json"
+    ],
+    "original_worktree_preserved": true
+  },
+  {
+    "repo": "visionGraph",
+    "source_branch": "ontomark/validate",
+    "source_head": "f52395fae83c4283c70a541ef21780fbdd0ccd7d",
+    "recovery_branch": "resume/prep-validate",
+    "recovery_head": "c47b94dfe8a905176f80cd1656c02639cf4dce21",
+    "files": [
+      "CLAUDE.md",
+      "publishing-tools/WasmVOWL/modern/tests/migration/helpers.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/ontomark-step7-validate.test.ts",
+      "publishing-tools/WasmVOWL/modern/tests/migration/fingerprints.json"
+    ],
+    "original_worktree_preserved": true
+  }
+]

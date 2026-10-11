@@ -1,0 +1,110 @@
+{
+  "code_commit": "21cd9ffd7b08317248afb4e06b74b650290de5b4",
+  "corpus_commit": "b5e36abd172052cfb0d1dd8a904983f604e1b641",
+  "native_gate": {
+    "command": "TMPDIR=/home/devuser/workspace/project/.git/ontomark-resume-tmp CARGO_TARGET_DIR=/home/devuser/workspace/project/.git/ontomark-resume-target just check",
+    "passed": 746,
+    "ignored": 7,
+    "fmt": "passed",
+    "clippy": "passed"
+  },
+  "plugin": {
+    "unit_tests_passed": 17,
+    "wasm_harness_tests_passed": 4,
+    "offline_checks_passed": 40,
+    "network": "none",
+    "obsidian_runtime": "shim; installed GUI acceptance outstanding"
+  },
+  "parity": {
+    "command": "TMPDIR=/tmp ./conformance/parity.sh <exact-portable-asset> ../visionGraph conformance/golden/corpus-visiongraph",
+    "differences": 0,
+    "artefact_lines": 32,
+    "verb_outputs": 12,
+    "redaction": "disabled for legacy compatibility"
+  },
+  "portable_asset": {
+    "name": "ontomark-x86_64-unknown-linux-gnu",
+    "sha256": "7b15c2858f1715e561c0889dbaa50164e5a404ee7f8ed1d6cfd9da41daeb1d45",
+    "source": "clean git archive of code_commit",
+    "builder": "rust:1.96-bookworm",
+    "runtime": "debian:bookworm-slim, network none; version and synthetic fixture build passed"
+  },
+  "security_review": "not executed successfully; no security PASS claimed",
+  "logs": [
+    {
+      "file": "corpus-parity-nix.log",
+      "sha256": "e894b5933f97b923e96a37e3027071b70ffddc45523ae50bbab1586a3ca36320"
+    },
+    {
+      "file": "corpus-parity-portable.log",
+      "sha256": "e894b5933f97b923e96a37e3027071b70ffddc45523ae50bbab1586a3ca36320"
+    },
+    {
+      "file": "loom-clippy.log",
+      "sha256": "f4a664e5c05c6c8b3ef916109d1fcd7688555bf3d2f5b8b71a393e81534b93c9"
+    },
+    {
+      "file": "loom-empty-id-dispatch-red.log",
+      "sha256": "e6567c0f3ef009eb35edbcfc75c07115f65bd27edd4f81280fa0b95ccd1b6848"
+    },
+    {
+      "file": "loom-integration-green.log",
+      "sha256": "eedea4b9bc4bf4d6030c4aeea1ff06f233f5a67442957e2acf8a9ff307ba32fa"
+    },
+    {
+      "file": "loom-parent-contracts-pending.log",
+      "sha256": "0680d1879c1d0b32c6d98a92e462ad93939687d7b661c943d16eb24ce673061a"
+    },
+    {
+      "file": "loom-probe-marker-red.log",
+      "sha256": "7e69240ae7b22c545ee03c89658360296a0d4b5061a0e147fb8439a3683fb012"
+    },
+    {
+      "file": "loom-receipt-parity-green.log",
+      "sha256": "91fca7d4f4a75ce9fd5d9ac721c3c686a5b6a0cdf7a2e6634ad9b4e7f4624409"
+    },
+    {
+      "file": "loom-receipt-red.log",
+      "sha256": "32b89423e245cc5d851c481e4d09ea1598f763dee509dd16658ca327aea8d72a"
+    },
+    {
+      "file": "native-check.log",
+      "sha256": "f46d49747077459b2a335577b043e55a6ffb288463d2fa2b680dadd1d3d6bcc8"
+    },
+    {
+      "file": "plugin-offline.log",
+      "sha256": "f38823239d8bd408384f08df48cbad7da3ed16eff755dd5197bd808d4d2aad69"
+    },
+    {
+      "file": "plugin-tests.log",
+      "sha256": "63ca05fbeee990fe43c334fb2f1cd037f87a277a9de970231f277ec2834b32f9"
+    },
+    {
+      "file": "plugin-wasm.log",
+      "sha256": "3844a1a727ae83a224ef3801dab00f6aa923af7c7e33cac3895812989ba7f56e"
+    },
+    {
+      "file": "portable-build.log",
+      "sha256": "20b8f3f6d23861e1b5da94cbf314f6a8bdad5b06fea0b2c7eed4e2c2f89f1fb2"
+    },
+    {
+      "file": "portable-runtime.log",
+      "sha256": "58a6b66947898310e2625ebe89a09093b074320fcfb9fc3fa27fee81ba802ea7"
+    }
+  ],
+  "loom": {
+    "integration_commit": "739f71a",
+    "branch": "resume/reload-integration",
+    "integration_tests_passed": 61,
+    "receipt_unit_tests_passed": 1,
+    "new_regressions_proved_red": 7,
+    "fmt": "passed",
+    "clippy": "passed",
+    "parent_contracts": {
+      "passed": 2,
+      "failed": 5,
+      "status": "pending LM04/LM09 migration"
+    },
+    "broader_library_limit": "existing build-info revision test fails in Git worktree; no full workspace PASS claim"
+  }
+}

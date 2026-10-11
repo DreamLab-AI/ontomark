@@ -1,0 +1,77 @@
+warning: failed to auto-clean cache data
+
+failed to clean entries from the global cache
+
+Caused by:
+  failed to remove file `/home/devuser/workspace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/protobuf-2.28.0/regenerate.sh`
+
+Caused by:
+  Permission denied (os error 13)
+   Compiling loom-facade v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-facade)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.57s
+     Running tests/reload_published_generation.rs (/home/devuser/workspace/project/.git/ontomark-loom-target/debug/deps/reload_published_generation-19b9185856ba46ad)
+
+running 2 tests
+test a_preexisting_temp_symlink_cannot_truncate_a_bundle_artifact ... FAILED
+test a_preexisting_public_temp_file_cannot_make_the_receipt_public ... FAILED
+
+failures:
+
+---- a_preexisting_temp_symlink_cannot_truncate_a_bundle_artifact stdout ----
+
+thread 'a_preexisting_temp_symlink_cannot_truncate_a_bundle_artifact' (621821) panicked at crates/loom-facade/tests/reload_published_generation.rs:777:5:
+assertion `left == right` failed
+  left: [123, 34, 99, 111, 110, 116, 101, 110, 116, 95, 100, 105, 103, 101, 115, 116, 34, 58, 32, 34, 97, 102, 50, 48, 52, 102, 50, 54, 50, 54, 100, 56, 49, 49, 99, 55, 102, 49, 53, 48, 56, 98, 56, 98, 50, 51, 56, 54, 49, 52, 99, 53, 56, 54, 100, 52, 55, 50, 48, 48, 48, 56, 97, 56, 51, 50, 52, 100, 98, 49, 100, 102, 102, 54, 100, 55, 51, 51, 49, 98, 102, 56, 57, 57, 34, 44, 32, 34, 103, 101, 110, 101, 114, 97, 116, 105, 111, 110, 34, 58, 32, 34, 103, 49, 34, 44, 32, 34, 115, 116, 97, 116, 101, 34, 58, 32, 34, 115, 101, 114, 118, 101, 100, 34, 125, 10]
+ right: [102, 105, 120, 116, 117, 114, 101]
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: core::panicking::assert_failed_inner
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:452:17
+   3: core::panicking::assert_failed::<alloc::vec::Vec<u8>, alloc::vec::Vec<u8>>
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/panicking.rs:407:5
+   4: reload_published_generation::a_preexisting_temp_symlink_cannot_truncate_a_bundle_artifact
+             at ./tests/reload_published_generation.rs:777:5
+   5: reload_published_generation::a_preexisting_temp_symlink_cannot_truncate_a_bundle_artifact::{closure#0}
+             at ./tests/reload_published_generation.rs:770:66
+   6: <reload_published_generation::a_preexisting_temp_symlink_cannot_truncate_a_bundle_artifact::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   7: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- a_preexisting_public_temp_file_cannot_make_the_receipt_public stdout ----
+
+thread 'a_preexisting_public_temp_file_cannot_make_the_receipt_public' (621820) panicked at crates/loom-facade/tests/reload_published_generation.rs:765:5:
+assertion `left == right` failed
+  left: 420
+ right: 384
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: core::panicking::assert_failed_inner
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:452:17
+   3: core::panicking::assert_failed::<u32, u32>
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:407:5
+   4: reload_published_generation::a_preexisting_public_temp_file_cannot_make_the_receipt_public
+             at ./tests/reload_published_generation.rs:765:5
+   5: reload_published_generation::a_preexisting_public_temp_file_cannot_make_the_receipt_public::{closure#0}
+             at ./tests/reload_published_generation.rs:757:67
+   6: <reload_published_generation::a_preexisting_public_temp_file_cannot_make_the_receipt_public::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   7: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    a_preexisting_public_temp_file_cannot_make_the_receipt_public
+    a_preexisting_temp_symlink_cannot_truncate_a_bundle_artifact
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 39 filtered out; finished in 0.26s
+
+error: test failed, to rerun pass `-p loom-facade --test reload_published_generation`

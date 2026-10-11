@@ -1,71 +1,88 @@
-# Hand-off: ontomark sprint, checkpoint 2026-10-11 evening
+# Hand-off: resumed ontomark sprint
 
-Read this first, then `docs/RUNLOG.md` (the append-only ledger), then
-`docs/adr/ADR-OM-001-sprint-decisions.md` (21 decisions) and
-`docs/DEPRECATION.md` on branch `wp-d-estate` (the estate removal plan).
+Read [the branch census](BRANCH-RECOVERY.md), [RUNLOG](RUNLOG.md),
+[ADR-OM-001](adr/ADR-OM-001-sprint-decisions.md) and
+[the removal plan](DEPRECATION.md). The older WP-D tables describe the original
+interruption; the branch census records what was recovered and what can land.
 
-## State of main
+## Integrated core
 
-`main` holds the scaffold, the merged WP-A slice (`ontomark-parse`,
-`ontomark-model`), and the documentation. WP-A is closed: 9,244 of 9,244
-public pages round-trip byte-identically, two Codex cross-vendor audits ran,
-six defects were fixed test-first, no gates pending.
+Local `main` was fast-forwarded from `506e401` to `21cd9ff` after the recovered
+WP-B/C/D/E merges. WP-A remains the canonical parser/model. All original
+ontomark sprint refs and detached worktree tips are ancestors of this code;
+there is no omitted committed core slice.
 
-`ontomark-ngg1` 0.1.0 is published on crates.io from `291e0de`, tagged
-`ontomark-ngg1-v0.1.0`. It is the single owner of the NGG1 format.
+| Slice | Current state |
+|---|---|
+| WP-A model/parse | Original audited slice retained; later branch copies do not overwrite it. |
+| WP-B reasoner | Audited facade merged. Unsupported assertion/role constructs are refused; dropped existentials make classification incomplete. Partial EL capability is explicit. |
+| WP-C compiler/CLI | Public projection, alias/link privacy and Turtle writer corrections merged; JSON-LD/SHACL conformance work recovered. Legacy corpus parity passes. Shared reasoner adoption is pending. |
+| WP-D estate | Census, removal plan and guard merged. Estate migrations remain open. |
+| WP-E engine/plugin | Offline plugin merged, capability metadata corrected, JSON ordering stable with combined workspace features. Desktop Obsidian acceptance remains open. |
 
-## Slices
+`ontomark-ngg1` 0.1.0 was already published from `291e0de`, with tag
+`ontomark-ngg1-v0.1.0`. The CLI prerelease has not yet been published.
 
-| Slice | Branch | State at hand-off |
-|---|---|---|
-| WP-A model and parse | merged to main | closed |
-| WP-B reasoner | `wp-b-reason` (`e773feb`, on origin) | whelk-el ported from whelk-rs 79a1ee2; ontomark-reason with EL profile check, classification facade, EXP-01 and EXP-06; two Codex rounds, seven defects fixed; `docs/api/WP-B.md` says stable for consumers; queen ran `just check` in a clean worktree: exit 0, 38 tests. Never reported to the queen; ready to merge after a last read of WP-B.md |
-| WP-C compile and CLI | `wp-c-compile` | parity proven at `291e0de`; checkpoint `d5c1188` unverified; rc.1 pending |
-| WP-D estate | `wp-d-estate` | census done; guard baseline 876; 29 prep branches with red tests, all round-one Codex FAIL, fixes in progress; `docs/HANDOFF-WP-D.md` |
-| WP-E plugin | `wp-e-plugin` (`acd6dd5` local; push requested) | ontomark-wasm engine with generation guard, local SPARQL and patch proposals (`2376d38`); offline Obsidian plugin (`03d7187`); evidence receipts for EXP-05, 06, 11, 12 and wasm parity (`65e3824`); merges WP-A and WP-B in. 17 uncommitted files at hand-off; never reported |
+## Verified checks
 
-## WP-C: finishing rc.1 (about 90 minutes, in this order)
+`just check`: 746 tests passed, 7 ignored; fmt and clippy pass. Reasoner WASM:
+47 tests passed. Plugin: 17 unit tests, 4 WASM/harness tests, bundle checks and
+40 offline Docker checks passed. The Docker plugin harness uses an Obsidian
+runtime shim. Legacy fixture parity and full committed corpus parity pass;
+full corpus receipt reports zero differences over 32 artefact lines and
+12 verb outputs. Current logs are in [evidence/resume](evidence/resume/).
 
-1. Take the redaction count with three public example titles from the
-   worker; record in RUNLOG.
-2. `cargo fmt`, commit `Cargo.lock`.
-3. Full parity with `--no-redact-private-links` on fixture and corpus:
-   must be 0 differences over 32 artefact lines.
-4. Release build from a clean worktree: `cargo build --release -p ontomark-cli`.
-5. Codex audit of the parity claim; verdict into `docs/api/WP-C.md`.
-6. Tag `v0.1.0-rc.1`, upload asset `ontomark-x86_64-unknown-linux-gnu`
-   with its sha256.
+Default-redaction corpus counts, from committed visionGraph `b5e36abd1`:
+258 knowledge publication pages changed, 301 frontmatter entries removed,
+5 keys removed and 50 body links rewritten; 63 working publication pages
+changed with 195 body links rewritten; 32 mirror pages changed with 50 links.
+Public example titles: 1Hive, 1inch, 2D LiDAR. Private page bodies and target
+names are not included in the evidence bundle.
 
-After rc.1: rebase onto main (WP-A), switch compile to `ontomark-reason`,
-divergence 3 (declare the 690 `skos:Concept`-only classes as `owl:Class`),
-writer `shorten` fixes, the in-memory projection API for WP-E, then
-`find`, `retrieve`, `tree`.
+## CLI release
 
-## WP-D: landing Phase 2
+A clean source archive of `21cd9ff` was built using `rust:1.96-bookworm`.
+The resulting `ontomark-x86_64-unknown-linux-gnu` uses the ordinary Linux ELF
+loader; the local Nix release binary must not be uploaded. The portable asset
+runs and builds the synthetic fixture on Debian 12 with networking disabled.
+Its SHA-256 is
+`7b15c2858f1715e561c0889dbaa50164e5a404ee7f8ed1d6cfd9da41daeb1d45`.
 
-Each `ontomark/<responsibility>` branch in each estate repo has a red
-consumer test. Round-one Codex audits failed all 29 (the tests checked
-spelling, not behaviour); fix workers are rewriting them to parse manifests,
-strip comments, never self-scan, and carry a mutation suite. The visionGraph
-branches live only in the worktrees under `~/workspace/wt-ontomark/`; the
-repo rule forbids agents pushing visionGraph, so the owner pushes those.
-VisionClaw branches push to remote `dreamlab-github`. See
-`docs/HANDOFF-WP-D.md` on `wp-d-estate` (`935915f`) for the per-branch
-table. VisionClaw's ten branches are on `dreamlab-github` in their round-one
-state; the fix worker's commits fast-forward them. Order is `docs/DEPRECATION.md` section 9. First to land:
-visionGraph `ontomark/publish-cli` (`ea812a287`): fill
-`ONTOMARK_RELEASE_TAG` and `ONTOMARK_SHA256` from rc.1, run its contract
-test (11 of 11), push visionGraph, watch the deploy. Done when
-`scripts/estate-guard.sh` exits 0 across all repos.
+Parity of that exact asset also passes: zero differences over 32 artefact lines
+and 12 verb outputs. Remaining release work: final receipts and the prerelease
+tag/upload. Then fill visionGraph `ontomark/publish-cli` release tag
+and checksum, run its 17 contract tests, and prepare the owner's push. Agents
+must not push visionGraph: its main push deploys the public site.
 
-## Lessons for the next queen
+## Estate branch work
 
-- `SendMessage` bodies over about 1,300 characters truncate; send in parts.
-- Check `git branch --show-current` before every commit; the shared
-  checkout can be switched by a teammate.
-- Codex's sandbox (`bwrap`) cannot start in this container; run audits
-  unsandboxed on exported copies, never on worktrees.
-- Run a slice's own gate yourself in a clean worktree before merging.
-- `Write` of a long file was silently truncated once; verify with `wc -l`
-  after writing anything over about 100 lines.
-- Count declarations by parsing, never by grepping lines.
+Thirty-one estate migration branches were checked. Twenty-four dirty test/audit
+preparations were preserved as `resume/prep-*` commits without changing their
+original worktrees or indexes. WP-E historical evidence was preserved separately.
+See the census for every recovery commit and landing blocker. Preparation tests
+remain deliberately red until their consumer implementations are replaced.
+
+VOWL NGG1 implementation `da21468` passes its functional gates and actual WASM
+smoke/bundle tests. Its security review was unavailable, not passed. Taxonomy is
+still preparation. Loom's Rust reloader is reconciled with its hardened CLI
+parent on `resume/reload-integration` (`739f71a`). Marker, receipt and
+concurrent-publication regressions are fixed; 61 integration tests plus one unit
+test pass with fmt/clippy. Parent publishing contracts still have five failures,
+and the existing build-info test reports unknown Loom revision in worktrees. VisionFlow main has diverged from origin/main and needs
+reconciliation before its diagram migration plan can land.
+
+The guard still reports the original 876 residues. Estate completion requires
+that count to reach zero with each consumer's behavioural gates passing.
+
+## Next implementation work
+
+After the CLI prerelease, replace compiler legacy classification with the shared
+reasoner, add the typed/in-memory projection API, declare the 690 SKOS-only
+classes as `owl:Class`, and implement the remaining CLI commands. Follow the
+consumer removal order in DEPRECATION section 9; repin importers in the same
+change as removing their old library.
+
+Use `CARGO_TARGET_DIR` and `TMPDIR` under the roomy
+`/home/devuser/workspace/project/.git/` mount. The workspace volume is nearly full;
+`/tmp` accepts logs/data but is mounted without execution permission. Stream
+source archives into Docker rather than binding container paths on the host.

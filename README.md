@@ -35,9 +35,10 @@ Three things it refuses to do: hold truth anywhere but the Markdown, infer struc
 | `ontomark-model` | Typed ontology model: `Class`, `Individual`, `Property`; full predicate IRIs via a prefix map; reference states `Resolved`, `Ambiguous`, `Unresolved`, `External`; the `Profile` trait | native, wasm32 |
 | `whelk-el` | OWL 2 EL reasoner, a fork of whelk-rs with the CLI and all host dependencies removed; `rayon` optional | native, wasm32 |
 | `ontomark-reason` | EL-profile checker with precise refusal reasons; classification facade; cancellable incremental generations for worker hosts | native, wasm32 |
-| `ontomark-compile` | RDF 1.1 Turtle, JSON-LD 1.1, SHACL shapes, PROV-O attribution, and the NGG1 graph tier codec (single owner) | native, wasm32 |
+| `ontomark-compile` | RDF 1.1 Turtle, JSON-LD 1.1, SHACL shapes, PROV-O attribution and public projections; re-exports the shared NGG1 codec | native, wasm32 |
+| `ontomark-ngg1` | NGG1 graph tier encoder and zero-copy reader; published as 0.1.0 | native, wasm32 |
 | `ontomark-wasm` | `wasm-bindgen` surface for Obsidian and the browser: index, update, classify, query, patch | wasm32 |
-| `ontomark-cli` | `ontomark build / validate / gate / conflicts / migrate` and the rest of the estate's `vault` contract, as a drop-in | native |
+| `ontomark-cli` | `ontomark build / validate / gate / conflicts / migrate / attribute / assets / body-residue`; remaining estate commands are pending | native |
 
 `plugin/` is the Obsidian plugin: self-contained, offline, no database, a local SPARQL subset, guarded writes behind a diff preview. Desktop first.
 
@@ -65,7 +66,7 @@ cargo test --workspace
 cargo build -p ontomark-wasm --target wasm32-unknown-unknown
 ```
 
-`just` targets mirror CI: `just check`, `just test`, `just wasm`, `just conformance`, `just doc`. CI runs clippy with warnings denied, `missing_docs` denied workspace-wide, the wasm32 build, and gitleaks.
+`just` targets include `just check`, `just wasm`, `just wasm-test`, `just conformance`, `just doc` and `just plugin`. CI runs clippy with warnings denied, `missing_docs` denied workspace-wide, the wasm32 build, and gitleaks.
 
 ## Where it sits in the estate
 
@@ -91,7 +92,9 @@ Every duplicate the census found is listed with its replacement and its removal 
 
 ## Status
 
-Sprint in progress. The workspace scaffold builds natively and to wasm32; the estate census is complete; the five slices (model and parse, reasoner, compiler and CLI, estate deprecation, plugin) are in flight on their own branches. Nothing is published to crates.io yet and the repository is private until the first release is complete. The run log is the honest ledger.
+The five core work packages are integrated locally. The combined native gate passes 746 tests (7 ignored); reasoner WASM tests, plugin checks and legacy corpus parity also pass. `ontomark-ngg1` 0.1.0 is published on crates.io. The CLI release and estate migrations remain in progress; see [the hand-off](docs/HANDOFF.md) and [branch census](docs/BRANCH-RECOVERY.md).
+
+The reasoner implements a subset of OWL 2 EL. Capability metadata reports that limit; classification refuses unsupported constructs and reports dropped existential restrictions. The compiler still uses its legacy classification path while its move to the shared reasoner is pending. The offline plugin checks use an Obsidian runtime shim; an installed desktop Obsidian acceptance run remains outstanding.
 
 ## Licence
 

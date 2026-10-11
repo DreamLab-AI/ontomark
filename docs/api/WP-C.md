@@ -1,8 +1,8 @@
 # WP-C — compiler, profiles and CLI
 
-Status: in progress on branch `wp-c-compile`. This page is rewritten with
-executed results when the slice closes; every claim below cites the command
-that proved it.
+Status: recovered into local `main` through `resume/integration` at `21cd9ff`.
+The compiler and CLI checks pass; the portable CLI release and later API work
+remain open. Current receipts are in `docs/evidence/resume/`.
 
 ## Crates
 
@@ -22,7 +22,32 @@ workspace follows the sprint brief (non-negotiable 5: only code descending from
 solid-pod or sidestr, in practice `vault/src/nostr.rs` and governance posting,
 stays AGPL). Not relocated: `nostr.rs`, `propose.rs`, `apply.rs`, `edit.rs`,
 `create.rs`, `diff.rs`, `vault-core/src/{graph,proposal}.rs`, `build/rvdb.rs`
-(networked embedder). Each relocated module names its origin. Open question for
-the owner: confirm the relicensing of the relocated files.
+(networked embedder). Each relocated module names its origin. The sole rights
+holder's relicensing grant and exclusions are recorded in `NOTICE` and
+ADR-OM-001; this is resolved.
 
 The NGG1 reader descends from `vowl-wasm` 0.1.2 (MIT); its notice is kept.
+
+## Resume verification
+
+`just check` passes across the integrated workspace: 746 tests, 7 ignored,
+formatting and clippy with warnings denied. This includes the fixture parity
+tests and ten public-export privacy canaries. Previously ignored Turtle writer
+tests now run, including 400 random graph seeds per profile. Additional
+regressions cover private aliases in display labels, cross-vault machine links
+and quoted YAML definition keys. Definitions containing private conjuncts are
+withheld as a whole.
+
+`TMPDIR=/tmp ./conformance/parity.sh <release-binary> ../visionGraph
+conformance/golden/corpus-visiongraph` reports zero differences across 32
+artefact lines and 12 verb outputs for committed corpus `b5e36abd1`. This
+compatibility check uses `--no-redact-private-links`; public redaction has
+separate canaries. The first resumed full-corpus receipt used the local Nix
+build, which cannot be shipped as an ordinary Linux asset. The clean Debian-built
+portable asset also passes the same full corpus parity gate (see
+`corpus-parity-portable.log`) and builds the synthetic fixture offline on Debian 12.
+
+Remaining work: shared reasoner adoption, typed/in-memory projection APIs,
+explicit `owl:Class` declarations for the 690 SKOS-only classes, and the
+remaining estate CLI commands. This slice does not claim those migrations
+complete.

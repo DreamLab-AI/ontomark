@@ -9,6 +9,10 @@ companion: docs/DEPRECATION.md
 
 # WP-D handoff
 
+This is the original interruption checkpoint. For resumed branch heads, recovered
+drafts and current landing decisions, read [BRANCH-RECOVERY.md](BRANCH-RECOVERY.md)
+and [HANDOFF.md](HANDOFF.md). The tables below are historical.
+
 State of every estate migration branch at the wrap-up checkpoint. `DEPRECATION.md` is the inventory and removal plan; this file is where each step's branch has got to. Step numbers are DEPRECATION §9.
 
 ## Rules still in force

@@ -1,0 +1,171 @@
+warning: failed to auto-clean cache data
+
+failed to clean entries from the global cache
+
+Caused by:
+  failed to remove file `/home/devuser/workspace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/protobuf-2.28.0/regenerate.sh`
+
+Caused by:
+  Permission denied (os error 13)
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling quote v1.0.47
+   Compiling winnow v0.7.15
+   Compiling memchr v2.8.3
+   Compiling toml_write v0.1.2
+   Compiling indexmap v2.14.0
+   Compiling syn v3.0.3
+   Compiling syn v2.0.119
+   Compiling thiserror-impl v1.0.69
+   Compiling serde_derive v1.0.229
+   Compiling async-trait v0.1.92
+   Compiling thiserror v1.0.69
+   Compiling serde_spanned v0.6.9
+   Compiling toml_datetime v0.6.11
+   Compiling loom-domain v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-domain)
+   Compiling toml_edit v0.22.27
+   Compiling toml v0.8.23
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.00s
+     Running tests/ontomark_cli_publish_migration.rs (/home/devuser/workspace/project/.git/ontomark-loom-target/debug/deps/ontomark_cli_publish_migration-6fd89c666a74c06d)
+
+running 7 tests
+test lm09_runbook_fetches_the_pinned_release_and_verifies_it_before_building ... ok
+test lm09_runbook_does_not_install_ontomark_with_cargo_or_build_vault ... ok
+test lm09_ontomark_release_is_pinned_by_tag_and_digest ... FAILED
+test lm04_scaffold_adopts_the_bundle_contract_without_the_reasoner ... FAILED
+test lm09_operator_error_text_names_ontomark_build ... FAILED
+test lm04_no_private_artefact_shape_survives_under_any_name ... FAILED
+test lm04_surviving_importers_resolve_to_ontomark_compile ... FAILED
+
+failures:
+
+---- lm09_ontomark_release_is_pinned_by_tag_and_digest stdout ----
+
+thread 'lm09_ontomark_release_is_pinned_by_tag_and_digest' (696580) panicked at crates/loom-domain/tests/ontomark_cli_publish_migration.rs:121:5:
+LM-09: deploy/ontomark-release.env must set ONTOMARK_RELEASE_TAG to a released tag `v<semver>[-pre]` (e.g. v0.1.0-rc.1), got ""
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: ontomark_cli_publish_migration::lm09_ontomark_release_is_pinned_by_tag_and_digest
+             at ./tests/ontomark_cli_publish_migration.rs:121:5
+   3: ontomark_cli_publish_migration::lm09_ontomark_release_is_pinned_by_tag_and_digest::{closure#0}
+             at ./tests/ontomark_cli_publish_migration.rs:119:55
+   4: <ontomark_cli_publish_migration::lm09_ontomark_release_is_pinned_by_tag_and_digest::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   5: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- lm04_scaffold_adopts_the_bundle_contract_without_the_reasoner stdout ----
+
+thread 'lm04_scaffold_adopts_the_bundle_contract_without_the_reasoner' (696578) panicked at crates/loom-domain/tests/support/mod.rs:502:9:
+LM-04: crates/loom-scaffold/Cargo.toml [dependencies] has no dependency on package `ontomark-compile` (renames are resolved)
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: ontomark_cli_publish_migration::support::assert_depends_on::{closure#0}
+             at ./tests/support/mod.rs:502:9
+   3: <core::option::Option<ontomark_cli_publish_migration::support::Dep>>::unwrap_or_else::<ontomark_cli_publish_migration::support::assert_depends_on::{closure#0}>
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/option.rs:1065:21
+   4: ontomark_cli_publish_migration::support::assert_depends_on
+             at ./tests/support/mod.rs:501:49
+   5: ontomark_cli_publish_migration::lm04_scaffold_adopts_the_bundle_contract_without_the_reasoner
+             at ./tests/ontomark_cli_publish_migration.rs:247:15
+   6: ontomark_cli_publish_migration::lm04_scaffold_adopts_the_bundle_contract_without_the_reasoner::{closure#0}
+             at ./tests/ontomark_cli_publish_migration.rs:246:67
+   7: <ontomark_cli_publish_migration::lm04_scaffold_adopts_the_bundle_contract_without_the_reasoner::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   8: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- lm09_operator_error_text_names_ontomark_build stdout ----
+
+thread 'lm09_operator_error_text_names_ontomark_build' (696581) panicked at crates/loom-domain/tests/ontomark_cli_publish_migration.rs:57:5:
+LM-09: crates/loom-facade/src/mirror.rs: string literal "vault build marker missing or mistyped {}" still names `vault build`
+LM-09: crates/loom-facade/src/mirror.rs: string literal "vault build marker must list artifacts" still names `vault build`
+LM-09: crates/loom-vector-ruvector/src/artifact.rs: string literal "marker has no `id`: not a vault build marker" still names `vault build`
+LM-09: crates/loom-vector-ruvector/src/artifact.rs: string literal "marker does not list {RECORDS_FILE}; build with `vault build --with-rvdb`" still names `vault build`
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: core::panicking::panic_display::<alloc::string::String>
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/panicking.rs:259:5
+   3: ontomark_cli_publish_migration::lm09_operator_error_text_names_ontomark_build
+             at ./tests/ontomark_cli_publish_migration.rs:57:5
+   4: ontomark_cli_publish_migration::lm09_operator_error_text_names_ontomark_build::{closure#0}
+             at ./tests/ontomark_cli_publish_migration.rs:45:51
+   5: <ontomark_cli_publish_migration::lm09_operator_error_text_names_ontomark_build::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   6: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- lm04_no_private_artefact_shape_survives_under_any_name stdout ----
+
+thread 'lm04_no_private_artefact_shape_survives_under_any_name' (696577) panicked at crates/loom-domain/tests/ontomark_cli_publish_migration.rs:281:5:
+take the typed artefact structs from ontomark-compile (ADR-142 §2):
+LM-04: crates/loom-scaffold/src/bin/build_concept_records.rs: `struct ProseFile` is a private prose-index envelope (pages)
+LM-04: crates/loom-scaffold/src/index.rs: `struct ClassEntry` is a private scaffold-index class entry (sup, isup, bl)
+LM-04: crates/loom-scaffold/src/index.rs: `struct RawIndex` is a private scaffold-index envelope (version, generated, classes)
+LM-04: crates/loom-scaffold/src/prose.rs: `struct ProseEntry` is a private prose-index entry (dfull, cl)
+LM-04: crates/loom-scaffold/src/prose.rs: `struct ProseFile` is a private prose-index envelope (pages)
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: ontomark_cli_publish_migration::lm04_no_private_artefact_shape_survives_under_any_name
+             at ./tests/ontomark_cli_publish_migration.rs:281:5
+   3: ontomark_cli_publish_migration::lm04_no_private_artefact_shape_survives_under_any_name::{closure#0}
+             at ./tests/ontomark_cli_publish_migration.rs:255:60
+   4: <ontomark_cli_publish_migration::lm04_no_private_artefact_shape_survives_under_any_name::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   5: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+---- lm04_surviving_importers_resolve_to_ontomark_compile stdout ----
+
+thread 'lm04_surviving_importers_resolve_to_ontomark_compile' (696579) panicked at crates/loom-domain/tests/ontomark_cli_publish_migration.rs:313:5:
+LM-04: `ClassEntry` is still referenced in ["crates/loom-scaffold/src/bin/build_concept_records.rs", "crates/loom-scaffold/src/index.rs", "crates/loom-scaffold/src/lib.rs", "crates/loom-scaffold/src/serialise.rs"] but no `use ontomark_compile::..ClassEntry` binds it
+LM-04: `RawIndex` is still referenced in ["crates/loom-scaffold/src/bin/build_concept_records.rs", "crates/loom-scaffold/src/index.rs"] but no `use ontomark_compile::..RawIndex` binds it
+LM-04: `ProseEntry` is still referenced in ["crates/loom-scaffold/src/prose.rs", "crates/loom-scaffold/src/serialise.rs"] but no `use ontomark_compile::..ProseEntry` binds it
+LM-04: `ProseFile` is still referenced in ["crates/loom-scaffold/src/bin/build_concept_records.rs", "crates/loom-scaffold/src/prose.rs"] but no `use ontomark_compile::..ProseFile` binds it
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/panicking.rs:80:14
+   2: core::panicking::panic_display::<alloc::string::String>
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/panicking.rs:259:5
+   3: ontomark_cli_publish_migration::lm04_surviving_importers_resolve_to_ontomark_compile
+             at ./tests/ontomark_cli_publish_migration.rs:313:5
+   4: ontomark_cli_publish_migration::lm04_surviving_importers_resolve_to_ontomark_compile::{closure#0}
+             at ./tests/ontomark_cli_publish_migration.rs:289:58
+   5: <ontomark_cli_publish_migration::lm04_surviving_importers_resolve_to_ontomark_compile::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /nix/store/np3jnsrvjgbl3jy6jzg8wcjhs2wk6g6n-rust-minimal-1.99.0/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+   6: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    lm04_no_private_artefact_shape_survives_under_any_name
+    lm04_scaffold_adopts_the_bundle_contract_without_the_reasoner
+    lm04_surviving_importers_resolve_to_ontomark_compile
+    lm09_ontomark_release_is_pinned_by_tag_and_digest
+    lm09_operator_error_text_names_ontomark_build
+
+test result: FAILED. 2 passed; 5 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+error: test failed, to rerun pass `-p loom-domain --test ontomark_cli_publish_migration`

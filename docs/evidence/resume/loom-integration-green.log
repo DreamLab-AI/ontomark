@@ -1,0 +1,102 @@
+warning: failed to auto-clean cache data
+
+failed to clean entries from the global cache
+
+Caused by:
+  failed to remove file `/home/devuser/workspace/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/protobuf-2.28.0/regenerate.sh`
+
+Caused by:
+  Permission denied (os error 13)
+   Compiling loom-facade v0.1.0 (/home/devuser/workspace/wt-ontomark/loom/resume-reload/crates/loom-facade)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.41s
+     Running tests/adr141_generation_and_ledger.rs (/home/devuser/workspace/project/.git/ontomark-loom-target/debug/deps/adr141_generation_and_ledger-d5a74f681b644d0b)
+
+running 7 tests
+test a_vault_build_marker_activates_and_names_the_local_generation ... ok
+test the_legacy_mirror_marker_still_activates ... ok
+test a_fresh_generation_is_not_stale ... ok
+test a_decision_without_a_case_or_digest_is_refused ... ok
+test a_generation_past_its_stale_after_is_reported_stale_and_still_served ... ok
+test the_chain_survives_a_restart ... ok
+test a_signed_decision_is_ledgered_and_the_chain_verifies ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/exp009_generation.rs (/home/devuser/workspace/project/.git/ontomark-loom-target/debug/deps/exp009_generation-53646b22853e26d4)
+
+running 7 tests
+test verify_atomicity_ok_without_manifest ... ok
+test generation_store_falls_to_mirror_manifest ... ok
+test generation_store_falls_to_scaffold_index ... ok
+test generation_store_prefers_build_manifest ... ok
+test verify_atomicity_flags_a_tampered_artifact ... ok
+test generation_mismatch_skips_fallback ... ok
+test generation_match_admits_fallback ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/mirror_generation.rs (/home/devuser/workspace/project/.git/ontomark-loom-target/debug/deps/mirror_generation-9caf1a2500114037)
+
+running 4 tests
+test promotes_consistent_new_build ... ok
+test current_when_nothing_downloaded ... ok
+test rejects_mixed_build ... ok
+test rejects_failed_fetch_with_no_prior ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/ontomark_reload_migration.rs (/home/devuser/workspace/project/.git/ontomark-loom-target/debug/deps/ontomark_reload_migration-39d4bc44ac597ca5)
+
+running 2 tests
+test lm06_python_implementation_and_duplicate_tests_are_removed ... ok
+test lm06_service_runs_the_registered_rust_binary ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/reload_published_generation.rs (/home/devuser/workspace/project/.git/ontomark-loom-target/debug/deps/reload_published_generation-5c053f55aa6f6aec)
+
+running 41 tests
+test a_tampered_artifact_still_refuses_whatever_the_declared_digest ... ok
+test an_empty_id_falls_back_to_the_legacy_shape ... ok
+test indirect_and_traversal_artifacts_refused ... ok
+test graph_tier_subdirectory_artifact_is_accepted ... ok
+test hash_tamper_prevents_restart ... ok
+test missing_semantic_and_inflight_publication_refused ... ok
+test declared_corpus_digest_is_carried_not_compared ... ok
+test c3_marker_with_a_duplicate_artifact_name_or_non_list_artifacts_is_refused ... ok
+test semantic_sidecar_must_declare_the_same_generation ... ok
+test a_preexisting_temp_symlink_cannot_truncate_a_bundle_artifact ... ok
+test a_preexisting_public_temp_file_cannot_make_the_receipt_public ... ok
+test missing_c3_field_is_refused ... ok
+test publication_during_the_current_probe_is_not_acknowledged ... ok
+test escaping_or_indirect_subpaths_are_refused ... ok
+test identity_must_name_its_own_commit ... ok
+test served_matches_requires_every_proof ... ok
+test c3_identity_rejects_an_empty_or_partial_commit ... ok
+test size_mismatch_is_refused ... ok
+test symlinked_marker_and_symlinked_artifact_are_refused ... ok
+test cli::a_second_invocation_cannot_take_the_lock ... ok
+test vault_build_bundle_is_accepted ... ok
+test matching_server_does_not_restart ... ok
+test publication_during_the_post_restart_probe_leaves_pending ... ok
+test failed_reload_never_records_success ... ok
+test sidecar_model_and_dimensions_are_enforced ... ok
+test concurrent_publication_after_restart_not_acknowledged ... ok
+test cli::tampered_bundle_exits_one_before_any_restart_or_receipt ... ok
+test receipt_is_private_atomic_and_leaves_no_temp_file ... ok
+test pending_receipt_is_written_before_the_restart_runs ... ok
+test timeout_polls_every_second_until_the_deadline ... ok
+test new_publication_reloads_then_records_verified_receipt ... ok
+test cli::receipt_directory_is_created_private ... ok
+test wrong_generation_after_restart_is_not_acknowledged ... ok
+test c3_fields_require_their_declared_types ... ok
+test cli::verify_subcommand_checks_the_bundle_only ... ok
+test cli::node_that_never_proves_the_bundle_times_out_with_exit_one ... ok
+test cli::restart_that_outlives_the_timeout_is_killed ... ok
+test cli::failing_restart_exits_one_and_leaves_pending ... ok
+test cli::matching_node_exits_zero_prints_current_and_runs_nothing ... ok
+test cli::usage_errors_exit_two ... ok
+test cli::stale_node_is_restarted_then_proved ... ok
+
+test result: ok. 41 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+

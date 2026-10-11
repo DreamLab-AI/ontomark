@@ -1,0 +1,18 @@
+{
+  "repo": "ontomark",
+  "source_head": "6f79f58c8aceae617adf241b7ac045102a32458f",
+  "recovery_branch": "refs/heads/resume/wp-e-historical-evidence",
+  "recovery_head": "22641cd0e3d68b517532316d3a96c775de724c9e",
+  "files": [
+    "docs/evidence/WP-E/01-cargo-test.log",
+    "docs/evidence/WP-E/02-clippy.log",
+    "docs/evidence/WP-E/03-rustdoc.log",
+    "docs/evidence/WP-E/04-build.log",
+    "docs/evidence/WP-E/05-vitest.log",
+    "docs/evidence/WP-E/06-wasm-harness.log",
+    "docs/evidence/WP-E/07-check-bundle.log",
+    "docs/evidence/WP-E/08-offline-docker.log",
+    "docs/evidence/WP-E/00-just-check.log",
+    "docs/evidence/WP-E/09-offline-repeat.log"
+  ]
+}

@@ -1,0 +1,13 @@
+
+> ontomark-obsidian@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.3 /home/devuser/workspace/ontomark-resume/plugin
+
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  20:56:46
+   Duration  3.10s (tests 94%, transform 4%, import 2%)
+

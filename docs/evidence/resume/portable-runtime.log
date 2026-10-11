@@ -1,0 +1,717 @@
+ontomark-x86_64-unknown-linux-gnu: OK
+ontomark 0.1.0
+vault build: whelk restrictions mode skip (0 kept, 12 skipped, 0 defined class(es))
+{
+  "generation": {
+    "id": "visionGraph@unknown",
+    "commit": "unknown",
+    "dirty": false,
+    "content_digest": "cbe3eaffe819352339dccb176d0214710f22ce549e833f4098f5350c48a5bca6",
+    "ontology_digest": "sha256-12-b4ff9705d14d",
+    "generated_at": "2026-10-11T20:10:33.193458+00:00",
+    "class_count": 53,
+    "page_count": 53,
+    "vocabulary_version": 1,
+    "artifacts": [
+      {
+        "name": "data/ontology.ttl",
+        "sha256": "b4ca88c0355f97bcadb09203cd926ac6711535a192c938348b28842ce52c3d7c",
+        "bytes": 115174
+      },
+      {
+        "name": "data/ontology-inferred.ttl",
+        "sha256": "d1d376d6ae2cdb40433c0147dc88fb27bf85da8094651f4f3ab40eab249b0036",
+        "bytes": 1569
+      },
+      {
+        "name": "data/scaffold-index.json",
+        "sha256": "32b4505c6c7baa27815ae1f7603a260d55ca442f06f4afde021e939521554b28",
+        "bytes": 46464
+      },
+      {
+        "name": "data/prose-index.json",
+        "sha256": "d282fe20f9040766cc8c41d6f6146c996b66d1eb6f485c151f968e0d7b155434",
+        "bytes": 42595
+      },
+      {
+        "name": "api/search-index.json",
+        "sha256": "fabfb76006caf1eb0db36003d14355cef34121ef576072c967ad60ff4afc792b",
+        "bytes": 56359
+      },
+      {
+        "name": "api/pages/1-hive.json",
+        "sha256": "ce66e325233a78066e52f6688222a0b6d588d4b530f32f86edb913dd9a859975",
+        "bytes": 1727
+      },
+      {
+        "name": "api/pages/1-inch.json",
+        "sha256": "7adf75b3a0fe7bf82a4aa88daa99706556b33d3a2fbf286d5af0e18f38289cae",
+        "bytes": 1885
+      },
+      {
+        "name": "api/pages/2-d-li-dar.json",
+        "sha256": "9b1fa4ae8f58cd966353e02f58a70c34ba05e808c13139ae1dbbf1eea60b7387",
+        "bytes": 2467
+      },
+      {
+        "name": "api/pages/360-video.json",
+        "sha256": "93a01881731994c9e1867029804b32cce831db50dc3f56ae0951bedd52f9c66a",
+        "bytes": 2105
+      },
+      {
+        "name": "api/pages/3-d-animation.json",
+        "sha256": "6307ac5d7a75ce949969a2b96be5486ffc7719abdf176c39fa2ea5e953414bb9",
+        "bytes": 4046
+      },
+      {
+        "name": "api/pages/3d-asset-creation.json",
+        "sha256": "336cb46d8d861469c8fe5575ca9bf8a4da70f8c2aab4ea2c7a82af9f2cca27c9",
+        "bytes": 2183
+      },
+      {
+        "name": "api/pages/3-d-asset-standard.json",
+        "sha256": "b80b2087fb25b1d520161923c10440359336504d835938e4b5873efdf89bb541",
+        "bytes": 4973
+      },
+      {
+        "name": "api/pages/3-d-asset.json",
+        "sha256": "47d065fbeaaf21d38335130789d3f148cc70490bcd8233549e83c6e92f317064",
+        "bytes": 4423
+      },
+      {
+        "name": "api/pages/3-d-content-creation.json",
+        "sha256": "c654143a56ef9d02a5a94112a1ceb85c5ed6fd266e6dc5c42e22fc34cdc46317",
+        "bytes": 2343
+      },
+      {
+        "name": "api/pages/3-d-content-generation.json",
+        "sha256": "31b75f30fd8c1cec4ecd7a7a50930a4fe72f70a046bd82c6fe39dd8cda48328a",
+        "bytes": 4367
+      },
+      {
+        "name": "api/pages/3-d-content-pipeline.json",
+        "sha256": "2f3cee7bed0bb4e58c25f6b6fae860d8b582862fb3a52addf1f9d4727fa569ef",
+        "bytes": 3719
+      },
+      {
+        "name": "api/pages/3-d-design.json",
+        "sha256": "c060b0c033a766b560efe79887d67903ed7df7bacbe96108cb50daf79186fd92",
+        "bytes": 2005
+      },
+      {
+        "name": "api/pages/3-d-development.json",
+        "sha256": "fee0cb7c52abdfd561e5561fceb84252b693e546d526a69158e2bf4e5fbce486",
+        "bytes": 2578
+      },
+      {
+        "name": "api/pages/3-d-engine.json",
+        "sha256": "c4554063d618446211c3f4a6e6d57dedf4e5b5ce1e0e168ca43064fcdb6f5a10",
+        "bytes": 3777
+      },
+      {
+        "name": "api/pages/3-d-file-format.json",
+        "sha256": "e3b10935fdec7d33d95586187b2a226c214b92a47153218b5caedd44d35bbd65",
+        "bytes": 4415
+      },
+      {
+        "name": "api/pages/3-d-gaussian-splatting.json",
+        "sha256": "8a7f925cbddcfbcb4b3e2888fb6577169cb819b52cef22f6ac4f6688aecb040d",
+        "bytes": 4447
+      },
+      {
+        "name": "api/pages/3-d-generation.json",
+        "sha256": "3b769faedcf0a97f4348f8ee878eb5bfae0ea77c65b97eb556cdd9082132f248",
+        "bytes": 10454
+      },
+      {
+        "name": "api/pages/3-d-geometry.json",
+        "sha256": "68516ec280a8ad25ab8d5b00b58ce682420059a9c9eb2a6fce152ee6c2836e2c",
+        "bytes": 1428
+      },
+      {
+        "name": "api/pages/3-d-graphics-standard.json",
+        "sha256": "f20d2c26cc0a3e1e4ec48b9f44b705048861a5b8cdaf434d5784ca9729d664af",
+        "bytes": 3290
+      },
+      {
+        "name": "api/pages/3-d-li-dar.json",
+        "sha256": "af3b9f0608ae50fd0f5d8f5ae8f01377b777ca0955bdc11425494723614a8da8",
+        "bytes": 2450
+      },
+      {
+        "name": "api/pages/3d-mapping.json",
+        "sha256": "6cabafd6d411e54cae6587ea56c264c503dd0bd395f328829bb409e16b9344e4",
+        "bytes": 4045
+      },
+      {
+        "name": "api/pages/3-d-model.json",
+        "sha256": "2357506bcf0f76f83c33cb5e0fe2c5999ef5d9d99c18ae95711abdd871760047",
+        "bytes": 4594
+      },
+      {
+        "name": "api/pages/3-d-modeling-software.json",
+        "sha256": "ee16b056c74ecd31acd4d6ce437e54eeb94e5cd9550051ba6fa5d67fb7bd211a",
+        "bytes": 7056
+      },
+      {
+        "name": "api/pages/3d-modelling.json",
+        "sha256": "b157ffcfe3ac61276f1521b7a3631370c421f04a8857913c1167668dc8adbb0f",
+        "bytes": 5775
+      },
+      {
+        "name": "api/pages/3d-parallelism.json",
+        "sha256": "2c3590f048afc9564d013f767de258076c411a2c6e927f90d2bce20d221278ec",
+        "bytes": 1352
+      },
+      {
+        "name": "api/pages/3-d-perception.json",
+        "sha256": "7e1732132d3aa898338b75776c88549b0686ca32037248b000239d312f5f848a",
+        "bytes": 2282
+      },
+      {
+        "name": "api/pages/3-d-reconstruction.json",
+        "sha256": "2f7d96bcdeca29a9010b950b5125e9fb879b9933b37cdef4667f352d03688051",
+        "bytes": 4646
+      },
+      {
+        "name": "api/pages/3-d-rendering-engine.json",
+        "sha256": "bb25a1e9e9c8a1131cafb7f8b345ad3fe629d90a8caa931da7572e4583476164",
+        "bytes": 4483
+      },
+      {
+        "name": "api/pages/3-d-rendering.json",
+        "sha256": "17e34efad5afd95eb03a1b9b90756c51d85cb97cf98a4b06f90e2e225d3abb5c",
+        "bytes": 4811
+      },
+      {
+        "name": "api/pages/3-d-scanning.json",
+        "sha256": "02dc0b4b8e660e226e19dca67fe36c9d6dba0e1ee27d497ec7fbd7477ec483d5",
+        "bytes": 6430
+      },
+      {
+        "name": "api/pages/3-d-scene-exchange-protocol-sxp.json",
+        "sha256": "3bbe7f2be1bb71cdab68cf0106f04d8619a4654f8d6e4efbd3e6e91c3667d434",
+        "bytes": 10428
+      },
+      {
+        "name": "api/pages/3-d-scene-reconstruction.json",
+        "sha256": "2c7319bf0a8fc725fe9e1ef97352473de5ad71e724e62f85e62278cd216dbe59",
+        "bytes": 4944
+      },
+      {
+        "name": "api/pages/3-d-scene-representation.json",
+        "sha256": "d537cd4e31a5f7c311245609947d02c7346d7a9b86eaa94c5665890b8a891e36",
+        "bytes": 1431
+      },
+      {
+        "name": "api/pages/3-d-user-interface.json",
+        "sha256": "8eedc40fbd8e327ebfc7cc1e0a123c675070cc2d21b0dbd9be860413751d674c",
+        "bytes": 5055
+      },
+      {
+        "name": "api/pages/3-d-and-4-d.json",
+        "sha256": "bf8f2eb4ae02f3020fcdc25665fbfc1f56a64c4d32b27f0533f77322ca11430a",
+        "bytes": 4317
+      },
+      {
+        "name": "api/pages/3-gpp.json",
+        "sha256": "bfe403510f7f45d02d6c6f21b588c893ea56317aaaf1f17727586eb205673f48",
+        "bytes": 3398
+      },
+      {
+        "name": "api/pages/51-attack.json",
+        "sha256": "07f1061705e18a907528a11a74cbcaf179fcdca13de5af564739bbd8f452937c",
+        "bytes": 7281
+      },
+      {
+        "name": "api/pages/5-g-connectivity.json",
+        "sha256": "675f2e8d2278d8bf3a3db9c61425118ed33723ea338b0b5789a132a09d7dec36",
+        "bytes": 4539
+      },
+      {
+        "name": "api/pages/5-g-network.json",
+        "sha256": "8e2ccad890b492d8d83064827e74ece6efa38643236778641d7130507dda2dd1",
+        "bytes": 4339
+      },
+      {
+        "name": "api/pages/5-g.json",
+        "sha256": "f4f79eaa2572df0ce1cb3c251f8ebf31029390beda739d7900299256f7ab17c7",
+        "bytes": 3590
+      },
+      {
+        "name": "api/pages/6-do-f-tracking.json",
+        "sha256": "ba602574949d5955188df6c09693551a47c7d391f56cad06bb66356b2b8d2c56",
+        "bytes": 2380
+      },
+      {
+        "name": "api/pages/6-g-network-slice.json",
+        "sha256": "af97f9be38dac75ba4d30d15a2240b9e6644d93d8bb69deed02dc9d9180dd065",
+        "bytes": 2882
+      },
+      {
+        "name": "api/pages/a-star-algorithm.json",
+        "sha256": "ad36ad972908489b1582924020973b85ce971bb6631b346d5b8852b662f12261",
+        "bytes": 8837
+      },
+      {
+        "name": "api/pages/a2-a-protocol.json",
+        "sha256": "6bc9de90c50ca602db55fa8314f14bc6a7ad202224936c00e39c4b4f61a090c3",
+        "bytes": 10720
+      },
+      {
+        "name": "api/pages/aaai.json",
+        "sha256": "6e04afea417bb73557cea23d8d15b72671f2974f7f62c886a2004972a0ce8026",
+        "bytes": 9535
+      },
+      {
+        "name": "api/pages/abi-encoding.json",
+        "sha256": "edbb7e78f50106f6c2e430ca8c3b1fb10ac9b2a1ea51bfad669b51464cec03c0",
+        "bytes": 1361
+      },
+      {
+        "name": "api/pages/acid-properties.json",
+        "sha256": "24e67fd60745091950326b82080abf0401dc8b81e6222c40f0251c2f73e94a07",
+        "bytes": 3230
+      },
+      {
+        "name": "api/pages/acinq.json",
+        "sha256": "8fdd23f363d779a513c5c6d283d9688123e34bd73132bf5544f44ada1ab192bd",
+        "bytes": 3673
+      },
+      {
+        "name": "api/pages/acl.json",
+        "sha256": "597387b428a7da761bff099a8f45886d29e7b3716b203096b8bcc1b183072bfc",
+        "bytes": 2421
+      },
+      {
+        "name": "api/pages/a-b-testing.json",
+        "sha256": "23205f6dc0cad03f74b6763f4250b4a9aa5e0828f9917f34905aaa1784a5481e",
+        "bytes": 2476
+      },
+      {
+        "name": "api/pages/fixture-link-probe.json",
+        "sha256": "32bed4ec0286fee4ac7f863d67f97276c883252a612004a620835671f758071f",
+        "bytes": 4162
+      },
+      {
+        "name": "api/pages/fixture-public-child.json",
+        "sha256": "8f3d5d92182ab7652416da23b06ffc92dd89684fd00ec79bcc917950dab6db75",
+        "bytes": 3847
+      },
+      {
+        "name": "api/pages/fixture-unattributed.json",
+        "sha256": "cb400fb68ae60abff8051759aa916d0415bbf1822a5202a6508d97596b1fa35d",
+        "bytes": 4991
+      },
+      {
+        "name": "api/pages/_domain-index.json",
+        "sha256": "9e07f4327ddc4a122c85dda189a0b164fc27e35f30bcbe23379d93d3bb8372ab",
+        "bytes": 5805
+      },
+      {
+        "name": "api/census.json",
+        "sha256": "10a8813045bfca326e30a38cd6e482ed169ccadaee438582651de126cb6d1270",
+        "bytes": 237
+      },
+      {
+        "name": "api/validation-report.json",
+        "sha256": "d066f36274c97b6bde173776cc931b875e0a6e8da8770ff190270e16f2e0822d",
+        "bytes": 353
+      },
+      {
+        "name": "context/v1.jsonld",
+        "sha256": "452d5ce09759911587032b30a6a4cc5270fe130c92b7f658f37631ff9a97160f",
+        "bytes": 6888
+      },
+      {
+        "name": "api/schema/context.jsonld",
+        "sha256": "452d5ce09759911587032b30a6a4cc5270fe130c92b7f658f37631ff9a97160f",
+        "bytes": 6888
+      },
+      {
+        "name": "ns/v2.jsonld",
+        "sha256": "452d5ce09759911587032b30a6a4cc5270fe130c92b7f658f37631ff9a97160f",
+        "bytes": 6888
+      },
+      {
+        "name": "data/ontology.json",
+        "sha256": "1d8c6b3c3357844184441afdbac93b3ee57b22023b3b0e1040557ec55ef9f4c4",
+        "bytes": 56651
+      },
+      {
+        "name": "data/graph/overview.json",
+        "sha256": "13337aee4c1c2a3aef9ade29dc3ce5b12cfe420abafa5d47e12a89db90b10567",
+        "bytes": 24605
+      },
+      {
+        "name": "data/graph/full.bin",
+        "sha256": "a3befeeb2ab0344662402726897a5aeafe381c6b45b4b3c266e63d0aacc161e5",
+        "bytes": 5668
+      },
+      {
+        "name": "data/graph/domain-artificial-intelligence.bin",
+        "sha256": "b315a47936e40ade1a26807bf5faf0c9421ea35f5034a4ff25256ea59d14a910",
+        "bytes": 647
+      },
+      {
+        "name": "data/graph/domain-blockchain.bin",
+        "sha256": "018f1a9b3c0204b76e828e446007fce2ae6e0ae843595b4f54ffa1e8c0bded2f",
+        "bytes": 396
+      },
+      {
+        "name": "data/graph/domain-spatial-computing.bin",
+        "sha256": "4983447681e3b1f8dd3d60976aa1c7da0223bf00f382ec7eb1e8b6123e565f4a",
+        "bytes": 3370
+      },
+      {
+        "name": "data/graph/domain-robotics.bin",
+        "sha256": "51c1a3ffc008364c3c201867d6fea9db89b196abb22ed0e3687c12c0375b5d5a",
+        "bytes": 348
+      },
+      {
+        "name": "data/graph/domain-distributed-collaboration.bin",
+        "sha256": "4824e2cdf7f9cbc6d6210759a8dc389d9123223270037240ce4803799a98e7e1",
+        "bytes": 44
+      },
+      {
+        "name": "data/graph/domain-infrastructure.bin",
+        "sha256": "39050becd9747a934446410602417744334aa797da25f1a033ec0ec8e82b45df",
+        "bytes": 1011
+      },
+      {
+        "name": "data/graph/domain-space-science-and-systems.bin",
+        "sha256": "4824e2cdf7f9cbc6d6210759a8dc389d9123223270037240ce4803799a98e7e1",
+        "bytes": 44
+      },
+      {
+        "name": "data/graph/domain-earth-observation-and-geospatial-sensing.bin",
+        "sha256": "4824e2cdf7f9cbc6d6210759a8dc389d9123223270037240ce4803799a98e7e1",
+        "bytes": 44
+      },
+      {
+        "name": "data/graph/stats.json",
+        "sha256": "302da7d90b1ad7ab172dbc513ca8a949c4cc9d067aea60d1b57ffdb22fc232bd",
+        "bytes": 2954
+      },
+      {
+        "name": "data/graph/bridges.json",
+        "sha256": "3d69ba9df80f9907373268c86da30804a458f3484cd3b5ae8ab9910e950de9cc",
+        "bytes": 633
+      },
+      {
+        "name": "okf/index.md",
+        "sha256": "0016b23cf4c044e43f66978df149a9f636270315dad6fc8fc2e2d6e567d89209",
+        "bytes": 4565
+      },
+      {
+        "name": "okf/concepts/1-hive.md",
+        "sha256": "76a6faf1316488f4ae5c4f6206f72aa2d8d5b431ec5b435c4b2a24e18c6a79a5",
+        "bytes": 688
+      },
+      {
+        "name": "okf/concepts/1-inch.md",
+        "sha256": "edb6e4c81e84a838127843d2549418ab1f5e4c44f90bdcbc66b6e70be2c8caf5",
+        "bytes": 694
+      },
+      {
+        "name": "okf/concepts/2-d-li-dar.md",
+        "sha256": "98d474f9c0821e2874120c7c2662fd70d58b00e39a241b35a7c11f1965a914be",
+        "bytes": 1310
+      },
+      {
+        "name": "okf/concepts/3-d-and-4-d.md",
+        "sha256": "defe0167c66191de123170af7d345114262829ec28d47b542e438a4a1ee47a3a",
+        "bytes": 1426
+      },
+      {
+        "name": "okf/concepts/3-d-animation.md",
+        "sha256": "84dacbaebf88bf7a398ceed68a6b1f7ee8e2b603f22d71ceecb81dbb0bbb689f",
+        "bytes": 1958
+      },
+      {
+        "name": "okf/concepts/3-d-asset.md",
+        "sha256": "a456f5065cde103171db39fdc02324563fa29f11237e5ed16b59ac05838dfa12",
+        "bytes": 2583
+      },
+      {
+        "name": "okf/concepts/3-d-asset-standard.md",
+        "sha256": "c294ee718fa0394a3b2baeeb0f4dd9111c39c1939d4544b6c64c2ade35af2b3e",
+        "bytes": 2903
+      },
+      {
+        "name": "okf/concepts/3-d-content-creation.md",
+        "sha256": "351b4ba3c5fd40fa7c3e3ba6422acf452ce8ab464b00a7efccb6ce154d855dd8",
+        "bytes": 1520
+      },
+      {
+        "name": "okf/concepts/3-d-content-generation.md",
+        "sha256": "8af6ce2b07b4627248e19bd9168b860c77a416ba64954b4a5736de4aae7653fb",
+        "bytes": 2010
+      },
+      {
+        "name": "okf/concepts/3-d-content-pipeline.md",
+        "sha256": "34a87930edeff09eab630facc37bd7a624f2ef76d82f3aaf21c0caf07aa48b41",
+        "bytes": 2048
+      },
+      {
+        "name": "okf/concepts/3-d-design.md",
+        "sha256": "3dc44eac3c69a5bf9cd18702905040ebfbe1f9fb6bf04ccee4f71fd8938ad83a",
+        "bytes": 1363
+      },
+      {
+        "name": "okf/concepts/3-d-development.md",
+        "sha256": "c03e3d2c1e47e5eabefdbd881890d93aa9d2cff96488107d6399841ff73c698a",
+        "bytes": 820
+      },
+      {
+        "name": "okf/concepts/3-d-engine.md",
+        "sha256": "25ee0784036712ea7ca7e2532e17a057fc6395a8ee2ff17d3bcaa49cb22924cc",
+        "bytes": 1612
+      },
+      {
+        "name": "okf/concepts/3-d-file-format.md",
+        "sha256": "78913eca909494aa7b8af2ea50dcdb12671183f75414f8453873a21fe56d2fe9",
+        "bytes": 1602
+      },
+      {
+        "name": "okf/concepts/3-d-gaussian-splatting.md",
+        "sha256": "692735e34916ca24ac0b22e1a2779a7ef1010019d42d6f2902b8b224733a51e2",
+        "bytes": 1964
+      },
+      {
+        "name": "okf/concepts/3-d-generation.md",
+        "sha256": "6aca9fe5755e7a1b99c41eccc4964c2b5466c6a0dc5319e995c25301fb2ad28d",
+        "bytes": 2191
+      },
+      {
+        "name": "okf/concepts/3-d-geometry.md",
+        "sha256": "98b1d49e1b36358c6017adddc71cd43cae4d6c2828c4dde436158b762002ac1f",
+        "bytes": 1214
+      },
+      {
+        "name": "okf/concepts/3-d-graphics-standard.md",
+        "sha256": "62ea828171f12f9715b40b919a012d88af7928064f97e1b415260c74be9d4a8d",
+        "bytes": 1064
+      },
+      {
+        "name": "okf/concepts/3-d-li-dar.md",
+        "sha256": "f65c94eec14add5f37f8982dde586da80951f6ced8aaa3e15bedea5fad1beaf4",
+        "bytes": 1433
+      },
+      {
+        "name": "okf/concepts/3-d-model.md",
+        "sha256": "8e7beee0a0eedb20ab4d4a4e995bbaad282a2949fe1da5dd2005d626a0423a1e",
+        "bytes": 1712
+      },
+      {
+        "name": "okf/concepts/3-d-modeling-software.md",
+        "sha256": "00562706017c98cbd781c4738dfb0bb66efecdc0abef79182593e2a8dd733de0",
+        "bytes": 1525
+      },
+      {
+        "name": "okf/concepts/3-d-perception.md",
+        "sha256": "a25ed0fec717bd428a1a864b047f5f0cbc80b6e668bbcac855bcfe37b01bb86e",
+        "bytes": 1547
+      },
+      {
+        "name": "okf/concepts/3-d-reconstruction.md",
+        "sha256": "dafe1965b47896ace89eeebc63fbc26d06868fbd40d9fc6c8f24010e59bcc16e",
+        "bytes": 1962
+      },
+      {
+        "name": "okf/concepts/3-d-rendering.md",
+        "sha256": "5e06d135b8cc773c328990215bcf0b5124821705f69eb878b5825bb496121008",
+        "bytes": 2572
+      },
+      {
+        "name": "okf/concepts/3-d-rendering-engine.md",
+        "sha256": "b51b01c7c6a14a1e265639442465680241b2d624ebdbe133528c1df0ae739c13",
+        "bytes": 1987
+      },
+      {
+        "name": "okf/concepts/3-d-scanning.md",
+        "sha256": "78e3930bdb0872f0529a2f4ba5912f0807bf7c8ec065a92f34cdf0de7f2465f1",
+        "bytes": 2173
+      },
+      {
+        "name": "okf/concepts/3-d-scene-exchange-protocol-sxp.md",
+        "sha256": "4edddb1686fc67a3178d48524ca4b3688c2f5eed3cbd096e96038ffd4c74e033",
+        "bytes": 1656
+      },
+      {
+        "name": "okf/concepts/3-d-scene-reconstruction.md",
+        "sha256": "19de4b779a23de25fc9873bf1f6a5ebaf9d5b9fba9aff4a32164f54726db4c5a",
+        "bytes": 1658
+      },
+      {
+        "name": "okf/concepts/3-d-scene-representation.md",
+        "sha256": "f7aff37c4552814f8639cf6f9115b8bc25f04978b928108f424e78b62e2e9660",
+        "bytes": 1214
+      },
+      {
+        "name": "okf/concepts/3-d-user-interface.md",
+        "sha256": "53e3f03683202099b0ba894359fe2adaf6109fd7568586e11af09246d5ef5b11",
+        "bytes": 2094
+      },
+      {
+        "name": "okf/concepts/3-gpp.md",
+        "sha256": "a7936552eaab3ff5ff1044e5b30a651782f85cd1dc7ffe09fc7f36a48be8cc22",
+        "bytes": 1961
+      },
+      {
+        "name": "okf/concepts/360-video.md",
+        "sha256": "edc9a2e4eed314a546cf0edcb8e28b36aa4b299d5b7d878546a9ad5fe6f22dad",
+        "bytes": 1290
+      },
+      {
+        "name": "okf/concepts/3d-asset-creation.md",
+        "sha256": "69bb4121c9952e4bce27c54b5d33c4f2ec933bb32ee7b075efb613da4d7da817",
+        "bytes": 1377
+      },
+      {
+        "name": "okf/concepts/3d-mapping.md",
+        "sha256": "59ab00e30a9f406f8610ece8301cc5c86d37ee35b5b392337cb58db4c5272fe9",
+        "bytes": 1222
+      },
+      {
+        "name": "okf/concepts/3d-modelling.md",
+        "sha256": "bc242c1fa61eae8d92a5314e49ee636df08bc37b4690e25b57615a4959464294",
+        "bytes": 2406
+      },
+      {
+        "name": "okf/concepts/3d-parallelism.md",
+        "sha256": "0150766fc11d8522be4a885e190d99dcf084f9746302f0abfedfdf04405fcbe3",
+        "bytes": 1203
+      },
+      {
+        "name": "okf/concepts/5-g.md",
+        "sha256": "a0e8f2e63c0af44102f227b757771e5d62613b336d0a436cdf2cd0d8736bc8a8",
+        "bytes": 2032
+      },
+      {
+        "name": "okf/concepts/5-g-connectivity.md",
+        "sha256": "dd2056c8be187a672f3c4231410f099b7748c52daee08712eef3e2db7ab56606",
+        "bytes": 1573
+      },
+      {
+        "name": "okf/concepts/5-g-network.md",
+        "sha256": "460c11da871ed84f784a8a3b7df9a54c1e5f0d79cc74e27e74a05597f26a47bf",
+        "bytes": 2634
+      },
+      {
+        "name": "okf/concepts/51-attack.md",
+        "sha256": "81a54858532a97145d3f8356b499e43c410c4e92c47ed025269fce03d5b21e78",
+        "bytes": 1847
+      },
+      {
+        "name": "okf/concepts/6-do-f-tracking.md",
+        "sha256": "30e894c805d0bd97133cb72b5b7cddb8082085e2c275a7f6390ee2a2dc975b84",
+        "bytes": 1634
+      },
+      {
+        "name": "okf/concepts/6-g-network-slice.md",
+        "sha256": "32fd03eadab794cd238041efc858a3edda75b1ec21866322eaa88bc2d2a3571d",
+        "bytes": 766
+      },
+      {
+        "name": "okf/concepts/a-b-testing.md",
+        "sha256": "829587c68fea4371b8efee4755dbccdeee5043a59a7fbeede666609d2024fe72",
+        "bytes": 1519
+      },
+      {
+        "name": "okf/concepts/a-star-algorithm.md",
+        "sha256": "188e2686fc039404727ea2ebb13df08e73f413cbd8857534aa720847ed34aade",
+        "bytes": 3038
+      },
+      {
+        "name": "okf/concepts/a2-a-protocol.md",
+        "sha256": "80e83c243f5a259eba0333f3bc5d0ab1c4f520b3b4f1141133411d9e7e794a73",
+        "bytes": 2950
+      },
+      {
+        "name": "okf/concepts/aaai.md",
+        "sha256": "10c3b4fcfe0a5065b954d8b97ee74db39297b4cbd50ca614717c8016a1324363",
+        "bytes": 2948
+      },
+      {
+        "name": "okf/concepts/abi-encoding.md",
+        "sha256": "7f18b27e8266d20c5db8554515159666dd6e9612748b1c10e00fa7233939ff4d",
+        "bytes": 1218
+      },
+      {
+        "name": "okf/concepts/acid-properties.md",
+        "sha256": "553780742d29423c534efa5384f0f59000c15f3b0082c5b53bb34eafb7663aea",
+        "bytes": 1904
+      },
+      {
+        "name": "okf/concepts/acinq.md",
+        "sha256": "f35cecd291d029f0d3126369873129052c776c1365fabe8ec4445e50cea7a294",
+        "bytes": 2018
+      },
+      {
+        "name": "okf/concepts/acl.md",
+        "sha256": "0364586675f7bb2abc9de4f9717a003b45dadef87a362807fa7c096bf2a28b9f",
+        "bytes": 1756
+      },
+      {
+        "name": "okf/concepts/fixture-link-probe.md",
+        "sha256": "a0222b7fca60c40bc27d2091c6053860ab299461ed3413e0c6b8331e097c9ed8",
+        "bytes": 419
+      },
+      {
+        "name": "okf/concepts/fixture-public-child.md",
+        "sha256": "d7ffe87ab52028edd87938f9be6f7b08a330e69a176f5e9f893a751ebf8ce36c",
+        "bytes": 558
+      },
+      {
+        "name": "okf/concepts/fixture-unattributed.md",
+        "sha256": "6a14d5c4a13b7bddcd2a65da9585174670fa343a6dcf163a6985a6080f5e023b",
+        "bytes": 381
+      }
+    ]
+  },
+  "class_count": 53,
+  "page_count": 53,
+  "triples": 2297,
+  "inferred_triples": 14,
+  "search_entries": 53,
+  "graph_nodes": 53,
+  "graph_edges": 72,
+  "unsatisfiable": [],
+  "reasoner_mode": "skip",
+  "restrictions_kept": 0,
+  "defined_classes": 0,
+  "published": {
+    "knowledge": {
+      "considered": 54,
+      "published": 53
+    }
+  },
+  "written": 187,
+  "out": "/work/out",
+  "redaction": {
+    "publish": {
+      "knowledge": {
+        "pages_changed": 2,
+        "frontmatter_entries_removed": 2,
+        "frontmatter_keys_removed": 1,
+        "frontmatter_inline_rewrites": 0,
+        "body_links_rewritten": 2,
+        "body_labels_kept": 1,
+        "embeds_removed": 1
+      }
+    },
+    "mirror": {
+      "pages_changed": 0,
+      "frontmatter_entries_removed": 0,
+      "frontmatter_keys_removed": 0,
+      "frontmatter_inline_rewrites": 0,
+      "body_links_rewritten": 0,
+      "body_labels_kept": 0,
+      "embeds_removed": 0
+    }
+  }
+}
+/work/out/data/ontology-inferred.ttl
+/work/out/data/ontology.ttl
+PASS: portable CLI builds synthetic fixture on Debian 12 with networking disabled

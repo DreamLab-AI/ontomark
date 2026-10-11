@@ -233,3 +233,42 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   requested. Estate table received in three parts; HANDOFF-WP-D at 935915f.
   Advisor never answered three checkpoints and was released. Memory key
   ontomark-handoff-2026-10-11 updated. Queen standing down.
+
+
+## Resume and branch recovery, 2026-10-11
+
+- Recovered WP-B/C dirty source and merged WP-B/C/E/D onto canonical main WP-A.
+  Integration code `21cd9ff`; local main fast-forwarded after checks. Partial EL
+  capabilities, private projection aliases/links, quoted definitions, Turtle
+  prefixes and combined-feature JSON ordering have regression coverage.
+- Combined native gate: 746 passed, 7 ignored; fmt/clippy clean. WASM reasoner:
+  47 passed. Plugin: 17 unit tests, 4 WASM harness tests and 40 offline Docker
+  checks passed; the runtime is an Obsidian shim. Full corpus compatibility:
+  zero differences over 32 artefact lines and 12 verb outputs.
+- User asked to check and merge branch work before release. Fetched eight repos
+  without pruning; checked 84 existing local heads, 37 sprint branches, detached
+  core tips, dirty worktrees and stash summaries. All committed core work was
+  already in integration. Preserved exact dirty preparation files in 24 estate
+  recovery branches and ten old WP-E receipts on a separate historical branch;
+  original worktrees and indexes unchanged. See BRANCH-RECOVERY.md and its JSON
+  receipts. No branches deleted, no remote main push or deployment.
+- VOWL NGG1 audit correction committed `da21468`; native, feature matrix, docs,
+  clippy and actual WASM gates pass. Security review unavailable; its wrapper's
+  PASS receipt is invalid. Not declared security-reviewed.
+- Loom reloader merge with hardened CLI parent prepared in an isolated worktree.
+  Rust runbook retained; Python CI hook remains removed. Further review reproduced
+  publication-during-probe and strict marker validation defects, plus receipt
+  temp-file poisoning. Fixes and evidence are in progress.
+- Portable CLI built from clean archived `21cd9ff` in rust:1.96-bookworm, then
+  executed on Debian 12 with networking disabled. The native Nix binary depends
+  on Nix runtime paths and is unsuitable for release. Exact portable asset
+  parity and prerelease publication remain pending.
+- Portable CLI full corpus parity passed: zero differences over 32 artefact
+  lines and 12 verb outputs. Asset SHA-256: `7b15c2858f1715e561c0889dbaa50164e5a404ee7f8ed1d6cfd9da41daeb1d45`,
+  clean source `21cd9ff`. Prerelease publication remains pending.
+- Branch review completed: Loom `resume/reload-integration` committed `739f71a`,
+  merging the newer CLI parent while keeping the Rust reloader/runbook. Seven
+  regressions proved red before fixes. Final gates: 61 integration tests plus
+  one receipt-parity unit test, fmt, clippy and diff checks passed. Parent
+  migration suite remains red (2 pass, 5 fail); existing build-info test fails
+  in linked worktrees. Held from main; no deployment or timer activation.

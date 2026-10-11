@@ -1,0 +1,38 @@
+
+> ontomark-obsidian@0.1.0 test:wasm
+> node --test test/wasm-harness.test.mjs
+
+TAP version 13
+# Subtest: nodejs-target wasm replays the script byte-identically to native
+ok 1 - nodejs-target wasm replays the script byte-identically to native
+  ---
+  duration_ms: 65.76533
+  type: 'test'
+  ...
+# Subtest: web-target wasm (the bytes embedded in the plugin) via initSync matches native
+ok 2 - web-target wasm (the bytes embedded in the plugin) via initSync matches native
+  ---
+  duration_ms: 11.235328
+  type: 'test'
+  ...
+# Subtest: bundle check is not vacuous: it flags the raw web glue, which loads wasm by fetch
+ok 3 - bundle check is not vacuous: it flags the raw web glue, which loads wasm by fetch
+  ---
+  duration_ms: 63.01914
+  type: 'test'
+  ...
+# Subtest: wasm-only runtime paths: entropy (RAND, UUID, STRUUID, BNODE, CONSTRUCT bnodes) and clock (NOW) execute
+ok 4 - wasm-only runtime paths: entropy (RAND, UUID, STRUUID, BNODE, CONSTRUCT bnodes) and clock (NOW) execute
+  ---
+  duration_ms: 8.718918
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 386.86702

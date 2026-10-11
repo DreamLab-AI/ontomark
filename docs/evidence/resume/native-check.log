@@ -1,0 +1,1052 @@
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+    Checking ontomark-compile v0.1.0 (/home/devuser/workspace/ontomark-resume/crates/ontomark-compile)
+    Checking ontomark-profile-estate v0.1.0 (/home/devuser/workspace/ontomark-resume/profiles/estate)
+    Checking ontomark-cli v0.1.0 (/home/devuser/workspace/ontomark-resume/crates/ontomark-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.54s
+cargo test --workspace
+   Compiling ontomark-compile v0.1.0 (/home/devuser/workspace/ontomark-resume/crates/ontomark-compile)
+   Compiling ontomark-profile-estate v0.1.0 (/home/devuser/workspace/ontomark-resume/profiles/estate)
+   Compiling ontomark-cli v0.1.0 (/home/devuser/workspace/ontomark-resume/crates/ontomark-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.06s
+     Running unittests src/main.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/ontomark-d18f72ef62c96d9e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/build_cli.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/build_cli-e4ed09c1295be64a)
+
+running 1 test
+test a_path_claimed_twice_exits_2_and_promotes_nothing ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/conformance.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/conformance-398e133ef3900aaa)
+
+running 2 tests
+test build_is_byte_identical_to_the_legacy_golden ... ok
+test verbs_print_the_same_bytes_and_exit_codes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.36s
+
+     Running tests/exp04_private_canary.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/exp04_private_canary-0f3e246511d25f81)
+
+running 10 tests
+test the_fixture_has_the_private_pages_the_canary_relies_on ... ok
+test the_canary_fires_without_redaction ... ok
+test staged_pages_are_rewritten_by_the_rules ... ok
+test an_explicit_private_curated_set_stays_empty_after_projection ... ok
+test no_published_file_names_a_non_public_page ... ok
+test relations_to_private_working_pages_do_not_reach_machine_artefacts ... ok
+test private_curated_targets_and_definition_conjuncts_are_withheld ... ok
+test machine_wikilinks_do_not_name_private_aliases_and_headings ... ok
+test the_report_counts_what_was_changed ... ok
+test machine_records_use_the_same_public_link_boundary_as_markdown ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.29s
+
+     Running tests/migrate_cli.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/migrate_cli-5ab5c69337c01511)
+
+running 3 tests
+test a_stale_plan_exits_one_and_leaves_the_edited_page ... ok
+test the_binary_runs_migrate_end_to_end ... ok
+test plan_apply_status_rollback_through_the_command_layer ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.82s
+
+     Running unittests src/lib.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/ontomark_compile-3f800e2251e037d7)
+
+running 411 tests
+test build::generation::tests::artifacts_record_hash_and_size ... ok
+test build::generation::tests::a_content_change_changes_the_digest ... ok
+test build::attribution::tests::resolves_each_actor_spelling ... ok
+test build::generation::tests::a_dirty_build_says_so_in_its_id ... ok
+test build::generation::tests::sha256_12_is_the_adr_2023_content_address ... ok
+test build::generation::tests::scoping_keeps_identity_and_rebases_the_artefacts ... ok
+test build::generation::tests::stale_after_is_omitted_when_absent ... ok
+test build::generation::tests::the_digest_is_order_independent_but_path_sensitive ... ok
+test build::generation::tests::the_digest_resists_boundary_ambiguity ... ok
+test build::generation::tests::the_ontology_digest_sits_beside_the_content_digest ... ok
+test build::generation::tests::the_id_carries_the_sha ... ok
+test build::graph_tiers::tests::backbone_edges_precede_relations_within_a_source ... ok
+test build::graph_tiers::tests::slug_of_splits_on_colon_or_slash ... ok
+test build::indexes::tests::search_index_carries_aliases_as_labels ... ok
+test build::ngg1::tests::csr_groups_by_source_and_preserves_arrival_order ... ok
+test build::ngg1::tests::bake_positions_rings_leaves_around_their_category ... ok
+test build::indexes::tests::a_non_ontology_page_gets_only_id_title_labels ... ok
+test build::indexes::tests::classes_are_ordered_by_class_slug ... ok
+test build::indexes::tests::search_index_title_cases_the_domain_name ... ok
+test build::indexes::tests::a_page_never_backlinks_to_itself ... ok
+test build::ngg1::tests::degenerate_layouts_are_handled ... ok
+test build::ngg1::tests::edge_types_are_padded_to_a_four_byte_boundary ... ok
+test build::indexes::tests::scaffold_omits_empty_relation_lists ... ok
+test build::ngg1::tests::packing_is_byte_stable ... ok
+test build::indexes::tests::a_zero_quality_score_becomes_null ... ok
+test build::ngg1::tests::the_header_is_the_frozen_shape ... ok
+test build::ngg1::tests::the_python_rng_stream_matches_cpython ... ok
+test build::ngg1::tests::the_string_table_pairs_label_and_iri_per_node ... ok
+test build::indexes::tests::definitions_truncate_by_character_not_byte ... ok
+test build::ngg1::tests::the_uncategorised_bucket_sorts_last ... ok
+test build::ngg1::tests::uniform_matches_cpython ... ok
+test build::okf::tests::ambiguous_scalars_are_quoted ... ok
+test build::ngg1::tests::hypot_is_the_platform_function ... ok
+test build::ngg1::tests::the_node_stride_is_twenty_four_bytes ... ok
+test build::ngg1::tests::force_layout_matches_the_python_reference ... ok
+test build::ngg1::tests::bake_positions_puts_a_lone_domain_at_the_origin ... ok
+test build::ngg1::tests::rounding_matches_cpython_round_to_three_places ... ok
+test build::indexes::tests::scaffold_uses_the_frozen_rel_order ... ok
+test build::page_api::tests::a_plain_note_gets_identity_and_links_only ... ok
+test build::page_api::tests::backlinks_resolve_titles_and_fall_back_to_the_slug ... ok
+test build::page_api::tests::closure_enrichment_lands_on_the_document ... ok
+test build::publish::tests::a_credential_on_a_private_page_does_not_refuse_the_build ... ok
+test build::publish::tests::an_unpublished_dir_never_publishes_however_it_is_flagged ... ok
+test build::page_api::tests::every_relationship_key_is_present_even_when_empty ... ok
+test build::indexes::tests::backlinks_are_capped_and_keyed_by_page_slug ... ok
+test build::page_api::tests::private_pages_get_no_document ... ok
+test build::page_api::tests::the_domain_index_groups_by_domain ... ok
+test build::redact::tests::a_held_back_folder_and_a_journal_are_non_public ... ok
+test build::generation::tests::git_sha_is_unknown_outside_a_checkout ... ok
+test build::redact::tests::a_link_inside_longer_frontmatter_text_is_rewritten_in_place ... ok
+test build::redact::tests::a_scalar_link_to_a_private_page_removes_the_key ... ok
+test build::redact::tests::a_plain_link_to_a_private_page_becomes_the_marker ... ok
+test build::redact::tests::a_heading_link_becomes_the_marker ... ok
+test build::redact::tests::an_escaped_pipe_in_a_table_is_a_pipe ... ok
+test build::redact::tests::an_untouched_frontmatter_is_byte_identical ... ok
+test build::redact::tests::a_working_page_resolves_into_the_knowledge_vault ... ok
+test build::generation::tests::nothing_is_dirty_outside_a_checkout ... ok
+test build::graph_tiers::tests::the_taxonomy_preserves_legacy_ids_and_appends_space_domains ... ok
+test build::graph_tiers::tests::domain_aliases_fold_onto_the_canonical_six ... ok
+test build::tests::a_second_claim_on_a_path_is_recorded_not_applied ... ok
+test build::redact::tests::nested_mappings_and_odd_quoting_do_not_confuse_the_editor ... ok
+test build::redact::tests::frontmatter_list_entries_are_removed_losslessly ... ok
+test build::graph_tiers::tests::an_individual_is_flagged_and_uses_instance_of_as_its_backbone ... ok
+test build::graph_tiers::tests::a_bridges_to_edge_sets_the_bridge_flag ... ok
+test build::graph_tiers::tests::a_cycle_in_the_ancestry_terminates ... ok
+test build::graph_tiers::tests::a_category_is_inherited_through_the_whole_ancestry ... ok
+test build::graph_tiers::tests::only_edges_to_declared_nodes_are_resolvable ... ok
+test build::redact::tests::public_and_unresolved_targets_are_untouched ... ok
+test build::graph_tiers::tests::gids_follow_canonical_iri_order ... ok
+test build::redact::tests::an_embed_of_a_private_page_is_removed ... ok
+test build::graph_tiers::tests::a_single_parent_class_is_not_a_bridge ... ok
+test build::graph_tiers::tests::the_nearest_category_ancestor_wins ... ok
+test build::graph_tiers::tests::bridges_record_multi_category_membership ... ok
+test build::okf::tests::the_context_maps_every_declared_relation ... ok
+test build::okf::tests::a_concept_file_carries_the_okf_block_and_relations ... ok
+test build::okf::tests::the_bundle_has_an_index_and_one_file_per_class ... ok
+test build::graph_tiers::tests::relations_are_capped_by_descending_target_degree ... ok
+test build::graph_tiers::tests::roots_carry_their_structural_flags ... ok
+test build::redact::tests::crlf_and_missing_final_newline_are_preserved ... ok
+test build::okf::tests::private_classes_never_reach_the_bundle ... ok
+test build::redact::tests::crlf_frontmatter_is_edited_without_changing_other_line_endings ... ok
+test build::redact::tests::private_definition_is_withheld_whole_with_quoted_keys ... ok
+test build::indexes::tests::a_page_without_a_landscape_section_yields_nothing ... ok
+test build::indexes::tests::prose_index_omits_pages_with_nothing_to_add ... ok
+test build::redact::tests::code_is_authored_text_not_a_link ... ok
+test build::redact::tests::unicode_prose_is_byte_identical_around_a_rewrite ... ok
+test build::tests::the_timestamp_has_python_isoformat_shape ... ok
+test build::indexes::tests::the_newest_landscape_section_wins ... ok
+test build::redact::tests::a_private_title_is_never_emitted ... ok
+test build::redact::tests::a_safe_display_text_survives_and_an_unsafe_one_does_not ... ok
+test build::redact::tests::resolution_follows_the_builds_name_rules ... ok
+test build::indexes::tests::current_landscape_flattens_bullets_and_stops_at_the_next_heading ... ok
+test build::indexes::tests::current_landscape_reads_the_same_from_markdown_headings ... ok
+test build::indexes::tests::current_landscape_keeps_its_own_sub_headings ... ok
+test build::turtle::tests::float_formatting_always_carries_a_decimal_point ... ok
+test build::turtle::tests::maps_urns_onto_the_http_projection ... ok
+test build::turtle::tests::rebuilds_labels_with_acronyms ... ok
+test build::turtle::tests::an_undeclared_disjoint_target_emits_nothing ... ok
+test build::turtle::tests::a_lone_conjunct_is_the_equivalent_class_itself ... ok
+test build::turtle::tests::an_absent_restriction_flag_means_no_restriction ... ok
+test build::turtle::tests::an_unregistered_disjoint_with_key_emits_nothing ... ok
+test build::turtle::tests::an_existential_restriction_needs_both_endpoints_declared ... ok
+test build::turtle::tests::an_individual_is_never_defined ... ok
+test build::turtle::tests::a_signature_on_any_emitted_relation_is_emitted ... ok
+test build::turtle::tests::emits_a_class_with_its_annotations ... ok
+test build::turtle::tests::disjoint_with_between_declared_classes_is_emitted ... ok
+test build::turtle::tests::an_undeclared_relation_target_becomes_a_skos_concept_stub ... ok
+test build::webvowl::tests::a_dangling_edge_is_not_drawn ... ok
+test build::turtle::tests::an_unregistered_defines_as_key_emits_nothing ... ok
+test build::webvowl::tests::an_individual_is_coloured_and_typed_differently ... ok
+test build::webvowl::tests::an_unknown_domain_takes_the_default_colour ... ok
+test build::webvowl::tests::emits_a_class_node_with_its_colour_and_comment ... ok
+test build::webvowl::tests::a_declared_parent_becomes_a_subclass_property ... ok
+test build::turtle::tests::a_definition_is_emitted_as_an_equivalent_intersection ... ok
+test build::turtle::tests::a_taxonomic_parent_also_gets_skos_broader ... ok
+test build::turtle::tests::version_info_stays_a_semver_string ... ok
+test build::turtle::tests::restrictions_follow_the_vocabulary_flag ... ok
+test build::turtle::tests::private_records_contribute_nothing_when_public_only ... ok
+test build::turtle::tests::a_page_change_changes_the_version_iri ... ok
+test build::turtle::tests::a_declared_domain_and_range_emit_scoped_signatures ... ok
+test build::turtle::tests::a_non_taxonomic_parent_gets_only_subclassof ... ok
+test build::webvowl::tests::the_legacy_term_id_is_carried_into_the_node_attributes ... ok
+test check::bodies::tests::a_blank_line_after_frontmatter_is_kept_once ... ok
+test check::bodies::tests::a_fence_in_a_bullet_keeps_its_content_and_sits_under_its_item ... ok
+test build::webvowl::tests::private_pages_contribute_nothing ... ok
+test build::webvowl::tests::remaps_every_urn_namespace_and_passes_others_through ... ok
+test build::webvowl::tests::related_to_is_labelled_skos_related_not_vc_relatedto ... ok
+test check::bodies::tests::a_closed_fence_keeps_code_that_is_less_indented_than_its_bullet ... ok
+test check::bodies::tests::a_heading_bullet_whose_text_starts_after_a_blank_line_gets_one_blank ... ok
+test check::bodies::tests::a_dash_rule_bullet_is_a_thematic_break ... ok
+test check::bodies::tests::a_leading_definition_paragraph_is_untouched ... ok
+test check::bodies::tests::a_heading_bullet_with_text_below_becomes_heading_and_paragraph ... ok
+test check::bodies::tests::a_plain_markdown_page_is_left_alone ... ok
+test check::bodies::tests::a_quote_under_a_parent_item_stays_with_the_parent ... ok
+test build::turtle::tests::no_owl_thing_domain_or_range_is_emitted_by_default ... ok
+test build::webvowl::tests::the_header_counts_nodes_and_domains ... ok
+test check::bodies::tests::a_top_level_fence_is_flush ... ok
+test check::bodies::tests::an_unclosed_fence_in_a_bullet_ends_with_its_block ... ok
+test check::bodies::tests::a_repeated_quote_line_inside_a_list_item_is_dropped ... ok
+test check::bodies::tests::an_outliners_closing_bare_bullet_is_kept ... ok
+test check::bodies::tests::a_table_under_a_list_item_is_indented_under_it ... ok
+test check::bodies::tests::blank_runs_inside_code_survive ... ok
+test check::bodies::tests::continuation_lines_follow_their_item ... ok
+test check::bodies::tests::empty_bullets_vanish_and_their_children_move_up ... ok
+test check::bodies::tests::frontmatter_is_carried_verbatim ... ok
+test build::webvowl::tests::the_property_counter_is_shared_across_kinds_and_page_ordered ... ok
+test build::turtle::tests::requires_and_dependson_are_transitive ... ok
+test build::turtle::tests::an_identical_rebuild_keeps_the_version_iri ... ok
+test check::bodies::tests::inlined_blockquotes_lose_their_repeated_line ... ok
+test check::bodies::tests::logseq_task_markers_become_tasks ... ok
+test check::bodies::tests::macros_inside_code_are_left_alone ... ok
+test check::bodies::tests::items_after_a_heading_never_nest_under_items_before_it ... ok
+test check::bodies::tests::tab_indented_headings_flatten_and_lists_restart_under_them ... ok
+test check::conflicts::tests::label_normalisation_ignores_punctuation_and_case ... ok
+test check::conflicts::tests::a_class_under_an_individual_is_a_type_conflict ... ok
+test check::conflicts::tests::a_relation_contradiction_is_medium ... ok
+test check::conflicts::tests::non_ontology_records_are_ignored ... ok
+test check::gate::tests::tier_parsing_defaults_to_quick ... ok
+test check::conflicts::tests::a_subclass_cycle_is_detected_once ... ok
+test check::conflicts::tests::a_clean_corpus_has_no_conflicts ... ok
+test check::repair::tests::a_balanced_page_is_not_touched ... ok
+test check::repair::tests::a_logseq_bullet_is_prose_not_code ... ok
+test check::conflicts::tests::conflicts_become_blockers ... ok
+test check::conflicts::tests::differing_definitions_are_called_out_as_a_contradiction ... ok
+test check::conflicts::tests::the_gate_can_be_lowered_to_catch_medium_conflicts ... ok
+test build::turtle::tests::a_vocabulary_only_change_changes_the_version_iri ... ok
+test check::repair::tests::a_closer_is_never_inserted_around_nothing ... ok
+test check::repair::tests::a_real_opener_gains_a_closer_at_the_paragraph_boundary ... ok
+test check::repair::tests::a_real_opener_with_no_boundary_is_closed_at_the_end ... ok
+test check::repair::tests::a_lone_orphaned_closer_is_removed_not_paired_with_another_marker ... ok
+test check::conflicts::tests::two_iris_with_the_same_label_are_a_high_duplicate ... ok
+test check::repair::tests::a_spurious_opener_is_removed ... ok
+test check::repair::tests::a_stray_marker_with_prose_on_both_sides_is_removed_even_in_a_multi_fence_file ... ok
+test check::repair::tests::an_orphaned_closer_in_a_multi_fence_file_is_reported_not_guessed ... ok
+test check::repair::tests::code_far_below_the_marker_does_not_justify_a_closer_next_to_it ... ok
+test check::repair::tests::owl_and_turtle_are_code ... ok
+test check::repair::tests::the_closer_copies_the_openers_marker_and_indentation ... ok
+test check::repair::tests::an_ambiguous_page_is_reported_and_left_byte_identical ... ok
+test check::repair::tests::the_repair_is_idempotent ... ok
+test check::repair::tests::a_run_reports_every_change_and_writes_only_when_asked ... ok
+test build::turtle::tests::the_header_carries_a_content_addressed_version_iri ... ok
+test build::turtle::tests::the_digest_excludes_the_header_itself ... ok
+test build::turtle::tests::a_definition_with_an_undeclared_or_unusable_term_is_dropped_whole ... ok
+test build::turtle::tests::serialisation_is_deterministic ... ok
+test check::bodies::tests::image_only_bullets_become_paragraphs_with_obsidian_sizing ... ok
+test check::bodies::tests::a_renderer_as_the_first_line_of_a_fenced_block_leaves_the_fence ... ok
+test check::bodies::tests::a_video_bullet_becomes_an_embed_and_a_renderer_line_vanishes ... ok
+test check::gate::tests::a_clean_corpus_passes_the_quick_tier ... ok
+test build::publish::tests::the_index_states_the_extent_per_vault ... ok
+test check::gate::tests::the_full_tier_short_circuits_on_a_broken_corpus ... ok
+test build::publish::tests::the_staging_is_the_union_of_both_vaults_public_pages ... ok
+test build::publish::tests::a_misc_dir_at_any_depth_is_held_back_and_subdirectories_survive ... ok
+test check::validate::tests::a_duplicate_iri_is_an_error ... ok
+test check::validate::tests::a_page_documenting_logseq_syntax_is_not_residue ... ok
+test check::validate::tests::an_individual_cannot_be_defined ... ok
+test check::validate::tests::a_disjoint_target_that_is_not_a_page_is_an_error ... ok
+test check::validate::tests::a_self_referential_parent_is_an_error ... ok
+test check::gate::tests::the_full_tier_runs_conflicts_and_skips_whelk_without_a_graph ... ok
+test check::validate::tests::a_public_page_linking_to_a_private_one_is_flagged ... ok
+test check::validate::tests::an_out_of_range_scalar_is_a_warning_not_an_error ... ok
+test build::publish::tests::one_credential_on_one_published_page_refuses_the_whole_staging ... ok
+test check::validate::tests::an_environment_variable_reference_is_not_a_credential ... ok
+test input::code::tests::a_backtick_inside_a_fence_does_not_open_a_span ... ok
+test input::code::tests::a_page_with_no_code_scans_clean ... ok
+test input::code::tests::a_paired_fence_is_code ... ok
+test check::gate::tests::a_validation_error_fails_the_gate ... ok
+test check::validate::tests::a_conformant_page_produces_no_errors ... ok
+test check::gate::tests::a_blocking_conflict_fails_the_full_tier ... ok
+test check::gate::tests::every_verdict_carries_the_caveat ... ok
+test check::validate::tests::an_undeclared_type_is_an_error ... ok
+test check::validate::tests::a_credential_is_an_error_naming_the_line_and_the_type_but_never_the_value ... ok
+test check::validate::tests::a_dangling_link_is_a_warning ... ok
+test build::tests::a_validation_error_writes_nothing ... ok
+test input::code::tests::an_inline_span_does_not_cross_a_line ... ok
+test input::code::tests::an_inline_span_is_code ... ok
+test input::code::tests::an_unclosed_inline_span_is_not_code ... ok
+test input::code::tests::an_unterminated_fence_is_not_a_fence ... ok
+test input::code::tests::double_backticks_pair_with_double_backticks ... ok
+test input::code::tests::inline_and_fenced_regions_are_distinguishable ... ok
+test input::code::tests::overlaps_reports_partial_intersection ... ok
+test input::code::tests::three_markers_pair_the_first_two_and_report_the_third ... ok
+test input::code::tests::tilde_fences_are_recognised ... ok
+test check::validate::tests::a_block_reference_outside_code_is_residue ... ok
+test check::validate::tests::the_published_summary_withholds_issue_detail ... ok
+test input::definition::tests::a_lone_wikilink_scalar_is_a_one_item_definition ... ok
+test input::frontmatter::tests::a_horizontal_rule_in_the_body_is_not_a_fence ... ok
+test input::definition::tests::a_plain_emitted_property_is_refused_as_not_an_existential ... ok
+test input::frontmatter::tests::a_non_mapping_frontmatter_is_rejected ... ok
+test input::definition::tests::names_and_existentials_parse_in_author_order ... ok
+test input::frontmatter::tests::a_scalar_reads_as_a_one_element_list ... ok
+test input::frontmatter::tests::handles_a_closing_fence_with_no_trailing_newline ... ok
+test input::frontmatter::tests::splits_frontmatter_from_body ... ok
+test input::frontmatter::tests::round_trips_key_order ... ok
+test check::gate::tests::whelk_runs_when_a_graph_is_supplied ... ok
+test input::frontmatter::tests::wikilink_display_round_trips ... ok
+test input::frontmatter::tests::typed_accessors_coerce_logseq_spellings ... ok
+test input::definition::tests::every_other_refusal_carries_the_generic_code ... ok
+test check::validate::tests::disjoint_siblings_validate_cleanly ... ok
+test check::validate::tests::stable_without_a_human_signature_is_a_warning ... ok
+test input::okf::tests::a_bare_actor_is_rejected ... ok
+test check::validate::tests::disjointness_without_a_shared_parent_is_an_error_on_the_declaring_page ... ok
+test input::okf::tests::actor_round_trips_every_prefix ... ok
+test input::definition::tests::an_existential_over_a_transitive_hierarchy_is_refused ... ok
+test input::okf::tests::only_human_actors_satisfy_the_gate ... ok
+test input::okf::tests::an_unparseable_status_is_kept_raw_for_reporting ... ok
+test input::page::tests::a_page_with_no_frontmatter_is_private ... ok
+test input::okf::tests::stamp_yaml_round_trips ... ok
+test input::page::tests::a_body_opening_with_structure_has_no_leading_paragraph ... ok
+test input::page::tests::an_empty_body_has_no_leading_paragraph ... ok
+test input::page::tests::a_root_without_pages_is_not_a_vault ... ok
+test input::page::tests::blank_lines_before_the_paragraph_are_skipped ... ok
+test input::page::tests::body_wikilinks_dedupe_and_skip_code_fences ... ok
+test input::okf::tests::projects_the_okf_block_out_of_frontmatter ... ok
+test input::page::tests::declared_links_override_the_body_scan ... ok
+test check::validate::tests::multi_parent_is_info_not_a_warning ... ok
+test input::page::tests::declared_slug_and_resource_win_over_derivation ... ok
+test input::page::tests::falls_back_to_the_stem_and_derived_slug ... ok
+test input::promotion::tests::a_deprecated_page_can_be_reinstated_by_a_human ... ok
+test input::page::tests::render_round_trips ... ok
+test input::page::tests::the_leading_paragraph_joins_wrapped_lines ... ok
+test input::promotion::tests::a_draft_cannot_be_approved_directly ... ok
+test input::page::tests::an_unpublished_dir_is_loaded_but_outside_the_publish_scope ... ok
+test input::promotion::tests::a_process_cannot_approve ... ok
+test input::promotion::tests::blockers_refuse_every_transition ... ok
+test input::promotion::tests::demote_requires_a_human_and_reaches_deprecated ... ok
+test input::page::tests::ids_are_vault_relative_paths_without_the_suffix ... ok
+test input::page::tests::corpus_order_is_component_wise ... ok
+test input::promotion::tests::expiry_returns_a_proposal_to_draft ... ok
+test input::promotion::tests::propose_moves_draft_to_machine_confirmed ... ok
+test input::promotion::tests::deprecated_wins_over_any_attestation ... ok
+test input::consistency::tests::self_disjointness_is_refused ... ok
+test input::promotion::tests::state_is_read_from_attestations_not_from_the_label ... ok
+test check::validate::tests::residue_inside_a_fenced_block_or_an_inline_span_is_not_residue ... ok
+test input::definition::tests::disjunction_and_negation_inside_a_string_are_not_names ... ok
+test check::validate::tests::a_missing_status_or_type_is_an_error ... ok
+test input::consistency::tests::siblings_across_iri_forms_share_a_parent ... ok
+test input::consistency::tests::a_parentless_pair_is_refused ... ok
+test input::slug::tests::ref_slug_takes_the_last_colon_segment_verbatim ... ok
+test check::validate::tests::residue_from_the_old_format_is_an_error ... ok
+test input::slug::tests::target_slug_takes_a_kebab_target_verbatim ... ok
+test input::slug::tests::thing_detection_is_case_insensitive ... ok
+test input::slug::tests::slugify_matches_python_regex ... ok
+test input::vocabulary::tests::a_dangling_inverse_fails_the_load ... ok
+test input::vocabulary::tests::a_relation_mapped_to_all_values_from_fails_the_load ... ok
+test input::vocabulary::tests::a_signature_on_a_logical_relation_fails_the_load ... ok
+test input::definition::tests::malformed_existentials_are_refused_with_a_reason ... ok
+test input::vocabulary::tests::a_relation_domain_or_range_is_el_checked ... ok
+test input::vocabulary::tests::a_symmetric_characteristic_fails_the_load ... ok
+test check::validate::tests::an_unterminated_fence_does_not_hide_residue_after_it ... ok
+test build::turtle::tests::domain_roots_never_receive_owl_disjoint_with ... ok
+test input::vocabulary::tests::a_transitive_property_in_the_closure_is_found ... ok
+test input::vocabulary::tests::emitted_defaults_to_true_and_false_is_honoured ... ok
+test check::validate::tests::a_domain_root_or_category_is_never_a_disjointness_member ... ok
+test input::secrets::tests::an_environment_reference_is_never_a_secret ... ok
+test input::vocabulary::tests::an_inverse_hint_and_el_constructs_still_load ... ok
+test input::vocabulary::tests::expansion_covers_the_declared_and_builtin_prefixes ... ok
+test input::vocabulary::tests::emitted_relations_exclude_the_taxonomy_key_and_the_unemitted ... ok
+test input::vocabulary::tests::only_restriction_relations_can_be_existentials ... ok
+test input::vocabulary::tests::one_of_and_property_disjoint_with_are_refused ... ok
+test input::vocabulary::tests::the_has_value_refusal_names_nominals_not_the_el_profile ... ok
+test input::vocabulary::tests::only_emitted_object_properties_can_be_existentials ... ok
+test input::vocabulary::tests::informational_census_keys_are_ignored_not_rejected ... ok
+test input::vocabulary::tests::json_keys_are_derived_by_camel_casing ... ok
+test input::consistency::tests::non_siblings_are_refused ... ok
+test input::vocabulary::tests::list_scalars_are_recognised_by_either_spelling ... ok
+test build::tests::an_unsatisfiable_class_fails_the_build_naming_only_the_root_cause ... ok
+test input::definition::tests::every_non_el_keyword_is_named_as_such ... ok
+test input::vocabulary::tests::the_taxonomy_key_is_found_by_iri ... ok
+test input::vocabulary::tests::working_extensions_are_known_only_in_working ... ok
+test input::vocabulary::tests::sub_property_of_is_an_owl_iri_not_a_relation_key ... ok
+test input::vocabulary::tests::restriction_relations_are_listed ... ok
+test input::secrets::tests::the_line_number_is_one_based_and_the_value_is_never_carried ... ok
+test input::consistency::tests::one_shared_parent_among_several_is_enough ... ok
+test input::secrets::tests::ordinary_prose_does_not_match ... ok
+test input::vocabulary::tests::validation_rules_are_readable ... ok
+test ir::model::tests::a_declared_slug_keeps_its_url_and_the_derived_claimant_moves_to_its_resource ... ok
+test ir::model::tests::maturity_defaults_to_draft_and_quality_to_zero ... ok
+test ir::model::tests::curated_links_keep_their_own_slug ... ok
+test ir::model::tests::falls_back_to_a_tail_iri_then_to_slugification ... ok
+test ir::model::tests::a_wikilink_alias_becomes_the_ref_label ... ok
+test ir::model::tests::relations_keep_the_frozen_artefact_order ... ok
+test ir::model::tests::the_class_slug_comes_from_the_iri_not_the_page_slug ... ok
+test ir::model::tests::resolves_through_an_alias ... ok
+test ir::projection::tests::a_string_public_flag_refuses_the_build ... ok
+test ir::model::tests::resolves_a_ref_through_the_target_pages_resource ... ok
+test json::tests::control_characters_use_the_python_table ... ok
+test json::tests::compact_has_no_spaces_and_preserves_insertion_order ... ok
+test json::tests::default_separators_keep_non_ascii_raw ... ok
+test ir::model::tests::private_and_non_ontology_pages_are_excluded_from_the_class_set ... ok
+test ir::projection::tests::census_counts_and_balances ... ok
+test json::tests::default_separators_put_a_space_after_comma_and_colon ... ok
+test json::tests::escapes_non_ascii_as_lowercase_utf16 ... ok
+test json::tests::indented_matches_python_indent_two ... ok
+test jsonld::tests::a_cell_with_extra_properties_is_not_a_list ... ok
+test jsonld::tests::rdf_type_with_an_iri_object_is_at_type_and_with_a_literal_is_not ... ok
+test jsonld::tests::a_well_formed_chain_becomes_a_list ... ok
+test jsonld::tests::the_context_may_be_bare_or_wrapped ... ok
+test jsonld::tests::typed_literals_keep_their_lexical_form ... ok
+test jsonld::tests::a_shared_or_cyclic_chain_stays_nodes ... ok
+test reason::tests::a_graph_without_definitions_still_uses_skip ... ok
+test input::secrets::tests::two_credentials_on_two_lines_are_both_reported ... ok
+test reason::tests::an_empty_graph_classifies_cleanly ... ok
+test ir::closure::tests::a_class_with_no_inheritance_has_no_entry ... ok
+test reason::tests::classifies_through_an_existential_restriction ... ok
+test reason::tests::derives_the_transitive_subclass_closure ... ok
+test check::validate::tests::an_unknown_key_fails_knowledge_but_not_working ... ok
+test reason::tests::a_single_existential_definition_is_extracted ... ok
+test reason::tests::a_named_only_definition_keeps_no_restriction_and_still_classifies ... ok
+test reason::tests::disjoint_parents_make_their_common_subclass_unsatisfiable ... ok
+test reason::tests::owl_thing_never_appears_in_the_inferred_set ... ok
+test ir::closure::tests::direct_parents_keep_assertion_order_and_dedupe ... ok
+test ir::closure::tests::a_cycle_terminates_and_excludes_self ... ok
+test reason::tests::a_definition_yields_a_named_subsumption_nobody_asserted ... ok
+test ir::closure::tests::ancestors_outside_the_corpus_still_appear ... ok
+test ir::closure::tests::owl_thing_and_self_references_are_dropped ... ok
+test reason::tests::reasoning_is_deterministic ... ok
+test reason::tests::non_transitive_existentials_do_not_count_toward_the_cap ... ok
+test profile::tests::projection_prefers_class_then_individual_then_legacy_then_page ... ok
+test ir::projection::tests::an_identity_collision_blocks_the_build ... ok
+test reason::tests::skip_is_never_capped ... ok
+test reason::tests::relevant_over_the_transitive_cap_is_refused_before_reasoning ... ok
+test ir::closure::tests::relations_are_inherited_in_proximity_order_and_deduped ... ok
+test ir::closure::tests::later_levels_are_alphabetical ... ok
+test reason::tests::root_causes_exclude_classes_derived_from_an_unsatisfiable_parent ... ok
+test ir::projection::tests::excluded_identities_are_treated_as_private ... ok
+test reason::tests::without_the_disjointness_the_probe_is_consistent ... ok
+test reason::tests::restrictions_change_no_named_subsumption ... ok
+test ir::projection::tests::a_definition_naming_a_private_page_is_withheld_whole ... ok
+test ir::projection::tests::a_name_that_is_also_public_is_not_redacted ... ok
+test ir::projection::tests::redacts_a_private_name_out_of_prose ... ok
+test reason::tests::relevant_keeps_restrictions_over_sub_and_super_properties_only ... ok
+test reason::tests::two_independent_clashes_are_two_root_causes ... ok
+test ir::projection::tests::drops_edges_that_point_at_a_private_page ... ok
+test profile::tests::short_names_keep_their_domain_class_ids ... ok
+test ir::closure::tests::inheritance_is_capped ... ok
+test ir::projection::tests::keeps_only_public_pages ... ok
+test reason::tests::relevant_and_include_give_the_same_closure_and_skip_loses_the_entailment ... ok
+test input::vocabulary::tests::every_non_el_construct_is_refused_wherever_an_iri_is_declared ... ok
+test check::validate::tests::transitive_and_non_restriction_existentials_are_refused_under_their_own_codes ... ok
+test ir::projection::tests::the_http_projection_of_a_private_urn_is_redacted_too ... ok
+test reason::tests::the_inferred_turtle_carries_the_method_and_the_pairs ... ok
+test build::ngg1::tests::force_layout_is_stable_for_the_overview_sized_graph ... ok
+test build::generation::tests::dirtiness_is_scoped_to_the_vault_paths ... ok
+test input::secrets::tests::every_declared_form_is_detected ... ok
+test build::graph_tiers::tests::the_overview_uses_domain_count_for_category_array_indices ... ok
+test build::graph_tiers::tests::an_authored_root_page_supplies_the_overview_label_and_iri ... ok
+test check::validate::tests::a_conjunction_of_named_classes_and_existentials_validates_cleanly ... ok
+test build::graph_tiers::tests::the_bin_tiers_carry_the_ngg1_magic ... ok
+test build::graph_tiers::tests::a_domain_with_no_authored_root_gets_a_synthetic_iri ... ok
+test build::graph_tiers::tests::stats_separates_declared_from_resolvable ... ok
+test build::graph_tiers::tests::emit_produces_every_contract_c3_graph_file ... ok
+test build::tests::a_title_that_is_another_pages_name_is_not_an_alias ... ok
+test build::graph_tiers::tests::emission_is_byte_stable ... ok
+test build::tests::the_scaffold_index_is_compact_and_ascii_only ... ok
+test build::tests::an_unresolvable_collision_refuses_the_build_and_names_both_pages ... ok
+test build::tests::the_markdown_mirror_states_a_leading_paragraph_definition_once ... ok
+test build::tests::a_title_slug_colliding_with_a_declared_slug_gets_its_own_file ... ok
+test build::tests::the_generation_stamps_every_artefact ... ok
+test build::tests::a_defined_class_is_classified_into_by_the_build ... ok
+test build::tests::the_markdown_mirror_is_written_under_the_title_the_explorer_requests ... ok
+test build::tests::the_data_marker_verifies_every_data_artefact_relative_to_data ... ok
+test build::tests::emits_every_contract_c3_artefact ... ok
+test build::tests::the_closure_and_the_reasoner_agree_on_the_taxonomy ... ok
+test build::tests::private_pages_reach_no_artefact ... ok
+test build::tests::a_corpus_without_definitions_reasons_with_skip ... ok
+test build::tests::a_satisfiable_disjointness_builds_and_emits_the_axiom ... ok
+test build::tests::the_prose_index_captures_the_current_landscape ... ok
+test check::validate::tests::every_non_el_definition_is_refused_on_the_declaring_page ... ok
+test build::tests::promotion_replaces_the_previous_bundle_wholesale ... ok
+test build::tests::the_generation_records_the_ontology_version_iri_digest ... ok
+test input::consistency::tests::every_domain_root_and_category_is_refused_even_as_siblings ... ok
+
+test result: ok. 411 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s
+
+     Running tests/defined_classes.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/defined_classes-e474ead823ece1fb)
+
+running 4 tests
+test without_the_definition_the_corpus_reasons_with_skip_and_derives_nothing_new ... ok
+test the_same_fixture_forced_to_skip_loses_the_subsumption ... ok
+test the_definition_fixture_validates_cleanly ... ok
+test one_defines_as_page_yields_a_named_subsumption_absent_from_the_asserted_graph ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/el_profile.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/el_profile-7f8f2884f5a06c5d)
+
+running 2 tests
+test the_estate_small_fixture_graph_contains_no_non_el_construct ... ok
+test the_real_corpus_graph_contains_no_non_el_construct ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.87s
+
+     Running tests/estate_profile_pins_published_identities.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/estate_profile_pins_published_identities-5a5265d936faef6d)
+
+running 5 tests
+test short_names_and_aliases_resolve_to_the_published_class_ids ... ok
+test domains_keep_their_publication_order ... ok
+test categories_keep_their_ids_labels_and_domains ... ok
+test maturity_levels_and_dataset_identity ... ok
+test identity_namespaces_and_their_publication ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/jsonld_matches_turtle.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/jsonld_matches_turtle-5e71fd403ddbc944)
+
+running 8 tests
+test the_full_corpus_is_the_same_in_both_syntaxes ... ignored, needs ONTOMARK_STANDARDS_CORPUS pointing at a full corpus checkout
+test iris_that_look_like_compact_iris_stay_absolute ... ok
+test the_output_is_deterministic ... ok
+test the_comparison_can_fail ... ok
+test the_shapes_graph_is_the_same_in_both_syntaxes ... ok
+test the_mutation_fixture_data_graphs_are_the_same_in_both_syntaxes ... ok
+test the_asserted_ontology_graph_is_the_same_in_both_syntaxes ... ok
+test the_frontmatter_data_graphs_are_the_same_in_both_syntaxes ... ok
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running tests/migrate.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/migrate-41971bb7b0e0fde6)
+
+running 21 tests
+test the_registry_lists_m0001 ... ok
+test a_syntax_migration_that_changes_the_page_iri_is_refused ... ok
+test plan_agrees_with_repair_bodies_page_for_page ... ok
+test a_syntax_migration_that_changes_visibility_is_refused ... ok
+test a_syntax_migration_that_changes_a_resource_iri_is_refused ... ok
+test a_plan_from_another_migration_or_version_is_not_applied ... ok
+test plan_finds_the_logseq_pages_and_is_ready ... ok
+test the_delta_machinery_reports_zero_for_a_no_op_edit ... ok
+test a_semantic_migration_is_planned_with_deltas_and_needs_explicit_acceptance ... ok
+test plan_is_deterministic_and_holds_no_page_text ... ok
+test a_stale_run_is_reported_as_complete_with_conflicts ... ok
+test rollback_after_a_crash_between_rename_and_commit_restores_the_page_in_the_window ... ok
+test a_hostile_plan_path_cannot_escape_the_repository ... ok
+test unicode_crlf_and_comments_outside_the_region_survive_byte_for_byte ... ok
+test rollback_refuses_a_page_edited_after_apply ... ok
+test a_replan_with_nothing_to_do_reports_zero_inferred_not_unknown ... ok
+test a_torn_journal_tail_does_not_stop_a_restart ... ok
+test apply_then_replan_is_idempotent ... ok
+test a_page_edited_after_planning_conflicts_and_the_rest_apply ... ok
+test rollback_restores_byte_identical_originals ... ok
+test interrupted_apply_resumes_to_the_same_final_bytes ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.03s
+
+     Running tests/owl2_el_profile.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/owl2_el_profile-4e8dd31c16a7c514)
+
+running 7 tests
+test fixture_declares_every_class_it_uses ... ignored, FINDING: ontology.ttl uses undeclared classes as rdfs:subClassOf targets (not OWL 2 DL typed); EL axioms are unaffected
+test profile_identification_agreement ... ok
+test annotation_values_may_use_any_datatype ... ok
+test el_allows_the_specified_constructs ... ok
+test el_rejects_the_unsupported_constructs ... ok
+test estate_small_fixture_is_owl2_el ... ok
+test full_corpus_is_owl2_el ... ok
+
+test result: ok. 6 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 4.95s
+
+     Running tests/probe_consistency.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/probe_consistency-39e9ef0e3ed86781)
+
+running 2 tests
+test control_without_disjointness_has_no_whelk_inconsistent ... ok
+test probe_disjoint_parents_block_with_whelk_inconsistent_naming_p ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/publish_gate.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/publish_gate-785398c78a627dcb)
+
+running 6 tests
+test a_credential_on_a_published_page_refuses_the_build_and_writes_nothing ... ok
+test a_credential_on_a_private_page_does_not_refuse_the_build ... ok
+test publish_out_is_counted_and_lands_outside_the_bundle ... ok
+test publish_out_matches_the_site_url_contract ... ok
+test the_fixture_builds_and_stages_its_public_pages ... ok
+test a_build_reports_what_it_wrote ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s
+
+     Running tests/shacl_projection.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/shacl_projection-7ebd72ada10eed2c)
+
+running 10 tests
+test the_module_documentation_table_matches_the_rule_list ... ok
+test a_generic_profile_yields_shapes_too ... ok
+test the_rule_table_covers_every_code_validate_can_emit ... ok
+test severities_follow_validate ... ok
+test every_covered_rule_has_a_shape_and_every_annotation_is_a_covered_rule ... ok
+test the_actor_pattern_accepts_exactly_what_the_actor_grammar_accepts ... ok
+test shapes_and_data_serialise_as_turtle ... ok
+test the_data_graph_reads_values_the_way_validate_does ... ok
+test every_shape_says_where_it_comes_from_and_how_serious_it_is ... ok
+test the_data_graph_has_one_node_per_page_with_its_id ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests/w3c_turtle.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/w3c_turtle-4524ef4c3c7538b9)
+
+running 7 tests
+test w3c_turtle_round_trip ... ok
+test bug_leading_hyphen_local_name_is_not_valid_turtle ... ok
+test bug_rdf_type_outside_predicate_position_is_not_valid_turtle ... ok
+test language_and_datatype_forms_stay_distinct ... ok
+test property_unicode_and_escapes_in_literals ... ok
+test property_random_graphs_round_trip ... ok
+test bug_random_graphs_round_trip_unrestricted ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+
+     Running tests/whelk_scaling.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/whelk_scaling-1d00c771bd2f86c4)
+
+running 6 tests
+test multi_parent_density ... ignored, diagnostic: prints a density grid, asserts nothing
+test real_repo_definition_over_requires_fails_fast ... ignored, diagnostic: needs VAULT_SCALING_REPO
+test real_repo_phase_breakdown ... ignored, diagnostic: needs VAULT_SCALING_REPO
+test the_phase_breakdown ... ignored, diagnostic: prints a phase breakdown, asserts nothing
+test the_scaling_curve ... ignored, diagnostic: prints a timing curve, asserts nothing
+test two_thousand_classes_reason_within_the_budget ... ok
+
+test result: ok. 1 passed; 0 failed; 5 ignored; 0 measured; 0 filtered out; finished in 1.09s
+
+     Running unittests src/lib.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/ontomark_model-244e9f31f0accb9c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/adr2015.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/adr2015-3a2b61ad6e0bfbaa)
+
+running 27 tests
+test a_colon_target_is_a_name_first_when_one_entity_carries_it ... ok
+test a_conflicted_identity_never_resolves ... ok
+test d1_property_pages_are_properties_and_unknown_types_are_refused ... ok
+test axioms_project_only_supported_statements ... ok
+test locked_frontmatter_is_refused_with_a_diagnostic ... ok
+test a_conflicted_predicate_iri_is_never_reasoned ... ok
+test data_sub_properties_are_kept_not_projected_as_object_ones ... ok
+test mint_refuses_titles_held_as_aliases_or_note_names ... ok
+test generic_profile_accepts_a_plain_vault_and_body_links_are_not_axioms ... ok
+test d2_any_declared_predicate_survives_and_undeclared_keys_are_kept_not_dropped ... ok
+test a_predicate_whose_iri_is_a_non_object_entity_is_never_reasoned_as_one ... ok
+test d5_each_assertion_has_exactly_one_form ... ok
+test d4_equal_tails_in_different_namespaces_stay_distinct_and_duplicates_are_not_first_wins ... ok
+test d3_full_iris_are_kept_verbatim_and_publication_is_explicit ... ok
+test d6_every_statement_declares_what_a_reasoner_may_do_with_it ... ok
+test d7_domain_is_not_a_required_field_rule ... ok
+test d4_input_order_does_not_change_the_model ... ok
+test minting_is_explicit_single_sourced_and_collision_safe ... ok
+test paths_that_differ_only_by_case_are_ambiguous_in_either_order ... ok
+test sub_property_of_needs_the_same_property_kind_and_never_annotation ... ok
+test the_model_serialises ... ok
+test unquoted_wikilink_items_become_statements_with_a_warning ... ok
+test reference_states_resolved_ambiguous_unresolved_external ... ok
+test lifecycle_states_are_profile_data ... ok
+test d7_cycles_are_policy_findings_with_profile_severity ... ok
+test titles_and_paths_compare_under_full_unicode_case_folding ... ok
+test legacy_rule_iris_never_get_a_second_iri_for_the_same_title ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/model_corpus.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/model_corpus-e57b27a0d4218ab7)
+
+running 1 test
+test model_builds_over_every_public_page ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/ontomark_ngg1-220668bdc1083461)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/corpus.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/corpus-175e549b046214c5)
+
+running 1 test
+test the_corpus_tiers_decode_and_re_encode_byte_identically ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/golden.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/golden-d14fcaf87454b57d)
+
+running 3 tests
+test the_full_tier_splits_into_the_stated_backbone_and_relations ... ok
+test every_golden_tier_decodes_and_matches_stats ... ok
+test every_golden_tier_re_encodes_byte_identically ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/malformed.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/malformed-04f7810f5d1629ea)
+
+running 10 tests
+test csr_and_string_table_corruption ... ok
+test edge_endpoint_out_of_range ... ok
+test invalid_utf8_is_lossy_for_accessors_and_strict_for_to_graph ... ok
+test out_of_range_offsets ... ok
+test truncated_header ... ok
+test truncated_sections ... ok
+test wrong_magic_and_unknown_version ... ok
+test truncating_at_every_length_never_panics_and_always_errors ... ok
+test flipping_bytes_never_panics ... ok
+test random_multi_byte_corruption_never_panics ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests/roundtrip.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/roundtrip-83b0d82c3b168820)
+
+running 9 tests
+test offsets_follow_the_documented_layout_for_every_padding_class ... ok
+test no_domains_at_all ... ok
+test the_encoder_rejects_inconsistent_input ... ok
+test the_vowl_wasm_surface_is_unchanged ... ok
+test unicode_labels_survive ... ok
+test three_custom_domains_without_categories ... ok
+test worked_example_decodes_and_re_encodes ... ok
+test zero_edges_and_zero_nodes ... ok
+test random_graphs_round_trip ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/ts_agreement.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/ts_agreement-fee865c05035bd64)
+
+running 1 test
+test the_typescript_reader_agrees_with_the_rust_reader ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.41s
+
+     Running unittests src/lib.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/ontomark_parse-519dd6c37963e182)
+
+running 25 tests
+test body::tests::footnotes_refs_defs_and_inline ... ok
+test body::tests::spans_slice_back_to_tokens_with_unicode ... ok
+test body::tests::links_in_fences_and_inline_code_are_ignored ... ok
+test body::tests::unclosed_fence_runs_to_end ... ok
+test body::tests::subpaths_embeds_and_escaped_pipes ... ok
+test document::tests::bom_crlf_and_no_final_newline_round_trip ... ok
+test document::tests::closing_fence_at_eof_without_newline ... ok
+test document::tests::horizontal_rule_is_not_a_fence ... ok
+test document::tests::malformed_yaml_still_round_trips ... ok
+test document::tests::unclosed_block_is_body ... ok
+test emit::tests::crlf_and_indented_sequences_follow_the_block ... ok
+test emit::tests::strings_that_look_like_other_types_are_quoted ... ok
+test frontmatter::tests::comment_only_block_is_empty_and_parsed ... ok
+test frontmatter::tests::anchors_are_unsupported ... ok
+test emit::tests::nested_mapping_and_sequence_of_mappings ... ok
+test frontmatter::tests::duplicate_keys_are_malformed ... ok
+test emit::tests::corpus_house_style ... ok
+test frontmatter::tests::flow_mapping_block_is_unsupported ... ok
+test frontmatter::tests::entries_and_gaps_tile_the_content ... ok
+test frontmatter::tests::non_mapping_is_malformed ... ok
+test frontmatter::tests::style_is_observed ... ok
+test value::tests::empty_link_is_not_a_link ... ok
+test value::tests::table_escaped_pipe_is_the_alias_separator ... ok
+test frontmatter::tests::unicode_keys_and_values_get_byte_spans ... ok
+test value::tests::wikilink_display_round_trips ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/exp03_corpus.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/exp03_corpus-84638da8b5b3c6a4)
+
+running 1 test
+test exp03_every_public_page ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/exp03_fixtures.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/exp03_fixtures-8f14871ae87fc232)
+
+running 12 tests
+test fixtures_have_the_byte_shapes_they_claim ... ok
+test a_page_without_frontmatter_gains_a_block_after_the_bom ... ok
+test crlf_pages_get_crlf_edits ... ok
+test locked_frontmatter_round_trips_but_refuses_key_patches ... ok
+test unquoted_wikilink_item_is_recovered_not_dropped ... ok
+test body_link_retarget_touches_only_that_span ... ok
+test guards_refuse_stale_or_unsafe_patches ... ok
+test strings_needing_escapes_survive_a_round_trip ... ok
+test every_fixture_round_trips_and_matches_an_independent_yaml_load ... ok
+test new_keys_land_where_placed_and_nothing_else_moves ... ok
+test no_op_patches_are_idempotent ... ok
+test every_key_can_be_rewritten_alone ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/review_regressions.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/review_regressions-816f99e43b5e3015)
+
+running 17 tests
+test a_document_end_marker_locks_the_block ... ok
+test a_lone_cr_line_break_never_lets_a_set_delete_a_comment ... ok
+test a_reversed_span_has_no_utf16_range ... ok
+test a_body_edit_cannot_forge_frontmatter_alongside_a_key_set ... ok
+test a_comment_after_a_keep_chomped_scalar_survives_a_set_of_that_key ... ok
+test direct_emission_refuses_a_float_the_reader_would_not_type_as_one ... ok
+test a_body_prefix_and_a_new_frontmatter_block_compose ... ok
+test direct_emission_refuses_a_style_that_changes_structure ... ok
+test document_marker_lookalike_keys_and_values_are_quoted ... ok
+test keep_chomped_blank_lines_before_a_comment_stay_with_the_value ... ok
+test utf16_index_handles_empty_crlf_and_out_of_range ... ok
+test utf16_offsets_round_trip_both_ways_at_every_boundary ... ok
+test keep_chomped_block_scalars_keep_their_trailing_blank_lines ... ok
+test end_and_after_last_insertions_agree_on_order ... ok
+test set_anchored_on_a_key_the_same_patch_removes_is_refused_in_either_order ... ok
+test the_empty_key_can_be_patched ... ok
+test a_float_the_reader_would_not_type_as_a_float_is_refused_by_name ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/ontomark_profile_estate-52b2e06a422a9bbf)
+
+running 1 test
+test tests::parses_and_declares_the_published_taxonomy ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/ontomark_reason-6f071179d069bdd8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/audit_regressions.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/audit_regressions-64af2223af97670e)
+
+running 8 tests
+test built_in_properties_and_nominals_are_refused ... ok
+test an_unsatisfiable_thing_is_reported_even_without_named_classes ... ok
+test a_dropped_existential_does_not_claim_completeness_or_consistency ... ok
+test individual_assertions_are_refused_and_cannot_claim_consistency ... ok
+test consistency_is_not_claimed_for_an_incomplete_relevant_result_without_clashes ... ok
+test relevant_keeps_named_conjuncts_of_a_reduced_axiom ... ok
+test relevant_never_hides_a_clash_inside_an_anonymous_filler ... ok
+test relevant_still_initialises_classes_of_a_dropped_restriction ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/exp01.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/exp01-df27476a8e2a8be4)
+
+running 3 tests
+test the_closure_only_substitute_fails_exp01 ... ok
+test every_fixture_meets_its_expectations_and_matches_its_golden ... ok
+test the_relevant_policy_changes_no_named_subsumption_on_these_fixtures ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/exp06.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/exp06-722cc37d8362c5d0)
+
+running 10 tests
+test an_outcome_from_another_session_is_rejected ... ok
+test a_zero_step_budget_allows_an_already_finished_empty_job ... ok
+test a_finished_job_is_spent ... ok
+test a_late_old_result_is_rejected_even_before_the_new_one_arrives ... ok
+test an_old_result_that_raced_to_completion_cannot_replace_the_new_one ... ok
+test deleting_a_page_removes_its_class_from_the_accepted_result ... ok
+test a_cancel_from_the_host_stops_the_job ... ok
+test an_edit_during_reasoning_cancels_the_old_job_at_its_next_slice ... ok
+test a_step_budget_stops_the_job_instead_of_running_on ... ok
+test sliced_jobs_equal_one_shot_classification ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running unittests src/lib.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/ontomark_wasm-415713c55ef5079c)
+
+running 25 tests
+test profile::tests::default_profile_is_generic ... ok
+test profile::tests::kinds_parse_case_and_prefix_insensitively ... ok
+test projection::tests::plain_notes_and_prose_links_yield_nothing ... ok
+test projection::tests::ambiguous_titles_are_reported_not_guessed ... ok
+test projection::tests::generic_typed_pages_give_axioms_and_unresolved_links_diagnose ... ok
+test query::tests::graph_detection_finds_nested_graph_patterns ... ok
+test projection::tests::estate_profile_requires_resource_and_keeps_it_verbatim ... ok
+test reason::tests::cycles_are_equivalences ... ok
+test reason::tests::refused_axioms_are_reported_and_mark_the_result_incomplete ... ok
+test text::tests::host_span_counts_utf16_for_astral_and_accented_text ... ok
+test reason::tests::unsupported_built_in_properties_cannot_claim_a_complete_run ... ok
+test query::tests::row_cap_truncates ... ok
+test text::tests::diff_has_headers_and_hunks ... ok
+test text::tests::pct_encoding_keeps_slashes_and_encodes_unicode ... ok
+test reason::tests::a_relevant_fallback_with_dropped_restrictions_is_incomplete ... ok
+test reason::tests::full_profile_capability_is_partial_even_for_a_complete_supported_run ... ok
+test query::tests::refusals_have_specific_codes ... ok
+test reason::tests::subsumption_is_transitive_and_marks_told_edges ... ok
+test query::tests::optional_union_construct_work ... ok
+test reason::tests::existential_reasoning_goes_beyond_a_told_closure ... ok
+test reason::tests::disjoint_superclasses_make_a_class_unsatisfiable ... ok
+test query::tests::select_with_filter_order_limit_over_selected_graph ... ok
+test reason::tests::complete_policy_over_budget_falls_back_to_relevant ... ok
+test reason::tests::stepping_gives_the_same_result_as_one_shot ... ok
+test query::tests::store_matches_oxrdf_dataset_on_every_pattern_shape ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/transcript.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/transcript-657fd2b8bfc48656)
+
+running 3 tests
+test transcript_semantics ... ok
+test transcript_matches_golden ... ok
+test reads_never_mutate_and_rebuild_is_identical ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running unittests src/lib.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/whelk_el-e92141410fb254de)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/entailments.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/entailments-6f7c05e67d88daf5)
+
+running 23 tests
+test a_nominal_filler_and_assertions_classify ... ok
+test a_chain_into_equivalent_roles_survives_pruning ... ok
+test a_domain_classifies_the_subject ... ok
+test a_three_link_chain_is_binarised ... ok
+test appending_inclusions_with_a_fresh_role_still_matches_existentials ... ok
+test bottom_aliases_in_an_intersection_normalise_to_bottom ... ok
+test an_unsatisfiable_filler_makes_its_restricted_class_unsatisfiable ... ok
+test disjointness_of_thing_with_itself_forces_one_component ... ok
+test equivalent_named_classes_subsume_each_other ... ok
+test nothing_on_the_left_forces_one_component ... ok
+test a_defined_class_classifies_a_class_nobody_placed_under_it ... ok
+test colliding_chain_prefixes_do_not_share_an_intermediate_role ... ok
+test disjoint_parents_make_a_common_subclass_unsatisfiable ... ok
+test existentials_propagate_through_filler_subsumption ... ok
+test existentials_propagate_through_the_role_hierarchy ... ok
+test an_unfinished_saturation_refuses_to_yield_a_state ... ok
+test intersection_operand_order_and_nesting_do_not_matter ... ok
+test transitivity_composes_links ... ok
+test a_chain_with_two_super_properties_implies_both ... ok
+test thing_on_the_left_forces_one_component ... ok
+test components_reason_independently_to_the_same_result ... ok
+test appending_equals_asserting_together ... ok
+test sliced_saturation_equals_one_shot_saturation ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/upstream_owx.rs (/home/devuser/workspace/project/.git/ontomark-resume-target/debug/deps/upstream_owx-c5c774051153cb59)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ontomark_compile
+
+running 34 tests
+test crates/ontomark-compile/src/json.rs - json::to_indented (line 146) ... ok
+test crates/ontomark-compile/src/input/consistency.rs - input::consistency::is_taxonomic (line 75) ... ok
+test crates/ontomark-compile/src/input/secrets.rs - input::secrets (line 13) ... ok
+test crates/ontomark-compile/src/input/page.rs - input::page::Page::leading_paragraph (line 249) ... ok
+test crates/ontomark-compile/src/check/repair.rs - check::repair (line 42) ... ok
+test crates/ontomark-compile/src/input/consistency.rs - input::consistency::whelk_inconsistent (line 137) ... ok
+test crates/ontomark-compile/src/input/definition.rs - input::definition::refusal_code (line 106) ... ok
+test crates/ontomark-compile/src/input/frontmatter.rs - input::frontmatter::Frontmatter::wikilinks (line 266) ... ok
+test crates/ontomark-compile/src/input/definition.rs - input::definition (line 37) ... ok
+test crates/ontomark-compile/src/input/frontmatter.rs - input::frontmatter::split (line 109) ... ok
+test crates/ontomark-compile/src/json.rs - json::to_compact (line 124) ... ok
+test crates/ontomark-compile/src/json.rs - json::to_default_utf8 (line 220) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies::convert (line 78) ... ok
+test crates/ontomark-compile/src/input/consistency.rs - input::consistency::class_key (line 56) ... ok
+test crates/ontomark-compile/src/input/slug.rs - input::slug::slugify (line 23) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies::fix_macros (line 713) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies::same_but_trailing_whitespace (line 748) ... ok
+test crates/ontomark-compile/src/json.rs - json::to_default_ascii (line 198) ... ok
+test crates/ontomark-compile/src/input/frontmatter.rs - input::frontmatter::Wikilink::parse (line 45) ... ok
+test crates/ontomark-compile/src/input/vocabulary.rs - input::vocabulary::Vocabulary::transitive_in_closure (line 797) ... ok
+test crates/ontomark-compile/src/input/slug.rs - input::slug::ref_slug (line 41) ... ok
+test crates/ontomark-compile/src/input/consistency.rs - input::consistency (line 18) ... ok
+test crates/ontomark-compile/src/shacl.rs - shacl (line 131) ... ok
+test crates/ontomark-compile/src/input/vocabulary.rs - input::vocabulary::Vocabulary::existential_property (line 731) ... ok
+test crates/ontomark-compile/src/profile.rs - profile (line 14) ... ok
+test crates/ontomark-compile/src/jsonld.rs - jsonld (line 56) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies::fix_images (line 645) ... ok
+test crates/ontomark-compile/src/migrate/m0001.rs - migrate::m0001 (line 17) ... ok
+test crates/ontomark-compile/src/input/vocabulary.rs - input::vocabulary (line 24) ... ok
+test crates/ontomark-compile/src/input/slug.rs - input::slug::iri_for (line 80) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies (line 47) ... ok
+test crates/ontomark-compile/src/input/slug.rs - input::slug::target_slug (line 60) ... ok
+test crates/ontomark-compile/src/input/promotion.rs - input::promotion::apply (line 205) ... ok
+test crates/ontomark-compile/src/input/frontmatter.rs - input::frontmatter::Frontmatter::sort_canonical (line 293) ... ok
+
+test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.15s
+
+   Doc-tests ontomark_model
+
+running 8 tests
+test crates/ontomark-model/src/model.rs - model::DocId::new (line 27) ... ok
+test crates/ontomark-model/src/iri.rs - iri::PrefixMap (line 107) ... ok
+test crates/ontomark-model/src/iri.rs - iri::Iri (line 29) ... ok
+test crates/ontomark-model/src/profile.rs - profile::DeclarativeProfile::generic (line 466) ... ok
+test crates/ontomark-model/src/mint.rs - mint::slugify (line 65) ... ok
+test crates/ontomark-model/src/lib.rs - (line 28) ... ok
+test crates/ontomark-model/src/axiom.rs - axiom::Model::axioms (line 110) ... ok
+test crates/ontomark-model/src/model.rs - model::Model::build (line 349) ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.40s
+
+   Doc-tests ontomark_ngg1
+
+running 12 tests
+test crates/ontomark-ngg1/src/error.rs - error::Ngg1Error (line 15) ... ok
+test crates/ontomark-ngg1/src/reader.rs - reader::Ngg1<'a>::to_graph (line 427) ... ok
+test crates/ontomark-ngg1/src/encode.rs - encode::Csr (line 61) ... ok
+test crates/ontomark-ngg1/src/error.rs - error::Ngg1Fault (line 38) ... ok
+test crates/ontomark-ngg1/src/reader.rs - reader::Ngg1<'a>::try_parse (line 141) ... ok
+test crates/ontomark-ngg1/src/encode.rs - encode::GraphNode (line 21) ... ok
+test crates/ontomark-ngg1/src/reader.rs - reader::Ngg1 (line 83) ... ok
+test crates/ontomark-ngg1/src/example.rs - example::worked_example (line 10) ... ok
+test crates/ontomark-ngg1/src/reader.rs - reader::NodeRecord (line 30) ... ok
+test crates/ontomark-ngg1/src/encode.rs - encode::build_csr (line 103) ... ok
+test crates/ontomark-ngg1/src/lib.rs - (line 81) ... ok
+test crates/ontomark-ngg1/src/encode.rs - encode::encode (line 206) ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+   Doc-tests ontomark_parse
+
+running 9 tests
+test crates/ontomark-parse/src/body.rs - body::BodyIndex::scan (line 76) ... ok
+test crates/ontomark-parse/src/document.rs - document::Document (line 16) ... ok
+test crates/ontomark-parse/src/span.rs - span::SourceDigest (line 77) ... ok
+test crates/ontomark-parse/src/value.rs - value::Value::strings (line 49) ... ok
+test crates/ontomark-parse/src/value.rs - value::Wikilink::parse (line 209) ... ok
+test crates/ontomark-parse/src/patch.rs - patch::Patch (line 84) ... ok
+test crates/ontomark-parse/src/utf16.rs - utf16::Utf16Index (line 10) ... ok
+test crates/ontomark-parse/src/value.rs - value::Value::texts (line 128) ... ok
+test crates/ontomark-parse/src/lib.rs - (line 17) ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+
+   Doc-tests ontomark_profile_estate
+
+running 1 test
+test profiles/estate/src/lib.rs - (line 11) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s
+
+   Doc-tests ontomark_reason
+
+running 2 tests
+test crates/ontomark-reason/src/session.rs - session (line 20) ... ok
+test crates/ontomark-reason/src/lib.rs - (line 9) ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+   Doc-tests ontomark_wasm
+
+running 1 test
+test crates/ontomark-wasm/src/lib.rs - (line 13) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+   Doc-tests whelk_el
+
+running 1 test
+test crates/whelk-el/src/lib.rs - (line 16) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
