@@ -206,9 +206,14 @@ pub enum PatchError {
     /// A placement anchor key does not exist.
     #[error("placement anchor `{0}` is not a key of this page")]
     AnchorNotFound(String),
-    /// A key is empty or contains a line break.
+    /// A key contains a line break.
     #[error("invalid key {0:?}")]
     InvalidKey(String),
+    /// A value has no YAML spelling that reads back as itself: a
+    /// [`Value::Float`] whose text the reader does not type as a float
+    /// (`1_0.0`, `nan`). Holds the offending text.
+    #[error("value {0:?} cannot be written so that it reads back unchanged")]
+    Unrepresentable(String),
     /// Two operations touch the same key or overlapping ranges.
     #[error("operations {0} and {1} overlap")]
     Overlap(usize, usize),
@@ -358,6 +363,7 @@ impl Document {
                     placement,
                 } => {
                     check_key(key)?;
+                    check_value(value)?;
                     if let Some((_, j)) = named.iter().find(|(k, _)| k == key) {
                         return Err(PatchError::Overlap(*j, i));
                     }
@@ -601,6 +607,18 @@ impl Document {
             }
         }
         Ok(preserved)
+    }
+}
+
+fn check_value(v: &Value) -> Result<(), PatchError> {
+    match v {
+        Value::Float(raw) => match crate::frontmatter::resolve_plain(raw) {
+            Value::Float(r) if &r == raw => Ok(()),
+            _ => Err(PatchError::Unrepresentable(raw.clone())),
+        },
+        Value::Seq(items) => items.iter().try_for_each(check_value),
+        Value::Map(m) => m.values().try_for_each(check_value),
+        _ => Ok(()),
     }
 }
 

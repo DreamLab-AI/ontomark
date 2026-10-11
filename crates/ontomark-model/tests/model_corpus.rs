@@ -5,7 +5,9 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use ontomark_model::{DeclarativeProfile, DocDisposition, DocId, Model, ProfileSpec};
+use ontomark_model::{
+    slugify, DeclarativeProfile, DocDisposition, DocId, Model, Profile as _, ProfileSpec,
+};
 use ontomark_parse::{Document, Value};
 
 fn walk(dir: &Path, out: &mut Vec<PathBuf>) {
@@ -95,6 +97,35 @@ fn model_builds_over_every_public_page() {
     eprintln!("  dispositions: {dispositions:?}");
     eprintln!("  diagnostics: {diags:?}");
     eprintln!("  policy findings: {}", m.policy.len());
+    // Slug parity: does the minter's rule reproduce the resources the estate
+    // already minted? Compared against the profile's label (title, else note
+    // name). Counts only; set ONTOMARK_SLUG_EXAMPLES=n to print n public
+    // mismatches for triage.
+    let examples: usize = std::env::var("ONTOMARK_SLUG_EXAMPLES")
+        .ok()
+        .and_then(|n| n.parse().ok())
+        .unwrap_or(0);
+    let (mut minted, mut agree, mut shown) = (0usize, 0usize, 0usize);
+    for (id, d) in &docs {
+        let Some(Value::String(res)) = d.value("resource") else {
+            continue;
+        };
+        let Some(tail) = res.strip_prefix("urn:ngm:class:") else {
+            continue;
+        };
+        minted += 1;
+        let label = profile.label(id, d);
+        if slugify(&label) == tail {
+            agree += 1;
+        } else if shown < examples && d.value("public") == Some(&Value::Bool(true)) {
+            shown += 1;
+            eprintln!(
+                "    slug mismatch: {label:?} -> {:?} vs {tail:?}",
+                slugify(&label)
+            );
+        }
+    }
+    eprintln!("  slug parity: {agree}/{minted} urn:ngm:class: resources equal slugify(label)");
     assert_eq!(m.documents.len(), docs.len());
     assert!(disp.get("entity").copied().unwrap_or(0) > 0);
 }

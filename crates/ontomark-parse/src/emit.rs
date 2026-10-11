@@ -109,8 +109,9 @@ fn inline(v: &Value) -> String {
         Value::Bool(b) => b.to_string(),
         Value::Int(i) => i.to_string(),
         Value::Float(raw) => {
-            // `_` separators are YAML 1.1 only; the reader keeps them as text.
-            if !raw.contains('_') && matches!(resolve_plain(raw), Value::Float(_)) {
+            // Unreachable for patches: `Document::apply` refuses a float
+            // whose text the reader would not type as a float.
+            if matches!(resolve_plain(raw), Value::Float(_)) {
                 raw.clone()
             } else {
                 double_quoted(raw)

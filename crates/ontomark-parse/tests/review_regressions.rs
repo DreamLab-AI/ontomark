@@ -102,3 +102,26 @@ fn the_empty_key_can_be_patched() {
     let r = apply("---\n'': 1\nb: 2\n---\n", |p| p.remove(""));
     assert_eq!(r.unwrap(), "---\nb: 2\n---\n");
 }
+
+#[test]
+fn a_float_the_reader_would_not_type_as_a_float_is_refused_by_name() {
+    for raw in ["1_0.0", "nan", "abc"] {
+        let r = apply("---\na: 1\n---\n", |p| p.set("q", Value::Float(raw.into())));
+        assert!(
+            matches!(&r, Err(PatchError::Unrepresentable(t)) if t == raw),
+            "{raw}: {r:?}"
+        );
+        // Nested values are checked too.
+        let r = apply("---\na: 1\n---\n", |p| {
+            p.set("q", Value::Seq(vec![Value::Float(raw.into())]))
+        });
+        assert!(
+            matches!(r, Err(PatchError::Unrepresentable(_))),
+            "{raw} nested: {r:?}"
+        );
+    }
+    for raw in ["0.70", ".inf", "1e3"] {
+        let r = apply("---\na: 1\n---\n", |p| p.set("q", Value::Float(raw.into())));
+        assert_eq!(r.unwrap(), format!("---\na: 1\nq: {raw}\n---\n"));
+    }
+}
