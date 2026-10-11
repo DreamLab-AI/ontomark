@@ -1,14 +1,23 @@
 [package]
 name = "ontomark-model"
-description = "ontomark: model"
+description = "Typed ontology model derived from Markdown pages: explicit entity kinds, full predicate IRIs, reference resolution states and injectable profiles"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+keywords = ["ontology", "owl", "obsidian", "iri", "knowledge-graph"]
+categories = ["data-structures", "text-processing"]
 
 [dependencies]
+ontomark-parse = { workspace = true, features = ["serde"] }
+indexmap = { workspace = true }
+serde = { workspace = true }
+thiserror.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
 
 [lints]
 workspace = true

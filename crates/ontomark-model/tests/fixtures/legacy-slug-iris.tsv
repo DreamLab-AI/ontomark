@@ -1,0 +1,420 @@
+# title	resource: public visionGraph pages whose urn:ngm:class: IRI was minted
+# by the older case/digit-boundary rule, so slugify(title) differs. 2026-10-11.
+1Hive	urn:ngm:class:1-hive
+1inch	urn:ngm:class:1-inch
+2D LiDAR	urn:ngm:class:2-d-li-dar
+3D Animation	urn:ngm:class:3-d-animation
+3D Asset	urn:ngm:class:3-d-asset
+3D Asset Standard	urn:ngm:class:3-d-asset-standard
+3D Content Creation	urn:ngm:class:3-d-content-creation
+3D Content Generation	urn:ngm:class:3-d-content-generation
+3D Content Pipeline	urn:ngm:class:3-d-content-pipeline
+3D Design	urn:ngm:class:3-d-design
+3D Development	urn:ngm:class:3-d-development
+3D Engine	urn:ngm:class:3-d-engine
+3D File Format	urn:ngm:class:3-d-file-format
+3D Gaussian Splatting	urn:ngm:class:3-d-gaussian-splatting
+3D Generation	urn:ngm:class:3-d-generation
+3D Geometry	urn:ngm:class:3-d-geometry
+3D Graphics Standard	urn:ngm:class:3-d-graphics-standard
+3D LiDAR	urn:ngm:class:3-d-li-dar
+3D Model	urn:ngm:class:3-d-model
+3D Modeling Software	urn:ngm:class:3-d-modeling-software
+3D Perception	urn:ngm:class:3-d-perception
+3D Reconstruction	urn:ngm:class:3-d-reconstruction
+3D Rendering	urn:ngm:class:3-d-rendering
+3D Rendering Engine	urn:ngm:class:3-d-rendering-engine
+3D Scanning	urn:ngm:class:3-d-scanning
+3D Scene Exchange Protocol (SXP)	urn:ngm:class:3-d-scene-exchange-protocol-sxp
+3D Scene Reconstruction	urn:ngm:class:3-d-scene-reconstruction
+3D Scene Representation	urn:ngm:class:3-d-scene-representation
+3D User Interface	urn:ngm:class:3-d-user-interface
+3D and 4D	urn:ngm:class:3-d-and-4-d
+3GPP	urn:ngm:class:3-gpp
+51 Percent Attack	urn:ngm:class:51-attack
+5G	urn:ngm:class:5-g
+5G Connectivity	urn:ngm:class:5-g-connectivity
+5G Network	urn:ngm:class:5-g-network
+6DoF Tracking	urn:ngm:class:6-do-f-tracking
+6G Network Slice	urn:ngm:class:6-g-network-slice
+A2A Protocol	urn:ngm:class:a2-a-protocol
+ADE20K	urn:ngm:class:ade20-k
+AI Infrastructure (category)	urn:ngm:class:cat-ai-infrastructure
+AI TRiSM	urn:ngm:class:ai-tri-sm
+ARM TrustZone	urn:ngm:class:arm-trust-zone
+ARP4754A	urn:ngm:class:arp4754-a
+AUTOMATIC1111 WebUI	urn:ngm:class:automatic-1111-web-ui
+ActivityPub	urn:ngm:class:activity-pub
+Actuation and Control	urn:ngm:class:robo-actuation-and-control
+Agent2Agent Protocol	urn:ngm:class:agent2-agent-protocol
+Agent2Agent Protocol (Google 2025)	urn:ngm:class:agent2-agent-protocol-google-2025
+AltspaceVR	urn:ngm:class:altspace-vr
+AluVM	urn:ngm:class:alu-vm
+AnonCreds	urn:ngm:class:anon-creds
+AntPool	urn:ngm:class:ant-pool
+Apple Mixed Reality Headset	urn:ngm:class:apple-inc-technology-corporation-mixed-reality-headset
+Apple Vision Pro	urn:ngm:class:apple-inc-technology-corporation-vision-pro
+ArcFace	urn:ngm:class:arc-face
+AutoGen	urn:ngm:class:auto-gen
+AutoML	urn:ngm:class:auto-ml
+BIP-39	urn:ngm:class:bip39
+BOLT11	urn:ngm:class:bolt-11
+BOLT12	urn:ngm:class:bolt-12
+BitGo	urn:ngm:class:bit-go
+BitVM	urn:ngm:class:bit-vm
+Bitcoin As Money	urn:ngm:class:bitcoin-proof-of-work-protocol-as-money
+Bitcoin Cash	urn:ngm:class:bitcoin-proof-of-work-protocol-cash
+Bitcoin Centralisation Risks	urn:ngm:class:bitcoin-proof-of-work-protocol-centralisation-risks
+Bitcoin Core	urn:ngm:class:bitcoin-proof-of-work-protocol-core
+Bitcoin Custody	urn:ngm:class:bitcoin-proof-of-work-protocol-custody
+Bitcoin DeFi	urn:ngm:class:bitcoin-proof-of-work-protocol-de-fi
+Bitcoin Distribution	urn:ngm:class:bitcoin-proof-of-work-protocol-distribution
+Bitcoin ETF	urn:ngm:class:bitcoin-proof-of-work-protocol-etf
+Bitcoin ETF Custody	urn:ngm:class:bitcoin-proof-of-work-protocol-etf-custody
+Bitcoin Environmental Issues	urn:ngm:class:bitcoin-proof-of-work-protocol-environmental-issues
+Bitcoin Fungible Token Protocols	urn:ngm:class:bitcoin-proof-of-work-protocol-fungible-token-protocols
+Bitcoin Halving	urn:ngm:class:bitcoin-proof-of-work-protocol-halving
+Bitcoin Improvement Proposals	urn:ngm:class:bitcoin-proof-of-work-protocol-improvement-proposals
+Bitcoin Layer 2	urn:ngm:class:bitcoin-proof-of-work-protocol-layer-2
+Bitcoin Lightning Network	urn:ngm:class:bitcoin-proof-of-work-protocol-lightning-network
+Bitcoin Mining	urn:ngm:class:bitcoin-proof-of-work-protocol-mining
+Bitcoin Network	urn:ngm:class:bitcoin-proof-of-work-protocol-network
+Bitcoin Ordinals	urn:ngm:class:bitcoin-proof-of-work-protocol-ordinals
+Bitcoin Technical Overview	urn:ngm:class:bitcoin-proof-of-work-protocol-technical-overview
+Bitcoin Value Proposition	urn:ngm:class:bitcoin-proof-of-work-protocol-value-proposition
+Bitcoin Whitepaper	urn:ngm:class:bitcoin-proof-of-work-protocol-whitepaper
+Bitcoin related links	urn:ngm:class:bitcoin-proof-of-work-protocol-related-links
+BlackRock	urn:ngm:class:black-rock
+BlackRock BUIDL	urn:ngm:class:black-rock-buidl
+BlackRock Bitcoin ETF	urn:ngm:class:black-rock-bitcoin-etf
+BrightID	urn:ngm:class:bright-id
+C2PA Standard	urn:ngm:class:c2-pa-standard
+Centralised Application	urn:ngm:class:centralized-application
+ChaCha20-Poly1305	urn:ngm:class:cha-cha20-poly1305
+CleanSpark	urn:ngm:class:clean-spark
+CoAP	urn:ngm:class:co-ap
+CodeFormer	urn:ngm:class:code-former
+Collaborative Design	urn:ngm:class:collaborative-systems-modality-design
+Collaborative Document Editing	urn:ngm:class:tc-0002-collaborative-document-editing
+Collaborative Filtering	urn:ngm:class:collaborative-systems-modality-filtering
+Collaborative Learning	urn:ngm:class:collaborative-systems-modality-learning
+Collaborative Operation	urn:ngm:class:collaborative-systems-modality-operation
+Collaborative Robot	urn:ngm:class:collaborative-systems-modality-robot
+Collaborative Robotics	urn:ngm:class:collaborative-systems-modality-robotics
+Collaborative Simulation	urn:ngm:class:collaborative-systems-modality-simulation
+Collaborative Technology	urn:ngm:class:collaborative-systems-modality-technology
+Collaborative Whiteboard	urn:ngm:class:collaborative-systems-modality-whiteboard
+ComfyUI API Specification	urn:ngm:class:node-based-diffusion-pipeline-interface-api-specification
+ComfyUI Client	urn:ngm:class:node-based-diffusion-pipeline-interface-client
+ComfyUI Workflows	urn:ngm:class:node-based-diffusion-pipeline-interface-workflows
+Communication Technology	urn:ngm:class:dc-communication
+Computing and Cloud	urn:ngm:class:infra-computing-and-cloud
+ConsenSys	urn:ngm:class:consen-sys
+Constitutional AI Language Model Family	urn:ngm:class:constitutional-ai-training-methodology-language-model-family
+Content and Assets	urn:ngm:class:sc-content-and-assets
+ControlNet Conditioning	urn:ngm:class:control-net-conditioning
+ControlNet and Similar Spatial Conditioning Systems	urn:ngm:class:control-net-and-similar-spatial-conditioning-systems
+Copyright Law	urn:ngm:class:intellectual-property-rights-framework-law
+CorDapp	urn:ngm:class:cor-dapp
+CrewAI	urn:ngm:class:crew-ai
+Cryptographic Primitive (category)	urn:ngm:class:bc-cryptographic-primitive
+DO-178C	urn:ngm:class:do-178-c
+Data Management (category)	urn:ngm:class:infra-data-management
+DeFi and Economics	urn:ngm:class:bc-defi-and-economics
+Decentralized Finance (DeFi)	urn:ngm:class:decentralized-finance-de-fi
+DeepDAO	urn:ngm:class:deep-dao
+DeepMind	urn:ngm:class:deep-mind
+DeepSpeed	urn:ngm:class:deep-speed
+DevSecOps	urn:ngm:class:dev-sec-ops
+DiLoCo	urn:ngm:class:di-lo-co
+Digital Twin of Society (DToS)	urn:ngm:class:digital-twin-of-society-dto-s
+Display and Rendering	urn:ngm:class:sc-display-and-rendering
+DoRA	urn:ngm:class:do-ra
+Dr O'Hare Writing for LogSeq	urn:ngm:class:dr-o-hare-writing-for-log-seq
+ERC20Votes Standard	urn:ngm:class:erc20-votes-standard
+ETSI Domain: Ethics & Law	urn:ngm:class:etsi-domain-ethics-and-law
+ETSI Domain: Governance & Compliance	urn:ngm:class:etsi-domain-governance-and-compliance
+ETSI Domain: Governance & Ethics	urn:ngm:class:etsi-domain-governance-and-ethics
+ETSIDomainClassification	urn:ngm:class:etsidomain-classification
+EU AI Act Article 50	urn:ngm:class:eu-ai-act-regulatory-instrument-article-50
+EU AI Act Article 53	urn:ngm:class:eu-ai-act-regulatory-instrument-article-53
+EU MiCA Regulation	urn:ngm:class:eu-mi-ca-regulation
+EdDSA	urn:ngm:class:ed-dsa
+EigenLayer	urn:ngm:class:eigen-layer
+ElevenLabs	urn:ngm:class:eleven-labs
+Energy Optimisation	urn:ngm:class:energy-optimization
+Ethereum Attestation Service	urn:ngm:class:ethereum-smart-contract-platform-attestation-service
+Ethereum Classic	urn:ngm:class:ethereum-smart-contract-platform-classic
+Ethereum Foundation	urn:ngm:class:ethereum-smart-contract-platform-foundation
+Ethereum Name Service	urn:ngm:class:ethereum-smart-contract-platform-name-service
+Ethereum Smart Contracts	urn:ngm:class:ethereum-smart-contract-platform-smart-contracts
+Ethereum Virtual Machine	urn:ngm:class:ethereum-smart-contract-platform-virtual-machine
+Ethics & Law Layer	urn:ngm:class:ethics-and-law-layer
+Experiment Tracking	urn:ngm:class:empirical-experimental-design-tracking
+F2Pool	urn:ngm:class:f-2-pool
+FigJam	urn:ngm:class:fig-jam
+FinCEN	urn:ngm:class:fin-cen
+GS1 Standards	urn:ngm:class:gs-1-standards
+GameFi	urn:ngm:class:game-fi
+GitHub	urn:ngm:class:git-hub
+GoQuorum	urn:ngm:class:go-quorum
+Google Cloud	urn:ngm:class:google-ai-technology-corporation-cloud
+Google DeepMind	urn:ngm:class:google-ai-technology-corporation-deep-mind
+Google Gemini	urn:ngm:class:google-ai-technology-corporation-gemini
+Governance and Regulation	urn:ngm:class:bc-governance-and-regulation
+Governance and Safety	urn:ngm:class:sc-governance-and-safety
+GraphQL	urn:ngm:class:graph-ql
+GraphRAG	urn:ngm:class:graph-rag
+Groth16	urn:ngm:class:groth-16
+Heatmap Regression	urn:ngm:class:risk-intensity-heatmap-regression
+Hooke's Law	urn:ngm:class:hookes-law
+HotStuff	urn:ngm:class:hot-stuff
+HotStuff Consensus	urn:ngm:class:hot-stuff-consensus
+Human Annotation Data	urn:ngm:class:human-annotation
+Human Capture & Recognition	urn:ngm:class:human-capture-and-recognition
+IBM TrueNorth	urn:ngm:class:ibm-true-north
+IEEE P2048	urn:ngm:class:ieee-p-2048
+IEEE P2048-3	urn:ngm:class:ieee-p-2048-3
+IEEE P2048-9	urn:ngm:class:ieee-p-2048-9
+IEEE P7000	urn:ngm:class:ieee-p-7000
+IEEE P7003-2021	urn:ngm:class:ieee-p-7003-2021
+IEEE P7009	urn:ngm:class:ieee-p-7009
+ISO-IEC 18013-5 mDL	urn:ngm:class:iso-iec-18013-5-m-dl
+ISO/IEC 9075 SQL Standard	urn:ngm:class:iso-iec-9075
+ISO/IEC JTC 1/SC 29	urn:ngm:class:iso-iec-jtc1-sc29
+Identity Provider (IdP)	urn:ngm:class:identity-provider-id-p
+InfraredSensor	urn:ngm:class:infrared-sensor
+Infrastructure Architecture	urn:ngm:class:technology-infrastructure-domain-architecture
+Infrastructure Component	urn:ngm:class:technology-infrastructure-domain-component
+Infrastructure Inspection	urn:ngm:class:technology-infrastructure-domain-inspection
+Infrastructure Layer	urn:ngm:class:technology-infrastructure-domain-layer
+InstantID	urn:ngm:class:instant-id
+Interaction Technology	urn:ngm:class:sc-interaction
+InvokeAI	urn:ngm:class:invoke-ai
+IoT AI Integration	urn:ngm:class:io-t-ai-integration
+IoT Infrastructure	urn:ngm:class:io-t-infrastructure
+IoT Integration	urn:ngm:class:io-t-integration
+IoT Sensor Network	urn:ngm:class:io-t-sensor-network
+JSON Serialisation	urn:ngm:class:json-data-interchange-format-serialisation
+JSON Web Token	urn:ngm:class:json-data-interchange-format-web-token
+JSON-LD 1.1 Standard	urn:ngm:class:json-data-interchange-format-ld-1-1-standard
+JSON-LD Context	urn:ngm:class:json-data-interchange-format-ld-context
+JSON-RPC 2.0	urn:ngm:class:json-data-interchange-format-rpc-2-0
+JavaScript	urn:ngm:class:java-script
+Khronos Group glTF 2.0 Specification	urn:ngm:class:khronos-group-gl-tf-2-0-specification
+Khronos OpenXR	urn:ngm:class:khronos-open-xr
+Khronos OpenXR 1.1 Specification	urn:ngm:class:khronos-open-xr-1-1-specification
+Khronos glTF	urn:ngm:class:khronos-gl-tf
+KlimaDAO	urn:ngm:class:klima-dao
+L402	urn:ngm:class:l-402
+L402 Protocol	urn:ngm:class:l-402-protocol
+LangChain	urn:ngm:class:lang-chain
+LangGraph	urn:ngm:class:lang-graph
+LayerZero	urn:ngm:class:layer-zero
+Legal and Regulatory	urn:ngm:class:infra-legal-and-regulatory
+Llama 3	urn:ngm:class:meta-llama-model-family-3
+LlamaIndex	urn:ngm:class:meta-llama-model-family-index
+LoRA DoRA etc	urn:ngm:class:lo-ra-do-ra-etc
+LoRa Alliance	urn:ngm:class:lo-ra-alliance
+LoRaWAN	urn:ngm:class:lo-ra-wan
+LyCORIS	urn:ngm:class:ly-coris
+Machine Learning Framework	urn:ngm:class:machine-learning-discipline-framework
+Machine Learning Infrastructure	urn:ngm:class:machine-learning-discipline-infrastructure
+Machine Learning Model	urn:ngm:class:machine-learning-discipline-model
+Machine Learning Models	urn:ngm:class:machine-learning-discipline-models
+Machine Learning Pipeline	urn:ngm:class:machine-learning-discipline-pipeline
+Machine Learning Platform	urn:ngm:class:machine-learning-discipline-platform
+Machine Learning Technique	urn:ngm:class:machine-learning-discipline-technique
+Machine Learning Techniques Survey	urn:ngm:class:machine-learning-discipline-techniques-survey
+MaterialX	urn:ngm:class:material-x
+MediLedger	urn:ngm:class:medi-ledger
+MetaMask	urn:ngm:class:meta-mask
+MetaversePlatforms	urn:ngm:class:metaverse-platforms
+MiCA	urn:ngm:class:mi-ca
+MiCA Regulation	urn:ngm:class:mi-ca-regulation
+MicroBT	urn:ngm:class:micro-bt
+MicroStrategy	urn:ngm:class:micro-strategy
+Model Card	urn:ngm:class:ai-model-card
+Model Quantisation	urn:ngm:class:neural-network-quantisation
+ModelOps	urn:ngm:class:model-ops
+MoveIt 2	urn:ngm:class:move-it-2
+MuJoCo	urn:ngm:class:mu-jo-co
+MuSig2	urn:ngm:class:mu-sig-2
+MuZero	urn:ngm:class:mu-zero
+Multi-Chain DeFi	urn:ngm:class:multi-chain-de-fi
+MultiAccessEdgeComputing	urn:ngm:class:multi-access-edge-computing
+Multimodal AI	urn:ngm:class:multimodal-ai-architecture-ai
+Multimodal Learning	urn:ngm:class:multimodal-ai-architecture-learning
+Multimodal Reasoning	urn:ngm:class:multimodal-ai-architecture-reasoning
+Multimodal Understanding	urn:ngm:class:multimodal-ai-architecture-understanding
+NB-IoT	urn:ngm:class:nb-io-t
+NVIDIA H100	urn:ngm:class:nvidia-corporation-h-100
+NVIDIA H200	urn:ngm:class:nvidia-corporation-h200
+NVIDIA Isaac Sim	urn:ngm:class:nvidia-corporation-isaac-sim
+NVIDIA Jetson	urn:ngm:class:nvidia-corporation-jetson
+NVIDIA Omniverse Platform	urn:ngm:class:nvidia-corporation-omniverse-platform
+Navigation and Planning	urn:ngm:class:robo-navigation-and-planning
+NeRF	urn:ngm:class:ne-rf
+Neo4j	urn:ngm:class:neo-4-j
+Network Component (category)	urn:ngm:class:bc-network-component
+Network and Communication	urn:ngm:class:infra-network-and-comms
+NeurIPS	urn:ngm:class:neur-ips
+Neural 3D Generation	urn:ngm:class:neural-3-d-generation
+Neural Rendering Telepresence	urn:ngm:class:tele-050-neural-rendering-telepresence
+Newcastle AI & Health Innovation	urn:ngm:class:newcastle-ai-and-health-innovation
+OMA3	urn:ngm:class:oma-3
+OMA3 Media WG	urn:ngm:class:oma-3-media-wg
+Onem2M	urn:ngm:class:oneM2M
+Open AI Chat Completions API	urn:ngm:class:openai-research-organisation-chat-completions-api
+Open AI Whisper	urn:ngm:class:openai-research-organisation-whisper
+OpenAI API	urn:ngm:class:openai-research-organisation-api
+OpenAI Agents SDK	urn:ngm:class:openai-research-organisation-agents-sdk
+OpenCV	urn:ngm:class:open-cv
+OpenGL	urn:ngm:class:open-gl
+OpenID4VC	urn:ngm:class:open-id4-vc
+OpenID4VCI	urn:ngm:class:open-id4-vci
+OpenID4VP	urn:ngm:class:open-id4-vp
+OpenLineage	urn:ngm:class:open-lineage
+OpenPose	urn:ngm:class:open-pose
+OpenRAIL	urn:ngm:class:open-rail
+OpenSea	urn:ngm:class:open-sea
+OpenTelemetry	urn:ngm:class:open-telemetry
+OpenVR	urn:ngm:class:open-vr
+OpenXR	urn:ngm:class:open-xr
+OpenZeppelin	urn:ngm:class:open-zeppelin
+OpenZeppelin Contracts	urn:ngm:class:open-zeppelin-contracts
+OpenZeppelin Governor Contracts	urn:ngm:class:open-zeppelin-governor-contracts
+Parametric Modeling	urn:ngm:class:parametric-design-methodology-modeling
+PayPal	urn:ngm:class:pay-pal
+Perception and Sensing	urn:ngm:class:robo-perception
+Platform and Environment	urn:ngm:class:sc-platform-and-environment
+Play-to-Earn (P2E)	urn:ngm:class:play-to-earn-p2-e
+Polygon AggLayer	urn:ngm:class:polygon-agg-layer
+PositionControl	urn:ngm:class:position-control
+PostgreSQL	urn:ngm:class:postgre-sql
+Presentation: Conclusion	urn:ngm:class:presentation-concluding-synthesis-slide
+Procedural and Hybrid 4D	urn:ngm:class:procedural-and-hybrid-4-d
+Project mBridge	urn:ngm:class:project-m-bridge
+Protocol and Consensus	urn:ngm:class:bc-protocol-and-consensus
+Protocol and Infrastructure	urn:ngm:class:dc-protocol-and-infra
+PyTorch	urn:ngm:class:py-torch
+QLoRA	urn:ngm:class:qlo-ra
+ReAct Pattern	urn:ngm:class:re-act-pattern
+ReLU Activation	urn:ngm:class:re-lu-activation
+RoBERTa	urn:ngm:class:ro-berta
+Robot Type	urn:ngm:class:robo-robot-type
+RobotLink	urn:ngm:class:robot-link
+RoboticsCoreConcepts	urn:ngm:class:robotics-core-concepts
+RocksDB	urn:ngm:class:rocks-db
+SAE J3016	urn:ngm:class:sae-j-3016
+SafeSnap	urn:ngm:class:safe-snap
+Safety and Standards	urn:ngm:class:robo-safety-and-standards
+Security and Identity	urn:ngm:class:infra-security-and-identity
+SegWit	urn:ngm:class:seg-wit
+Semantic Web Infrastructure	urn:ngm:class:semantic-web-linked-data-standard-infrastructure
+Semantic Web Standards	urn:ngm:class:semantic-web-linked-data-standard-standards
+SentencePiece	urn:ngm:class:sentence-piece
+ServiceNow	urn:ngm:class:service-now
+ShEx	urn:ngm:class:sh-ex
+SimCLR	urn:ngm:class:sim-clr
+Software Engineering (category)	urn:ngm:class:infra-software-engineering
+SpeechSynthesis	urn:ngm:class:speech-synthesis
+Standards and Interoperability	urn:ngm:class:sc-standards-and-interop
+SwiGLU	urn:ngm:class:swi-glu
+TELE-153-5g-telepresence	urn:ngm:class:tele-153-5-g-telepresence
+Tax Treatment Crypto	urn:ngm:class:corporate-tax-compliance-framework-treatment-crypto
+Taxonomic Framework	urn:ngm:class:corporate-tax-compliance-frameworkonomic-framework
+Telemetry & Analytics	urn:ngm:class:telemetry-and-analytics
+Telepresence (category)	urn:ngm:class:dc-telepresence
+TensorFlow	urn:ngm:class:tensor-flow
+TensorFlow Lite	urn:ngm:class:tensor-flow-lite
+TensorRT	urn:ngm:class:tensor-rt
+Text-to-3D	urn:ngm:class:text-to-3-d
+TinyML	urn:ngm:class:tiny-ml
+Token and Asset	urn:ngm:class:bc-token-and-asset
+TradeLens	urn:ngm:class:trade-lens
+TypeScript	urn:ngm:class:type-script
+ULMFiT	urn:ngm:class:ulmfi-t
+VeChain	urn:ngm:class:ve-chain
+VelocityControl	urn:ngm:class:velocity-control
+Verifiable Credential	urn:ngm:class:verifiable-credentials
+Vision Processing	urn:ngm:class:apple-mixed-reality-headsetcessing
+VisionClaw Agentic Container	urn:ngm:class:vision-claw-agentic-container
+VisioningLab-Property-Crosswalk	urn:ngm:class:visioning-lab-property-crosswalk
+VisualServoing	urn:ngm:class:visual-servoing
+W3C 2022 DID Core 1.0 Recommendation	urn:ngm:class:w-3-c-2022-did-core-1-0-recommendation
+W3C Cognitive AI Community Group	urn:ngm:class:w-3-c-cognitive-ai-community-group
+W3C DID	urn:ngm:class:w3-c-did
+W3C DID Core Specification	urn:ngm:class:w-3-c-did-core-specification
+W3C DID Specification	urn:ngm:class:w3-c-did-specification
+W3C DID Working Group	urn:ngm:class:w-3-c-did-working-group
+W3C Linked Data Platform	urn:ngm:class:w-3-c-linked-data-platform
+W3C OWL 2	urn:ngm:class:w-3-c-owl-2
+W3C PROV	urn:ngm:class:w3-c-prov
+W3C PROV-O	urn:ngm:class:w-3-c-prov-o
+W3C RDF 1.1	urn:ngm:class:w-3-c-rdf-1-1
+W3C SPARQL 1.1	urn:ngm:class:w-3-c-sparql-1-1
+W3C Standard	urn:ngm:class:w-3-c-standard
+W3C Standards	urn:ngm:class:w-3-c-standards
+W3C Verifiable Credentials 2.0	urn:ngm:class:w-3-c-verifiable-credentials-2-0
+W3C Verifiable Credentials Data Model	urn:ngm:class:w-3-c-verifiable-credentials-data-model
+W3C Verifiable Credentials Data Model 2.0	urn:ngm:class:w-3-c-verifiable-credentials-data-model-2-0
+W3C Verifiable Credentials Data Model v2.0	urn:ngm:class:w-3-c-verifiable-credentials-data-model-v-2-0
+W3C Vocabulary	urn:ngm:class:w-3-c-vocabulary
+W3C Web Speech API	urn:ngm:class:w3-c-web-speech-api
+W3C WebXR	urn:ngm:class:w-3-c-web-xr
+W3C WebXR Device API	urn:ngm:class:w-3-c-web-xr-device-api
+WaveNet	urn:ngm:class:wave-net
+Web3 Infrastructure	urn:ngm:class:web-3-infrastructure
+WebAssembly	urn:ngm:class:web-assembly
+WebAuthn	urn:ngm:class:web-authn
+WebGL	urn:ngm:class:web-gl
+WebID	urn:ngm:class:web-id
+WebID Profile	urn:ngm:class:web-id-profile
+WebRTC	urn:ngm:class:web-rtc
+WebRTC W3C Specification	urn:ngm:class:web-rtc-w-3-c-specification
+WebSocket Protocol	urn:ngm:class:web-socket-protocol
+WebSockets	urn:ngm:class:web-sockets
+WebXR	urn:ngm:class:web-xr
+WebXR API	urn:ngm:class:web-xr-api
+WirelessHART	urn:ngm:class:wireless-hart
+WordPiece	urn:ngm:class:word-piece
+Workspace Tools	urn:ngm:class:dc-workspace-tools
+X402	urn:ngm:class:x-402
+Zigbee2MQTT	urn:ngm:class:zigbee2-mqtt
+bitcoin standard	urn:ngm:class:bitcoin-proof-of-work-protocol-standard
+c2pa	urn:ngm:class:c2-pa
+c2pa content credentials	urn:ngm:class:c2-pa-content-credentials
+comfyui manager	urn:ngm:class:node-based-diffusion-pipeline-interface-manager
+controlnet	urn:ngm:class:control-net
+dYdX	urn:ngm:class:d-yd-x
+eIDAS 2.0	urn:ngm:class:e-idas-2-0
+ethercat	urn:ngm:class:ether-cat
+gRPC	urn:ngm:class:g-rpc
+glTF	urn:ngm:class:gl-tf
+glTF (3D File Format)	urn:ngm:class:gl-tf-3-d-file-format
+huggingface hub	urn:ngm:class:hugging-face-hub
+iProov	urn:ngm:class:i-proov
+industrial iot	urn:ngm:class:industrial-io-t
+industrialautomation	urn:ngm:class:industrial-automation
+json schema	urn:ngm:class:json-data-interchange-format-schema
+json-ld	urn:ngm:class:json-data-interchange-format-ld
+json-ld 1.1	urn:ngm:class:json-data-interchange-format-ld-1-1
+json-rpc	urn:ngm:class:json-data-interchange-format-rpc
+kinematicmodel	urn:ngm:class:kinematic-model
+lora fine-tuning	urn:ngm:class:lo-ra-fine-tuning
+mBERT	urn:ngm:class:m-bert
+mT5	urn:ngm:class:m-t5
+makerdao	urn:ngm:class:maker-dao
+openid connect	urn:ngm:class:open-id-connect
+openid foundation	urn:ngm:class:open-id-foundation
+openusd	urn:ngm:class:open-usd
+openzeppelin governor	urn:ngm:class:open-zeppelin-governor
+react	urn:ngm:class:re-act
+sBTC	urn:ngm:class:s-btc
+sustainabilityreporting	urn:ngm:class:sustainability-reporting
+vLLM	urn:ngm:class:v-llm
+w3c did core	urn:ngm:class:w3-c-did-core
+websocket	urn:ngm:class:web-socket
+xDai	urn:ngm:class:x-dai
+zkSync	urn:ngm:class:zk-sync

@@ -16,3 +16,7 @@ conformance:
 
 doc:
     cargo doc --workspace --no-deps
+
+# EXP-03: lossless round-trip over every public page of a vault (read-only).
+exp03 corpus="../visionGraph/knowledge/pages":
+    ONTOMARK_CORPUS={{absolute_path(corpus)}} cargo test --release -p ontomark-parse --test exp03_corpus -- --nocapture

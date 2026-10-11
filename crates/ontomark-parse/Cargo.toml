@@ -1,14 +1,29 @@
 [package]
 name = "ontomark-parse"
-description = "ontomark: parse"
+description = "Lossless Markdown document model for Obsidian pages: frontmatter spans, body links and footnotes, and guarded byte-preserving patches"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+keywords = ["obsidian", "markdown", "frontmatter", "lossless", "yaml"]
+categories = ["parser-implementations", "text-processing"]
+
+[features]
+default = []
+## Derive serde for the public data types (used by the wasm bindings).
+serde = ["dep:serde", "indexmap/serde"]
 
 [dependencies]
+yaml-rust2.workspace = true
+sha2.workspace = true
+indexmap = { version = "2", default-features = false, features = ["std"] }
+thiserror.workspace = true
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+yaml-rust2.workspace = true
 
 [lints]
 workspace = true
