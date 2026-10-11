@@ -1,21 +1,10 @@
-//! The NGG1 binary graph format, and the two layout functions that feed it.
+//! The two layout functions that feed the NGG1 graph tiers.
 //!
-//! NGG1 is the **frozen** wire format the explorer's physics worker memory-maps
-//! straight out of the published site (`FORMAT-NGG1.md`,
-//! `publishing-tools/WasmVOWL`). This writer and the Rust/TS readers must agree
-//! byte for byte, so nothing here is a judgement call:
-//!
-//! ```text
-//! magic    "NGG1"                                  4 bytes
-//! header   version:u16 pad:u16 nodes:u32 edges:u32
-//!          off_nodes:u32 off_adjacency:u32 off_edge_types:u32 off_strings:u32
-//! nodes    id:u32 x:f32 y:f32 domain:u16 category:u16 flags:u8 pad:3 degree:u32
-//!          (24-byte stride — the brief's "20" is arithmetically impossible)
-//! adjacency row_ptr:[u32; nodes+1] then col_idx:[u32; edges]   (CSR)
-//! types    edge_type:[u8; edges], zero-padded to a 4-byte boundary
-//! strings  count:u32 blob_len:u32 offsets:[u32; count] blob
-//!          (offsets pair label,iri per node, so count == 2 × nodes)
-//! ```
+//! The NGG1 wire format itself (constants, CSR, byte layout, encoder, reader)
+//! is owned by the `ontomark-ngg1` crate, whose crate docs carry the byte
+//! layout table. What stays here is the pipeline side: the [`Node`] the tier
+//! builder fills in, the radial seed positions and the force layout, none of
+//! which are part of the format.
 //!
 //! # The layout functions are parity-critical
 //!
@@ -35,35 +24,13 @@
 
 use std::f64::consts::PI;
 
-/// `NGG1` as a little-endian `u32` — `0x3147_474E`.
-pub const MAGIC: &[u8; 4] = b"NGG1";
-/// Format version.
-pub const VERSION: u16 = 1;
-/// Header length in bytes.
-pub const HEADER_SIZE: usize = 32;
-/// Node record stride in bytes.
-pub const NODE_STRIDE: usize = 24;
-
-/// A `subClassOf` edge — the taxonomy backbone.
-pub const EDGE_SUBCLASS: u8 = 0;
-/// An `objectProperty` edge.
-pub const EDGE_RELATION: u8 = 1;
-
-/// Node is a declared domain root.
-pub const FLAG_DOMAIN_ROOT: u8 = 0x01;
-/// Node is one of the 34 taxonomy category roots.
-pub const FLAG_CATEGORY_ROOT: u8 = 0x02;
-/// Node has an authored page behind it.
-pub const FLAG_HAS_PAGE: u8 = 0x04;
-/// Node ships at least one `bridges-to` edge.
-pub const FLAG_BRIDGE: u8 = 0x08;
-/// Node is an OWL individual, not a class.
-pub const FLAG_INDIVIDUAL: u8 = 0x10;
-
-/// Sentinel for a node with no resolvable domain.
-pub const DOMAIN_NONE: u16 = 0xFFFF;
-/// Sentinel for an uncategorised node.
-pub const CATEGORY_NONE: u16 = 0xFFFF;
+// The format itself (constants, CSR, byte layout, encoder, reader) lives in
+// `ontomark-ngg1`; these re-exports keep the pipeline's import paths stable.
+pub use ontomark_ngg1::{
+    build_csr, Csr, CATEGORY_NONE, DOMAIN_NONE, EDGE_RELATION, EDGE_SUBCLASS, FLAG_BRIDGE,
+    FLAG_CATEGORY_ROOT, FLAG_DOMAIN_ROOT, FLAG_HAS_PAGE, FLAG_INDIVIDUAL, HEADER_SIZE, MAGIC,
+    NODE_STRIDE, VERSION,
+};
 
 /// One graph node, in local-index order within its tier.
 #[derive(Debug, Clone)]
@@ -94,124 +61,31 @@ pub struct Node {
     pub is_category_root: bool,
 }
 
-/// Compressed sparse row adjacency.
-#[derive(Debug, Clone, Default)]
-pub struct Csr {
-    /// `nodes + 1` offsets into [`Csr::col_idx`].
-    pub row_ptr: Vec<u32>,
-    /// Target local indices.
-    pub col_idx: Vec<u32>,
-    /// One edge type per entry of [`Csr::col_idx`].
-    pub edge_type: Vec<u8>,
-}
-
-/// Build CSR from directed `(src_local, tgt_local, edge_type)` triples.
-///
-/// Edges arrive pre-ordered per source (backbone before relations); this only
-/// groups them, preserving arrival order within a source.
-#[must_use]
-pub fn build_csr(num_nodes: usize, edges: &[(u32, u32, u8)]) -> Csr {
-    let mut counts = vec![0u32; num_nodes];
-    for (src, _, _) in edges {
-        counts[*src as usize] += 1;
-    }
-    let mut row_ptr = vec![0u32; num_nodes + 1];
-    for i in 0..num_nodes {
-        row_ptr[i + 1] = row_ptr[i] + counts[i];
-    }
-    let mut col_idx = vec![0u32; edges.len()];
-    let mut edge_type = vec![0u8; edges.len()];
-    let mut cursor: Vec<u32> = row_ptr[..num_nodes].to_vec();
-    for (src, tgt, t) in edges {
-        let p = cursor[*src as usize] as usize;
-        col_idx[p] = *tgt;
-        edge_type[p] = *t;
-        cursor[*src as usize] += 1;
-    }
-    Csr {
-        row_ptr,
-        col_idx,
-        edge_type,
-    }
-}
-
-const fn pad4(n: usize) -> usize {
-    (4 - (n & 3)) & 3
-}
-
 /// Serialise one tier to NGG1 bytes.
 ///
-/// `nodes` are in local-index order and `csr.col_idx` holds local indices.
+/// `nodes` are in local-index order and `csr.col_idx` holds local indices. The
+/// `f64` layout positions narrow to the file's `f32` here, once, exactly as the
+/// original writer did (`as f32`).
 ///
 /// # Panics
 /// When `csr` is inconsistent with `nodes` — a programming error, not input.
 #[must_use]
-#[allow(clippy::too_many_lines)] // One frozen binary layout, written once.
 pub fn pack(nodes: &[Node], csr: &Csr) -> Vec<u8> {
-    let node_count = nodes.len();
-    let edge_count = csr.col_idx.len();
-    assert_eq!(csr.row_ptr.len(), node_count + 1, "row_ptr length");
-    assert_eq!(csr.edge_type.len(), edge_count, "edge_type length");
-    assert_eq!(csr.row_ptr[node_count] as usize, edge_count, "row_ptr tail");
-
-    let off_nodes = HEADER_SIZE;
-    let off_adjacency = off_nodes + node_count * NODE_STRIDE;
-    let off_edge_types = off_adjacency + (node_count + 1) * 4 + edge_count * 4;
-    let off_strings = off_edge_types + edge_count + pad4(edge_count);
-
-    let mut out: Vec<u8> = Vec::with_capacity(off_strings + 8 + node_count * 8);
-    out.extend_from_slice(MAGIC);
-    out.extend_from_slice(&VERSION.to_le_bytes());
-    out.extend_from_slice(&0u16.to_le_bytes()); // pad
-    for v in [
-        node_count as u32,
-        edge_count as u32,
-        off_nodes as u32,
-        off_adjacency as u32,
-        off_edge_types as u32,
-        off_strings as u32,
-    ] {
-        out.extend_from_slice(&v.to_le_bytes());
-    }
-
-    for n in nodes {
-        out.extend_from_slice(&n.gid.to_le_bytes());
-        out.extend_from_slice(&(n.x as f32).to_le_bytes());
-        out.extend_from_slice(&(n.y as f32).to_le_bytes());
-        out.extend_from_slice(&n.domain_id.to_le_bytes());
-        out.extend_from_slice(&n.category_id.to_le_bytes());
-        out.push(n.flags);
-        out.extend_from_slice(&[0u8; 3]); // pad
-        out.extend_from_slice(&n.degree.to_le_bytes());
-    }
-
-    for v in &csr.row_ptr {
-        out.extend_from_slice(&v.to_le_bytes());
-    }
-    for v in &csr.col_idx {
-        out.extend_from_slice(&v.to_le_bytes());
-    }
-
-    out.extend_from_slice(&csr.edge_type);
-    out.extend(std::iter::repeat_n(0u8, pad4(edge_count)));
-
-    let mut blob: Vec<u8> = Vec::new();
-    let mut offsets: Vec<u32> = Vec::with_capacity(node_count * 2);
-    for n in nodes {
-        offsets.push(blob.len() as u32);
-        blob.extend_from_slice(n.label.as_bytes());
-        offsets.push(blob.len() as u32);
-        blob.extend_from_slice(n.iri.as_bytes());
-    }
-    out.extend_from_slice(&(offsets.len() as u32).to_le_bytes());
-    out.extend_from_slice(&(blob.len() as u32).to_le_bytes());
-    for v in &offsets {
-        out.extend_from_slice(&v.to_le_bytes());
-    }
-    out.extend_from_slice(&blob);
-
-    debug_assert_eq!(out.len(), off_strings + 8 + offsets.len() * 4 + blob.len());
-    out
+    let records: Vec<ontomark_ngg1::GraphNode> = nodes
+        .iter()
+        .map(|n| ontomark_ngg1::GraphNode {
+            id: n.gid,
+            x: n.x as f32,
+            y: n.y as f32,
+            domain: n.domain_id,
+            category: n.category_id,
+            flags: n.flags,
+            degree: n.degree,
+            label: n.label.clone(),
+            iri: n.iri.clone(),
+        })
+        .collect();
+    ontomark_ngg1::encode(&records, csr).expect("csr is consistent with nodes")
 }
 
 // ── Python's Mersenne Twister ────────────────────────────────────────────

@@ -18,6 +18,8 @@ pub mod check;
 pub mod input;
 pub mod ir;
 pub mod json;
+/// The NGG1 graph-tier format: constants, encoder and zero-copy reader.
+pub use ontomark_ngg1 as ngg1;
 pub mod profile;
 pub mod reason;
 #[cfg(feature = "whelk-el")]

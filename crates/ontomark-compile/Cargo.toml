@@ -17,6 +17,7 @@ whelk-el = ["dep:whelk-el"]
 
 [dependencies]
 whelk-el = { path = "../whelk-el", optional = true }
+ontomark-ngg1 = { path = "../ontomark-ngg1", version = "0.1.0" }
 serde = { workspace = true }
 # preserve_order: every JSON artefact's key order is part of the byte contract.
 serde_json = { workspace = true, features = ["preserve_order"] }

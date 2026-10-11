@@ -559,6 +559,7 @@ dependencies = [
  "anyhow",
  "hex",
  "indexmap 2.14.2",
+ "ontomark-ngg1",
  "regex",
  "serde",
  "serde_json",
@@ -573,6 +574,10 @@ dependencies = [
 
 [[package]]
 name = "ontomark-model"
+version = "0.1.0"
+
+[[package]]
+name = "ontomark-ngg1"
 version = "0.1.0"
 
 [[package]]

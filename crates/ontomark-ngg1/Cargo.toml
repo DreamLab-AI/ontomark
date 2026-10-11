@@ -1,0 +1,17 @@
+[package]
+name = "ontomark-ngg1"
+description = "NGG1 binary graph-tier format: constants, record types, encoder and zero-copy decoder. Dependency-free, no unsafe."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+readme = "README.md"
+keywords = ["graph", "binary-format", "ontology", "csr", "wasm"]
+categories = ["encoding", "data-structures", "parser-implementations"]
+
+[dependencies]
+
+[lints]
+workspace = true
