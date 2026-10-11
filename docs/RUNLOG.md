@@ -1,14 +1,49 @@
-- 18:40 spec-model: WP-A crates landed on `wp-a-model-parse` (local worktree,
-  not yet on origin). EXP-03 round-trip 9,244/9,244 public pages, each also
-  passing five guarded patches; 163,645 frontmatter entries re-written, 0
-  failures; parse 25 unit + 12 fixture + 8 doc tests; model 15 acceptance + 6
-  doc tests; whole-corpus model build 9,244 entities, 0 identity conflicts,
-  0.9 s; wasm32 clean. `docs/api/WP-A.md` published. Cross-vendor Codex audit
-  not yet run (transient login failure; retry ordered, Codex is logged in).
-- 18:42 queen decisions: unresolved references (about 20k) are reported as
-  Unresolved, never invented; the legacy exporter's phantom parents are a defect,
-  reproducible only via a named off-by-default `legacy-phantom-parents` adapter
-  for the parity test, listed as a divergence. `Profile::mint_iri` hook added,
-  default off, one minter owned by the model crate. Defect 8 (ADR status labels
-  vs corpus-format doc) owned by spec-estate as a doc fix. All specialists told
-  to push their branches after each milestone; only `wp-d-estate` is on origin.
+# Sprint run log
+
+Append-only. Each entry: time (UTC), actor, what changed, evidence. The queen
+writes here at every milestone so a fresh session can resume from this file plus
+`docs/ADR-OM-001-sprint-decisions.md`, `docs/DEPRECATION.md` and the RuVector
+memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
+
+## 2026-10-11
+
+- 17:38 queen: repo `DreamLab-AI/ontomark` created private; secret scanning and
+  push protection on. Scaffold pushed (`24d2e88`): seven crates, dual licence,
+  Whelk notice, CI with gitleaks, eight estate ADRs copied in. Native and
+  `wasm32-unknown-unknown` builds proven for the skeleton.
+- 17:39 queen: VisionClaw tag `ontomark-census-baseline` on `1044b0722`.
+- 17:40 queen: `SPRINT-BRIEF.md` pushed (`4f112b6`). Five Opus specialists
+  launched: `spec-model` (WP-A), `spec-reason` (WP-B), `spec-compile` (WP-C),
+  `spec-estate` (WP-D), `spec-plugin` (WP-E). Each may spawn Sonnet workers and
+  Haiku Explore agents. Advisor consulted at checkpoint 1 (reply pending at time
+  of writing).
+- 17:46 spec-estate: two vault pins diverge (`1044b0722` vs Agentbox
+  `3213e314`); vowl-wasm pinned at `0.1.2`.
+- 17:47 spec-estate: reported 48-vs-53 category drift. 17:58 queen: reproduced
+  the miscount (rustfmt-wrapped tuples), confirmed both tables at 53, added a
+  one-set unit test in VisionClaw, tag `ontomark-census-baseline-1`
+  (`de33ca538`), pushed. Specialists corrected.
+- 17:49 spec-compile: working in worktree `../ontomark-wp-c`; legacy build
+  deterministic apart from `generated_at`. Licence confirmation requested.
+- 17:55 queen: licence confirmed to all specialists on the owner's authority;
+  worktree discipline made mandatory after a shared-checkout branch switch.
+- 18:00 spec-estate: `DEPRECATION.md` committed (`1b009f6`, branch
+  `wp-d-estate`), about 110 rows, 48 of 48 anchors verified. Asked D1 to D9.
+- 18:04 queen: D1 to D9 decided (see ADR-OM-001); knowledgeGraph and standalone
+  WasmVOWL brought into scope; WP-C CLI contract widened to DEPRECATION §2.1.
+- 18:08 queen: relicensing grant recorded in `NOTICE` (`32a3de3`), after
+  verifying knowledgeGraph is also owner-authored.
+- 18:12 queen: ADR-OM-001 and this run log written.
+
+## Resume procedure
+
+1. `cd ~/workspace/ontomark && git fetch && git branch -a` to see which `wp-*`
+   branches have moved; read each branch's `docs/api/WP-*.md` if present.
+2. Read `docs/DEPRECATION.md` for the removal plan and its gating tests.
+3. `ListAgents` to see which specialists are still alive; re-spawn any missing
+   one with the brief in `SPRINT-BRIEF.md` and the slice description in this
+   log, telling it to read its branch first.
+4. The queen merges a slice only when its acceptance tests in the brief pass
+   under `source scripts/env.sh && cargo test --workspace`, then pushes estate
+   repos; VisionClaw via remote `dreamlab-github`, visionGraph via `origin`,
+   both after the gates in their `CLAUDE.md`.
