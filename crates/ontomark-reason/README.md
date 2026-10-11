@@ -20,4 +20,7 @@ fragment. Unsupported nominals, ranges and other constructs are reported rather
 than silently treated as ordinary edges. Bounded step-based sessions support
 responsive hosts; optional `corpus-bench` enables a native-only benchmark.
 
+Version 0.1.1 requires `whelk-el` 0.1.1 or later, which carries the corrected
+upstream attribution and Scala BSD notice. Reasoning behaviour is unchanged.
+
 Licensed under MIT OR Apache-2.0. See `LICENSE-MIT`, `LICENSE-APACHE` and `NOTICE`.

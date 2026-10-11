@@ -61,6 +61,9 @@ and `is_consistent` to include those source omissions in the verdict. These are
 named-class coherence checks, not full OWL 2 EL consistency claims. Authored
 Markdown remains the source of truth.
 
+Version 0.1.2 requires `ontomark-reason` 0.1.1 or later so new builds use the
+Whelk package with corrected upstream attribution and its Scala BSD notice.
+
 The extraction's relicensing grant and exclusions are recorded in the
 repository's `NOTICE`. Licensed under MIT OR Apache-2.0; governance posting
 and Nostr signing remain outside this crate.

@@ -1,7 +1,7 @@
 [package]
 name = "ontomark-reason"
 description = "ontomark: OWL 2 EL profile check and classification facade over whelk-el"
-version.workspace = true
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -15,7 +15,7 @@ readme = "README.md"
 corpus-bench = ["dep:oxttl", "dep:oxrdf", "whelk-el/parallel"]
 
 [dependencies]
-whelk-el = { path = "../whelk-el", version = "0.1.0" }
+whelk-el = { path = "../whelk-el", version = "0.1.1" }
 serde = { workspace = true }
 oxttl = { version = "0.2", optional = true }
 oxrdf = { version = "0.3", optional = true }

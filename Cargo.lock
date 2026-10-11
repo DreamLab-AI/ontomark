@@ -700,7 +700,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-reason"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "oxrdf",
  "oxttl",
@@ -1585,7 +1585,7 @@ checksum = "33ff1c1b360982e93b6d8ea9c04836f71dba0817a16f91e229cf3a51bdd9d987"
 
 [[package]]
 name = "whelk-el"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "horned-owl",
  "im",

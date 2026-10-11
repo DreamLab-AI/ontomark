@@ -21,7 +21,7 @@ model-projection = ["dep:ontomark-model", "dep:ontomark-reason"]
 
 [dependencies]
 ontomark-model = { workspace = true, optional = true }
-ontomark-reason = { path = "../ontomark-reason", version = "0.1.0", optional = true }
+ontomark-reason = { path = "../ontomark-reason", version = "0.1.1", optional = true }
 ontomark-ngg1 = { path = "../ontomark-ngg1", version = "0.1.0" }
 serde = { workspace = true }
 # preserve_order: every JSON artefact's key order is part of the byte contract.
@@ -38,7 +38,7 @@ time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"
 
 [dev-dependencies]
 # Independent pre-migration backend oracle for shared-classifier parity tests.
-whelk-el = { path = "../whelk-el", version = "0.1.0" }
+whelk-el = { path = "../whelk-el", version = "0.1.1" }
 ontomark-parse = { workspace = true }
 tempfile = "3"
 # Independent JSON-LD 1.1 parser (oxigraph project) that checks the JSON-LD
