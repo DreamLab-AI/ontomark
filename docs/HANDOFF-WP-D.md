@@ -112,5 +112,5 @@ All 10 were pushed during the wrap-up at the heads below, under team-lead's part
 ## Outside WP-D, needed for landing
 
 - **v0.1.0-rc.1** (team-lead, from `wp-c-compile`): asset `ontomark-x86_64-unknown-linux-gnu` plus its sha256. That unblocks `publish-cli`, VisionClaw step 10 and the publish half of every step's test.
-- **Parity receipt.** `wp-c-compile` must be pushed so `d7863ff`, which the docs cite, resolves on GitHub. Codex round 2 got a 404 for it.
+- **Parity receipt: resolved.** `wp-c-compile` was pushed at `291e0de`, which contains `d7863ff`. Checked with `gh api repos/DreamLab-AI/ontomark/commits/d7863ff` at 19:35 UTC. Codex round 2 had got a 404 for it before that push.
 - **Later CLI verbs** (`find`, `retrieve`, `tree`, `edit`, `create`, `apply`) gate agentbox step 10 (DEPRECATION §2.1).
