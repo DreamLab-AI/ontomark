@@ -1,11 +1,11 @@
 vault_binary_sha256=ee44eb4a8c910a655fc8df4db6715199a687b8877424d78a79152f136a133d16
 vault_version=vault 0.1.0
-vault_source_commit=30169a41694f23d4bdc4dca42b3a475974eb9fee
-vault_source_note=built from project main 30169a416; git diff ontomark-census-baseline^{commit}..HEAD over crates/vault crates/vault-core Cargo.lock Cargo.toml rust-toolchain* .cargo is empty and those paths are clean
-source_repo_head=7e236adeb2a08f55ec671471f3539c3373393440
+vault_source_commit=de33ca538289e3b1384a5a1e23ed0a8178f0b54d
+vault_source_note=built at tag ontomark-census-baseline-1 (project HEAD, crates/ clean); differs from ontomark-census-baseline only by a graph_tiers unit test
+source_repo_head=66c95a053521788577bd15dc4d2b1fcf5b3a174f
 snapshot_commit=e09be63a0b0b95d088b8b99c2dc129e14444cdac
 vault_kind=all
-generated_at=2026-10-11T17:54:33.990709+00:00
+generated_at=2026-10-11T18:23:05.034641+00:00
 content_digest=3313b5832ef3a7c4eb89dc340784ecd3541a46e9d4deb01d42b063a059799f5c
 ontology_digest=sha256-12-80be0f5150b3
-captured_at=2026-10-11T17:54:35Z
+captured_at=2026-10-11T18:23:06Z

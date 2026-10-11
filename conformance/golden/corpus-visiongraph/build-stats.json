@@ -5,7 +5,7 @@
     "dirty": false,
     "content_digest": "840ab1cec72dfcb48eb3dd2b51ae1cec16172a79540da7479807a064039ce0cb",
     "ontology_digest": "sha256-12-0bc8c7857720",
-    "generated_at": "2026-10-11T17:54:50.571405+00:00",
+    "generated_at": "2026-10-11T18:23:18.543959+00:00",
     "class_count": 9244,
     "page_count": 9244,
     "vocabulary_version": 1,
@@ -17,17 +17,17 @@
       },
       {
         "name": "data/ontology-inferred.ttl",
-        "sha256": "5e265f67d68f9030fde734220dc98b86a31d1bdae56a12d9b5ca2ddb2c3c4f12",
+        "sha256": "5b99ac2df4c1b8730b5a18a1764f99e49d81d8fcf3bf62ee35e6998fdba5a434",
         "bytes": 3802753
       },
       {
         "name": "data/scaffold-index.json",
-        "sha256": "15680839f5603c212e9940f168544d8fcb56915897caea1422f19b1ff5a722a1",
+        "sha256": "66f73ca242338aeb8aac3fc8391d02fa90a5d2f9a92f34714954b4d793d98814",
         "bytes": 10177753
       },
       {
         "name": "data/prose-index.json",
-        "sha256": "af6d4450afb326183e72742d3b43905b16d1b0adde5a6f07c64279279f676d45",
+        "sha256": "d40a28ce79c1df5d168a23c6e4c6ba084053cab1daed590aa49267bd6409b880",
         "bytes": 5536435
       },
       {
@@ -140384,5 +140384,5 @@
     }
   },
   "written": 37489,
-  "out": "/home/devuser/workspace/.tmp/ontomark-golden.XXD1jT/build/out"
+  "out": "/home/devuser/workspace/.tmp/ontomark-golden.6KoRNa/build/out"
 }
