@@ -378,7 +378,7 @@ impl Model {
         let mut claimants: BTreeMap<Iri, Vec<DocId>> = BTreeMap::new();
         for (id, doc) in docs {
             m.paths
-                .entry(id.as_str().to_lowercase())
+                .entry(fold(id.as_str()))
                 .or_default()
                 .push(id.clone());
             let public = profile.is_public(doc);
@@ -421,7 +421,7 @@ impl Model {
             let mut names = vec![profile.label(&p.id, p.doc), p.id.name().to_owned()];
             names.extend(profile.aliases(p.doc));
             for n in names {
-                let n = n.trim().to_lowercase();
+                let n = fold(n.trim());
                 if !n.is_empty() {
                     m.names.entry(n).or_default().insert(p.iri.clone());
                 }
@@ -648,6 +648,11 @@ impl Model {
                     );
                 }
                 let (form, mut disposition) = shape(pred.form, &pred.iri, p.kind, &object, kinds);
+                if disposition == Disposition::Supported && self.conflicts.contains_key(&pred.iri) {
+                    disposition = Disposition::PreservedNotReasoned(
+                        "predicate IRI is claimed by several documents".into(),
+                    );
+                }
                 if !reasoned && disposition == Disposition::Supported {
                     disposition =
                         Disposition::PreservedNotReasoned("lifecycle state is not reasoned".into());
@@ -709,7 +714,7 @@ impl Model {
         let as_iri = (t.contains(':') && !t.contains(char::is_whitespace))
             .then(|| self.prefixes.expand(t).ok())
             .flatten();
-        let key = t.to_lowercase();
+        let key = fold(t);
         let mut cands: BTreeSet<Iri> = self.names.get(&key).cloned().unwrap_or_default();
         if let Some(iri) = &as_iri {
             if self.claimed.contains(iri) {
@@ -755,7 +760,7 @@ impl Model {
     #[must_use]
     pub fn entities_named(&self, name: &str) -> Vec<Iri> {
         self.names
-            .get(&name.trim().to_lowercase())
+            .get(&fold(name.trim()))
             .map(|s| s.iter().cloned().collect())
             .unwrap_or_default()
     }
@@ -963,4 +968,12 @@ impl CyclePolicy {
             Self::Refuse => Some(Severity::Error),
         }
     }
+}
+/// Caseless key for titles, aliases, note names and paths.
+///
+/// Uppercasing first applies the full Unicode mappings that lowercasing
+/// alone skips (`ß` → `SS`), so `Straße`, `STRASSE` and `strasse` share one
+/// key. Identity checks (minting, resolution) must all go through this.
+pub(crate) fn fold(s: &str) -> String {
+    s.to_uppercase().to_lowercase()
 }

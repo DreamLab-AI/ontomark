@@ -230,3 +230,30 @@ fn utf16_index_handles_empty_crlf_and_out_of_range() {
     assert_eq!(u.byte(7), Some(9));
     assert_eq!(u.byte(8), None);
 }
+
+// ---------- Codex delta audit (gpt-6-astra, 4cc0810..3f6f521) ----------
+
+#[test]
+fn a_lone_cr_line_break_never_lets_a_set_delete_a_comment() {
+    let src = "---\na: |+\n  x\r# keep\n\nb: 1\n---\n";
+    let doc = Document::parse(src);
+    match doc.apply(&Patch::new(doc.digest()).set("a", Value::Int(2))) {
+        Ok(out) => assert!(
+            out.document.source().contains("# keep"),
+            "{:?}",
+            out.document.source()
+        ),
+        Err(e) => assert!(matches!(e, PatchError::FrontmatterLocked(_)), "{e:?}"),
+    }
+}
+
+#[test]
+fn direct_emission_refuses_a_style_that_changes_structure() {
+    let style = ontomark_parse::BlockStyle {
+        map_indent: 0,
+        ..ontomark_parse::BlockStyle::default()
+    };
+    let mut m = indexmap::IndexMap::new();
+    m.insert("a".to_owned(), Value::Int(1));
+    assert!(ontomark_parse::emit_entry("k", &Value::Map(m), &style).is_err());
+}

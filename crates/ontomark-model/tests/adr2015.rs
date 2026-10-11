@@ -1017,3 +1017,91 @@ fn paths_that_differ_only_by_case_are_ambiguous_in_either_order() {
         );
     }
 }
+
+// ---------- Codex delta audit (gpt-6-astra, 4cc0810..3f6f521) ----------
+
+#[test]
+fn a_conflicted_predicate_iri_is_never_reasoned() {
+    use ontomark_model::Axiom;
+    let p = has_profile();
+    let v = Vault::new(&[
+        ("A.md", &generic_page("Class", "https://ex.org/A", "")),
+        (
+            "C.md",
+            &generic_page("Class", "https://ex.org/C", "has: ['[[A]]']\n"),
+        ),
+        (
+            "P1.md",
+            &generic_page("DatatypeProperty", "https://ex.org/has", ""),
+        ),
+        (
+            "P2.md",
+            &generic_page("DatatypeProperty", "https://ex.org/has", ""),
+        ),
+    ]);
+    let m = v.model(&p);
+    assert!(
+        !matches!(
+            only_statement(&m, "https://ex.org/C").1,
+            Disposition::Supported
+        ),
+        "{:?}",
+        only_statement(&m, "https://ex.org/C")
+    );
+    let ax: Vec<Axiom> = m.axioms(&p).into_iter().map(|a| a.axiom).collect();
+    assert!(ax.is_empty(), "{ax:?}");
+}
+
+#[test]
+fn titles_and_paths_compare_under_full_unicode_case_folding() {
+    let p = estate_like("warn");
+    let v = Vault::new(&[(
+        "Street.md",
+        &page("Class", "urn:ngm:class:strasse-1", "title: Straße\n"),
+    )]);
+    let m = v.model(&p);
+    assert_eq!(
+        m.mint_iri(&p, Kind::Class, "STRASSE"),
+        Err(ontomark_model::MintRefusal::TitleTaken {
+            title: "STRASSE".into(),
+            existing: vec![iri("urn:ngm:class:strasse-1")]
+        })
+    );
+    let g = DeclarativeProfile::generic();
+    let a = "---\ntype: Class\niri: urn:test:a\n---\n";
+    let b = "---\ntype: Class\niri: urn:test:b\n---\n";
+    for order in [
+        [("dir/Straße.md", a), ("dir/STRASSE.md", b)],
+        [("dir/STRASSE.md", b), ("dir/Straße.md", a)],
+    ] {
+        let m = Vault::new(&order).model(&g);
+        assert_eq!(
+            m.resolve_with(&g, "dir/strasse").state,
+            Resolution::Ambiguous(vec![iri("urn:test:a"), iri("urn:test:b")])
+        );
+    }
+}
+
+#[test]
+fn mint_refuses_titles_held_as_aliases_or_note_names() {
+    let p = estate_like("warn");
+    let v = Vault::new(&[(
+        "Hound.md",
+        &page(
+            "Class",
+            "urn:ngm:class:dog",
+            "title: Dog\naliases: ['Doggo']\n",
+        ),
+    )]);
+    let m = v.model(&p);
+    for t in ["doggo", "HOUND"] {
+        assert_eq!(
+            m.mint_iri(&p, Kind::Class, t),
+            Err(ontomark_model::MintRefusal::TitleTaken {
+                title: t.into(),
+                existing: vec![iri("urn:ngm:class:dog")]
+            }),
+            "{t}"
+        );
+    }
+}
