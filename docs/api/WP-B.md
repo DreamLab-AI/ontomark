@@ -165,6 +165,8 @@ an unsound complement rule (removed with the unused disjunction/self variants).
 | EXP-06 | `cargo test -p ontomark-reason --test exp06` (native and wasm32) | 8 passed |
 | Upstream conformance | `WHELK_RS_INFERENCE_TESTS=… cargo test -p whelk-el --all-features --test upstream_owx` | skeletons 5+2, go-extract 694 entailments |
 | Corpus | `cargo run --release -p ontomark-reason --features corpus-bench --example corpus_bench -- data/ontology.ttl data/ontology-inferred.ttl` | 9,936 classes; Relevant: classify median 589 ms, saturation 336 ms (estate whelk-rs 360 ms); `inferred` = estate's 81,238, 0 missing, 0 extra |
+| Corpus, All | same, mode `all` | did not finish within 900 s wall clock (14 min 51 s CPU; 23,040 existentials over 15 properties, 2 transitive), as the estate measured for whelk-rs `Include`. Hosts must use `Relevant` or a `max_steps` budget on this corpus |
+| `parallel` on the corpus | `corpus_bench` components line | 5 components, the largest 22,763 of 22,771 axioms: the taxonomy is one component, so `classify_parallel` gives no speed-up here; it helps only on inputs with independent modules |
 
 Toolchain note: the lock pins `wasm-bindgen = 0.2.127` and
 `wasm-bindgen-test = 0.3.77` to match the baked `wasm-bindgen-test-runner`;
