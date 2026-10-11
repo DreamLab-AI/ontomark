@@ -1,0 +1,14 @@
+$ (plugin) node scripts/check-bundle.mjs dist/main.js
+# sha=03d7187 at=2026-10-11T18:34:10Z
+{
+  "file": "dist/main.js",
+  "bytes": 3140320,
+  "urls": [
+    "http://www.w3.org/2000/01/rdf-schema#",
+    "http://www.w3.org/2002/07/owl#"
+  ],
+  "embedded_wasm": true,
+  "embedded_worker": true,
+  "findings": []
+}
+# exit=0

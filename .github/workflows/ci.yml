@@ -15,6 +15,23 @@ jobs:
       - run: cargo build -p ontomark-wasm --target wasm32-unknown-unknown --release
       - run: cargo doc --workspace --no-deps
         env: { RUSTDOCFLAGS: "-D warnings" }
+  plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: wasm32-unknown-unknown }
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: cargo install wasm-bindgen-cli --version 0.2.127 --locked
+      - run: sudo apt-get update && sudo apt-get install -y binaryen
+      - run: npm ci --include=dev
+        working-directory: plugin
+      - run: npm run build && npm test && npm run test:wasm && npm run check:bundle
+        working-directory: plugin
+      - run: npm run test:offline
+        working-directory: plugin
   secrets:
     runs-on: ubuntu-latest
     steps:

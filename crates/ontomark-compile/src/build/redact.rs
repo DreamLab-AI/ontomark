@@ -421,10 +421,12 @@ impl PrivateLinks {
         let (key_content, _) = split_eol(block[0]);
         let after_key = key_content.split_once(':').map_or("", |(_, v)| v).trim();
 
-        if key_content
-            .split_once(':')
-            .is_some_and(|(k, _)| k == "defines-as")
-        {
+        if key_content.split_once(':').is_some_and(|(k, _)| {
+            let k = k.trim();
+            k == "defines-as"
+                || (k.starts_with(['\"', '\''])
+                    && serde_yaml::from_str::<String>(k).ok().as_deref() == Some("defines-as"))
+        }) {
             if let Ok(Yaml::Mapping(map)) = serde_yaml::from_str::<Yaml>(&block.concat()) {
                 if map.values().any(|v| self.value_has_private_target(home, v)) {
                     tally.frontmatter_keys_removed += 1;
@@ -677,6 +679,19 @@ mod tests {
         let mut t = Tally::default();
         let out = links().frontmatter(VaultKind::Knowledge, text, &mut t);
         (out, t)
+    }
+
+    #[test]
+    fn private_definition_is_withheld_whole_with_quoted_keys() {
+        for key in ["defines-as", "'defines-as'", "\"defines-as\""] {
+            let text = format!("---\n{key}:\n- '[[Open Page]]'\n- '[[Secret Thing]]'\n---\n");
+            let mut tally = Tally::default();
+            let got = links().frontmatter(VaultKind::Knowledge, &text, &mut tally);
+            assert_eq!(
+                got, "---\n---\n",
+                "definition was weakened for {key}: {got}"
+            );
+        }
     }
 
     #[test]

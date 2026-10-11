@@ -1,0 +1,252 @@
+$ (plugin) node scripts/offline-test.mjs
+# sha=03d7187 at=2026-10-11T18:34:10Z
+{
+  "started": "2026-10-11T18:34:11.453Z",
+  "node": "v24.20.0",
+  "checks": [
+    {
+      "name": "installed plugin consists of main.js, manifest.json, styles.css only",
+      "ok": true,
+      "detail": [
+        "main.js",
+        "manifest.json",
+        "styles.css"
+      ]
+    },
+    {
+      "name": "manifest: id ontomark, desktop only",
+      "ok": true,
+      "detail": {
+        "id": "ontomark",
+        "name": "Ontomark",
+        "version": "0.1.0",
+        "minAppVersion": "1.5.0",
+        "description": "Ontologies in Markdown: index typed notes, run local reasoning and SPARQL, and apply reviewed frontmatter edits. Offline; desktop only for now.",
+        "author": "DreamLab AI",
+        "isDesktopOnly": true
+      }
+    },
+    {
+      "name": "no vault listeners before layout-ready (startup create storm ignored)",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "name": "vault listeners registered after layout-ready",
+      "ok": true,
+      "detail": 4
+    },
+    {
+      "name": "loading and indexing wrote nothing to the vault",
+      "ok": true
+    },
+    {
+      "name": "index: generic profile by default",
+      "ok": true,
+      "detail": "generic"
+    },
+    {
+      "name": "index: 10 fixture entities + chain",
+      "ok": true,
+      "detail": {
+        "entities": 3010,
+        "chain": 3000
+      }
+    },
+    {
+      "name": "index: plain notes are not entities",
+      "ok": true
+    },
+    {
+      "name": "index: malformed frontmatter reported, indexing continued",
+      "ok": true
+    },
+    {
+      "name": "panel lists classes, individuals and properties",
+      "ok": true,
+      "detail": "Generation 1 · profile generic · reasoner interim-told-closure 0.1.0Reasoner is not OWL 2 EL complete: Interim, not OWL 2 EL: transitive closure of named subclass and equivalence assertions plus disjointness clashes. Existential and intersection axioms are reported as unsupported. Replaced by ontoma"
+    },
+    {
+      "name": "panel warns the interim reasoner is not EL complete",
+      "ok": true
+    },
+    {
+      "name": "panel item carries its IRI",
+      "ok": true
+    },
+    {
+      "name": "classify: unsatisfiable class found",
+      "ok": true,
+      "detail": [
+        "urn:ontomark:page:Ontology/Catdog"
+      ]
+    },
+    {
+      "name": "classify: reasoner declares el_complete false (interim)",
+      "ok": true
+    },
+    {
+      "name": "panel shows inferred superclasses after classification",
+      "ok": true
+    },
+    {
+      "name": "edit during classify: old result discarded (stale/cancelled)",
+      "ok": true,
+      "detail": "cancelled"
+    },
+    {
+      "name": "edit during classify: new generation reflects the edit",
+      "ok": true,
+      "detail": [
+        {
+          "q": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "0.65"
+          }
+        }
+      ]
+    },
+    {
+      "name": "query view: inferred types of Rex over the combined dataset",
+      "ok": true,
+      "detail": {
+        "rows": 5,
+        "error": null
+      }
+    },
+    {
+      "name": "query view renders a results table",
+      "ok": true
+    },
+    {
+      "name": "SPARQL UPDATE / SERVICE / FROM refused with codes",
+      "ok": true,
+      "detail": {
+        "update": "update_forbidden",
+        "service": "service_forbidden",
+        "from": "dataset_clause"
+      }
+    },
+    {
+      "name": "queries changed no file",
+      "ok": true
+    },
+    {
+      "name": "patch: diff preview shown before writing",
+      "ok": true,
+      "detail": "--- a/Welcome.md\n+++ b/Welcome.md\n@@ -1,2 +1,5 @@\n+---\n+type: class\n+---\n Welcome to a plain vault. It mentions [[Animal]], [[Dog]] and [[Rex]] in prose,\n which must never become ontology axioms.\n"
+    },
+    {
+      "name": "patch: applied after approval",
+      "ok": true,
+      "detail": {
+        "status": "applied",
+        "path": "Welcome.md",
+        "digest": "sha256:dfbd97597568541bd655078f7a77cbc5170334b45cdc1416da2fc7e07c6c8c13"
+      }
+    },
+    {
+      "name": "patch: prose bytes preserved, frontmatter added",
+      "ok": true,
+      "detail": "---\ntype: class\n---\nWelcome to a plain vault. It mentions [[Animal]], [[Dog]] and [[Rex]] in prose,\nwhich must never become ontology axioms.\n"
+    },
+    {
+      "name": "patch: the note is now a class in the index",
+      "ok": true
+    },
+    {
+      "name": "patch refused when the source changed after preview",
+      "ok": true,
+      "detail": {
+        "status": "refused",
+        "path": "Ontology/Dog.md",
+        "code": "source_changed",
+        "message": "Ontology/Dog.md changed after the patch was planned; nothing was written"
+      }
+    },
+    {
+      "name": "refused patch wrote nothing (external edit intact)",
+      "ok": true
+    },
+    {
+      "name": "declined patch writes nothing",
+      "ok": true,
+      "detail": {
+        "status": "declined",
+        "path": "Ontology/Cat.md"
+      }
+    },
+    {
+      "name": "delete: entity gone from the index",
+      "ok": true
+    },
+    {
+      "name": "rename: entity follows the file",
+      "ok": true
+    },
+    {
+      "name": "settings: profile selector offers generic (default) and estate",
+      "ok": true,
+      "detail": [
+        "generic",
+        "estate"
+      ]
+    },
+    {
+      "name": "estate profile: pages without `resource` refused",
+      "ok": true,
+      "detail": {
+        "entities": 0
+      }
+    },
+    {
+      "name": "unload: worker terminated",
+      "ok": true,
+      "detail": {
+        "before": 1,
+        "after": 0
+      }
+    },
+    {
+      "name": "unload: vault listeners removed",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "name": "unload: commands and views unregistered",
+      "ok": true,
+      "detail": {
+        "commands": 0,
+        "views": 0
+      }
+    },
+    {
+      "name": "unload: later calls reject with disposed",
+      "ok": true
+    },
+    {
+      "name": "reload: plugin indexes again (persisted estate profile honoured)",
+      "ok": true,
+      "detail": "estate"
+    },
+    {
+      "name": "no network attempt from any thread",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "network": {
+    "interfaces": [
+      "lo"
+    ],
+    "outbound": "ENETUNREACH",
+    "attempts": []
+  },
+  "notices": [],
+  "finished": "2026-10-11T18:34:13.810Z",
+  "failed": 0,
+  "passed": 38
+}
+{"mode":"docker --network none","invocation":"docker run --rm -i --network none node:24-bookworm-slim sh -c mkdir -p /w && tar -x -C /w && node /w/e2e/offline.e2e.cjs /w/vault","image":"node:24-bookworm-slim","exit":0}
+# exit=0
