@@ -52,6 +52,9 @@ pub struct Reasoning {
     /// unsatisfiable parent inherits `owl:Nothing` and is fixed by fixing the
     /// parent, so the build gate names these and only these (ADR-2125).
     pub root_causes: Vec<String>,
+    /// Classifier profile refusals. A forced-mode diagnostic run may return
+    /// partial results; [`reason`] refuses these instead of emitting a bundle.
+    pub refusals: Vec<String>,
     /// Number of named classes the reasoner classified.
     pub classified: usize,
     /// Existential restrictions present in the asserted graph but **not** given
@@ -69,10 +72,11 @@ pub struct Reasoning {
 }
 
 impl Reasoning {
-    /// `true` when no class is unsatisfiable.
+    /// `true` when the classifier accepted the selected input and no class is
+    /// unsatisfiable. This checks named-class coherence, not full OWL consistency.
     #[must_use]
     pub fn is_consistent(&self) -> bool {
-        self.unsatisfiable.is_empty()
+        self.unsatisfiable.is_empty() && self.refusals.is_empty()
     }
 }
 
@@ -198,6 +202,11 @@ pub trait Classifier {
     /// including the reflexive, `owl:Thing` and `owl:Nothing` pairs: the
     /// compiler filters them.
     fn named_subsumptions(&self, input: &ElInput) -> Vec<(String, String)>;
+    /// Unsupported input constructs reported before saturation. A backend that
+    /// accepts the entire [`ElInput`] fragment may use the empty default.
+    fn refusals(&self, _input: &ElInput) -> Vec<String> {
+        Vec::new()
+    }
 }
 
 /// The EL-relevant slice of the asserted graph, pulled out of the Turtle model
@@ -470,6 +479,11 @@ pub const WHELK_RELEVANT_CAP: &str = "WHELK_RELEVANT_CAP";
 /// Why [`reason`] refused to run the reasoner.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReasoningError {
+    /// A classifier refused the selected logical input; no bundle is emitted.
+    UnsupportedProfile {
+        /// Construct and reason for each refusal, in input order.
+        refusals: Vec<String>,
+    },
     /// `Restrictions::Relevant` would keep more existentials over transitive
     /// properties than the cap allows; saturating them does not finish.
     RelevantOverCap {
@@ -485,10 +499,11 @@ pub enum ReasoningError {
 }
 
 impl ReasoningError {
-    /// The error's code, [`WHELK_RELEVANT_CAP`].
+    /// The error's stable diagnostic code.
     #[must_use]
     pub fn code(&self) -> &'static str {
         match self {
+            Self::UnsupportedProfile { .. } => "UNSUPPORTED_REASONING_PROFILE",
             Self::RelevantOverCap { .. } => WHELK_RELEVANT_CAP,
         }
     }
@@ -498,6 +513,7 @@ impl ReasoningError {
     #[must_use]
     pub fn detail(&self) -> String {
         match self {
+            Self::UnsupportedProfile { refusals } => refusals.join("; "),
             Self::RelevantOverCap {
                 kept,
                 transitive_kept,
@@ -533,7 +549,8 @@ impl std::error::Error for ReasoningError {}
 /// # Errors
 /// [`ReasoningError::RelevantOverCap`], before the reasoner runs, when
 /// `Relevant` would keep more than [`RELEVANT_TRANSITIVE_CAP`] existentials
-/// over transitive properties.
+/// over transitive properties. [`ReasoningError::UnsupportedProfile`] if the
+/// classifier refuses the selected logical input.
 pub fn reason(graph: &Graph, classifier: &dyn Classifier) -> Result<Reasoning, ReasoningError> {
     reason_capped(graph, RELEVANT_TRANSITIVE_CAP, classifier)
 }
@@ -542,7 +559,8 @@ pub fn reason(graph: &Graph, classifier: &dyn Classifier) -> Result<Reasoning, R
 ///
 /// # Errors
 /// [`ReasoningError::RelevantOverCap`] when `Relevant` would keep more than
-/// `cap` existentials over transitive properties. `Skip` never fails.
+/// `cap` existentials over transitive properties. `Skip` has no cap, but either
+/// mode refuses unsupported input with [`ReasoningError::UnsupportedProfile`].
 pub fn reason_capped(
     graph: &Graph,
     cap: usize,
@@ -550,7 +568,7 @@ pub fn reason_capped(
 ) -> Result<Reasoning, ReasoningError> {
     let axioms = extract(graph);
     if axioms.definitions.is_empty() {
-        return Ok(reason_axioms(&axioms, Restrictions::Skip, classifier));
+        return checked(reason_axioms(&axioms, Restrictions::Skip, classifier));
     }
     let kept = axioms.kept_existentials(Restrictions::Relevant);
     let over_transitive: Vec<_> = kept
@@ -566,10 +584,22 @@ pub fn reason_capped(
             properties: properties.into_iter().cloned().collect(),
         });
     }
-    Ok(reason_axioms(&axioms, Restrictions::Relevant, classifier))
+    checked(reason_axioms(&axioms, Restrictions::Relevant, classifier))
+}
+
+fn checked(reasoning: Reasoning) -> Result<Reasoning, ReasoningError> {
+    if reasoning.refusals.is_empty() {
+        Ok(reasoning)
+    } else {
+        Err(ReasoningError::UnsupportedProfile {
+            refusals: reasoning.refusals,
+        })
+    }
 }
 
 /// [`reason`] with the restriction mode forced. See [`Restrictions`].
+/// Classifier refusals are returned in [`Reasoning::refusals`], with no
+/// saturation performed; use [`Reasoning::is_consistent`] before acting on it.
 #[must_use]
 pub fn reason_with(
     graph: &Graph,
@@ -595,7 +625,12 @@ fn reason_axioms(
         disjoint: axioms.disjoint.clone(),
         definitions: axioms.definitions.clone(),
     };
-    let subsumptions = classifier.named_subsumptions(&input);
+    let refusals = classifier.refusals(&input);
+    let subsumptions = if refusals.is_empty() {
+        classifier.named_subsumptions(&input)
+    } else {
+        Vec::new()
+    };
 
     let mut inferred = BTreeSet::new();
     let mut unsatisfiable = BTreeSet::new();
@@ -628,6 +663,7 @@ fn reason_axioms(
         .collect();
 
     Reasoning {
+        refusals,
         inferred: inferred.into_iter().collect(),
         unsatisfiable: unsatisfiable.into_iter().collect(),
         root_causes,
@@ -680,6 +716,25 @@ pub fn inferred_turtle(profile: &Profile, reasoning: &Reasoning, generated_at: &
 mod tests {
 
     use super::*;
+    #[test]
+    fn a_refused_profile_never_saturates_or_reports_consistency() {
+        struct Refusing;
+        impl Classifier for Refusing {
+            fn named_subsumptions(&self, _: &ElInput) -> Vec<(String, String)> {
+                panic!("refused input must never reach saturation");
+            }
+            fn refusals(&self, _: &ElInput) -> Vec<String> {
+                vec!["UnsupportedConstruct: not implemented".into()]
+            }
+        }
+        let graph = Graph::new();
+        let error = super::reason(&graph, &Refusing).unwrap_err();
+        assert_eq!(error.code(), "UNSUPPORTED_REASONING_PROFILE");
+        assert!(matches!(error, ReasoningError::UnsupportedProfile { .. }));
+        let forced = super::reason_with(&graph, Restrictions::Include, &Refusing);
+        assert!(!forced.is_consistent());
+        assert!(!forced.refusals.is_empty());
+    }
     #[cfg(feature = "whelk-el")]
     use crate::build::turtle::{Subject as S, Term as T};
 
@@ -1260,6 +1315,7 @@ mod tests {
     #[test]
     fn the_inferred_turtle_carries_the_method_and_the_pairs() {
         let reasoning = Reasoning {
+            refusals: Vec::new(),
             restrictions_skipped: 0,
             restrictions_kept: 0,
             mode: Restrictions::Skip,

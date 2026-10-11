@@ -639,12 +639,15 @@ dependencies = [
 
 [[package]]
 name = "ontomark-compile"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "hex",
  "indexmap 2.14.2",
+ "ontomark-model",
  "ontomark-ngg1",
+ "ontomark-parse",
+ "ontomark-reason",
  "oxiri 0.3.1",
  "oxjsonld",
  "oxrdf",

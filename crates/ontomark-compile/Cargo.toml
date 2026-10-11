@@ -1,7 +1,7 @@
 [package]
 name = "ontomark-compile"
 description = "Compile Markdown ontology vaults to RDF 1.1 Turtle, JSON-LD 1.1, SHACL, NGG1 graph tiers and page APIs under a versioned profile"
-version = "0.1.1"
+version = "0.1.2"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -14,10 +14,14 @@ categories = ["compilers", "science"]
 [features]
 default = ["whelk-el"]
 # The OWL 2 EL classifier the build and the gate reason with.
-whelk-el = ["dep:whelk-el"]
+whelk-el = ["dep:ontomark-reason"]
+# Pure, profile-injected projection from the normative typed model, including
+# the shared supported-profile classifier. No filesystem reads are performed.
+model-projection = ["dep:ontomark-model", "dep:ontomark-reason"]
 
 [dependencies]
-whelk-el = { path = "../whelk-el", version = "0.1.0", optional = true }
+ontomark-model = { workspace = true, optional = true }
+ontomark-reason = { path = "../ontomark-reason", version = "0.1.0", optional = true }
 ontomark-ngg1 = { path = "../ontomark-ngg1", version = "0.1.0" }
 serde = { workspace = true }
 # preserve_order: every JSON artefact's key order is part of the byte contract.
@@ -33,6 +37,9 @@ hex = "0.4"
 time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"] }
 
 [dev-dependencies]
+# Independent pre-migration backend oracle for shared-classifier parity tests.
+whelk-el = { path = "../whelk-el", version = "0.1.0" }
+ontomark-parse = { workspace = true }
 tempfile = "3"
 # Independent JSON-LD 1.1 parser (oxigraph project) that checks the JSON-LD
 # serialisation against the Turtle in the tests (with oxttl and oxrdf below).
@@ -59,3 +66,7 @@ required-features = ["whelk-el"]
 [[test]]
 name = "whelk_scaling"
 required-features = ["whelk-el"]
+
+[[test]]
+name = "model_projection"
+required-features = ["model-projection"]
