@@ -24,7 +24,7 @@ rayon = { version = "1.10", optional = true }
 horned-owl = { version = "1.2", optional = true, default-features = false }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-wasm-bindgen-test = "0.3"
+wasm-bindgen-test = "=0.3.77" # matches the baked wasm-bindgen-test-runner 0.2.127
 
 [lints]
 workspace = true

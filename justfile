@@ -19,8 +19,8 @@ doc:
 
 # EXP-01/EXP-06 on wasm32 under Node; the runner (wasm-bindgen-test-runner
 # 0.2.127) must match the locked wasm-bindgen.
-wasm-test:
-    CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER=wasm-bindgen-test-runner cargo test -p whelk-el -p ontomark-reason --target wasm32-unknown-unknown
+wasm-test *ARGS:
+    CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER=wasm-bindgen-test-runner cargo test -p whelk-el -p ontomark-reason --target wasm32-unknown-unknown {{ARGS}}
 
 # EXP-01 native; then compare the `EXP-01 <name> sha256=` lines with `just wasm-test -- --nocapture`.
 exp01:

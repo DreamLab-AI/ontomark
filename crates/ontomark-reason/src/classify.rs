@@ -80,7 +80,9 @@ pub struct Classification {
     /// Named classes entailed to be `owl:Nothing`.
     pub unsatisfiable: Vec<String>,
     /// The unsatisfiable classes that are not explained by an unsatisfiable
-    /// asserted superclass: the ones to fix.
+    /// asserted `SubClassOf(Class, Class)` superclass (the estate's
+    /// `WHELK_INCONSISTENT` rule). A class made unsatisfiable only through an
+    /// unsatisfiable restriction filler is listed too, alongside the filler.
     pub root_causes: Vec<String>,
     /// For each unsatisfiable class, each declared disjoint pair it falls
     /// under.

@@ -259,6 +259,13 @@ fn main() {
         let t = Instant::now();
         let pairs = state.named_subsumption_ids();
         let t_pairs = t.elapsed();
+        let groups = whelk_el::components(&el);
+        println!(
+            "components (relevant input): {} (largest {} of {} axioms)",
+            groups.len(),
+            groups.iter().map(Vec::len).max().unwrap_or(0),
+            el.len()
+        );
         println!(
             "phases (relevant): check {t_check:?}, policy {t_policy:?}, translate {t_translate:?} -> {} axioms, assert {t_assert:?}, named_subsumption_ids {t_pairs:?} -> {} pairs",
             translated.len(),

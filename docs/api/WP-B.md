@@ -76,7 +76,7 @@ let c = classify_with(&axioms, Options { existentials: ExistentialPolicy::Releva
 | `subsumptions` | every entailed `(sub, sup)` between distinct named classes; no `owl:Thing`/`owl:Nothing` |
 | `inferred` | `subsumptions` minus told `SubClassOf(Class, Class)`: the content of `ontology-inferred.ttl` |
 | `unsatisfiable` | classes entailed `⊑ owl:Nothing` |
-| `root_causes` | unsatisfiable classes without an unsatisfiable *asserted* superclass (the `WHELK_INCONSISTENT` set) |
+| `root_causes` | unsatisfiable classes without an unsatisfiable *asserted* (`SubClassOf(Class, Class)`) superclass: the `WHELK_INCONSISTENT` rule. Under `All`, a class made unsatisfiable only through a restriction's filler is also listed |
 | `disjointness_violations` | `{class, disjoint: (a, b), axiom}` for each unsatisfiable class under both sides of a `DisjointClasses` |
 | `refusals` | `{index, kind, construct, reason}`; `code()` gives `EL_OUTSIDE_PROFILE` or `EL_NOT_IMPLEMENTED` |
 | `classes`, `existentials_dropped`, `steps` | counts; `steps` varies run to run (hash order) and is excluded from parity |
@@ -114,7 +114,10 @@ use ontomark_reason::session::{Session, Job, Step};
 let mut session = Session::new();          // main thread / controller
 let ticket = session.begin();              // on every source change; cancels the previous ticket
 // in the worker (Job is !Send: build it where it runs; Ticket is Send):
-let mut job = Job::new(ticket, &axioms, Options::default());
+// Relevant + a budget: All on the full corpus is the configuration the estate
+// measured as not finishing (see Evidence), so a host never uses it unbounded.
+let options = Options { existentials: ExistentialPolicy::Relevant, max_steps: Some(5_000_000) };
+let mut job = Job::new(ticket, &axioms, options);
 loop {
     match job.step(20_000) {               // one slice; yield to the event loop between slices
         Step::Pending { steps } => { /* report progress, check messages */ }
@@ -131,8 +134,15 @@ session.accept(outcome)?;                  // Err(Rejected::Stale{..}) if a newe
 single-threaded wasm worker, cancellation arrives as a message handled between
 slices (call `ticket.cancel.cancel()` or just drop the job). An outcome is
 accepted only for the current generation, so an old result that raced to
-completion cannot replace a newer one. A slice of 20,000 steps is about 25 ms
-on the corpus natively (302,861 steps in about 340 ms).
+completion cannot replace a newer one.
+
+Latency: a slice of 20,000 saturation steps is about 25 ms on the corpus
+natively (302,861 steps in about 340 ms), but two phases are not sliced:
+`Job::new` (profile check, policy filter, translation, role indexing; about
+40 ms on the corpus) and the `Done` slice, which runs `finish` (collecting and
+sorting about 125,000 pairs; about 200 ms, the remainder of the 589 ms median). Cancellation is noticed at the
+next slice boundary, so its worst-case latency is one of those phases, not
+25 ms. Expect wasm32 to be slower than these native figures.
 
 ## `whelk-el`
 
