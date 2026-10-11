@@ -65,8 +65,8 @@
 
 use std::path::{Path, PathBuf};
 
-use serde::Serialize;
 use crate::input::code::CodeMap;
+use serde::Serialize;
 
 /// One tree to repair: a vault's `pages/` or `journals/`.
 #[derive(Debug, Clone)]

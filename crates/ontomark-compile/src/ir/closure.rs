@@ -16,8 +16,8 @@
 
 use std::collections::{HashMap, HashSet};
 
-use indexmap::IndexMap;
 use crate::input::slug::{is_thing, ref_slug};
+use indexmap::IndexMap;
 
 use crate::ir::model::{ClassRecord, Corpus, Ref};
 

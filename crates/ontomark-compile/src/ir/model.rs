@@ -22,10 +22,10 @@
 
 use std::collections::HashMap;
 
-use indexmap::IndexMap;
 use crate::input::page::{Page, Vault};
 use crate::input::slug::{ref_slug, slugify, target_slug};
 use crate::input::vocabulary::Vocabulary;
+use indexmap::IndexMap;
 
 /// The twelve relation attributes in `pipeline/reason.py::RELATION_TYPES`
 /// order: `(frontmatter key, camelCase artefact key)`.
@@ -398,7 +398,10 @@ impl Corpus {
                     .unwrap_or_else(|| "draft".to_owned()),
                 quality: fm.number("quality").unwrap_or(0.0),
                 legacy_term_id: fm.text("legacy-term-id").unwrap_or_default(),
-                generated_by: fm.get("generated").and_then(crate::input::okf::Stamp::from_yaml).map(|st| st.by),
+                generated_by: fm
+                    .get("generated")
+                    .and_then(crate::input::okf::Stamp::from_yaml)
+                    .map(|st| st.by),
                 sub_class_of: links_of(page, IS_A_KEY),
                 instance_of: links_of(page, INSTANCE_OF_KEY),
                 relations,

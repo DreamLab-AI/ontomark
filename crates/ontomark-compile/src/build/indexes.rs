@@ -10,9 +10,9 @@
 
 use std::collections::HashMap;
 
+use crate::input::slug::{ref_slug, slugify};
 use indexmap::IndexMap;
 use serde_json::{json, Map, Value};
-use crate::input::slug::{ref_slug, slugify};
 
 use crate::ir::closure::Closure;
 use crate::ir::model::{ClassRecord, Corpus, Ref};

@@ -15,12 +15,12 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 
-use serde::Serialize;
 use crate::input::code::CodeMap;
 use crate::input::okf::{OkfBlock, Status};
 use crate::input::page::{Page, Vault, VaultKind};
 use crate::input::slug::slugify;
 use crate::input::vocabulary::{ScalarDef, ScalarType, Vocabulary};
+use serde::Serialize;
 
 use crate::ir::model::{ClassRecord, Corpus};
 

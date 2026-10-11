@@ -15,8 +15,8 @@
 //! successful one never leaves an obsolete page export behind, because the
 //! whole tree is replaced rather than written over.
 
-pub mod generation;
 pub mod attribution;
+pub mod generation;
 pub mod graph_tiers;
 pub mod indexes;
 pub mod ngg1;
@@ -29,16 +29,16 @@ pub mod webvowl;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use anyhow::Context as _;
-use serde_json::Value;
-use crate::json::{to_compact, to_default_ascii, to_default_utf8, to_indented};
 use crate::input::page::{load_vault, Vault};
 use crate::input::vocabulary::Vocabulary;
+use crate::json::{to_compact, to_default_ascii, to_default_utf8, to_indented};
+use anyhow::Context as _;
+use serde_json::Value;
 
+use crate::check::validate;
 use crate::ir::closure;
 use crate::ir::model::Corpus;
 use crate::ir::projection;
-use crate::check::validate;
 use crate::reason;
 
 /// What to build and where.
@@ -332,7 +332,11 @@ pub fn run(
 
     let structural = closure::compute(&corpus);
     let backlinks = indexes::backlink_index(&corpus);
-    let roster = options.vault_root.parent().map(attribution::Roster::discover).unwrap_or_default();
+    let roster = options
+        .vault_root
+        .parent()
+        .map(attribution::Roster::discover)
+        .unwrap_or_default();
     let graph = turtle::build_graph_attributed(&corpus, vocab, true, &roster);
     // ADR-2124: a definition over a transitive hierarchy is refused here,
     // before the reasoner runs, with the named `WHELK_RELEVANT_CAP` error —
@@ -385,7 +389,8 @@ pub fn run(
     let search_entries = search.as_array().map_or(0, Vec::len);
     staged.add("api/search-index.json", to_indented(&search)?);
 
-    let (documents, domain_index) = page_api::build_attributed(&corpus, &structural, &backlinks, &roster);
+    let (documents, domain_index) =
+        page_api::build_attributed(&corpus, &structural, &backlinks, &roster);
     for doc in &documents {
         staged.add_for(
             format!("api/pages/{}.json", doc.slug),

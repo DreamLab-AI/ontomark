@@ -1,0 +1,5 @@
+# parity receipt 2026-10-11 (pre-fmt build, identical sources)
+$ conformance/parity.sh target/debug/ontomark /home/devuser/workspace/visionGraph conformance/golden/corpus-visiongraph
+vault build: whelk restrictions mode skip (0 kept, 21935 skipped, 0 defined class(es))
+parity: 0 difference(s) over 32 artefact lines and 12 verb outputs
+real 6m57s

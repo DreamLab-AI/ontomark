@@ -25,9 +25,9 @@
 use std::fmt;
 use std::path::Path;
 
-use serde::Serialize;
 use crate::input::page::{is_unpublished, Page, Vault};
 use crate::input::secrets::{self, CredentialKind};
+use serde::Serialize;
 
 /// One credential found in a page selected for publication.
 ///
@@ -304,7 +304,9 @@ pub fn write_to(staging: &Staging, dir: &Path) -> std::io::Result<()> {
 ///
 /// # Errors
 /// Any read or parse failure in the working vault.
-pub fn sibling_working(vault_root: &Path) -> Result<Option<Vault>, crate::input::error::VaultError> {
+pub fn sibling_working(
+    vault_root: &Path,
+) -> Result<Option<Vault>, crate::input::error::VaultError> {
     let Some(repo) = vault_root.parent() else {
         return Ok(None);
     };

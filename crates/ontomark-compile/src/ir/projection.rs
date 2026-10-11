@@ -22,10 +22,10 @@
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 
-use indexmap::IndexMap;
-use regex::Regex;
 use crate::input::frontmatter;
 use crate::input::page::is_unpublished;
+use indexmap::IndexMap;
+use regex::Regex;
 
 use crate::ir::model::{ClassRecord, Conjunct, Corpus, Ref};
 

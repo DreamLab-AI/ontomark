@@ -17,8 +17,8 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use serde::Serialize;
 use crate::input::promotion::Blocker;
+use serde::Serialize;
 
 use crate::ir::model::{Corpus, EntityType};
 
@@ -345,9 +345,9 @@ pub fn analyse(corpus: &Corpus, severity_gate: &str) -> Report {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use indexmap::IndexMap;
     use crate::input::page::{Page, Vault, VaultKind};
     use crate::input::vocabulary::Vocabulary;
+    use indexmap::IndexMap;
 
     fn vocab() -> Vocabulary {
         Vocabulary::from_yaml_str(

@@ -14,8 +14,8 @@
 use serde::Serialize;
 
 use crate::check::conflicts;
-use crate::ir::model::Corpus;
 use crate::check::validate;
+use crate::ir::model::Corpus;
 use crate::reason;
 
 /// Which predicates to run.

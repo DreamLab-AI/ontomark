@@ -1,6 +1,6 @@
 [package]
 name = "ontomark-cli"
-description = "ontomark: cli"
+description = "ontomark: build, validate, gate, conflicts and migrate Markdown ontology vaults"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,7 +8,16 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[[bin]]
+name = "ontomark"
+path = "src/main.rs"
+
 [dependencies]
+ontomark-compile = { path = "../ontomark-compile" }
+whelk-el = { path = "../whelk-el" }
+anyhow = "1"
+clap = { version = "4.5", features = ["derive", "env"] }
+serde_json = { workspace = true, features = ["preserve_order"] }
 
 [lints]
 workspace = true

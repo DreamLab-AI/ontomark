@@ -8,8 +8,8 @@
 
 use std::fmt::Write as _;
 
-use serde_json::{json, Value};
 use crate::input::vocabulary::Vocabulary;
+use serde_json::{json, Value};
 
 use crate::ir::model::{ClassRecord, Corpus, RELATION_KEYS};
 
