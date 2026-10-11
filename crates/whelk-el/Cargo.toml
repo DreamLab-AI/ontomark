@@ -1,0 +1,19 @@
+[package]
+name = "whelk-el"
+description = "OWL 2 EL reasoner derived from Whelk and whelk-rs; portable, no I/O, optional parallelism"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+parallel = ["rayon"]
+
+[dependencies]
+rayon = { version = "1", optional = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,5 @@
+whelk-el derives from:
+  Whelk (Scala), Jim Balhoff, https://github.com/balhoff/whelk, MIT
+  whelk-rs (Rust port), Jim Balhoff and contributors, https://github.com/jjohare/whelk-rs, MIT
+The inherited MIT notice is in LICENSE-WHELK. Changes in this crate are under the
+workspace licence (MIT OR Apache-2.0).
