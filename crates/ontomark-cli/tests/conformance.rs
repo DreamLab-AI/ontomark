@@ -137,7 +137,12 @@ fn build_is_byte_identical_to_the_legacy_golden() {
         &expected.join("publish"),
         &out.path().join("publish"),
     ));
-    assert!(diffs.is_empty(), "{} difference(s):\n{}", diffs.len(), diffs.join("\n"));
+    assert!(
+        diffs.is_empty(),
+        "{} difference(s):\n{}",
+        diffs.len(),
+        diffs.join("\n")
+    );
 }
 
 #[test]
