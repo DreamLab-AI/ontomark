@@ -363,6 +363,13 @@ before then would break the agentbox pin and publish.yml.
 - **VG-05** lives at `publishing-tools/WasmVOWL/modern/scripts/check-space-domains.mjs` (called from `publish.yml:297`).
 - **VG-20 ordering:** `fmlib.py` is imported by eight hygiene scripts, so it is deleted in step 7 with them (D7), not in step 1.
 - **Pin convention (estate-wide):** every consumer pins the CLI as `ONTOMARK_RELEASE_TAG: vX.Y.Z` plus `ONTOMARK_SHA256` and verifies with `sha256sum --check`. The visionGraph step tests that need "consumer on ontomark" read that pin, so they go green only after `ontomark/publish-cli` lands.
+- **LM-02:** four `urn:ngm:class:` minting sites, not two or three: `loom-domain/src/model.rs:33`, `loom-vector-ruvector/src/bin/stage_corpus.rs:101`, `src/artifact.rs:366`, and `src/hnsw.rs:446` (a test helper).
+- **LM-06 widens scope:** `loom/scripts/reload-published-generation.py` is the whole reload timer (bundle hashing, receipt, served-identity proof, compose restart), not only a marker check. Deleting it needs a Rust replacement binary (proposed: `reload_published_generation` in loom-facade) driven by `deploy/loom-generation-reload.service`. Its runbook also claimed a mismatched `content_digest` is refused; the script discards it (`del declared_digest`).
+- **VW-04/VW-07:** `owl2_validator` is declared without a feature gate (`src/ontology/mod.rs:13`), and `loader.rs` (marked RETAIN) is built on `markdown_parser` and `Domain`, so D8 deletes both. Deleting `Domain` (step 3) breaks the parser and loader at compile time unless step 5's D8 deletion lands first or with it.
+- **vowl-wasm needs a light NGG1 crate:** `ontomark-compile` on `wp-c-compile` depends unconditionally on `serde_yaml` and `regex`. The bundle budget (232,052 bytes) needs `ontomark-ngg1`, or `ontomark-compile` with `default-features = false, features = ["ngg1"]`. Owner: spec-compile.
+- **vowl-wasm test count:** 173 lib tests with all features plus the integration suites, not 214.
+- **AB-05 split:** `ontology-local.js`'s json-ld parsing goes in step 1 and its validator in step 7.
+- **agentbox CI gap:** CI runs none of `management-api/tests/*.test.js` (jest roots are `tests/contract|sovereign|integration`); the step tests live there beside the ontology-apply tests and must be wired into `test:node` when each step lands.
 - **Ordering:** visionGraph `ontomark/publish-cli` (the queen's Phase 2 step 1) is this plan's step 10 for visionGraph only, and lands first. VisionClaw crate deletion and the agentbox flake stay on their step-10 branches.
 
 ## 10. Documentation and diagrams
