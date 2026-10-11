@@ -21,7 +21,7 @@ there is no omitted committed core slice.
 | WP-E engine/plugin | Offline plugin merged, capability metadata corrected, JSON ordering stable with combined workspace features. Desktop Obsidian acceptance remains open. |
 
 `ontomark-ngg1` 0.1.0 was already published from `291e0de`, with tag
-`ontomark-ngg1-v0.1.0`. The CLI prerelease has not yet been published.
+`ontomark-ngg1-v0.1.0`. The CLI prerelease `v0.1.0-rc.1` is published on GitHub with the portable binary, checksum and pinned WASM engine bundle.
 
 ## Verified checks
 
@@ -49,10 +49,11 @@ Its SHA-256 is
 `7b15c2858f1715e561c0889dbaa50164e5a404ee7f8ed1d6cfd9da41daeb1d45`.
 
 Parity of that exact asset also passes: zero differences over 32 artefact lines
-and 12 verb outputs. Remaining release work: final receipts and the prerelease
-tag/upload. Then fill visionGraph `ontomark/publish-cli` release tag
-and checksum, run its 17 contract tests, and prepare the owner's push. Agents
-must not push visionGraph: its main push deploys the public site.
+and 12 verb outputs. The release is published, and visionGraph main `366236b38`
+now pins its tag and checksum. All 17 consumer contract tests passed before the
+authorised push. Its GitHub deployment is being monitored. The owner has
+explicitly authorised pushes, repins and experimental deployment throughout
+the estate in this session; this overrides the earlier no-agent-push restriction.
 
 ## Estate branch work
 
@@ -67,8 +68,8 @@ smoke/bundle tests. Its security review was unavailable, not passed. Taxonomy is
 still preparation. Loom's Rust reloader is reconciled with its hardened CLI
 parent on `resume/reload-integration` (`739f71a`). Marker, receipt and
 concurrent-publication regressions are fixed; 61 integration tests plus one unit
-test pass with fmt/clippy. Parent publishing contracts still have five failures,
-and the existing build-info test reports unknown Loom revision in worktrees. VisionFlow main has diverged from origin/main and needs
+test pass with fmt/clippy. Shared typed bundle/prose/scaffold adoption now passes the parent publishing contracts;
+the build-info regression is fixed for linked worktrees. Registry repinning and final landing are in progress. VisionFlow main has diverged from origin/main and needs
 reconciliation before its diagram migration plan can land.
 
 The guard still reports the original 876 residues. Estate completion requires
@@ -86,3 +87,21 @@ Use `CARGO_TARGET_DIR` and `TMPDIR` under the roomy
 `/home/devuser/workspace/project/.git/` mount. The workspace volume is nearly full;
 `/tmp` accepts logs/data but is mounted without execution permission. Stream
 source archives into Docker rather than binding container paths on the host.
+
+## Public release continuation
+
+Core main `409cffe` includes shared typed C3 readers, crate-local READMEs and
+licences, and precise optional-backend test gates. `whelk-el` 0.1.0 and
+`ontomark-compile` 0.1.1 were published after locked package verification.
+The locked workspace requires Rust 1.89; its all-target check passed using
+the actual 1.89 toolchain. GitHub CI exposed an old distro WASM optimiser and
+a broken rustdoc link; both have fixes. Binaryen 132 is checksum-pinned.
+The licence-dependent Gitleaks action was replaced with the pinned open-source
+scanner; 109 commits scanned with no leaks after narrow review of synthetic
+fixtures and hash-pin false positives.
+
+The Obsidian plugin is being extracted to `DreamLab-AI/ontomark-obsidian`,
+with a pinned engine asset rather than a copy of the Rust workspace. VOWL 0.2.0
+adds shared WASM graph encoding/decoding and is undergoing hosted checks.
+Installed Obsidian browser-sidecar acceptance and live consumer checks remain
+part of the release work.
