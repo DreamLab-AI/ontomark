@@ -165,3 +165,11 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   agrees; vowl-wasm re-export works. migrate, Turtle conformance and test
   porting committed. Still running: profile threading, JSON-LD and SHACL.
   Then redaction (count to queen first), fmt and Cargo.lock, rc.1 build.
+- 20:05 queen: WP-A MERGED to main (`28ed200`). Independent gate: `just check`
+  exit 0 in a clean worktree of `3f6f521`; parse 25+12+15 tests, model 24, doc
+  tests, clippy -D warnings, cargo doc 0 warnings, wasm32 build. EXP-03
+  9,244/9,244 lossless; 163,645 entries re-emitted, 0 failures. Codex
+  cross-vendor audit RUN at `4cc0810`: two high-severity defects (a `|+` set
+  deleting a following comment; case-only path clash resolving to last-loaded)
+  fixed test-first in `3f6f521`. Delta audit `4cc0810..3f6f521` pending.
+  Consumers told to take WP-A from main.
