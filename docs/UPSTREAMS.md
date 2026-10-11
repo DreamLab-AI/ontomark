@@ -251,7 +251,7 @@ The bundled engine was built with Rust 1.99.0 (`b940084d7eb6a299eb4bfeb8e34901bc
 
 The engine links the Rust standard library and compiler-builtins runtime; they are absent from the application Cargo graph. Rust source is generally MIT OR Apache-2.0, with component-specific exceptions. `compiler_builtins` 0.1.160 in this toolchain declares `MIT AND Apache-2.0 WITH LLVM-exception AND (MIT OR Apache-2.0)`. The full inherited compiler-runtime notice and the official standard-library copyright collection, conservatively including other targets/build dependencies, are preserved in THIRD-PARTY-NOTICES.md. See [Rust’s release copyright explanation](https://github.com/rust-lang/rust/blob/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4/COPYRIGHT) and [source](https://github.com/rust-lang/rust/tree/b940084d7eb6a299eb4bfeb8e34901bc051e7ac4).
 
-The separately released Linux CLI was built with Rust 1.96.0. That toolchain credit does not expand this engine audit to the native CLI dependency closure.
+The separately released Linux CLI was built with Rust 1.96.1. Its dependency closure and standard-library notices are covered in the separate native CLI addendum below.
 
 ## Verification and maintenance
 
@@ -260,3 +260,92 @@ Audit date: 2026-10-11. `cargo-about` 0.9.2 ran against the clean engine snapsho
 Engine Cargo metadata SHA-256: `61bb1ad9c44b3e78e3bce6999759a563b507bf1a1bad794da490b5b79a21a82b`. Plugin package-lock SHA-256: `ea378440c867628b2f875bb655c8b1807d94b1853013b6061b342a35af1a1ea7`.
 
 When the engine source, target, features or npm lockfile changes, regenerate and review this inventory and the full notices, then include the notice file in the plugin ZIP and release assets. New shared graph packages or native feature closures need their own dependency review; this inventory does not silently cover them.
+
+## Native Linux CLI release inventory
+
+This separate inventory covers the released `ontomark-x86_64-unknown-linux-gnu` rc1 asset, SHA-256 `7b15c2858f1715e561c0889dbaa50164e5a404ee7f8ed1d6cfd9da41daeb1d45`, built from source `21cd9ffd7b08317248afb4e06b74b650290de5b4`. The earlier engine and npm tables remain frozen. Their versions are not replaced by this native inventory.
+
+`cargo-about` 0.9.2 ran with `--locked --target x86_64-unknown-linux-gnu --fail` against `crates/ontomark-cli/Cargo.toml`, excluding dev dependencies. An independent traversal of the target-filtered Cargo normal/build graph matched all 66 package/version pairs: five first-party packages and 61 registry packages. Thirty-five pairs are absent from the 80-pair engine graph; their union has 115 pairs. Build and procedural-macro dependencies are conservatively included, so a row does not assert that its code is linked into the binary.
+
+The native additions include [Clap and its contributors](https://github.com/clap-rs/clap), [Time by Jacob Pratt and contributors](https://github.com/time-rs/time), and additional RustCrypto versions. [Ryu](https://github.com/dtolnay/ryu) is David Tolnay’s Rust port of Ulf Adams’ implementation (copyright 2018 Ulf Adams); Apache-2.0 is selected. [unsafe-libyaml](https://github.com/dtolnay/unsafe-libyaml) is David Tolnay’s translation of [libyaml at its recorded source commit](https://github.com/yaml/libyaml/tree/2c891fc7a770e8ba2fec34fc6b545c672beb37e6), copyright 2017–2020 Ingy döt Net and 2006–2016 Kirill Simonov. The inherited libyaml notice is preserved in full, in addition to the packaged Rust licence.
+
+| Native CLI package | Version | Declared licence | Repository | In engine graph |
+| --- | --- | --- | --- | --- |
+| aho-corasick | 1.1.5 | `Unlicense OR MIT` | [Upstream](https://github.com/BurntSushi/aho-corasick) | Yes |
+| anstream | 1.0.0 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-cli/anstyle.git) | No |
+| anstyle | 1.0.14 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-cli/anstyle.git) | No |
+| anstyle-parse | 1.0.0 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-cli/anstyle.git) | No |
+| anstyle-query | 1.1.5 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-cli/anstyle.git) | No |
+| anyhow | 1.0.104 | `MIT OR Apache-2.0` | [Upstream](https://github.com/dtolnay/anyhow) | No |
+| bitmaps | 2.1.0 | `MPL-2.0+` | [Upstream](https://github.com/bodil/bitmaps) | Yes |
+| block-buffer | 0.10.4 | `MIT OR Apache-2.0` | [Upstream](https://github.com/RustCrypto/utils) | No |
+| cfg-if | 1.0.5 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-lang/cfg-if) | Yes |
+| clap | 4.6.7 | `MIT OR Apache-2.0` | [Upstream](https://github.com/clap-rs/clap) | No |
+| clap_builder | 4.6.7 | `MIT OR Apache-2.0` | [Upstream](https://github.com/clap-rs/clap) | No |
+| clap_derive | 4.6.7 | `MIT OR Apache-2.0` | [Upstream](https://github.com/clap-rs/clap) | No |
+| clap_lex | 1.1.1 | `MIT OR Apache-2.0` | [Upstream](https://github.com/clap-rs/clap) | No |
+| colorchoice | 1.0.5 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-cli/anstyle.git) | No |
+| cpufeatures | 0.2.17 | `MIT OR Apache-2.0` | [Upstream](https://github.com/RustCrypto/utils) | No |
+| crypto-common | 0.1.7 | `MIT OR Apache-2.0` | [Upstream](https://github.com/RustCrypto/traits) | No |
+| deranged | 0.5.8 | `MIT OR Apache-2.0` | [Upstream](https://github.com/jhpratt/deranged) | No |
+| digest | 0.10.7 | `MIT OR Apache-2.0` | [Upstream](https://github.com/RustCrypto/traits) | No |
+| equivalent | 1.0.2 | `Apache-2.0 OR MIT` | [Upstream](https://github.com/indexmap-rs/equivalent) | Yes |
+| foldhash | 0.2.0 | `Zlib` | [Upstream](https://github.com/orlp/foldhash) | Yes |
+| generic-array | 0.14.7 | `MIT` | [Upstream](https://github.com/fizyk20/generic-array.git) | No |
+| hashbrown | 0.17.1 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-lang/hashbrown) | Yes |
+| heck | 0.5.0 | `MIT OR Apache-2.0` | [Upstream](https://github.com/withoutboats/heck) | No |
+| hex | 0.4.3 | `MIT OR Apache-2.0` | [Upstream](https://github.com/KokaKiwi/rust-hex) | Yes |
+| im | 15.1.0 | `MPL-2.0+` | [Upstream](https://github.com/bodil/im-rs) | Yes |
+| indexmap | 2.14.2 | `Apache-2.0 OR MIT` | [Upstream](https://github.com/indexmap-rs/indexmap) | Yes |
+| is_terminal_polyfill | 1.70.2 | `MIT OR Apache-2.0` | [Upstream](https://github.com/polyfill-rs/is_terminal_polyfill) | No |
+| itoa | 1.0.18 | `MIT OR Apache-2.0` | [Upstream](https://github.com/dtolnay/itoa) | Yes |
+| memchr | 2.8.3 | `Unlicense OR MIT` | [Upstream](https://github.com/BurntSushi/memchr) | Yes |
+| num-conv | 0.2.2 | `MIT OR Apache-2.0` | [Upstream](https://github.com/jhpratt/num-conv) | No |
+| ontomark-cli | 0.1.0 | `MIT OR Apache-2.0` | [Upstream](https://github.com/DreamLab-AI/ontomark) | No |
+| ontomark-compile | 0.1.0 | `MIT OR Apache-2.0` | [Upstream](https://github.com/DreamLab-AI/ontomark) | No |
+| ontomark-ngg1 | 0.1.0 | `MIT OR Apache-2.0` | [Upstream](https://github.com/DreamLab-AI/ontomark) | No |
+| ontomark-profile-estate | 0.1.0 | `MIT OR Apache-2.0` | [Upstream](https://github.com/DreamLab-AI/ontomark) | No |
+| powerfmt | 0.2.1 | `MIT OR Apache-2.0` | [Upstream](https://github.com/jhpratt/powerfmt) | No |
+| proc-macro2 | 1.0.107 | `MIT OR Apache-2.0` | [Upstream](https://github.com/dtolnay/proc-macro2) | Yes |
+| quote | 1.0.47 | `MIT OR Apache-2.0` | [Upstream](https://github.com/dtolnay/quote) | Yes |
+| rand_core | 0.6.4 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-random/rand) | Yes |
+| rand_xoshiro | 0.6.0 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-random/rngs) | Yes |
+| regex | 1.13.1 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-lang/regex) | Yes |
+| regex-automata | 0.4.18 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-lang/regex) | Yes |
+| regex-syntax | 0.8.11 | `MIT OR Apache-2.0` | [Upstream](https://github.com/rust-lang/regex) | Yes |
+| ryu | 1.0.23 | `Apache-2.0 OR BSL-1.0` | [Upstream](https://github.com/dtolnay/ryu) | No |
+| same-file | 1.0.6 | `Unlicense/MIT` | [Upstream](https://github.com/BurntSushi/same-file) | No |
+| serde | 1.0.229 | `MIT OR Apache-2.0` | [Upstream](https://github.com/serde-rs/serde) | Yes |
+| serde_core | 1.0.229 | `MIT OR Apache-2.0` | [Upstream](https://github.com/serde-rs/serde) | Yes |
+| serde_derive | 1.0.229 | `MIT OR Apache-2.0` | [Upstream](https://github.com/serde-rs/serde) | Yes |
+| serde_json | 1.0.154 | `MIT OR Apache-2.0` | [Upstream](https://github.com/serde-rs/json) | Yes |
+| serde_yaml | 0.9.34+deprecated | `MIT OR Apache-2.0` | [Upstream](https://github.com/dtolnay/serde-yaml) | No |
+| sha2 | 0.10.9 | `MIT OR Apache-2.0` | [Upstream](https://github.com/RustCrypto/hashes) | No |
+| sized-chunks | 0.6.5 | `MPL-2.0+` | [Upstream](https://github.com/bodil/sized-chunks) | Yes |
+| strsim | 0.11.1 | `MIT` | [Upstream](https://github.com/rapidfuzz/strsim-rs) | No |
+| syn | 3.0.8 | `MIT OR Apache-2.0` | [Upstream](https://github.com/dtolnay/syn) | Yes |
+| thiserror | 2.0.21 | `MIT OR Apache-2.0` | [Upstream](https://github.com/dtolnay/thiserror) | Yes |
+| thiserror-impl | 2.0.21 | `MIT OR Apache-2.0` | [Upstream](https://github.com/dtolnay/thiserror) | Yes |
+| time | 0.3.55 | `MIT OR Apache-2.0` | [Upstream](https://github.com/time-rs/time) | No |
+| time-core | 0.1.9 | `MIT OR Apache-2.0` | [Upstream](https://github.com/time-rs/time) | No |
+| time-macros | 0.2.32 | `MIT OR Apache-2.0` | [Upstream](https://github.com/time-rs/time) | No |
+| typenum | 1.20.1 | `MIT OR Apache-2.0` | [Upstream](https://github.com/paholg/typenum) | Yes |
+| unicode-ident | 1.0.26 | `(MIT OR Apache-2.0) AND Unicode-3.0` | [Upstream](https://github.com/dtolnay/unicode-ident) | Yes |
+| unsafe-libyaml | 0.2.11 | `MIT` | [Upstream](https://github.com/dtolnay/unsafe-libyaml) | No |
+| utf8parse | 0.2.2 | `Apache-2.0 OR MIT` | [Upstream](https://github.com/alacritty/vte) | No |
+| version_check | 0.9.5 | `MIT/Apache-2.0` | [Upstream](https://github.com/SergioBenitez/version_check) | Yes |
+| walkdir | 2.5.0 | `Unlicense/MIT` | [Upstream](https://github.com/BurntSushi/walkdir) | No |
+| whelk-el | 0.1.0 | `MIT OR Apache-2.0` | [Upstream](https://github.com/DreamLab-AI/ontomark) | Yes |
+| zmij | 1.0.23 | `MIT` | [Upstream](https://github.com/dtolnay/zmij) | Yes |
+
+### Native CLI toolchain and sysroot
+
+The asset’s ELF `.comment` records Rust 1.96.1 (`31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd`), LLD 22.1.2 and GCC 12.2.0. The full standard-library copyright collection was extracted from the [official Rust 1.96.1 release archive](https://static.rust-lang.org/dist/2026-06-30/rustc-1.96.1-x86_64-unknown-linux-gnu.tar.xz), whose SHA-256 `3545a0efad2355ecb0a3b9ac02efee96e27f1f9d24b7ce2fc3f279b2efb0d923` was verified against the official release manifest. Its `COPYRIGHT-library.html` SHA-256 is `78c163fcec50e64bfd85fedb850c273595602fafa2b41f30f75d4e410b80ee83`. The collection has 35 dependency records and 22 distinct complete notice texts, conservatively covering the standard-library release across targets and build dependencies. This is separate from the preserved Rust 1.99.0 engine collection.
+
+Rust source is generally MIT OR Apache-2.0, with the recorded component exceptions. The [compiler-builtins source in this release](https://github.com/rust-lang/rust/tree/31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd/library/compiler-builtins) identifies runtime 0.1.160 and declares `MIT AND Apache-2.0 WITH LLVM-exception AND (MIT OR Apache-2.0)`; its full inherited notice is included. The CLI dynamically requires `libgcc_s.so.1`, `libm.so.6` and `libc.so.6`; those operating-system libraries are not bundled in the single-file asset and are outside this redistributable inventory.
+
+### Native notice verification
+
+Native Cargo metadata SHA-256: `20581602c3855db965e95156193d5c972af3abbc88cba32850eb14f207126569`. All 33 scanner licence groups are accounted for: first-party terms use the project licence files, while registry/Whelk notices are reproduced in the native addendum. Ryu’s actual packaged Apache licence replaces the scanner’s generic text. Packaged selected-licence texts are checked separately from scanner grouping; differing texts are retained. Ryu’s inherited source copyright and the exact libyaml source notice are also preserved.
+
+Audit date: 2026-10-11. This addendum does not alter the rc1 assets or the engine-only notice snapshot already included in the standalone plugin ZIP. Future native releases require a fresh inventory bound to their source, features, target, toolchain and digest.
