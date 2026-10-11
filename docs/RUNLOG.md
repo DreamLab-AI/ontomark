@@ -61,3 +61,16 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   edits staged per step, `scripts/estate-guard.sh` migration guard. Lesson:
   SendMessage bodies over about 1,300 characters can truncate; send decisions in
   parts.
+- 18:28 spec-compile: PARITY MET on `wp-c-compile` (`d7863ff`). Golden captured
+  at the baseline for visionGraph `b5e36abd1` (hashes) plus a public-and-synthetic
+  fixture `conformance/fixtures/estate-small` with full expected outputs.
+  `ontomark build|validate|gate|conflicts|repair` reproduces legacy bytes: 0
+  differences over 32 artefact lines, 12/12 verb outputs including exit codes,
+  negative control done. Reasoning via `whelk-el` behind a `Classifier` trait.
+- 18:30 queen: privacy finding accepted as divergence #1. Legacy publish staging
+  copies a public page's raw frontmatter including `is-a: [[Private Title]]`, so
+  private titles leak on the live site. Redaction approved for every public
+  export surface, count and three examples required before applying, EXP-04
+  test to grep every public artefact for every private title. Phase 2 step 1
+  released to spec-estate: visionGraph publish.yml onto the ontomark CLI on
+  branch `ontomark/publish-cli`.
