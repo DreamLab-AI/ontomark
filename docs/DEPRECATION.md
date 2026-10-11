@@ -353,6 +353,18 @@ touched repo, never on main, and is reported to team-lead with the diff summary 
 Final deletion of `crates/vault-core` and of everything in `crates/vault` except the governance adapter happens in step 10. Removing the crates
 before then would break the agentbox pin and publish.yml.
 
+
+### 9.1 Corrections found while writing the step tests (Phase 2 prep)
+
+- **VC-29 vs D4:** `crates/vault/src/apply.rs` survives in the D4 adapter, thinned to a wrapper over ontomark-parse; it is not deleted in step 9. The adapter itself lands in step 10, not step 9 as D4's gate column said.
+- **VC-11 and VC-14** (`vault-core/proposal.rs`, `vault/model.rs`) were in no step: both go in step 10 (crate deletion and the adapter shape check).
+- **VC-52** names 6 of the 9 files under `jsonld_validator/`; `iri.rs`, `errors.rs` and `context-v1.jsonld` also go in step 6.
+- **VC-51:** a second `crates/visionclaw-ontology/src/ontology/services/owl_validator.rs` exists beside the cited one; both go.
+- **VG-05** lives at `publishing-tools/WasmVOWL/modern/scripts/check-space-domains.mjs` (called from `publish.yml:297`).
+- **VG-20 ordering:** `fmlib.py` is imported by eight hygiene scripts, so it is deleted in step 7 with them (D7), not in step 1.
+- **Pin convention (estate-wide):** every consumer pins the CLI as `ONTOMARK_RELEASE_TAG: vX.Y.Z` plus `ONTOMARK_SHA256` and verifies with `sha256sum --check`. The visionGraph step tests that need "consumer on ontomark" read that pin, so they go green only after `ontomark/publish-cli` lands.
+- **Ordering:** visionGraph `ontomark/publish-cli` (the queen's Phase 2 step 1) is this plan's step 10 for visionGraph only, and lands first. VisionClaw crate deletion and the agentbox flake stay on their step-10 branches.
+
 ## 10. Documentation and diagrams
 
 ### 10.1 Documents and what each must say after
