@@ -1,38 +1,38 @@
 {
-  "id": "visionGraph@e09be63a0b0b95d088b8b99c2dc129e14444cdac",
-  "commit": "e09be63a0b0b95d088b8b99c2dc129e14444cdac",
+  "id": "visionGraph@116accb45051ae3fe43402c7a31fc6cc90801b73",
+  "commit": "116accb45051ae3fe43402c7a31fc6cc90801b73",
   "dirty": false,
-  "content_digest": "3313b5832ef3a7c4eb89dc340784ecd3541a46e9d4deb01d42b063a059799f5c",
-  "ontology_digest": "sha256-12-80be0f5150b3",
-  "generated_at": "2026-10-11T18:23:05.034641+00:00",
-  "class_count": 52,
-  "page_count": 52,
+  "content_digest": "cbe3eaffe819352339dccb176d0214710f22ce549e833f4098f5350c48a5bca6",
+  "ontology_digest": "sha256-12-b4ff9705d14d",
+  "generated_at": "2026-10-11T19:05:13.504876+00:00",
+  "class_count": 53,
+  "page_count": 53,
   "vocabulary_version": 1,
   "artifacts": [
     {
       "name": "data/ontology.ttl",
-      "sha256": "fa9840f2866e0b8c1ab2baac7d72ad346b091d80fb7d46db7ebc03c719485e7d",
-      "bytes": 114681
+      "sha256": "b4ca88c0355f97bcadb09203cd926ac6711535a192c938348b28842ce52c3d7c",
+      "bytes": 115174
     },
     {
       "name": "data/ontology-inferred.ttl",
-      "sha256": "49718f24c388ceedaeba8986fa8c2866f69ee9edf4491dfc08232b2628454a5a",
-      "bytes": 1510
+      "sha256": "beca6a26f13f3f7e5bc4c083d0f28121a4ed06755a77e59788898b3e82970a99",
+      "bytes": 1569
     },
     {
       "name": "data/scaffold-index.json",
-      "sha256": "bebdd012892bc86188cdc4d3e76d73d36e54d8cd9dad80e4df74c9afb33b4741",
-      "bytes": 46207
+      "sha256": "c546b8f66f6cee9a01c555a84b1a8bb114b45ff9585869456cee927b12c7209c",
+      "bytes": 46464
     },
     {
       "name": "data/prose-index.json",
-      "sha256": "efdc1350192b02761754965e484c6067f922feac9e6c60c4dc658229b71c74dd",
+      "sha256": "2928c6bf67c60bc83108dbd816d30ab1c20b4d21ca08adc5a880ddb88c0f92ed",
       "bytes": 42595
     },
     {
       "name": "api/search-index.json",
-      "sha256": "45a360eaec68a4d59bf858b2e58675c63892fb8f6895abc0c9fde3f61f142a68",
-      "bytes": 55775
+      "sha256": "fabfb76006caf1eb0db36003d14355cef34121ef576072c967ad60ff4afc792b",
+      "bytes": 56359
     },
     {
       "name": "api/pages/1-hive.json",
@@ -285,6 +285,11 @@
       "bytes": 2476
     },
     {
+      "name": "api/pages/fixture-link-probe.json",
+      "sha256": "32bed4ec0286fee4ac7f863d67f97276c883252a612004a620835671f758071f",
+      "bytes": 4162
+    },
+    {
       "name": "api/pages/fixture-public-child.json",
       "sha256": "8f3d5d92182ab7652416da23b06ffc92dd89684fd00ec79bcc917950dab6db75",
       "bytes": 3847
@@ -296,17 +301,17 @@
     },
     {
       "name": "api/pages/_domain-index.json",
-      "sha256": "4774198ecc46c48a1a9261053a637d6604b81727b1275b86d5c6277b4e3edbfd",
-      "bytes": 5693
+      "sha256": "9e07f4327ddc4a122c85dda189a0b164fc27e35f30bcbe23379d93d3bb8372ab",
+      "bytes": 5805
     },
     {
       "name": "api/census.json",
-      "sha256": "47f790884c0c0f2cdbc4e4f2f8718ef620f699941a4d53d5f7357dbbd76e29ce",
+      "sha256": "10a8813045bfca326e30a38cd6e482ed169ccadaee438582651de126cb6d1270",
       "bytes": 237
     },
     {
       "name": "api/validation-report.json",
-      "sha256": "7eb5439f4dff56344290fd5f2a9623ad8facc09cf8a147722ff2fd8eb4989325",
+      "sha256": "d066f36274c97b6bde173776cc931b875e0a6e8da8770ff190270e16f2e0822d",
       "bytes": 353
     },
     {
@@ -326,18 +331,18 @@
     },
     {
       "name": "data/ontology.json",
-      "sha256": "542f20ac5650e976a60b58e7dd6100136d1e8353cd1b25efee46e56fc14928f7",
-      "bytes": 55874
+      "sha256": "1d8c6b3c3357844184441afdbac93b3ee57b22023b3b0e1040557ec55ef9f4c4",
+      "bytes": 56651
     },
     {
       "name": "data/graph/overview.json",
-      "sha256": "98f91b15e433d3cab4224d0bc7b84f14feb099435b0a2de0688c274f6ae60ac2",
+      "sha256": "13337aee4c1c2a3aef9ade29dc3ce5b12cfe420abafa5d47e12a89db90b10567",
       "bytes": 24605
     },
     {
       "name": "data/graph/full.bin",
-      "sha256": "ac782c0b088dabbd11b51197d704cbb7652aca0ef1842da207fc532a54e52b7a",
-      "bytes": 5556
+      "sha256": "a3befeeb2ab0344662402726897a5aeafe381c6b45b4b3c266e63d0aacc161e5",
+      "bytes": 5668
     },
     {
       "name": "data/graph/domain-artificial-intelligence.bin",
@@ -351,12 +356,12 @@
     },
     {
       "name": "data/graph/domain-spatial-computing.bin",
-      "sha256": "728574a1afc20f2696396f775918edbb9fa6e4835c0aec35db8d28a4fbc1102f",
-      "bytes": 3254
+      "sha256": "4983447681e3b1f8dd3d60976aa1c7da0223bf00f382ec7eb1e8b6123e565f4a",
+      "bytes": 3370
     },
     {
       "name": "data/graph/domain-robotics.bin",
-      "sha256": "5538b4f34dce070929489749b5506f40e5682fb32dec5d36bf0bffd7767acffb",
+      "sha256": "51c1a3ffc008364c3c201867d6fea9db89b196abb22ed0e3687c12c0375b5d5a",
       "bytes": 348
     },
     {
@@ -381,8 +386,8 @@
     },
     {
       "name": "data/graph/stats.json",
-      "sha256": "ba377fde2bb0273ce3caea6c72925c6803edce847fa656ce4e538a39b411061c",
-      "bytes": 2952
+      "sha256": "302da7d90b1ad7ab172dbc513ca8a949c4cc9d067aea60d1b57ffdb22fc232bd",
+      "bytes": 2954
     },
     {
       "name": "data/graph/bridges.json",
@@ -650,6 +655,11 @@
       "bytes": 1438
     },
     {
+      "name": "api/markdown/Fixture Link Probe.md",
+      "sha256": "1e24ba6e4bb857eed6f9f67e1b295ac47d1253c64a96392b87eca518fffe6dc3",
+      "bytes": 525
+    },
+    {
       "name": "api/markdown/Fixture Public Child.md",
       "sha256": "61ebd827a8205dd1ea7ed4358e9ba12e276aa5c8ae10ac3dceda7d587ba08665",
       "bytes": 244
@@ -661,8 +671,8 @@
     },
     {
       "name": "okf/index.md",
-      "sha256": "dd0b3fd6f5d44492bff37f407da3e22d1bd274141b2974160d24e1807f3ba0b9",
-      "bytes": 4537
+      "sha256": "e5d9d76fa517654533393e1c4d79633b1e80b1b316af00dfacc44ddf58cfc176",
+      "bytes": 4631
     },
     {
       "name": "okf/concepts/1-hive.md",
@@ -913,6 +923,11 @@
       "name": "okf/concepts/acl.md",
       "sha256": "0364586675f7bb2abc9de4f9717a003b45dadef87a362807fa7c096bf2a28b9f",
       "bytes": 1756
+    },
+    {
+      "name": "okf/concepts/fixture-link-probe.md",
+      "sha256": "a0222b7fca60c40bc27d2091c6053860ab299461ed3413e0c6b8331e097c9ed8",
+      "bytes": 419
     },
     {
       "name": "okf/concepts/fixture-public-child.md",

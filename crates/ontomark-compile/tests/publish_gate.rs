@@ -61,6 +61,7 @@ fn options(repo: &Path, out: &Path) -> build::Options {
         generated_at: Some("2026-09-22T00:00:00+00:00".to_owned()),
         source: Some(("0000000000000000000000000000000000000000".to_owned(), false)),
         with_working_publish: false,
+        redact_private_links: None,
         publish_out: None,
         stale_after: None,
     }

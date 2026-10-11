@@ -1,0 +1,177 @@
+{
+  "id": "urn:ngm:class:fixture-link-probe",
+  "title": "Fixture Link Probe",
+  "slug": "fixture-link-probe",
+  "public": true,
+  "classIri": "urn:ngm:class:fixture-link-probe",
+  "domain": "spatial-computing",
+  "provenance": {
+    "wasAttributedTo": "did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246",
+    "label": "jjohare",
+    "actor": "human:npub16kv2h3hdalphuyzj8tkycq8cm9n54ymer23558ds80afkc9e7frqwrawzj"
+  },
+  "definition": "Synthetic public class whose prose links to non-public pages, for the EXP-04 redaction tests.",
+  "subClassOf": [
+    {
+      "id": "urn:ngm:class:3-d-asset",
+      "label": "3D Asset"
+    }
+  ],
+  "entityType": "Class",
+  "qualityScore": 0.0,
+  "maturity": "draft",
+  "relationships": {
+    "hasPart": [],
+    "requires": [],
+    "enables": [],
+    "dependsOn": [],
+    "implements": [],
+    "contrastsWith": [],
+    "bridgesTo": [],
+    "uses": [],
+    "supports": [],
+    "standardizedBy": [],
+    "partOf": [],
+    "relatedTo": []
+  },
+  "inferredSuperClasses": [
+    {
+      "id": "urn:ngm:class:digital-asset",
+      "label": "Digital Asset",
+      "slug": "digital-asset"
+    }
+  ],
+  "inheritedRelations": {
+    "hasPart": [
+      {
+        "id": "urn:ngm:class:level-of-detail",
+        "label": "Level of Detail"
+      },
+      {
+        "id": "urn:ngm:class:polygon-mesh",
+        "label": "Polygon Mesh"
+      },
+      {
+        "id": "urn:ngm:class:skeletal-rig",
+        "label": "Skeletal Rig"
+      },
+      {
+        "id": "urn:ngm:class:texture-map",
+        "label": "Texture Map"
+      }
+    ],
+    "requires": [
+      {
+        "id": "urn:ngm:class:asset-pipeline",
+        "label": "Asset Pipeline"
+      },
+      {
+        "id": "urn:ngm:class:digital-content-creation",
+        "label": "Digital Content Creation"
+      },
+      {
+        "id": "urn:ngm:class:physically-based-rendering",
+        "label": "Physically Based Rendering"
+      }
+    ],
+    "enables": [
+      {
+        "id": "urn:ngm:class:digital-twin",
+        "label": "Digital Twin"
+      },
+      {
+        "id": "urn:ngm:class:extended-reality",
+        "label": "Extended Reality"
+      },
+      {
+        "id": "urn:ngm:class:metaverse",
+        "label": "Metaverse"
+      },
+      {
+        "id": "urn:ngm:class:real-time-rendering",
+        "label": "Real-Time Rendering"
+      }
+    ],
+    "contrastsWith": [
+      {
+        "id": "urn:ngm:class:voxel",
+        "label": "Voxel"
+      }
+    ],
+    "bridgesTo": [
+      {
+        "id": "urn:ngm:class:generative-ai",
+        "label": "Generative AI"
+      },
+      {
+        "id": "urn:ngm:class:neural-radiance-field",
+        "label": "Neural Radiance Field"
+      },
+      {
+        "id": "urn:ngm:class:non-fungible-token",
+        "label": "Non-Fungible Token"
+      }
+    ],
+    "uses": [
+      {
+        "id": "urn:ngm:class:digital-asset-management",
+        "label": "Digital Asset Management"
+      },
+      {
+        "id": "urn:ngm:class:gltf-standard",
+        "label": "Gltf Standard"
+      },
+      {
+        "id": "urn:ngm:class:texture-compression",
+        "label": "Texture Compression"
+      },
+      {
+        "id": "urn:ngm:class:universal-scene-description",
+        "label": "Universal Scene Description"
+      }
+    ],
+    "standardizedBy": [
+      {
+        "id": "urn:ngm:class:academy-software-foundation",
+        "label": "Academy Software Foundation"
+      },
+      {
+        "id": "urn:ngm:class:khronos-group",
+        "label": "Khronos Group"
+      },
+      {
+        "id": "urn:ngm:class:w3-c",
+        "label": "W3C"
+      }
+    ],
+    "relatedTo": [
+      {
+        "id": "urn:ngm:class:game-engine",
+        "label": "Game Engine"
+      },
+      {
+        "id": "urn:ngm:class:scene-graph",
+        "label": "Scene Graph"
+      },
+      {
+        "id": "urn:ngm:class:spatial-computing",
+        "label": "Spatial Computing"
+      }
+    ]
+  },
+  "wikilinks": [
+    {
+      "slug": "fixture-missing-page",
+      "label": "Fixture Missing Page"
+    },
+    {
+      "slug": "3d-model",
+      "label": "3D Model"
+    },
+    {
+      "slug": "example-target",
+      "label": "Example Target"
+    }
+  ],
+  "backlinks": []
+}

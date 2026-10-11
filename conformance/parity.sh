@@ -7,13 +7,19 @@
 # recorded `generated_at` (the snapshot commit is reproduced by construction),
 # then compares every artefact hash, bulk aggregate and verb (exit code and
 # output hash). Prints one line per difference; exits 1 on any.
+#
+# The legacy build keeps links to non-public pages in publish/ and the markdown
+# mirror; ontomark redacts them by default (EXP-04). Byte parity therefore runs
+# ontomark with --no-redact-private-links. PARITY_REDACT=1 runs it redacting
+# instead, and the differences reported are then exactly what redaction changes.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 BIN=$(realpath "$1"); SRC=$2; GOLD=$(realpath "$3"); KEEP=${4:-}
 kind=$(sed -n 's/^vault_kind=//p' "$GOLD/MANIFEST")
 export ONTOMARK_GENERATED_AT; ONTOMARK_GENERATED_AT=$(sed -n 's/^generated_at=//p' "$GOLD/MANIFEST")
 got=$(mktemp -d "${TMPDIR:-/tmp}/ontomark-parity.XXXXXX"); trap 'rm -rf "$got"' EXIT
-KEEP_DIR=$KEEP KEEP_OUTPUTS=0 "$here/golden/capture.sh" "$BIN" "$SRC" "$got" "$kind" >/dev/null
+if [ "${PARITY_REDACT:-0}" = 1 ]; then extra=""; else extra="--no-redact-private-links"; fi
+EXTRA_BUILD_ARGS=$extra KEEP_DIR=$KEEP KEEP_OUTPUTS=0 "$here/golden/capture.sh" "$BIN" "$SRC" "$got" "$kind" >/dev/null
 fail=0
 want_commit=$(sed -n 's/^snapshot_commit=//p' "$GOLD/MANIFEST"); got_commit=$(sed -n 's/^snapshot_commit=//p' "$got/MANIFEST")
 [ "$want_commit" = "$got_commit" ] || { echo "SNAPSHOT  commit $got_commit != golden $want_commit (tree differs)"; fail=1; }

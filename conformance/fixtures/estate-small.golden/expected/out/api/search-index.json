@@ -1226,6 +1226,28 @@
     "wikilinks": []
   },
   {
+    "id": "fixture-link-probe",
+    "title": "Fixture Link Probe",
+    "domain": "spatial-computing",
+    "domain_name": "Spatial Computing",
+    "definition": "Synthetic public class whose prose links to non-public pages, for the EXP-04 redaction tests.",
+    "entityType": "Class",
+    "qualityScore": 0.0,
+    "maturity": "draft",
+    "iri": "urn:ngm:class:fixture-link-probe",
+    "labels": [
+      "Fixture Link Probe"
+    ],
+    "is_subclass_of": [
+      "3D Asset"
+    ],
+    "wikilinks": [
+      "Fixture Missing Page",
+      "3D Model",
+      "Example Target"
+    ]
+  },
+  {
     "id": "fixture-public-child",
     "title": "Fixture Public Child",
     "domain": "spatial-computing",

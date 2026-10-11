@@ -1,12 +1,12 @@
-validate-all.prose	0	14c14cac7407e6aaab2f8e8f9014b4ba2cd12a9a5db25c66d74bbdbdf7f4191c	validate --vault all 
-validate-all.json	0	33f906f4d3538ca603887bd2823ff3dcbf6498ce211f85749a1d6b9a0e89793a	validate --vault all --json
-validate-knowledge.prose	0	a64f7b11f40ccb042194983c5e2515086980be75d127964fd230e4ffa192c289	validate --vault knowledge 
-validate-knowledge.json	0	e61d82c41b42078e89b3986a41c6f23ef3b0d4b60a54684e284682c57e71db95	validate --vault knowledge --json
+validate-all.prose	0	e9045d6e17f5c7aa5c18ede74eb851f93a76958dbe9d876c208d94c55dcbb752	validate --vault all 
+validate-all.json	0	8a2446b7bc54ea8cea2ed3fcb800f7cbb0076a3534f9ed007d6afc59d52cbedc	validate --vault all --json
+validate-knowledge.prose	0	47a024b3cdd668e2cce3675afbf0f3c73dab41e14a09f170f207bfb5bf57c6c2	validate --vault knowledge 
+validate-knowledge.json	0	00945f73c4dabec9d4c73a911ca19382bbf91c0cabcb41401ef4cbbb68d0911d	validate --vault knowledge --json
 conflicts-knowledge.prose	0	290553998201a913c503f26f192d993f77edbe2dafc428d3a296ea54d427d05e	conflicts --vault knowledge 
 conflicts-knowledge.json	0	d36965b02921056e4df604867b8df0bd8638b3333b69fa9e174deb33a38c0c52	conflicts --vault knowledge --json
-gate-quick.prose	0	86564b0e7a2e122b2f721be4908bb310900f808b3055551c3367ff735d616701	gate --vault knowledge --tier quick 
-gate-quick.json	0	b635fa06dc92f7228388c2b3d78f7f9175e53a1a9bf3677a9ef3bfb25ab773e4	gate --vault knowledge --tier quick --json
-gate-full.prose	0	804371175eae32c6660d9e08da580914b406334878c4e8dcc7501dadb356fd1b	gate --vault all --tier full 
-gate-full.json	0	937c9c481a8a62c7baeb712849f92e3640504780550b224df1f8f0ba3c68d857	gate --vault all --tier full --json
-repair-bodies-check.prose	0	b76d86b03576a8123283c6f45b3693ae1f7dcc19751ff0499a13a75d2cc5ee33	repair bodies --vault all --check 
-repair-bodies-check.json	0	6a533d8331f3f245911ae69b6c471c4e851bee50f244524ebf8dccdeef6ea258	repair bodies --vault all --check --json
+gate-quick.prose	0	db59e171540cf7afacf1b54bf29a175fe629e756bf652fc948d2ec281fee2f96	gate --vault knowledge --tier quick 
+gate-quick.json	0	c97a5dc99deb2a0016eb12635ac1dcc3197b0cbe2fa40b8723ddfeeef7cc8319	gate --vault knowledge --tier quick --json
+gate-full.prose	0	35595b0cbf9b5d62edd768bbe63be9c9c50a68bfd5aaaaa826fd75d1adb2c496	gate --vault all --tier full 
+gate-full.json	0	9d348bb7b45a28e003f4d39adc0bebd0789c9f0422c9ad35be5cdcc3fa8a2033	gate --vault all --tier full --json
+repair-bodies-check.prose	0	c02260de3734a0b1a0e6e1c63f40babf071c1bd3bcb40800afb84b490f166504	repair bodies --vault all --check 
+repair-bodies-check.json	0	239c0db0abfbf45c4ba2eeec4393a0026e8103eb6ad09f8e9b5ffb72efb1d123	repair bodies --vault all --check --json

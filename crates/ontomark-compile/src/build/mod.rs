@@ -23,13 +23,14 @@ pub mod ngg1;
 pub mod okf;
 pub mod page_api;
 pub mod publish;
+pub mod redact;
 pub mod turtle;
 pub mod webvowl;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::input::page::{load_vault, Vault};
+use crate::input::page::{load_vault, Page, Vault, VaultKind};
 use crate::input::vocabulary::Vocabulary;
 use crate::json::{to_compact, to_default_ascii, to_default_utf8, to_indented};
 use anyhow::Context as _;
@@ -72,6 +73,12 @@ pub struct Options {
     /// The ontology projections stay `knowledge/`-only regardless: publication
     /// is a per-page decision, OWL membership is not.
     pub with_working_publish: bool,
+    /// Redact links to non-public pages in the raw-Markdown surfaces
+    /// (`publish/` and the `api/markdown` mirror; EXP-04).
+    ///
+    /// `None` takes the profile's `publication.redact_private_links`;
+    /// `Some(false)` is the byte-parity switch (`--no-redact-private-links`).
+    pub redact_private_links: Option<bool>,
 }
 
 /// What the build produced.
@@ -110,6 +117,9 @@ pub struct Report {
     pub written: usize,
     /// Where the bundle was written.
     pub out: PathBuf,
+    /// What private-link redaction changed; `None` when it was off.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redaction: Option<redact::RedactionReport>,
 }
 
 /// Two artefacts claimed one output path. The build refuses rather than let
@@ -319,7 +329,29 @@ pub fn run(
     };
     let mut publish_vaults: Vec<&Vault> = vec![&vault];
     publish_vaults.extend(working.as_ref());
-    let staging = publish::stage(&publish_vaults)?;
+
+    // EXP-04: links to pages that are not public are named in clear text by the
+    // raw-Markdown surfaces. Resolution needs both vaults, so the one not
+    // already loaded is read here whether or not its pages are published.
+    let redact_links = options
+        .redact_private_links
+        .unwrap_or(profile.publication.redact_private_links);
+    let other_vault = if redact_links && working.is_none() {
+        let other = match vault.kind {
+            VaultKind::Knowledge => VaultKind::Working,
+            VaultKind::Working => VaultKind::Knowledge,
+        };
+        publish::sibling_vault(&options.vault_root, other)?
+    } else {
+        None
+    };
+    let private_links = redact_links.then(|| {
+        let mut all: Vec<&Vault> = vec![&vault];
+        all.extend(working.as_ref());
+        all.extend(other_vault.as_ref());
+        redact::PrivateLinks::new(&all)
+    });
+    let staging = publish::stage_redacted(&publish_vaults, private_links.as_ref())?;
 
     let report = validate::validate(profile, &vault, &raw, vocab);
     anyhow::ensure!(
@@ -330,7 +362,7 @@ pub fn run(
     );
 
     let excluded = projection::excluded_identities(&pages_dir)?;
-    let corpus = projection::project(profile, &raw, &excluded)?;
+    let (corpus, prose_redactor) = projection::project_with_redactor(profile, &raw, &excluded)?;
 
     let structural = closure::compute(profile, &corpus);
     let backlinks = indexes::backlink_index(&corpus);
@@ -430,6 +462,7 @@ pub fn run(
         staged.add(format!("data/graph/{}", file.name), file.bytes.clone());
     }
 
+    let mut mirror_redaction = redact::SurfaceRedaction::default();
     if options.with_markdown_mirror {
         // A page's own name (its page id, in both `/` encodings) always wins.
         // Its title is written too, because the explorer requests
@@ -454,6 +487,8 @@ pub fn run(
                 }
             }
         }
+        let pages_by_id: std::collections::HashMap<&str, &Page> =
+            vault.pages.iter().map(|p| (p.id.as_str(), p)).collect();
         for record in corpus.public() {
             // Generated from the projected record, never copied from source: a
             // public page can reference a private one.
@@ -463,11 +498,35 @@ pub fn run(
             // prepend it only for a page whose body does not already open
             // with it; otherwise every mirrored page states it twice.
             let definition = record.definition.trim();
-            if !definition.is_empty() && !record.body.trim_start().starts_with(definition) {
-                text.push_str(definition);
+            let prepend_definition =
+                !definition.is_empty() && !record.body.trim_start().starts_with(definition);
+            let (mut body_text, mut definition_text) = (record.body.clone(), definition.to_owned());
+            if let (Some(links), Some(page)) = (
+                private_links.as_ref(),
+                pages_by_id.get(record.page_id.as_str()),
+            ) {
+                // Rewrite the links in the author's text, then apply the same
+                // marker masking the projection applied to `record`.
+                let mut tally = redact::Tally::default();
+                body_text = prose_redactor.redact(&links.body(vault.kind, &page.body, &mut tally));
+                if prepend_definition {
+                    let raw_definition = page
+                        .frontmatter
+                        .text("definition")
+                        .filter(|d| !d.trim().is_empty())
+                        .unwrap_or_else(|| page.leading_paragraph());
+                    definition_text = prose_redactor
+                        .redact(&links.body(vault.kind, &raw_definition, &mut tally))
+                        .trim()
+                        .to_owned();
+                }
+                mirror_redaction.record(&tally);
+            }
+            if prepend_definition {
+                text.push_str(&definition_text);
                 text.push_str("\n\n");
             }
-            text.push_str(&record.body);
+            text.push_str(&body_text);
             text.push('\n');
             let mut names = encodings(&record.page_id);
             if !record.title.is_empty() && record.title != record.page_id {
@@ -571,6 +630,13 @@ pub fn run(
                 0
             },
         out: options.out.clone(),
+        redaction: staging
+            .redaction
+            .clone()
+            .map(|publish| redact::RedactionReport {
+                publish,
+                mirror: mirror_redaction,
+            }),
     })
 }
 
@@ -672,6 +738,7 @@ scalars:
             repo_root: dir.path().to_path_buf(),
             with_markdown_mirror: false,
             with_working_publish: false,
+            redact_private_links: None,
             publish_out: None,
             generated_at: None,
             source: None,
@@ -848,6 +915,7 @@ scalars:
             repo_root: dir.path().to_path_buf(),
             with_markdown_mirror: true,
             with_working_publish: false,
+            redact_private_links: None,
             publish_out: None,
             generated_at: None,
             source: None,
@@ -1016,6 +1084,7 @@ scalars:
             repo_root: dir.path().to_path_buf(),
             with_markdown_mirror: false,
             with_working_publish: false,
+            redact_private_links: None,
             publish_out: None,
             generated_at: None,
             source: None,
@@ -1123,6 +1192,7 @@ scalars:
             repo_root: dir.path().to_path_buf(),
             with_markdown_mirror: false,
             with_working_publish: false,
+            redact_private_links: None,
             publish_out: None,
             generated_at: None,
             source: None,
@@ -1181,6 +1251,7 @@ scalars:
             repo_root: dir.path().to_path_buf(),
             with_markdown_mirror: false,
             with_working_publish: false,
+            redact_private_links: None,
             publish_out: None,
             generated_at: None,
             source: None,
@@ -1206,6 +1277,7 @@ scalars:
             repo_root: dir.path().to_path_buf(),
             with_markdown_mirror: false,
             with_working_publish: false,
+            redact_private_links: None,
             publish_out: None,
             generated_at: None,
             source: None,

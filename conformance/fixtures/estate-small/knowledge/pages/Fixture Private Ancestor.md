@@ -1,6 +1,8 @@
 ---
 type: Class
 title: Fixture Private Ancestor
+aliases:
+- Fixture Hidden Ancestor
 resource: urn:ngm:class:fixture-private-ancestor
 public: false
 status: draft

@@ -3,11 +3,11 @@ okf_version: "0.2"
 type: Index
 title: Published Corpus
 public: true
-published_count: 53
+published_count: 54
 by_vault:
   knowledge:
-    considered: 53
-    published: 52
+    considered: 54
+    published: 53
   working:
     considered: 2
     published: 1
@@ -15,7 +15,7 @@ by_vault:
 
 # Published Corpus
 
-53 page(s) carry `public: true` and are published here.
+54 page(s) carry `public: true` and are published here.
 
-- `knowledge/`: 52 of 53 page(s), under `/pages/`
+- `knowledge/`: 53 of 54 page(s), under `/pages/`
 - `working/`: 1 of 2 page(s), under `/working/`

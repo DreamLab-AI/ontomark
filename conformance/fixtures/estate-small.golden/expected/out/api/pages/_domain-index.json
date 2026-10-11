@@ -182,6 +182,11 @@
       "qualityScore": 0.8
     },
     {
+      "slug": "fixture-link-probe",
+      "title": "Fixture Link Probe",
+      "qualityScore": 0.0
+    },
+    {
       "slug": "fixture-public-child",
       "title": "Fixture Public Child",
       "qualityScore": 0.0

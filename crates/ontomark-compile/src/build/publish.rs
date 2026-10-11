@@ -22,9 +22,11 @@
 //! refusal rather than a warning — a key that reaches the published site is
 //! compromised, and no later check can un-publish it.
 
+use std::collections::BTreeMap;
 use std::fmt;
 use std::path::Path;
 
+use crate::build::redact::{PrivateLinks, SurfaceRedaction, Tally};
 use crate::input::page::{is_unpublished, Page, Vault};
 use crate::input::secrets::{self, CredentialKind};
 use serde::Serialize;
@@ -111,6 +113,8 @@ pub struct Staging {
     pub files: Vec<StagedPage>,
     /// Per-vault counts, keyed by vault name.
     pub per_vault: std::collections::BTreeMap<String, VaultPublished>,
+    /// What private-link redaction changed, per vault; `None` when it was off.
+    pub redaction: Option<BTreeMap<String, SurfaceRedaction>>,
 }
 
 /// Folders held back from publication at **any** depth, whatever the pages in
@@ -127,7 +131,7 @@ const HELD_BACK_DIRS: &[&str] = &["_misc", "misc"];
 
 /// `true` when a page path (relative to its vault's `pages/`) is outside the
 /// publish scope.
-fn held_back(rel: &Path) -> bool {
+pub(crate) fn held_back(rel: &Path) -> bool {
     if is_unpublished(rel) {
         return true;
     }
@@ -156,9 +160,14 @@ fn tree_dir(kind: crate::input::page::VaultKind) -> &'static str {
 /// The frontmatter is re-rendered rather than copied so a malformed or
 /// non-canonical source block cannot reach the published bytes, and the body
 /// follows it verbatim — it is the prose the author wrote.
-fn render(page: &Page) -> String {
-    let front = page.frontmatter.render().unwrap_or_default();
-    let body = page.body.trim_end();
+fn render(page: &Page, links: Option<&PrivateLinks>, vault: &Vault, tally: &mut Tally) -> String {
+    let mut front = page.frontmatter.render().unwrap_or_default();
+    let mut body = page.body.trim_end().to_owned();
+    if let Some(links) = links {
+        front = links.frontmatter(vault.kind, &front, tally);
+        body = links.body(vault.kind, &body, tally);
+    }
+    let body = body.as_str();
     if body.is_empty() {
         front
     } else {
@@ -174,7 +183,22 @@ fn render(page: &Page) -> String {
 /// credential. Nothing is staged in that case: the caller must not write a
 /// partial bundle.
 pub fn stage(vaults: &[&Vault]) -> Result<Staging, SecretsFound> {
+    stage_redacted(vaults, None)
+}
+
+/// [`stage`], redacting links to non-public pages (EXP-04) when `links` is
+/// given. See [`crate::build::redact`] for the rules.
+///
+/// # Errors
+/// [`SecretsFound`], exactly as [`stage`].
+pub fn stage_redacted(
+    vaults: &[&Vault],
+    links: Option<&PrivateLinks>,
+) -> Result<Staging, SecretsFound> {
     let mut staging = Staging::default();
+    if links.is_some() {
+        staging.redaction = Some(BTreeMap::new());
+    }
     let mut findings: Vec<SecretFinding> = Vec::new();
 
     for vault in vaults {
@@ -205,11 +229,16 @@ pub fn stage(vaults: &[&Vault]) -> Result<Staging, SecretsFound> {
                     kind: finding.kind,
                 });
             }
+            let mut tally = Tally::default();
+            let content = render(page, links, vault, &mut tally);
+            if let Some(report) = staging.redaction.as_mut() {
+                report.entry(name.clone()).or_default().record(&tally);
+            }
             staging.files.push(StagedPage {
                 // `id` is the path under `pages/` without `.md`, so a
                 // working subdirectory survives into the slug.
                 path: format!("publish/{tree}/{}.md", page.id),
-                content: render(page),
+                content,
             });
         }
     }
@@ -315,6 +344,24 @@ pub fn sibling_working(
         return Ok(None);
     }
     Vault::load(&working, crate::input::page::VaultKind::Working).map(Some)
+}
+
+/// Load the vault of `kind` beside `vault_root`, when it has a `pages/` tree.
+///
+/// # Errors
+/// Any read or parse failure in that vault.
+pub fn sibling_vault(
+    vault_root: &Path,
+    kind: crate::input::page::VaultKind,
+) -> Result<Option<Vault>, crate::input::error::VaultError> {
+    let Some(repo) = vault_root.parent() else {
+        return Ok(None);
+    };
+    let root = repo.join(kind.dir_name());
+    if !root.join("pages").is_dir() {
+        return Ok(None);
+    }
+    Vault::load(&root, kind).map(Some)
 }
 
 #[cfg(test)]

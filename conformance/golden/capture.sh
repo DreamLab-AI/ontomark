@@ -28,6 +28,9 @@ git -C "$SNAP" init -q && git -C "$SNAP" add -A && git -C "$SNAP" commit -qm sna
 BUILD=$WORK/build
 args=(--repo "$SNAP" --json build --vault "$KIND" --out "$BUILD/out" --publish-out "$BUILD/publish" --stats)
 [ "$KIND" = all ] && args+=(--with-markdown-mirror)
+# EXTRA_BUILD_ARGS: extra build flags, word-split. Set only by parity.sh for the
+# ontomark side (`--no-redact-private-links`); the legacy capture never sets it.
+if [ -n "${EXTRA_BUILD_ARGS:-}" ]; then read -r -a extra_args <<< "$EXTRA_BUILD_ARGS"; args+=("${extra_args[@]}"); fi
 "$VAULT" "${args[@]}" > "$OUT/build-stats.json"
 gen=$BUILD/out/.generation.json
 {

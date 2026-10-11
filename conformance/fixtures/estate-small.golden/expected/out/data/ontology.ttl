@@ -1556,6 +1556,15 @@ ngm:finality a skos:Concept ;
     rdfs:label "Finality"@en .
 ngm:fipa-acl a skos:Concept ;
     rdfs:label "Fipa Acl"@en .
+ngm:fixture-link-probe a owl:Class ;
+    rdfs:comment "Synthetic public class whose prose links to non-public pages, for the EXP-04 redaction tests."@en ;
+    rdfs:label "Fixture Link Probe"@en ;
+    rdfs:subClassOf ngm:3-d-asset ;
+    prov:wasAttributedTo <did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246> ;
+    vc:hasMaturity ngmi:maturity-draft ;
+    vc:qualityScore "0.0"^^xsd:float ;
+    vc:slug "fixture-link-probe" ;
+    vc:sourceDomain "spatial-computing" .
 ngm:fixture-public-child a owl:Class ;
     rdfs:comment "Synthetic public class whose direct parent is private. Its own facts publish; the private parent and anything derived through it must not."@en ;
     rdfs:label "Fixture Public Child"@en ;
@@ -2259,7 +2268,7 @@ vc:utilises a owl:ObjectProperty ;
 <https://narrativegoldmine.com/ontology> dc:creator "Dr John O'Hare" ;
     a owl:Ontology ;
     rdfs:label "NarrativeGoldmine Ontology"@en ;
-    owl:versionIRI <https://narrativegoldmine.com/ontology/sha256-12-80be0f5150b3> ;
+    owl:versionIRI <https://narrativegoldmine.com/ontology/sha256-12-b4ff9705d14d> ;
     owl:versionInfo "3.1.0" .
 _:r1 a owl:Restriction ;
     owl:onProperty vc:requires ;

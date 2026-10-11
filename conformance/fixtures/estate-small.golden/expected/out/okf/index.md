@@ -2,14 +2,14 @@
 okf_version: "0.2"
 type: Index
 title: NarrativeGoldmine Knowledge Bundle
-generation: visionGraph@e09be63a0b0b95d088b8b99c2dc129e14444cdac
+generation: visionGraph@116accb45051ae3fe43402c7a31fc6cc90801b73
 vocabulary_version: 1
-concept_count: 52
+concept_count: 53
 ---
 
 # NarrativeGoldmine Knowledge Bundle
 
-52 concepts, exported from generation `visionGraph@e09be63a0b0b95d088b8b99c2dc129e14444cdac`.
+53 concepts, exported from generation `visionGraph@116accb45051ae3fe43402c7a31fc6cc90801b73`.
 
 - [1Hive](concepts/1-hive.md) — `urn:ngm:class:1-hive`
 - [1inch](concepts/1-inch.md) — `urn:ngm:class:1-inch`
@@ -61,5 +61,6 @@ concept_count: 52
 - [ACID Properties](concepts/acid-properties.md) — `urn:ngm:class:acid-properties`
 - [ACINQ](concepts/acinq.md) — `urn:ngm:class:acinq`
 - [ACL](concepts/acl.md) — `urn:ngm:class:acl`
+- [Fixture Link Probe](concepts/fixture-link-probe.md) — `urn:ngm:class:fixture-link-probe`
 - [Fixture Public Child](concepts/fixture-public-child.md) — `urn:ngm:class:fixture-public-child`
 - [Fixture Unattributed](concepts/fixture-unattributed.md) — `urn:ngm:class:fixture-unattributed`

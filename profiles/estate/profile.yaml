@@ -190,3 +190,9 @@ governance:
   kinds:
     panel: 31400
     proposal: 31402
+publication:
+  # EXP-04: a link that resolves to a page that is not public is removed from the
+  # staged publish/ Markdown and the api/markdown mirror, never emitted with the
+  # private title. `ontomark build --no-redact-private-links` turns it off for
+  # byte-parity runs against the legacy build only.
+  redact_private_links: true

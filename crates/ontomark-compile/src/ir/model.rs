@@ -205,14 +205,20 @@ pub struct Corpus {
 }
 
 /// Index from lowercased name (id, title, alias) to page position.
-struct NameIndex {
+#[derive(Debug)]
+pub(crate) struct NameIndex {
     by_name: HashMap<String, usize>,
 }
 
 impl NameIndex {
     fn build(pages: &[Page]) -> Self {
+        Self::build_iter(pages.iter())
+    }
+
+    /// The same index over any sequence of pages (position = iteration order).
+    pub(crate) fn build_iter<'a>(pages: impl Iterator<Item = &'a Page>) -> Self {
         let mut by_name = HashMap::new();
-        for (i, page) in pages.iter().enumerate() {
+        for (i, page) in pages.enumerate() {
             let mut add = |k: String| {
                 by_name.entry(k).or_insert(i);
             };
@@ -229,7 +235,7 @@ impl NameIndex {
         Self { by_name }
     }
 
-    fn get(&self, name: &str) -> Option<usize> {
+    pub(crate) fn get(&self, name: &str) -> Option<usize> {
         self.by_name.get(&name.to_lowercase()).copied()
     }
 }

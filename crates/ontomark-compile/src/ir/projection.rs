@@ -356,6 +356,33 @@ pub fn project(
     corpus: &Corpus,
     extra_private: &HashSet<String>,
 ) -> Result<Corpus, PublicationBlocked> {
+    project_with_redactor(profile, corpus, extra_private).map(|(corpus, _)| corpus)
+}
+
+/// The marker redactor [`project`] applies to every public record, exposed so a
+/// prose surface built from raw text (the markdown mirror) can apply exactly
+/// the same masking after its own link rewriting.
+pub struct ProseRedactor(Redactor);
+
+impl ProseRedactor {
+    /// Mask every private marker in `text` with `[private]`.
+    #[must_use]
+    pub fn redact(&self, text: &str) -> String {
+        self.0.redact(text)
+    }
+}
+
+/// [`project`], also returning the redactor it used.
+///
+/// # Errors
+/// [`PublicationBlocked::Collision`] when an identity is claimed by both a
+/// public and a private page.
+#[allow(clippy::implicit_hasher)] // The build always uses the default hasher.
+pub fn project_with_redactor(
+    profile: &Profile,
+    corpus: &Corpus,
+    extra_private: &HashSet<String>,
+) -> Result<(Corpus, ProseRedactor), PublicationBlocked> {
     let (public, private): (Vec<&ClassRecord>, Vec<&ClassRecord>) =
         corpus.records.iter().partition(|r| r.public);
 
@@ -402,10 +429,13 @@ pub fn project(
             by_class_slug.entry(r.class_slug()).or_insert(i);
         }
     }
-    Ok(Corpus {
-        records,
-        by_class_slug,
-    })
+    Ok((
+        Corpus {
+            records,
+            by_class_slug,
+        },
+        ProseRedactor(redactor),
+    ))
 }
 
 #[cfg(test)]

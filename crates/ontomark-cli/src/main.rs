@@ -174,6 +174,7 @@ struct ConflictsArgs {
 }
 
 #[derive(Debug, Args)]
+#[allow(clippy::struct_excessive_bools)] // independent command-line switches
 struct BuildArgs {
     /// The bundle destination.
     #[arg(long)]
@@ -211,6 +212,14 @@ struct BuildArgs {
     /// With `--source-commit`: record the source as dirty.
     #[arg(long, requires = "source_commit")]
     source_dirty: bool,
+    /// Keep links to non-public pages in the staged `publish/` Markdown and
+    /// the markdown mirror, as the legacy `vault build` did.
+    ///
+    /// By default (profile `publication.redact_private_links`) such links are
+    /// redacted so a private page's title never reaches the published site.
+    /// This switch exists for byte-parity runs against the legacy build only.
+    #[arg(long)]
+    no_redact_private_links: bool,
 }
 
 fn main() -> ExitCode {
@@ -404,6 +413,7 @@ fn run() -> anyhow::Result<ExitCode> {
                     .clone()
                     .map(|commit| (commit, args.source_dirty)),
                 stale_after: args.stale_after.clone(),
+                redact_private_links: args.no_redact_private_links.then_some(false),
             };
             let report = match build::run(
                 &options,

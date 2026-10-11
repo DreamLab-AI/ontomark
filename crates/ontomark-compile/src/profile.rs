@@ -53,6 +53,8 @@ pub struct Profile {
     pub attribution: AttributionRules,
     /// Governance event kinds (data only; posting is a host adapter's job).
     pub governance: Governance,
+    /// What the raw-Markdown export surfaces do with private links.
+    pub publication: Publication,
 }
 
 impl Default for Profile {
@@ -77,6 +79,7 @@ impl Profile {
             frontmatter: FrontmatterGrammar::default(),
             attribution: AttributionRules::default(),
             governance: Governance::default(),
+            publication: Publication::default(),
         }
     }
 
@@ -393,6 +396,27 @@ pub struct AttributionRules {
     pub roster: String,
     /// The accepted `generated.by` spellings, for documentation and SHACL.
     pub actors: Vec<String>,
+}
+
+/// Publication behaviour of the raw-Markdown export surfaces.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct Publication {
+    /// Redact links that resolve to a page that is not public from the staged
+    /// `publish/` Markdown and the `api/markdown` mirror (EXP-04): list
+    /// entries and scalars are removed from frontmatter, body links become
+    /// their display text or `(private link)`, embeds vanish. Links to pages
+    /// that do not exist are left alone. `ontomark build
+    /// --no-redact-private-links` overrides this for byte-parity runs.
+    pub redact_private_links: bool,
+}
+
+impl Default for Publication {
+    fn default() -> Self {
+        Self {
+            redact_private_links: true,
+        }
+    }
 }
 
 /// Governance kinds, by name.

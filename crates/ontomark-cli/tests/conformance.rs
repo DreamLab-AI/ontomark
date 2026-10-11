@@ -121,6 +121,9 @@ fn build_is_byte_identical_to_the_legacy_golden() {
         .arg("--publish-out")
         .arg(out.path().join("publish"))
         .arg("--with-markdown-mirror")
+        // The legacy build keeps links to non-public pages; redaction is
+        // ontomark's own behaviour (EXP-04) and is tested in exp04_private_canary.
+        .arg("--no-redact-private-links")
         .args(["--generated-at", &m["generated_at"]])
         .args(["--source-commit", &m["snapshot_commit"]])
         .output()

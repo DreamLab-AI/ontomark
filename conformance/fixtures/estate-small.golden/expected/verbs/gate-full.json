@@ -6,7 +6,7 @@
     {
       "name": "validate",
       "status": "pass",
-      "detail": "53 pages, 52 public, 0 errors, 867 warnings"
+      "detail": "54 pages, 53 public, 0 errors, 867 warnings"
     },
     {
       "name": "conflicts",
@@ -16,7 +16,7 @@
     {
       "name": "whelk",
       "status": "pass",
-      "detail": "98 classes classified, 16 inferred subsumptions, 0 unsatisfiable"
+      "detail": "99 classes classified, 17 inferred subsumptions, 0 unsatisfiable"
     }
   ]
 }
