@@ -18,11 +18,11 @@
 
 use std::path::Path;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 /// One emitted file, with its hash and size.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Artifact {
     /// Path relative to the bundle root, e.g. `data/ontology.ttl`.
     pub name: String,
@@ -45,7 +45,7 @@ impl Artifact {
 }
 
 /// The `.generation.json` document (contract C3).
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Generation {
     /// `visionGraph@<sha>`, suffixed `+dirty` for an uncommitted build.
     pub id: String,

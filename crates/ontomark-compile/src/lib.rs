@@ -14,6 +14,7 @@
 #![allow(clippy::module_name_repetitions)]
 
 pub mod build;
+pub mod bundle;
 pub mod check;
 pub mod input;
 pub mod ir;

@@ -1,12 +1,13 @@
 [package]
 name = "ontomark-compile"
 description = "Compile Markdown ontology vaults to RDF 1.1 Turtle, JSON-LD 1.1, SHACL, NGG1 graph tiers and page APIs under a versioned profile"
-version.workspace = true
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme = "README.md"
 keywords = ["ontology", "owl", "rdf", "obsidian", "shacl"]
 categories = ["compilers", "science"]
 
@@ -16,7 +17,7 @@ default = ["whelk-el"]
 whelk-el = ["dep:whelk-el"]
 
 [dependencies]
-whelk-el = { path = "../whelk-el", optional = true }
+whelk-el = { path = "../whelk-el", version = "0.1.0", optional = true }
 ontomark-ngg1 = { path = "../ontomark-ngg1", version = "0.1.0" }
 serde = { workspace = true }
 # preserve_order: every JSON artefact's key order is part of the byte contract.

@@ -112,16 +112,19 @@ pub(crate) fn compile_knowledge(
         };
         *triples.entry(format!("{s} {p} {o}")).or_insert(0) += 1;
     }
-    let mut compiled = Compiled {
+    let compiled = Compiled {
         triples,
         ..Compiled::default()
     };
     #[cfg(feature = "whelk-el")]
     {
+        let mut compiled = compiled;
         let reasoning =
             reason::reason(&graph, &crate::whelk::WhelkEl).map_err(|e| e.to_string())?;
         compiled.inferred = Some(reasoning.inferred.iter().cloned().collect());
         compiled.unsatisfiable = Some(reasoning.unsatisfiable.iter().cloned().collect());
+        Ok(compiled)
     }
+    #[cfg(not(feature = "whelk-el"))]
     Ok(compiled)
 }
