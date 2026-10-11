@@ -199,3 +199,12 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   Blocked on spec-compile pushing wp-c-compile and naming the commit. The
   queen publishes from a clean worktree. `.ontomark/` ignored on the
   visionGraph publish-cli branch (`0e9f6c032`).
+- 20:30 spec-compile: profile threading landed (`f588878`, `d915d3c`), parity
+  still 0; `ontomark migrate list|plan|apply|rollback|status` wired
+  (`c56d1db`); W3C Turtle 219/219 (rdf-tests `42e6bb1`); OWL 2 EL 0
+  violations over 278,961 axioms. Redaction: strict rule confirmed (`[[T]]`
+  becomes `(private link)`, aliases kept unless equal to title, embeds and
+  frontmatter entries removed); the queen's earlier "else target text" wording
+  was wrong. Crude count now ~240 pages; definitive count from the resolver
+  pending. Post-rc.1: writer `shorten` fixes (no divergence); 690 classes
+  typed only skos:Concept get owl:Class as divergence 3 (adapters become 4).
