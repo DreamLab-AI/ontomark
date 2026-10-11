@@ -227,3 +227,9 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   `291e0de`. rc.1 is handed off as pending with its ordered steps in
   `docs/HANDOFF.md`. The first HANDOFF.md commit (`44d600e`) was a truncated
   file; rewritten in full at this commit.
+- 21:50 queen: hand-off complete. HANDOFF.md covers all five slices; WP-B
+  verified gate-green in a clean worktree (38 tests) and ready to merge; WP-E
+  has engine, plugin and receipts committed, 17 files uncommitted, push
+  requested. Estate table received in three parts; HANDOFF-WP-D at 935915f.
+  Advisor never answered three checkpoints and was released. Memory key
+  ontomark-handoff-2026-10-11 updated. Queen standing down.
