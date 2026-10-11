@@ -191,3 +191,11 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   Method note: Codex sandbox cannot start in this container (bwrap); audits
   run unsandboxed on checksummed scratch copies, never on worktrees. Batch
   audits of 29 prep branches running per repo.
+- 20:22 queen decision 19: `ontomark-ngg1` 0.1.0 publishes to crates.io ahead
+  of rc.1. Reason: vowl-wasm is a crates.io crate and cannot depend on a git
+  pin into a private repo; its CI cannot fetch one. The crate has zero deps,
+  is MIT OR Apache-2.0, and its surface is frozen by byte parity. Name free
+  on crates.io (checked); publish credentials present in the repo cargo home.
+  Blocked on spec-compile pushing wp-c-compile and naming the commit. The
+  queen publishes from a clean worktree. `.ontomark/` ignored on the
+  visionGraph publish-cli branch (`0e9f6c032`).
