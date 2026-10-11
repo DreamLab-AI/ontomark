@@ -1,2 +1,5 @@
 /target
 /.cargo-home
+
+# Migration journals hold original page bytes (possibly private pages)
+.ontomark/

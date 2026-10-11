@@ -1,0 +1,5301 @@
+{
+  "knowledge": {
+    "total_pages": 54,
+    "total_journals": 0,
+    "skipped": [],
+    "pages_with_ontology": 54,
+    "public_pages": 53,
+    "total_issues": 874,
+    "errors": 0,
+    "warnings": 867,
+    "info": 7,
+    "by_code": {
+      "DANGLING_LINK": 801,
+      "MULTI_PARENT": 7,
+      "PUBLIC_LINKS_PRIVATE": 1,
+      "SLUG_MISMATCH": 14,
+      "UNVERIFIED_STABLE": 51
+    },
+    "issues": [
+      {
+        "path": "1Hive",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "1Hive",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `decentralized-autonomous-organization`, which is not a page"
+      },
+      {
+        "path": "1Hive",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `quadratic-funding`, which is not a page"
+      },
+      {
+        "path": "1Hive",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `decentralized-autonomous-organization`, which is not a page"
+      },
+      {
+        "path": "1Hive",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `governance-token`, which is not a page"
+      },
+      {
+        "path": "1inch",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "1inch",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `decentralized-exchange`, which is not a page"
+      },
+      {
+        "path": "1inch",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `liquidity-pool`, which is not a page"
+      },
+      {
+        "path": "1inch",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `automated-market-maker`, which is not a page"
+      },
+      {
+        "path": "1inch",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `smart-contract`, which is not a page"
+      },
+      {
+        "path": "1inch",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `ethereum-smart-contract-platform`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `robo-perception` != label slug `perception-and-sensing`"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `robo-perception`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `slam`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `point-cloud`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `proximity-sensor`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `laser-scanner`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `ultrasonic-sensor`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `simultaneous-localisation-and-mapping`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `localisation`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `proximity-detection`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `lidar-scanning`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `lidar`, which is not a page"
+      },
+      {
+        "path": "2D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `robo-perception`, which is not a page"
+      },
+      {
+        "path": "360 Video",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "360 Video",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `immersive-media`, which is not a page"
+      },
+      {
+        "path": "360 Video",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `virtual-reality`, which is not a page"
+      },
+      {
+        "path": "360 Video",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `vr-experiences`, which is not a page"
+      },
+      {
+        "path": "360 Video",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `video-streaming`, which is not a page"
+      },
+      {
+        "path": "360 Video",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `volumetric-video`, which is not a page"
+      },
+      {
+        "path": "360 Video",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `volumetric-capture`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `animation-technique`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `rendering-pipeline`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `avatar`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `immersive-experience`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `inverse-kinematics`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `motion-capture`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `physics-simulation`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `procedural-animation`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `game-engine`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `keyframe-animation`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `character-rigging`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `blend-shape`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `animation-state-machine`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `real-time-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `extended-reality`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `machine-learning`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `generative-ai`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `animation`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `graphics-processing-unit`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `scene-graph`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `sc-content-and-assets`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `visual-effects`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `gltf-standard`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `universal-scene-description`, which is not a page"
+      },
+      {
+        "path": "3D Animation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `iso-iec-jtc-1-sc-24`, which is not a page"
+      },
+      {
+        "path": "3D Asset Creation",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Asset Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `asset-creation`, which is not a page"
+      },
+      {
+        "path": "3D Asset Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `creative-tools`, which is not a page"
+      },
+      {
+        "path": "3D Asset Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `digital-asset`, which is not a page"
+      },
+      {
+        "path": "3D Asset Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `virtual-environment`, which is not a page"
+      },
+      {
+        "path": "3D Asset Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `texture-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Asset Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `procedural-generation`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `interoperability-standard`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `digital-content-creation`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `spatial-web`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `iso-iec-14496-16`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `asset-interoperability`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `extended-reality`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `scene-graph`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `skeletal-animation`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `material-x`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `coordinate-system`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `mesh-compression`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `texture-atlas`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `gltf-standard`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `universal-scene-description`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `physically-based-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `metaverse-platform`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `game-engine`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `non-fungible-token`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `semantic-web-linked-data-standard`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `fbx`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `open-standard`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `iso-iec-14496-16`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `khronos-group`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `metaverse-standards-forum`, which is not a page"
+      },
+      {
+        "path": "3D Asset Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `academy-software-foundation`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `digital-asset`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `scene-graph`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `game-engine`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `metaverse`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `extended-reality`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `gltf-standard`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `universal-scene-description`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `digital-asset-management`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `texture-compression`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `physically-based-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `digital-content-creation`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `asset-pipeline`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `polygon-mesh`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `texture-map`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `skeletal-rig`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `neural-radiance-field`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `generative-ai`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `non-fungible-token`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `voxel`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `khronos-group`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `w3-c`, which is not a page"
+      },
+      {
+        "path": "3D Asset",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `academy-software-foundation`, which is not a page"
+      },
+      {
+        "path": "3D Content Creation",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Content Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `content-creation`, which is not a page"
+      },
+      {
+        "path": "3D Content Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `motion-capture`, which is not a page"
+      },
+      {
+        "path": "3D Content Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin-creation`, which is not a page"
+      },
+      {
+        "path": "3D Content Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `xr-applications`, which is not a page"
+      },
+      {
+        "path": "3D Content Creation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `physically-based-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `generative-ai`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-asset`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `virtual-world`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `game-development`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `neural-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `procedural-generation`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `deep-learning`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `diffusion-model`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `generative-adversarial-network`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `neural-radiance-field`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `deep-learning`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `computer-graphics`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `neural-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `procedural-generation`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `texture-synthesis`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `mesh-generation`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `extended-reality`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `metaverse`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `autonomous-robot`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `photogrammetry`, which is not a page"
+      },
+      {
+        "path": "3D Content Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `gpu-compute`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `infra-software-engineering` != label slug `software-engineering`"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `infra-software-engineering`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `metaverse-and-telecollaboration`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `xr-content-delivery`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `procedural-generation`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `physically-based-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `geometry-processing`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `digital-content-creation`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `game-engine`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `version-control`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `rendering-pipeline`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `character-rigging`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `distributed-team-collaboration`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `cloud-computing`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `asset-management-system`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `ci-cd-automation`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `gltf-standard`, which is not a page"
+      },
+      {
+        "path": "3D Content Pipeline",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `universal-scene-description`, which is not a page"
+      },
+      {
+        "path": "3D Design",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Design",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `infra-software-engineering` != label slug `software-engineering`"
+      },
+      {
+        "path": "3D Design",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `infra-software-engineering`, which is not a page"
+      },
+      {
+        "path": "3D Design",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Design",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `rendering-engine`, which is not a page"
+      },
+      {
+        "path": "3D Development",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Development",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `sc-platform-and-environment` != label slug `platform-and-environment`"
+      },
+      {
+        "path": "3D Development",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `sc-platform-and-environment`, which is not a page"
+      },
+      {
+        "path": "3D Development",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `metaverse-content-creation`, which is not a page"
+      },
+      {
+        "path": "3D Development",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `virtual-environment-design`, which is not a page"
+      },
+      {
+        "path": "3D Development",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `xr-applications`, which is not a page"
+      },
+      {
+        "path": "3D Development",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `software-development`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `game-engine`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `extended-reality`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `virtual-reality`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `vulkan`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `open-gl`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `directx`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `webgpu`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `computational-geometry`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `graphics-processing-unit`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `shader`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `linear-algebra`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `rendering-pipeline`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `physics-simulation-engine`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `scene-graph`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `animation-system`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `metaverse`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `machine-learning`, which is not a page"
+      },
+      {
+        "path": "3D Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `robotics`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `data-format-standard`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `point-cloud`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `cross-platform-asset-exchange`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-asset-management`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-graphics`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `binary-encoding`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `data-compression`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `coordinate-system`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `mesh-data`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `material-definition`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `texture-map`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `physics-simulation`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `data-format-standard`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `interoperability`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `metaverse-infrastructure`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `gl-tf`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `universal-scene-description`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `asset-pipeline`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `khronos-group`, which is not a page"
+      },
+      {
+        "path": "3D File Format",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `pixar-animation-studios`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `neural-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `virtual-reality-telepresence`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `photorealistic-telepresence`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `tele-053-volumetric-video-conferencing`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `novel-view-synthesis`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `avatar`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `stochastic-gradient-descent`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `ssim-loss`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `differentiable-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `structure-from-motion`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `gaussian-primitive`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `spherical-harmonics`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `tele-050-neural-rendering-telepresence`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `extended-reality`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `web-xr`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `neural-radiance-fields`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `tele-060-instant-ngp`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `alpha-blending`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `multi-view-photography`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `point-cloud`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `adam-optimiser`, which is not a page"
+      },
+      {
+        "path": "3D Gaussian Splatting",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `novel-view-synthesis`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "info",
+        "code": "MULTI_PARENT",
+        "message": "bridging class, 3 parents: 3D Content Generation, Generative Model, Computer Vision"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `generative-model`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `computer-vision`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `image-generation`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `extended-reality`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `robotics`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin-generation`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `game-asset-generation`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `scene-generation`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `diffusion-model`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `ne-rf`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `gaussian-splatting`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `score-distillation-sampling`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `implicit-neural-representation`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `triplane`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `clip`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `gpu-compute`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `objaverse`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `differentiable-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `text-to-3-d`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `neural-3-d-generation`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `novel-view-synthesis`, which is not a page"
+      },
+      {
+        "path": "3D Generation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `mesh-generation`, which is not a page"
+      },
+      {
+        "path": "3D Geometry",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Geometry",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `computational-geometry`, which is not a page"
+      },
+      {
+        "path": "3D Geometry",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `computer-graphics`, which is not a page"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `sc-display-and-rendering` != label slug `display-and-rendering`"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `sc-content-and-assets` != label slug `content-and-assets`"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "info",
+        "code": "MULTI_PARENT",
+        "message": "bridging class, 2 parents: Display and Rendering, Content and Assets"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `sc-display-and-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `sc-content-and-assets`, which is not a page"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `cross-platform-compatibility`, which is not a page"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `hardware-acceleration`, which is not a page"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `driver-software`, which is not a page"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `gpu`, which is not a page"
+      },
+      {
+        "path": "3D Graphics Standard",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `technical-standard`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `robo-perception` != label slug `perception-and-sensing`"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `robo-perception`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `lidar-scanning`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `stereo-camera`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `multirotor-uav`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `point-cloud`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `slam`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `simultaneous-localisation-and-mapping`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `autonomous-navigation`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `sensor-fusion`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `perception-system`, which is not a page"
+      },
+      {
+        "path": "3D LiDAR",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `lidar`, which is not a page"
+      },
+      {
+        "path": "3D Mapping",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `sc-content-and-assets` != label slug `content-and-assets`"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `sc-content-and-assets`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `photogrammetry`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `procedural-generation`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `interactive-visualization`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `animation-retargeting`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `virtual-reality`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `uv-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `mesh-data`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `material-definition`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `texture-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `skeletal-rig`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `metaverse`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `computer-vision`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `virtual-environment-design`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `digital-asset`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `gltf-standard`, which is not a page"
+      },
+      {
+        "path": "3D Model",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `universal-scene-description`, which is not a page"
+      },
+      {
+        "path": "3D Modeling Software",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Modeling Software",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `cad-software`, which is not a page"
+      },
+      {
+        "path": "3D Modeling Software",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `bim-software`, which is not a page"
+      },
+      {
+        "path": "3D Modeling Software",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `game-engine`, which is not a page"
+      },
+      {
+        "path": "3D Modeling Software",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `animation-rig`, which is not a page"
+      },
+      {
+        "path": "3D Modeling Software",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `physically-based-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Modeling Software",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `shader`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "info",
+        "code": "MULTI_PARENT",
+        "message": "bridging class, 2 parents: Computer Graphics, 3D Development"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `computer-graphics`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `fbx`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `character-rigging`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `skinning`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `visual-effects`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `rendering`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `character-model`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `texture-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `asset-creation`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `character-animation`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `virtual-environment-design`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-graphics`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `uv-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `computer-aided-design`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `design-software`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `polygon-mesh`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `polygon-mesh`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `geometry-processing`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `topology`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `character-rigging`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `material-definition`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `visual-effects`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `game-engine`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `virtual-production`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `virtual-reality`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `game-development`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `computer-vision`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `photogrammetry`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `generative-ai`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `computer-aided-design`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `digital-art`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `asset-pipeline`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `gltf-standard`, which is not a page"
+      },
+      {
+        "path": "3D Modelling",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `obj-format`, which is not a page"
+      },
+      {
+        "path": "3D Parallelism",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Parallelism",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `distributed-training`, which is not a page"
+      },
+      {
+        "path": "3D Perception",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Perception",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `computer-vision`, which is not a page"
+      },
+      {
+        "path": "3D Perception",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `pose-estimation`, which is not a page"
+      },
+      {
+        "path": "3D Perception",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `semantic-segmentation`, which is not a page"
+      },
+      {
+        "path": "3D Perception",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `simultaneous-localisation-and-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Perception",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `object-detection`, which is not a page"
+      },
+      {
+        "path": "3D Perception",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `depth-sensing`, which is not a page"
+      },
+      {
+        "path": "3D Perception",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `sensor-fusion`, which is not a page"
+      },
+      {
+        "path": "3D Perception",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `point-cloud`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `sc-content-and-assets` != label slug `content-and-assets`"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `sc-content-and-assets`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `scene-understanding`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `environmental-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `point-cloud-generation`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `lidar`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `neural-radiance-field`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `simultaneous-localisation-and-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `camera-calibration`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `feature-matching`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `image-processing`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `sensor-fusion`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `structure-from-motion`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `multi-view-stereo`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `point-cloud`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `depth-estimation`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `computer-vision`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `robotics`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `machine-learning`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `computer-vision`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `deep-learning`, which is not a page"
+      },
+      {
+        "path": "3D Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `photogrammetry`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `computer-graphics`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-visualisation`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `xr-applications`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `immersive-experiences`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `foveated-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `vulkan`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `open-gl`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `directx`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `graphics-processing-unit`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `graphics-api`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `shader-pipeline`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `scene-graph`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `texture-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `stereoscopic-display`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `virtual-reality`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `metaverse`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `inference`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `offline-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `ray-tracing`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `rasterization`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `physics-engine`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `spatial-audio`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `game-engine`, which is not a page"
+      },
+      {
+        "path": "3D Rendering Engine",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `khronos-group`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `computer-graphics`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `global-illumination`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `anti-aliasing`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `level-of-detail`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `photorealistic-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `physically-based-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `foveated-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-graphics`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `virtual-reality`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `gpu-compute`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `texture-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `shader`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `scene-graph`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `graphics-processing-unit`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `virtual-lighting-model`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `depth-buffer`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `rasterization`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `ray-tracing`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `path-tracing`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `pixel-shader`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `compute-shader`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `render-pipeline`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `differentiable-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `neural-radiance-field`, which is not a page"
+      },
+      {
+        "path": "3D Rendering",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `linear-algebra`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `gaussian-splatting`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `simultaneous-localisation-and-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin-creation`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `point-cloud-processing`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `reverse-engineering`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-heritage`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `photogrammetry`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `structured-light`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `time-of-flight-sensor`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `depth-sensor`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `calibration`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `point-cloud`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `mesh-generation`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `building-information-modelling`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `quality-inspection`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `robotics-perception`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `medical-imaging`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `structure-from-motion`, which is not a page"
+      },
+      {
+        "path": "3D Scanning",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `neural-radiance-field`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `sc-standards-and-interop` != label slug `standards-and-interoperability`"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `sc-standards-and-interop`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `asset-portability`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `cross-platform-compatibility`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `e-commerce-3-d`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `metaverse-interoperability`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `real-time-rendering`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `mesh-compression`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `texture-authoring`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `game-engine`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `rendering-pipeline`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `animation-rig`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `material-system`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `normal-map`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `texture-map`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `vertex-attribute`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `non-destructive-editing`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `pbr-materials`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `skeletal-animation`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `version-control`, which is not a page"
+      },
+      {
+        "path": "3D Scene Exchange Protocol (SXP)",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `scene-graph-format`, which is not a page"
+      },
+      {
+        "path": "3D Scene Reconstruction",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Scene Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `ne-rf`, which is not a page"
+      },
+      {
+        "path": "3D Scene Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `gaussian-splatting`, which is not a page"
+      },
+      {
+        "path": "3D Scene Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `digital-twin-creation`, which is not a page"
+      },
+      {
+        "path": "3D Scene Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `ar-registration`, which is not a page"
+      },
+      {
+        "path": "3D Scene Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `simultaneous-localisation-and-mapping`, which is not a page"
+      },
+      {
+        "path": "3D Scene Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `structure-from-motion`, which is not a page"
+      },
+      {
+        "path": "3D Scene Reconstruction",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `multi-view-stereo`, which is not a page"
+      },
+      {
+        "path": "3D Scene Representation",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D Scene Representation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `scene-representation`, which is not a page"
+      },
+      {
+        "path": "3D Scene Representation",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `point-cloud`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `sc-interaction` != label slug `interaction-technology`"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `sc-interaction`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `virtual-reality`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `mixed-reality`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `embodied-interaction`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `user-navigation`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `immersive-experience`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `spatial-audio`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `depth-sensing`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `real-time-rendering`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `gaze-tracking`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `voice-input`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `hand-tracking`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `haptic-feedback`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `sensor-input`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `hand-tracking`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `gaze-tracking`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `haptic-feedback`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `gesture-recognition`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `voice-input`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `accessibility-standard`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `multimodal-interaction`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `interaction-design`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `metaverse`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `user-interface`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `graphical-user-interface`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "3D User Interface",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `extended-reality`, which is not a page"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `sc-content-and-assets` != label slug `content-and-assets`"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `sc-content-and-assets`, which is not a page"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `computer-vision`, which is not a page"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `machine-learning-discipline`, which is not a page"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `augmented-reality`, which is not a page"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `pose-estimation`, which is not a page"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `generative-ai`, which is not a page"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `diffusion-model`, which is not a page"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `neural-radiance-field`, which is not a page"
+      },
+      {
+        "path": "3D and 4D",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `deep-learning`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `standards-body`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `etsi`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `telecommunications`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `network-architecture`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `itu-r`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `ieee`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `network-function-virtualization`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `multi-access-edge-computing`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `internet-of-things`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `vehicle-to-everything`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `network-slicing`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `spectrum-allocation`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `radio-access-network`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `5g-core-network`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `5g-new-radio`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `low-latency`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "3GPP",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `artificial-intelligence`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `bc-protocol-and-consensus` != label slug `protocol-and-consensus`"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `bc-protocol-and-consensus`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `selfish-mining`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `finality`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `transaction`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `ethereum-smart-contract-platform-classic`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `double-spending`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `transaction-censorship`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `chain-reorganization`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `proof-of-work`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `mining-pool`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `hash-rate`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `mining`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `network-security`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `game-theory`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `ai-energy-optimisation`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `proof-of-stake`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `byzantine-fault-tolerance`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `blockchain`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `cryptocurrency`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `mining-hardware`, which is not a page"
+      },
+      {
+        "path": "51% Attack",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `blockchain-security`, which is not a page"
+      },
+      {
+        "path": "5G Connectivity",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "5G Connectivity",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `guaranteed-bandwidth`, which is not a page"
+      },
+      {
+        "path": "5G Connectivity",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `latency`, which is not a page"
+      },
+      {
+        "path": "5G Connectivity",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `xr-applications`, which is not a page"
+      },
+      {
+        "path": "5G Connectivity",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `io-t-infrastructure`, which is not a page"
+      },
+      {
+        "path": "5G Connectivity",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `low-latency`, which is not a page"
+      },
+      {
+        "path": "5G Connectivity",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `multi-access-edge-computing`, which is not a page"
+      },
+      {
+        "path": "5G Connectivity",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `network-function-virtualization`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `telecommunications-infrastructure`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `network-infrastructure`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `open-ran`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `mobile-edge-computing`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `io-t-infrastructure`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `autonomous-vehicle`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `extended-reality`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `network-function-virtualization`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `software-defined-networking`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `edge-computing`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `massive-mimo`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `spectrum-allocation`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `cloud-native-architecture`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `transport-network`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `multi-access-edge-computing`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `network-slicing`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `artificial-intelligence-operations`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `wi-fi`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `o-ran-alliance`, which is not a page"
+      },
+      {
+        "path": "5G Network",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `etsi`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `telecommunications`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `internet-of-things`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `mobile-edge-computing`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `multi-access-edge-computing`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `xr-applications`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `network-slicing`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `private-5g-network`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `industrial-io-t`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `autonomous-vehicle`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `beamforming`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `network-function-virtualization`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `cloud-native`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `massive-mimo`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `5g-new-radio`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `5g-core`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `service-oriented-architecture`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `digital-twin`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `4g-lte`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `6g`, which is not a page"
+      },
+      {
+        "path": "5G",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `itu-r`, which is not a page"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `simultaneous-localisation-and-mapping`, which is not a page"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `pose-estimation`, which is not a page"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `camera-tracking`, which is not a page"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `depth-sensing`, which is not a page"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `xr-applications`, which is not a page"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `ar-registration`, which is not a page"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `sensor-fusion`, which is not a page"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `imu`, which is not a page"
+      },
+      {
+        "path": "6DoF Tracking",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `simultaneous-localisation-and-mapping`, which is not a page"
+      },
+      {
+        "path": "6G Network Slice",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "6G Network Slice",
+        "severity": "warning",
+        "code": "SLUG_MISMATCH",
+        "message": "parent IRI slug `infra-network-and-comms` != label slug `network-and-communication`"
+      },
+      {
+        "path": "6G Network Slice",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `infra-network-and-comms`, which is not a page"
+      },
+      {
+        "path": "6G Network Slice",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `resource-allocation`, which is not a page"
+      },
+      {
+        "path": "6G Network Slice",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `guaranteed-bandwidth`, which is not a page"
+      },
+      {
+        "path": "6G Network Slice",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `network-infrastructure`, which is not a page"
+      },
+      {
+        "path": "6G Network Slice",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `resource-allocation`, which is not a page"
+      },
+      {
+        "path": "6G Network Slice",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `service-level-agreement`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "info",
+        "code": "MULTI_PARENT",
+        "message": "bridging class, 3 parents: Search Algorithm, Informed Search, Graph Search"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `search-algorithm`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `informed-search`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `graph-search`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `optimisation`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `graph-theory`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `spatial-computing`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `ida-star`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `jump-point-search`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `theta-star`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `d-star`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `bidirectional-search`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `occupancy-grid`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `pathfinding`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `path-planning`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `motion-planning`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `shortest-path`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `autonomous-navigation`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `cost-function`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `graph-search`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `priority-queue`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `weighted-graph`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `dynamic-programming`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `state-space`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `graph-representation`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `weighted-graph`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `cost-function`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `priority-queue`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `heuristic-methods`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `admissibility`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `consistency`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `robotics`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `game-ai`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `logistics`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `network-routing`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `gps-systems`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `dijkstra-algorithm`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `rrt-algorithm`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `monte-carlo-tree-search`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `informed-search`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `graph-search`, which is not a page"
+      },
+      {
+        "path": "A Star Algorithm",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `heuristic-methods`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "info",
+        "code": "MULTI_PARENT",
+        "message": "bridging class, 2 parents: Agent Communication Protocol, Agent-to-Agent Protocol"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `agent-communication-protocol`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `agent-to-agent-protocol`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `model-context-protocol`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `multi-agent-system`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `fipa-acl`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `contract-net-protocol`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `prompt-injection`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `multi-agent-orchestration`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `agentic-workflow`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `inter-agent-communication`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `task-delegation`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `enterprise-ai`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `agent-marketplace`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `agent-frameworks`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `agentic-ai`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `function-calling`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `json-ld`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `protocol-buffer`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `http-protocol`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `json-data-interchange-format-rpc-2-0`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `server-sent-events`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `oauth-2-0`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `json-data-interchange-format-schema`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `agent-card`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `task-lifecycle`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `capability-negotiation`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `streaming-api`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `microservices-architecture`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `web-of-things`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `semantic-web`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `peer-to-peer-network`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `remote-procedure-call`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `model-context-protocol`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `autonomous-agent`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `distributed-systems`, which is not a page"
+      },
+      {
+        "path": "A2A Protocol",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `service-discovery`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "AAAI",
+        "severity": "info",
+        "code": "MULTI_PARENT",
+        "message": "bridging class, 2 parents: Academic Conference, AI Research Area"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `academic-conference`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `ai-research-area`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `scientific-conference`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `academic-conference`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `research-institution`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `knowledge-representation`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `symbolic-ai`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `multi-agent-system`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `research-dissemination`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `benchmark-standard`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `ai-research`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `ai-for-social-good`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `aaai-conference`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `peer-review`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `ai-magazine`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `aaai-fellows-program`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `workshop`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `tutorial`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `poster-session`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `programme-committee`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `artificial-intelligence`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `machine-learning`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `ai-ethics`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `responsible-ai`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `open-science`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `ai-policy`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `artificial-intelligence`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `ai-governance`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `ai-alignment`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `neur-ips`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `icml`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `iclr`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `cvpr`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `ijcai`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `peer-review`, which is not a page"
+      },
+      {
+        "path": "AAAI",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`standardized-by` points at `double-blind-review`, which is not a page"
+      },
+      {
+        "path": "ABI Encoding",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "ABI Encoding",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `smart-contract`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `transaction`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `transaction`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `data-persistence`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `distributed-systems`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `relational-database`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `data-integrity`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `reliability`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `two-phase-commit`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `write-ahead-logging`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `two-phase-commit`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `data-integrity`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `fault-tolerance`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `database-management-system`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `database-systems`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `scalability`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `data-integrity`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `reliability`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `write-ahead-logging`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `data-persistence`, which is not a page"
+      },
+      {
+        "path": "ACID Properties",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `transaction`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `lightning-network`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `bitcoin-proof-of-work-protocol-layer-2`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `channel-liquidity`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `bolt-12`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `micropayment`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `non-custodial-wallet`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `htlc`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `onion-routing`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `programming-language`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `bitcoin`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`requires` points at `payment-channel`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `eclair`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`has-part` points at `phoenix-wallet`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `splicing`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `decentralised-finance`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`bridges-to` points at `peer-to-peer-network`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `lnd`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `core-lightning`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `lightning-network`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`implements` points at `onion-routing`, which is not a page"
+      },
+      {
+        "path": "ACINQ",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `lightning-network`, which is not a page"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `access-control`, which is not a page"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `identity-and-access-management`, which is not a page"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `access-control-system`, which is not a page"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `digital-identity`, which is not a page"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `policy-enforcement`, which is not a page"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `zero-trust-architecture`, which is not a page"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `encryption`, which is not a page"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `authentication`, which is not a page"
+      },
+      {
+        "path": "ACL",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `policy-enforcement-point`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`is-a` points at `data-analytics`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `business-intelligence`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `user-experience`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `recommendation-system`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`related-to` points at `monitoring-dashboard`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`enables` points at `predictive-personalization`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `statistics`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`uses` points at `metrics`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `data-science`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `digital-marketing`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`supports` points at `optimisation`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`contrasts-with` points at `usability-testing`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`depends-on` points at `data-visualisation`, which is not a page"
+      },
+      {
+        "path": "B Testing",
+        "severity": "warning",
+        "code": "DANGLING_LINK",
+        "message": "`part-of` points at `data-analytics`, which is not a page"
+      },
+      {
+        "path": "Fixture Public Child",
+        "severity": "info",
+        "code": "MULTI_PARENT",
+        "message": "bridging class, 2 parents: Fixture Private Ancestor, 3D Asset"
+      },
+      {
+        "path": "Fixture Public Child",
+        "severity": "warning",
+        "code": "PUBLIC_LINKS_PRIVATE",
+        "message": "public page links to private `Fixture Private Ancestor` under `is-a`; the build will drop the edge"
+      },
+      {
+        "path": "Fixture Unattributed",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      }
+    ]
+  },
+  "working": {
+    "total_pages": 2,
+    "total_journals": 1,
+    "skipped": [],
+    "pages_with_ontology": 2,
+    "public_pages": 1,
+    "total_issues": 3,
+    "errors": 0,
+    "warnings": 3,
+    "info": 0,
+    "by_code": {
+      "MISSING_DOMAIN": 2,
+      "UNVERIFIED_STABLE": 1
+    },
+    "issues": [
+      {
+        "path": "Fixture Private Note",
+        "severity": "warning",
+        "code": "MISSING_DOMAIN",
+        "message": "no domain"
+      },
+      {
+        "path": "Fixture Public Note",
+        "severity": "warning",
+        "code": "UNVERIFIED_STABLE",
+        "message": "`status: stable` with no human entry in `verified`"
+      },
+      {
+        "path": "Fixture Public Note",
+        "severity": "warning",
+        "code": "MISSING_DOMAIN",
+        "message": "no domain"
+      }
+    ]
+  }
+}

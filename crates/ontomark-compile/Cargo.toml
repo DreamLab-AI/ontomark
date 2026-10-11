@@ -1,14 +1,46 @@
 [package]
 name = "ontomark-compile"
-description = "ontomark: compile"
+description = "Compile Markdown ontology vaults to RDF 1.1 Turtle, JSON-LD 1.1, SHACL, NGG1 graph tiers and page APIs under a versioned profile"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+keywords = ["ontology", "owl", "rdf", "obsidian", "shacl"]
+categories = ["compilers", "science"]
+
+[features]
+default = ["whelk-el"]
+# The OWL 2 EL classifier the build and the gate reason with.
+whelk-el = ["dep:whelk-el"]
 
 [dependencies]
+whelk-el = { path = "../whelk-el", optional = true }
+ontomark-ngg1 = { path = "../ontomark-ngg1", version = "0.1.0" }
+serde = { workspace = true }
+# preserve_order: every JSON artefact's key order is part of the byte contract.
+serde_json = { workspace = true, features = ["preserve_order"] }
+serde_yaml = "0.9"
+indexmap = { workspace = true }
+thiserror = { workspace = true }
+anyhow = "1"
+regex = "1"
+walkdir = "2"
+sha2 = "0.10"
+hex = "0.4"
+time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"] }
+
+[dev-dependencies]
+tempfile = "3"
+# Independent JSON-LD 1.1 parser (oxigraph project) that checks the JSON-LD
+# serialisation against the Turtle in the tests (with oxttl and oxrdf below).
+oxjsonld = "0.2"
+# W3C conformance and writer round-trip tests (conformance/w3c).
+oxttl = "0.2.4"
+oxrdf = { version = "0.3.4", features = ["rdfc-10"] }
+oxrdfxml = "0.2.4"
+oxiri = "0.3.1"
 
 [lints]
 workspace = true

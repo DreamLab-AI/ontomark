@@ -1,0 +1,293 @@
+{
+  "governance": [
+    {
+      "slug": "1-hive",
+      "title": "1Hive",
+      "qualityScore": 0.6
+    }
+  ],
+  "blockchain": [
+    {
+      "slug": "1-inch",
+      "title": "1inch",
+      "qualityScore": 0.6
+    },
+    {
+      "slug": "51-attack",
+      "title": "51% Attack",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "abi-encoding",
+      "title": "ABI Encoding",
+      "qualityScore": 0.5
+    },
+    {
+      "slug": "acinq",
+      "title": "ACINQ",
+      "qualityScore": 0.74
+    }
+  ],
+  "robotics": [
+    {
+      "slug": "2-d-li-dar",
+      "title": "2D LiDAR",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "3-d-li-dar",
+      "title": "3D LiDAR",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "fixture-unattributed",
+      "title": "Fixture Unattributed",
+      "qualityScore": 0.0
+    }
+  ],
+  "spatial-computing": [
+    {
+      "slug": "360-video",
+      "title": "360 Video",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "3-d-animation",
+      "title": "3D Animation",
+      "qualityScore": 0.0
+    },
+    {
+      "slug": "3-d-asset-standard",
+      "title": "3D Asset Standard",
+      "qualityScore": 0.74
+    },
+    {
+      "slug": "3-d-asset",
+      "title": "3D Asset",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "3-d-content-creation",
+      "title": "3D Content Creation",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "3-d-content-pipeline",
+      "title": "3D Content Pipeline",
+      "qualityScore": 0.73
+    },
+    {
+      "slug": "3-d-development",
+      "title": "3D Development",
+      "qualityScore": 0.5
+    },
+    {
+      "slug": "3-d-engine",
+      "title": "3D Engine",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "3-d-file-format",
+      "title": "3D File Format",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "3-d-gaussian-splatting",
+      "title": "3D Gaussian Splatting",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "3-d-geometry",
+      "title": "3D Geometry",
+      "qualityScore": 0.5
+    },
+    {
+      "slug": "3-d-graphics-standard",
+      "title": "3D Graphics Standard",
+      "qualityScore": 0.5
+    },
+    {
+      "slug": "3d-mapping",
+      "title": "3D Mapping",
+      "qualityScore": 0.0
+    },
+    {
+      "slug": "3-d-model",
+      "title": "3D Model",
+      "qualityScore": 0.7
+    },
+    {
+      "slug": "3-d-modeling-software",
+      "title": "3D Modeling Software",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "3d-modelling",
+      "title": "3D Modelling",
+      "qualityScore": 0.62
+    },
+    {
+      "slug": "3-d-perception",
+      "title": "3D Perception",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "3-d-reconstruction",
+      "title": "3D Reconstruction",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "3-d-rendering-engine",
+      "title": "3D Rendering Engine",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "3-d-rendering",
+      "title": "3D Rendering",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "3-d-scanning",
+      "title": "3D Scanning",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "3-d-scene-exchange-protocol-sxp",
+      "title": "3D Scene Exchange Protocol (SXP)",
+      "qualityScore": 0.5
+    },
+    {
+      "slug": "3-d-scene-reconstruction",
+      "title": "3D Scene Reconstruction",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "3-d-scene-representation",
+      "title": "3D Scene Representation",
+      "qualityScore": 0.5
+    },
+    {
+      "slug": "3-d-user-interface",
+      "title": "3D User Interface",
+      "qualityScore": 0.72
+    },
+    {
+      "slug": "3-d-and-4-d",
+      "title": "3D and 4D",
+      "qualityScore": 0.5
+    },
+    {
+      "slug": "6-do-f-tracking",
+      "title": "6DoF Tracking",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "fixture-link-probe",
+      "title": "Fixture Link Probe",
+      "qualityScore": 0.0
+    },
+    {
+      "slug": "fixture-public-child",
+      "title": "Fixture Public Child",
+      "qualityScore": 0.0
+    }
+  ],
+  "metaverse": [
+    {
+      "slug": "3d-asset-creation",
+      "title": "3D Asset Creation",
+      "qualityScore": 0.8
+    }
+  ],
+  "artificial-intelligence": [
+    {
+      "slug": "3-d-content-generation",
+      "title": "3D Content Generation",
+      "qualityScore": 0.68
+    },
+    {
+      "slug": "3-d-generation",
+      "title": "3D Generation",
+      "qualityScore": 0.88
+    },
+    {
+      "slug": "a-star-algorithm",
+      "title": "A Star Algorithm",
+      "qualityScore": 0.9
+    }
+  ],
+  "infrastructure": [
+    {
+      "slug": "3-d-design",
+      "title": "3D Design",
+      "qualityScore": 0.0
+    },
+    {
+      "slug": "5-g-connectivity",
+      "title": "5G Connectivity",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "5-g-network",
+      "title": "5G Network",
+      "qualityScore": 0.74
+    },
+    {
+      "slug": "5-g",
+      "title": "5G",
+      "qualityScore": 0.8
+    },
+    {
+      "slug": "6-g-network-slice",
+      "title": "6G Network Slice",
+      "qualityScore": 0.35
+    }
+  ],
+  "machine-learning": [
+    {
+      "slug": "3d-parallelism",
+      "title": "3D Parallelism",
+      "qualityScore": 0.5
+    }
+  ],
+  "standards": [
+    {
+      "slug": "3-gpp",
+      "title": "3GPP",
+      "qualityScore": 0.72
+    }
+  ],
+  "ai": [
+    {
+      "slug": "a2-a-protocol",
+      "title": "A2A Protocol",
+      "qualityScore": 0.88
+    },
+    {
+      "slug": "aaai",
+      "title": "AAAI",
+      "qualityScore": 0.9
+    }
+  ],
+  "distributed-systems": [
+    {
+      "slug": "acid-properties",
+      "title": "ACID Properties",
+      "qualityScore": 0.62
+    }
+  ],
+  "security": [
+    {
+      "slug": "acl",
+      "title": "ACL",
+      "qualityScore": 0.8
+    }
+  ],
+  "data": [
+    {
+      "slug": "a-b-testing",
+      "title": "A/B Testing",
+      "qualityScore": 0.62
+    }
+  ]
+}

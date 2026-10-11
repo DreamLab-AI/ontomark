@@ -5,9 +5,11 @@ members = [
     "crates/ontomark-parse",
     "crates/ontomark-reason",
     "crates/ontomark-compile",
+    "crates/ontomark-ngg1",
     "crates/ontomark-wasm",
     "crates/ontomark-cli",
     "crates/whelk-el",
+    "profiles/estate",
 ]
 
 [workspace.package]

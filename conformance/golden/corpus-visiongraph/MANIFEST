@@ -1,0 +1,11 @@
+vault_binary_sha256=ee44eb4a8c910a655fc8df4db6715199a687b8877424d78a79152f136a133d16
+vault_version=vault 0.1.0
+vault_source_commit=de33ca538289e3b1384a5a1e23ed0a8178f0b54d
+vault_source_note=built at tag ontomark-census-baseline-1 (project HEAD, crates/ clean); differs from ontomark-census-baseline only by a graph_tiers unit test
+source_repo_head=b5e36abd172052cfb0d1dd8a904983f604e1b641
+snapshot_commit=e2ff4df84699b2ed173cd61fdf61338855028030
+vault_kind=all
+generated_at=2026-10-11T18:23:18.543959+00:00
+content_digest=840ab1cec72dfcb48eb3dd2b51ae1cec16172a79540da7479807a064039ce0cb
+ontology_digest=sha256-12-0bc8c7857720
+captured_at=2026-10-11T18:23:30Z

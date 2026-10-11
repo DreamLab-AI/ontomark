@@ -1,0 +1,163 @@
+{
+  "id": "urn:visionflow:page:f32f0472a5ee16559fe85eb785fa81ec86cd50b3fe51d1d813e71a88fc87fac7",
+  "title": "3D Gaussian Splatting",
+  "slug": "3-d-gaussian-splatting",
+  "public": true,
+  "classIri": "urn:ngm:class:3-d-gaussian-splatting",
+  "domain": "spatial-computing",
+  "definition": "A neural rendering technique that represents 3D scenes as collections of millions of 3D Gaussian primitives with learnable positions, colours, opacities, and covariances, enabling photorealistic real-time rendering at 100+ frames per second through GPU-accelerated rasterisation, revolutionising telepresence and immersive collaboration with unprecedented visual fidelity.",
+  "subClassOf": [
+    {
+      "id": "urn:ngm:class:neural-rendering",
+      "label": "Neural Rendering"
+    }
+  ],
+  "entityType": "Class",
+  "qualityScore": 0.72,
+  "maturity": "emerging",
+  "relationships": {
+    "hasPart": [
+      {
+        "id": "urn:ngm:class:gaussian-primitive",
+        "label": "Gaussian Primitive"
+      },
+      {
+        "id": "urn:ngm:class:spherical-harmonics",
+        "label": "Spherical Harmonics"
+      }
+    ],
+    "requires": [
+      {
+        "id": "urn:ngm:class:differentiable-rendering",
+        "label": "Differentiable Rendering"
+      },
+      {
+        "id": "urn:ngm:class:structure-from-motion",
+        "label": "Structure-from-Motion"
+      }
+    ],
+    "enables": [
+      {
+        "id": "urn:ngm:class:photorealistic-telepresence",
+        "label": "Photorealistic Telepresence"
+      },
+      {
+        "id": "urn:ngm:class:tele-053-volumetric-video-conferencing",
+        "label": "Volumetric Video Conferencing"
+      },
+      {
+        "id": "urn:ngm:class:novel-view-synthesis",
+        "label": "Real-Time Novel View Synthesis"
+      },
+      {
+        "id": "urn:ngm:class:avatar",
+        "label": "Photorealistic Avatar"
+      }
+    ],
+    "dependsOn": [
+      {
+        "id": "urn:ngm:class:multi-view-photography",
+        "label": "Multi-View Photography"
+      },
+      {
+        "id": "urn:ngm:class:point-cloud",
+        "label": "Point Cloud"
+      },
+      {
+        "id": "urn:ngm:class:adam-optimiser",
+        "label": "Adam Optimiser"
+      }
+    ],
+    "implements": [
+      {
+        "id": "urn:ngm:class:alpha-blending",
+        "label": "Alpha Blending"
+      }
+    ],
+    "contrastsWith": [
+      {
+        "id": "urn:ngm:class:neural-radiance-fields",
+        "label": "Neural Radiance Fields"
+      },
+      {
+        "id": "urn:ngm:class:tele-060-instant-ngp",
+        "label": "Instant NGP"
+      }
+    ],
+    "bridgesTo": [
+      {
+        "id": "urn:ngm:class:tele-050-neural-rendering-telepresence",
+        "label": "TELE-050-neural-rendering-telepresence"
+      },
+      {
+        "id": "urn:ngm:class:extended-reality",
+        "label": "Extended Reality"
+      },
+      {
+        "id": "urn:ngm:class:web-xr",
+        "label": "WebXR"
+      }
+    ],
+    "uses": [
+      {
+        "id": "urn:ngm:class:stochastic-gradient-descent",
+        "label": "Stochastic Gradient Descent"
+      },
+      {
+        "id": "urn:ngm:class:ssim-loss",
+        "label": "SSIM Loss"
+      }
+    ],
+    "supports": [],
+    "standardizedBy": [],
+    "partOf": [
+      {
+        "id": "urn:ngm:class:novel-view-synthesis",
+        "label": "Novel View Synthesis"
+      }
+    ],
+    "relatedTo": [
+      {
+        "id": "urn:ngm:class:virtual-reality-telepresence",
+        "label": "Virtual Reality Telepresence"
+      },
+      {
+        "id": "urn:ngm:class:3-d-scene-reconstruction",
+        "label": "Scene Reconstruction"
+      }
+    ]
+  },
+  "inferredSuperClasses": [],
+  "inheritedRelations": {},
+  "wikilinks": [
+    {
+      "slug": "differentiable-rendering",
+      "label": "DifferentiableRendering"
+    },
+    {
+      "slug": "photorealistic-telepresence",
+      "label": "PhotorealisticTelepresence"
+    },
+    {
+      "slug": "tele-020-virtual-reality-telepresence",
+      "label": "TELE-020-virtual-reality-telepresence"
+    },
+    {
+      "slug": "tele-050-neural-rendering-telepresence",
+      "label": "TELE-050-neural-rendering-telepresence"
+    },
+    {
+      "slug": "tele-052-neural-radiance-fields",
+      "label": "TELE-052-neural-radiance-fields"
+    },
+    {
+      "slug": "tele-053-volumetric-video-conferencing",
+      "label": "TELE-053-volumetric-video-conferencing"
+    },
+    {
+      "slug": "tele-060-instant-ngp",
+      "label": "TELE-060-instant-ngp"
+    }
+  ],
+  "backlinks": []
+}

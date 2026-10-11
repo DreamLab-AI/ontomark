@@ -1,0 +1,5 @@
+# parity receipt 2026-10-11T18:10:16Z
+ontomark sha256 3717463bca63ee479235fbb4358e6dadd0756f99bfd200b149a0fe77b37df3ef
+branch wp-c-compile base 18fcdb5
+$ conformance/parity.sh target/debug/ontomark conformance/fixtures/estate-small conformance/fixtures/estate-small.golden
+parity: 0 difference(s) over 32 artefact lines and 12 verb outputs

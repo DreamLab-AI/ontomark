@@ -1,0 +1,188 @@
+{
+  "id": "urn:visionflow:page:ef4e7b461971847dc31569f579e052b5132c284c6fa8a396fbaf72a735cabe6b",
+  "title": "3D and 4D",
+  "slug": "3-d-and-4-d",
+  "public": true,
+  "classIri": "urn:ngm:class:3-d-and-4-d",
+  "domain": "spatial-computing",
+  "definition": "The domain of three-dimensional and four-dimensional content creation, covering tools, techniques, and AI-powered pipelines for generating, editing, and rendering 3D assets and temporally dynamic (4D) representations. Encompasses text-to-3D systems (NVIDIA Edify, Luma Genie, Point-E), neural radiance fields, Gaussian splatting, and diffusion-based mesh generation, as well as 6D pose estimation, scene-scale generation, and integration with AR/VR workflows.",
+  "subClassOf": [
+    {
+      "id": "urn:ngm:class:sc-content-and-assets",
+      "label": "Content and Assets"
+    }
+  ],
+  "entityType": "Class",
+  "qualityScore": 0.5,
+  "maturity": "emerging",
+  "relationships": {
+    "hasPart": [],
+    "requires": [],
+    "enables": [
+      {
+        "id": "urn:ngm:class:augmented-reality",
+        "label": "Augmented Reality"
+      },
+      {
+        "id": "urn:ngm:class:3-d-asset",
+        "label": "3D Asset"
+      },
+      {
+        "id": "urn:ngm:class:pose-estimation",
+        "label": "Pose Estimation"
+      }
+    ],
+    "dependsOn": [],
+    "implements": [],
+    "contrastsWith": [],
+    "bridgesTo": [],
+    "uses": [
+      {
+        "id": "urn:ngm:class:generative-ai",
+        "label": "Generative AI"
+      },
+      {
+        "id": "urn:ngm:class:diffusion-model",
+        "label": "Diffusion Model"
+      },
+      {
+        "id": "urn:ngm:class:neural-radiance-field",
+        "label": "Neural Radiance Field"
+      },
+      {
+        "id": "urn:ngm:class:deep-learning",
+        "label": "Deep Learning"
+      }
+    ],
+    "supports": [],
+    "standardizedBy": [],
+    "partOf": [],
+    "relatedTo": [
+      {
+        "id": "urn:ngm:class:computer-vision",
+        "label": "Computer Vision"
+      },
+      {
+        "id": "urn:ngm:class:machine-learning-discipline",
+        "label": "Machine Learning Discipline"
+      }
+    ]
+  },
+  "inferredSuperClasses": [],
+  "inheritedRelations": {},
+  "wikilinks": [
+    {
+      "slug": "automation",
+      "label": "automation"
+    },
+    {
+      "slug": "community",
+      "label": "community"
+    },
+    {
+      "slug": "decision-making",
+      "label": "decision making"
+    },
+    {
+      "slug": "design-thinking",
+      "label": "design thinking"
+    },
+    {
+      "slug": "documentation",
+      "label": "documentation"
+    },
+    {
+      "slug": "innovation",
+      "label": "innovation"
+    },
+    {
+      "slug": "modeling",
+      "label": "modeling"
+    },
+    {
+      "slug": "neural-networks",
+      "label": "neural networks"
+    },
+    {
+      "slug": "open-source",
+      "label": "open source"
+    },
+    {
+      "slug": "optimization",
+      "label": "optimization"
+    },
+    {
+      "slug": "organisation",
+      "label": "organisation"
+    },
+    {
+      "slug": "performance",
+      "label": "performance"
+    },
+    {
+      "slug": "research",
+      "label": "research"
+    },
+    {
+      "slug": "scalability",
+      "label": "scalability"
+    },
+    {
+      "slug": "skills-development",
+      "label": "skills development"
+    },
+    {
+      "slug": "user-experience",
+      "label": "user experience"
+    },
+    {
+      "slug": "visualization",
+      "label": "visualization"
+    },
+    {
+      "slug": "artificial-intelligence",
+      "label": "artificial intelligence"
+    },
+    {
+      "slug": "bias",
+      "label": "bias"
+    },
+    {
+      "slug": "collaboration",
+      "label": "collaboration"
+    },
+    {
+      "slug": "computer-vision",
+      "label": "computer vision"
+    },
+    {
+      "slug": "data-management",
+      "label": "data management"
+    },
+    {
+      "slug": "deep-learning",
+      "label": "deep learning"
+    },
+    {
+      "slug": "machine-learning",
+      "label": "machine learning"
+    },
+    {
+      "slug": "natural-language-processing",
+      "label": "natural language processing"
+    },
+    {
+      "slug": "robotics",
+      "label": "robotics"
+    },
+    {
+      "slug": "software-engineering",
+      "label": "software engineering"
+    },
+    {
+      "slug": "training",
+      "label": "training"
+    }
+  ],
+  "backlinks": []
+}

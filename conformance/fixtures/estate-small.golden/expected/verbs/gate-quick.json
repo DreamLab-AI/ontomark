@@ -1,0 +1,12 @@
+{
+  "gate": "pass",
+  "tier": "quick",
+  "caveat": "A passed gate proves graph consistency only, NOT enrichment correctness.",
+  "checks": [
+    {
+      "name": "validate",
+      "status": "pass",
+      "detail": "54 pages, 53 public, 0 errors, 867 warnings"
+    }
+  ]
+}

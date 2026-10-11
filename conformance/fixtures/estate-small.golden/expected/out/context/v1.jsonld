@@ -1,0 +1,235 @@
+{
+  "@context": {
+    "vc": "https://narrativegoldmine.com/ns/v1#",
+    "ngm": "https://narrativegoldmine.com/class/",
+    "ngmi": "https://narrativegoldmine.com/individual/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "prov": "http://www.w3.org/ns/prov#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "instanceOf": {
+      "@id": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+      "@type": "@id"
+    },
+    "isA": {
+      "@id": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+      "@type": "@id"
+    },
+    "relatedTo": {
+      "@id": "https://narrativegoldmine.com/ns/v1#relatedTo",
+      "@type": "@id"
+    },
+    "enables": {
+      "@id": "https://narrativegoldmine.com/ns/v1#enables",
+      "@type": "@id"
+    },
+    "uses": {
+      "@id": "https://narrativegoldmine.com/ns/v1#uses",
+      "@type": "@id"
+    },
+    "requires": {
+      "@id": "https://narrativegoldmine.com/ns/v1#requires",
+      "@type": "@id"
+    },
+    "hasPart": {
+      "@id": "https://narrativegoldmine.com/ns/v1#hasPart",
+      "@type": "@id"
+    },
+    "supports": {
+      "@id": "https://narrativegoldmine.com/ns/v1#supports",
+      "@type": "@id"
+    },
+    "bridgesTo": {
+      "@id": "https://narrativegoldmine.com/ns/v1#bridgesTo",
+      "@type": "@id"
+    },
+    "contrastsWith": {
+      "@id": "https://narrativegoldmine.com/ns/v1#contrastsWith",
+      "@type": "@id"
+    },
+    "implements": {
+      "@id": "https://narrativegoldmine.com/ns/v1#implements",
+      "@type": "@id"
+    },
+    "dependsOn": {
+      "@id": "https://narrativegoldmine.com/ns/v1#dependsOn",
+      "@type": "@id"
+    },
+    "partOf": {
+      "@id": "https://narrativegoldmine.com/ns/v1#isPartOf",
+      "@type": "@id"
+    },
+    "standardizedBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#standardizedBy",
+      "@type": "@id"
+    },
+    "enabledBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#enabledBy",
+      "@type": "@id"
+    },
+    "disjointWith": {
+      "@id": "http://www.w3.org/2002/07/owl#disjointWith",
+      "@type": "@id"
+    },
+    "definesAs": {
+      "@id": "http://www.w3.org/2002/07/owl#equivalentClass",
+      "@type": "@id"
+    },
+    "sameAs": {
+      "@id": "http://www.w3.org/2004/02/skos/core#exactMatch",
+      "@type": "@id"
+    },
+    "produces": {
+      "@id": "https://narrativegoldmine.com/ns/v1#produces",
+      "@type": "@id"
+    },
+    "governs": {
+      "@id": "https://narrativegoldmine.com/ns/v1#governs",
+      "@type": "@id"
+    },
+    "informs": {
+      "@id": "https://narrativegoldmine.com/ns/v1#informs",
+      "@type": "@id"
+    },
+    "implementedBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#implementedBy",
+      "@type": "@id"
+    },
+    "reduces": {
+      "@id": "https://narrativegoldmine.com/ns/v1#reduces",
+      "@type": "@id"
+    },
+    "detectedBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#detectedBy",
+      "@type": "@id"
+    },
+    "mitigatedBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#mitigatedBy",
+      "@type": "@id"
+    },
+    "constrains": {
+      "@id": "https://narrativegoldmine.com/ns/v1#constrains",
+      "@type": "@id"
+    },
+    "influences": {
+      "@id": "https://narrativegoldmine.com/ns/v1#influences",
+      "@type": "@id"
+    },
+    "affects": {
+      "@id": "https://narrativegoldmine.com/ns/v1#affects",
+      "@type": "@id"
+    },
+    "informedBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#informedBy",
+      "@type": "@id"
+    },
+    "appliesTo": {
+      "@id": "https://narrativegoldmine.com/ns/v1#appliesTo",
+      "@type": "@id"
+    },
+    "improves": {
+      "@id": "https://narrativegoldmine.com/ns/v1#improves",
+      "@type": "@id"
+    },
+    "enforcedBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#enforcedBy",
+      "@type": "@id"
+    },
+    "detects": {
+      "@id": "https://narrativegoldmine.com/ns/v1#detects",
+      "@type": "@id"
+    },
+    "describes": {
+      "@id": "https://narrativegoldmine.com/ns/v1#describes",
+      "@type": "@id"
+    },
+    "mitigates": {
+      "@id": "https://narrativegoldmine.com/ns/v1#mitigates",
+      "@type": "@id"
+    },
+    "regulatedBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#regulatedBy",
+      "@type": "@id"
+    },
+    "supportedBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#supportedBy",
+      "@type": "@id"
+    },
+    "causes": {
+      "@id": "https://narrativegoldmine.com/ns/v1#causes",
+      "@type": "@id"
+    },
+    "feedsInto": {
+      "@id": "https://narrativegoldmine.com/ns/v1#feedsInto",
+      "@type": "@id"
+    },
+    "impacts": {
+      "@id": "https://narrativegoldmine.com/ns/v1#impacts",
+      "@type": "@id"
+    },
+    "measuredBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#measuredBy",
+      "@type": "@id"
+    },
+    "improvedBy": {
+      "@id": "https://narrativegoldmine.com/ns/v1#improvedBy",
+      "@type": "@id"
+    },
+    "evaluates": {
+      "@id": "https://narrativegoldmine.com/ns/v1#evaluates",
+      "@type": "@id"
+    },
+    "manages": {
+      "@id": "https://narrativegoldmine.com/ns/v1#manages",
+      "@type": "@id"
+    },
+    "defines": {
+      "@id": "https://narrativegoldmine.com/ns/v1#defines",
+      "@type": "@id"
+    },
+    "settledOn": {
+      "@id": "https://narrativegoldmine.com/ns/v1#settledOn",
+      "@type": "@id"
+    },
+    "precedes": {
+      "@id": "https://narrativegoldmine.com/ns/v1#precedes",
+      "@type": "@id"
+    },
+    "underpins": {
+      "@id": "https://narrativegoldmine.com/ns/v1#underpins",
+      "@type": "@id"
+    },
+    "exploits": {
+      "@id": "https://narrativegoldmine.com/ns/v1#exploits",
+      "@type": "@id"
+    },
+    "controls": {
+      "@id": "https://narrativegoldmine.com/ns/v1#controls",
+      "@type": "@id"
+    },
+    "provides": {
+      "@id": "https://narrativegoldmine.com/ns/v1#provides",
+      "@type": "@id"
+    },
+    "verifies": {
+      "@id": "https://narrativegoldmine.com/ns/v1#verifies",
+      "@type": "@id"
+    },
+    "implementedInLayer": {
+      "@id": "https://narrativegoldmine.com/ns/v1#implementedInLayer",
+      "@type": "@id"
+    },
+    "domain": "https://narrativegoldmine.com/ns/v1#domain",
+    "maturity": "https://narrativegoldmine.com/ns/v1#maturity",
+    "quality": "https://narrativegoldmine.com/ns/v1#quality",
+    "authority": "https://narrativegoldmine.com/ns/v1#authority",
+    "gloss": "https://narrativegoldmine.com/ns/v1#gloss",
+    "legacy-term-id": "https://narrativegoldmine.com/ns/v1#legacy-term-id",
+    "governance-case": "https://narrativegoldmine.com/ns/v1#governance-case",
+    "public": "https://narrativegoldmine.com/ns/v1#public",
+    "title": "https://narrativegoldmine.com/ns/v1#title",
+    "aliases": "https://narrativegoldmine.com/ns/v1#aliases",
+    "tags": "https://narrativegoldmine.com/ns/v1#tags"
+  }
+}

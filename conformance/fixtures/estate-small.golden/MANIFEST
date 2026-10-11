@@ -1,0 +1,11 @@
+vault_binary_sha256=ee44eb4a8c910a655fc8df4db6715199a687b8877424d78a79152f136a133d16
+vault_version=vault 0.1.0
+vault_source_commit=de33ca538289e3b1384a5a1e23ed0a8178f0b54d
+vault_source_note=built at tag ontomark-census-baseline-1
+source_repo_head=b3b84c1de0b1d3931abf5a584ba2490c85d1cfc7
+snapshot_commit=116accb45051ae3fe43402c7a31fc6cc90801b73
+vault_kind=all
+generated_at=2026-10-11T19:05:13.504876+00:00
+content_digest=cbe3eaffe819352339dccb176d0214710f22ce549e833f4098f5350c48a5bca6
+ontology_digest=sha256-12-b4ff9705d14d
+captured_at=2026-10-11T19:05:14Z

@@ -1,0 +1,38 @@
+ontomark-ngg1 NOTICE
+
+The reader half of this crate (src/reader.rs and the format constants and
+worked example in src/lib.rs and src/example.rs) derives from
+vowl-wasm 0.1.2, src/ngg1.rs, which is distributed under the MIT licence:
+
+Copyright (c) 2025-2026 DreamLab-AI
+
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+---------------------------------------------------------------------------
+
+This crate is a clean-room Rust reimplementation of the VOWL visual notation
+defined by the WebVOWL project. No upstream source, fixtures or assets are
+vendored here, but WebVOWL is the origin of the notation and of the ontology
+JSON shape this crate reads and writes, and its licence notice is retained
+below in full.
+
+The encoder half derives from VisionClaw crates/vault/src/build/ngg1.rs at
+commit 1044b0722, relocated into ontomark-compile and then into this crate.

@@ -1,0 +1,198 @@
+# The DreamLab estate profile: the corpus rules of visionGraph as versioned data.
+# Every value here was lifted from VisionClaw `crates/vault` at 1044b0722
+# (tag ontomark-census-baseline); the golden suite proves the compiler emits the
+# same bytes with it. Order is significant wherever a list is a numbering
+# (domains, categories): positions are published identities, append-only.
+id: estate
+version: "1.0.0"
+iris:
+  # Authored identities (frontmatter `resource:` / `page_resource:`), kept byte for byte.
+  class_namespace: "urn:ngm:class:"
+  individual_namespace: "urn:ngm:individual:"
+  page_namespace: "urn:visionflow:page:"
+  # Published projections of those identities.
+  public_class_base: "https://narrativegoldmine.com/class/"
+  public_individual_base: "https://narrativegoldmine.com/individual/"
+  public_page_base: "https://narrativegoldmine.com/page/"
+  # Historical namespaces older pages still cite; they publish under the same bases.
+  legacy_projections:
+    - {prefix: "urn:visionflow:owl:class:", base: "https://narrativegoldmine.com/class/"}
+    - {prefix: "urn:visionflow:linked:", base: "https://narrativegoldmine.com/linked/"}
+  vocabulary_prefix: "vc"
+  class_prefix: "ngm"
+  individual_prefix: "ngmi"
+  vocabulary_namespace: "https://narrativegoldmine.com/ns/v1#"
+  ns_base: "https://narrativegoldmine.com/ns"
+  ontology_iri: "https://narrativegoldmine.com/ontology"
+  ontology_label: "NarrativeGoldmine Ontology"
+  inferred_ontology_iri: "https://narrativegoldmine.com/ontology/inferred"
+  inferred_label: "NarrativeGoldmine Inferred Axioms"
+  version_info: "3.1.0"
+dataset:
+  pipeline_version: "ng-1.0.0"
+  attributed_to: "did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246"
+  attributed_label: "DreamLab AI"
+  nature: "synthetic-ai-generated-human-directed"
+  kind: "synthetic"
+  authors: ["Dr John O'Hare", "LCR Swarm"]
+  bundle_title: "NarrativeGoldmine Knowledge Bundle"
+  description: "Mostly AI-generated synthetic content, produced under human direction, by design — this corpus exists to exercise and demonstrate the VisionFlow pipeline and VisionClaw engine on a medium-scale ontology (~8.1k classes, ~100k relations). Provenance (did:nostr, generatedAtTime, URNs) attests traceable generation under human direction, not human authorship."
+taxonomy:
+  # Publication order: position + 1 is the GPU class id, position the NGG1 domain id.
+  domains:
+    - {slug: "artificial-intelligence", label: "Artificial Intelligence", colour: "#4CAF50"}
+    - {slug: "blockchain", label: "Blockchain", colour: "#FF9800"}
+    - {slug: "spatial-computing", label: "Spatial Computing", colour: "#2196F3"}
+    - {slug: "robotics", label: "Robotics", colour: "#F44336"}
+    - {slug: "distributed-collaboration", label: "Distributed Collaboration", colour: "#00BCD4"}
+    - {slug: "infrastructure", label: "Infrastructure", colour: "#9C27B0"}
+    - {slug: "space-science-and-systems", label: "Space Science and Systems", colour: "#646b9f"}
+    - {slug: "earth-observation-and-geospatial-sensing", label: "Earth Observation and Geospatial Sensing", colour: "#438273"}
+  # Historical short names that keep their domain class id.
+  short_names:
+    ai: "artificial-intelligence"
+    bc: "blockchain"
+    mv: "spatial-computing"
+    rb: "robotics"
+    ngm: "distributed-collaboration"
+    tc: "infrastructure"
+  # Rendering aliases the graph tiers fold onto a canonical domain.
+  domain_aliases:
+    "ai": "artificial-intelligence"
+    "machine-learning": "artificial-intelligence"
+    "metaverse": "spatial-computing"
+    "distributed-systems": "infrastructure"
+    "supply-chain": "infrastructure"
+    "data": "infrastructure"
+    "governance": "infrastructure"
+    "security": "infrastructure"
+    "standards": "infrastructure"
+    "finance": "blockchain"
+    "economics": "blockchain"
+  # Domain values accepted when the vocabulary does not enumerate `domain`.
+  accepted_domains: [artificial-intelligence, spatial-computing, blockchain, infrastructure, distributed-collaboration, robotics, ai, supply-chain, metaverse, data, governance, security, standards, finance, distributed-systems, machine-learning]
+  # Position is the category id; `domain` the domain position.
+  categories:
+    - {slug: "ai-technique", label: "AI Technique", domain: 0}
+    - {slug: "ai-model-architecture", label: "AI Model Architecture", domain: 0}
+    - {slug: "ai-application", label: "AI Application", domain: 0}
+    - {slug: "ai-governance-and-ethics", label: "AI Governance and Ethics", domain: 0}
+    - {slug: "cat-ai-infrastructure", label: "AI Infrastructure", domain: 0}
+    - {slug: "ai-research-area", label: "AI Research Area", domain: 0}
+    - {slug: "bc-protocol-and-consensus", label: "Protocol and Consensus", domain: 1}
+    - {slug: "bc-cryptographic-primitive", label: "Cryptographic Primitive", domain: 1}
+    - {slug: "bc-token-and-asset", label: "Token and Asset", domain: 1}
+    - {slug: "bc-defi-and-economics", label: "DeFi and Economics", domain: 1}
+    - {slug: "bc-network-component", label: "Network Component", domain: 1}
+    - {slug: "bc-governance-and-regulation", label: "Governance and Regulation", domain: 1}
+    - {slug: "sc-display-and-rendering", label: "Display and Rendering", domain: 2}
+    - {slug: "sc-interaction", label: "Interaction Technology", domain: 2}
+    - {slug: "sc-content-and-assets", label: "Content and Assets", domain: 2}
+    - {slug: "sc-platform-and-environment", label: "Platform and Environment", domain: 2}
+    - {slug: "sc-standards-and-interop", label: "Standards and Interoperability", domain: 2}
+    - {slug: "sc-governance-and-safety", label: "Governance and Safety", domain: 2}
+    - {slug: "robo-perception", label: "Perception and Sensing", domain: 3}
+    - {slug: "robo-actuation-and-control", label: "Actuation and Control", domain: 3}
+    - {slug: "robo-robot-type", label: "Robot Type", domain: 3}
+    - {slug: "robo-navigation-and-planning", label: "Navigation and Planning", domain: 3}
+    - {slug: "robo-safety-and-standards", label: "Safety and Standards", domain: 3}
+    - {slug: "robo-human-robot-interaction", label: "Human-Robot Interaction", domain: 3}
+    - {slug: "dc-communication", label: "Communication Technology", domain: 4}
+    - {slug: "dc-workspace-tools", label: "Workspace Tools", domain: 4}
+    - {slug: "dc-telepresence", label: "Telepresence", domain: 4}
+    - {slug: "dc-protocol-and-infra", label: "Protocol and Infrastructure", domain: 4}
+    - {slug: "infra-computing-and-cloud", label: "Computing and Cloud", domain: 5}
+    - {slug: "infra-network-and-comms", label: "Network and Communication", domain: 5}
+    - {slug: "infra-security-and-identity", label: "Security and Identity", domain: 5}
+    - {slug: "infra-data-management", label: "Data Management", domain: 5}
+    - {slug: "infra-legal-and-regulatory", label: "Legal and Regulatory", domain: 5}
+    - {slug: "infra-software-engineering", label: "Software Engineering", domain: 5}
+    - {slug: "astronomy", label: "Astronomy", domain: 6}
+    - {slug: "heliophysics", label: "Heliophysics", domain: 6}
+    - {slug: "planetary-science", label: "Planetary Science", domain: 6}
+    - {slug: "orbital-dynamics", label: "Orbital Dynamics", domain: 6}
+    - {slug: "space-reference-systems", label: "Space Reference Systems", domain: 6}
+    - {slug: "positioning-navigation-and-timing", label: "Positioning, Navigation and Timing", domain: 6}
+    - {slug: "spacecraft-bus", label: "Spacecraft Systems", domain: 6}
+    - {slug: "spacecraft-propulsion", label: "Spacecraft Propulsion", domain: 6}
+    - {slug: "spacecraft-power-and-thermal-control", label: "Spacecraft Power and Thermal Control", domain: 6}
+    - {slug: "spacecraft-guidance-navigation-and-control", label: "Guidance, Navigation and Control", domain: 6}
+    - {slug: "spacecraft-communications", label: "Satellite Communications", domain: 6}
+    - {slug: "space-life-sciences", label: "Space Life Sciences", domain: 6}
+    - {slug: "space-prime", label: "Space Industry", domain: 6}
+    - {slug: "earth-observation-sensor", label: "Observation Methods", domain: 7}
+    - {slug: "earth-system-phenomena", label: "Observed Phenomena", domain: 7}
+    - {slug: "earth-observation-processing", label: "Data Processing", domain: 7}
+    - {slug: "earth-observation-data-quality", label: "Data Quality", domain: 7}
+    - {slug: "earth-observation-applications", label: "Applications", domain: 7}
+    - {slug: "geodesy", label: "Geodesy", domain: 7}
+lifecycle:
+  default_maturity: "draft"
+  maturity_levels:
+    - {slug: "established", label: "Established"}
+    - {slug: "emerging", label: "Emerging"}
+    - {slug: "draft", label: "Draft"}
+    - {slug: "stub", label: "Stub"}
+    - {slug: "deprecated", label: "Deprecated"}
+labels:
+  # Acronyms the label reconstruction restores from a slug.
+  acronyms:
+    "ai": "AI"
+    "api": "API"
+    "rag": "RAG"
+    "bip": "BIP"
+    "erc": "ERC"
+    "w3c": "W3C"
+    "nft": "NFT"
+    "defi": "DeFi"
+    "llm": "LLM"
+    "av1": "AV1"
+    "brdf": "BRDF"
+    "iot": "IoT"
+    "crdt": "CRDT"
+    "dao": "DAO"
+    "xr": "XR"
+    "ar": "AR"
+    "vr": "VR"
+    "cbdc": "CBDC"
+    "p2p": "P2P"
+    "sdk": "SDK"
+    "url": "URL"
+    "did": "DID"
+    "zk": "ZK"
+    "ml": "ML"
+    "nlp": "NLP"
+frontmatter:
+  # The vault roles of vault.toml: which page types each vault admits, which
+  # keys a page must carry, and whether an undeclared key is an error.
+  roles:
+    knowledge:
+      types: ["Class", "Property", "Individual"]
+      required_keys: ["type", "title", "resource", "public", "status", "generated"]
+      unknown_keys: fail
+      publishable: true
+      reasoned: true
+    working:
+      types: ["Note", "Episode", "Transcript", "Draft Concept", "Journal", "Canvas"]
+      required_keys: ["type", "title"]
+      unknown_keys: allow
+      publishable: false
+      reasoned: false
+  # The fail-closed publication flag: only a literal boolean true publishes.
+  public_gate: public
+attribution:
+  # ontology/attribution.yaml: generators keyed by did:nostr (public keys only).
+  roster: ontology/attribution.yaml
+  # generated.by actor grammar.
+  actors: ["human:<npub>", "agent:<label>/<version>", "process:<name>/<version>"]
+governance:
+  # Nostr event kinds of the governance loop (posted by VisionClaw's adapter).
+  kinds:
+    panel: 31400
+    proposal: 31402
+publication:
+  # EXP-04: a link that resolves to a page that is not public is removed from the
+  # staged publish/ Markdown and the api/markdown mirror, never emitted with the
+  # private title. `ontomark build --no-redact-private-links` turns it off for
+  # byte-parity runs against the legacy build only.
+  redact_private_links: true
