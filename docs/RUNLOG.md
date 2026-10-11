@@ -88,3 +88,12 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   default off, one minter owned by the model crate. Defect 8 (ADR status labels
   vs corpus-format doc) owned by spec-estate as a doc fix. All specialists told
   to push their branches after each milestone; only `wp-d-estate` is on origin.
+- 18:50 queen: branch repair. Four queen commits (NOTICE, README+ADR, two RUNLOG
+  entries) had landed on `wp-a-model-parse` because the shared checkout was on
+  that branch when I committed; `origin/main` had only the scaffold, brief and
+  one later entry. Cherry-picked onto main (`7936cb0`), log re-sequenced. Rule
+  now: the queen verifies `git branch --show-current` is `main` before every
+  commit in the shared checkout. Codex cross-vendor audit is down estate-wide
+  (refresh token expired, 401 reproduced); user asked to `codex login`. Until
+  then audits are Claude-only and labelled degraded; the Codex audit is a
+  pending gate, not a pass.
