@@ -1,0 +1,51 @@
+{
+  "checked_at": "2026-10-11T22:36:20.152405+00:00",
+  "runtime_source_commit": "9cf6cb87ef72f226b14bcf9a56126e1854683f6b",
+  "producer_run": 38179004619,
+  "pages_run": 38180896856,
+  "results": [
+    {
+      "path": "/graph",
+      "url": "https://narrativegoldmine.com/graph/",
+      "status": 200,
+      "bytes": 2012,
+      "sha256": "5a62baae81eaa563cdc002d2952ddf04b92eccc58b30c97777f566bf6ffbf090"
+    },
+    {
+      "path": "/about",
+      "url": "https://narrativegoldmine.com/about/",
+      "status": 200,
+      "bytes": 2012,
+      "sha256": "5a62baae81eaa563cdc002d2952ddf04b92eccc58b30c97777f566bf6ffbf090"
+    },
+    {
+      "path": "/third-party-notices/vowl-wasm-0.2.0.md",
+      "url": "https://narrativegoldmine.com/third-party-notices/vowl-wasm-0.2.0.md",
+      "status": 200,
+      "bytes": 293636,
+      "sha256": "bc5e8a52e922b9564f946b4699adbbbecb424f48e8d0f1e6c61472e4e6f1dc98"
+    },
+    {
+      "path": "/third-party-notices/ontomark-graph-0.1.0.md",
+      "url": "https://narrativegoldmine.com/third-party-notices/ontomark-graph-0.1.0.md",
+      "status": 200,
+      "bytes": 13528,
+      "sha256": "b6aa41366dd8171845876c662c5129592f795283ed11f2fe6828f5751bfc6173"
+    },
+    {
+      "path": "/third-party-notices/javascript-runtime.md",
+      "url": "https://narrativegoldmine.com/third-party-notices/javascript-runtime.md",
+      "status": 200,
+      "bytes": 278750,
+      "sha256": "c6cc314c826b7dda2d1528b92aef5c80726f973bc7b162b8fc31fddd2d40dd65"
+    },
+    {
+      "path": "/third-party-notices/javascript-runtime.json",
+      "url": "https://narrativegoldmine.com/third-party-notices/javascript-runtime.json",
+      "status": 200,
+      "bytes": 30181,
+      "sha256": "ebea8f655b107935d6cffcf497aa0dc9bc7bcb35d1e35a581d1351899dc01ee2",
+      "package_count": 99
+    }
+  ]
+}

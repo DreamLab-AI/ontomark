@@ -22,7 +22,7 @@ published versions and release assets remain immutable.
 
 Ontomark’s locked workspace declares Rust 1.89. Native tests, Clippy, strict rustdoc,
 WASM builds and complete-history secret scanning pass in hosted core CI at
-`b914f9a` (run `38177114896`). Compiler all/no-default-feature tests are explicit
+`c29c2b2` (run `38179654820`). Compiler all/no-default-feature tests are explicit
 hosted gates; opt-in projection WASM compilation and locked registry package
 verification also passed. The complete committed corpus comparison reports zero differences
 over 32 artefact lines and 12 command outputs. Its explicit compatibility
@@ -37,7 +37,7 @@ flag is a comparison mechanism; default public exports retain privacy tests.
 | Shared renderer | `ontomark-graph-v0.1.0`, immutable npm-format tarball, SHA-256 `de491e2d7d947503d3c49c140193c88a9d17cfec5fbb334166002049c8d56aa5`. |
 | Obsidian | Separate `DreamLab-AI/ontomark-obsidian`; released installable Linux ZIP at tag `0.1.0`; real desktop and offline gates pass. |
 | VOWL | crates.io `vowl-wasm` 0.2.0 and GitHub browser tarball; main `8c78a25` passes all 18 hosted jobs (run `38177385305`), including the reviewed release-notice guard. npm trusted-publisher configuration still prevents npm registry publication. |
-| Narrative Goldmine | CLI pin already deployed at `366236b38`; shared renderer and WASM codec adoption passed 88 tests and built-browser acceptance, final deployment being monitored. |
+| Narrative Goldmine | Runtime `9cf6cb8` uses the released CLI, shared renderer and WASM codec. Its 92 unit tests, six native notice-tool tests, 23 publisher contracts and built-browser acceptance pass. [Publisher run](https://github.com/jjohare/visionGraph/actions/runs/38179004619) and [Pages deployment](https://github.com/DreamLab-AI/knowledgeGraph/actions/runs/38180896856) succeeded; public graph/About routes and notices are verified. |
 | Loom | Main `eef1bec`, shared C3 contracts and registry compiler 0.1.1; 441 tests, Clippy, rustdoc and hosted Rust 1.98 checks passed. ADR-142 remains partial/inactive; no first served activation claimed. |
 
 Released CLI ELF was built with Rust 1.96.1 in the Bookworm image and uses
@@ -45,6 +45,22 @@ the ordinary Linux loader. Its SHA-256 is
 `7b15c2858f1715e561c0889dbaa50164e5a404ee7f8ed1d6cfd9da41daeb1d45`.
 Do not replace it with the local Nix binary. Dependency licence inventories are
 scoped to the exact release assets; see UPSTREAMS and THIRD-PARTY-NOTICES.
+
+The public [graph](https://narrativegoldmine.com/graph/) and
+[About page](https://narrativegoldmine.com/about/) have canonical HTTP 200 routes.
+All four attribution files are served: full VOWL and renderer notices plus
+JavaScript notices and the 99-package runtime inventory. The live inventory's
+SHA-256 matches the exact build, as recorded in the
+[public HTTP receipt](evidence/resume/publisher-live-http.json).
+Independent audits verify all 76 upstream repositories and 97 locked npm
+source archives in that inventory; see the
+[repository](evidence/resume/publisher-runtime-source-links.json) and
+[archive](evidence/resume/publisher-npm-source-archives.json) receipts.
+Fresh public browser acceptance renders 61 nodes and 350 edges, exposes 61
+accessible node controls and supports neighbourhood focus. Cold interaction
+settled in 2,729 ms including the isolation service-worker reload. The
+publisher's docs-only activation receipt is `32c81a222`; the tested runtime
+remains `9cf6cb8`. Its broader corpus-profile migration remains partial.
 
 ## Obsidian evidence
 
