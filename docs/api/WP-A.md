@@ -56,7 +56,10 @@ sequence indentation.
 
 EXP-03 (2026-10-11, visionGraph b5e36abd1): 9,244/9,244 public pages
 round-trip, match an independent yaml-rust2 load, and pass five guarded
-patches each. Run: `just exp03 ../visionGraph/knowledge/pages`.
+patches each. Every one of the 163,645 real entries (maps, sequences of maps,
+flat lists) re-emits and reads back equal; 163,643 re-emit byte-identically,
+so a no-semantic-change rewrite produces an essentially empty diff.
+Run: `just exp03 ../visionGraph/knowledge/pages`.
 
 ## ontomark-model — STABLE
 
@@ -129,5 +132,6 @@ Semantics consumers rely on:
 Corpus run (scratch estate-like spec derived from vocabulary.yaml; the real
 estate profile is WP-C's): 9,244 public pages → 9,244 entities, 0 conflicts,
 references resolved 133,316 / ambiguous 9 / unresolved 20,180 / external 99,
-0.9 s release. Run: `ONTOMARK_CORPUS=… ONTOMARK_PROFILE=spec.json cargo test
+0.9 s release. Including the 42 non-public pages moves unresolved to 20,211,
+so the unresolved figure is not a public-projection effect. Run: `ONTOMARK_CORPUS=… ONTOMARK_PROFILE=spec.json cargo test
 --release -p ontomark-model --test model_corpus -- --nocapture`.

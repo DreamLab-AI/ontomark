@@ -41,6 +41,9 @@ struct Tally {
     footnote_refs: usize,
     footnote_defs: usize,
     recovered_links: usize,
+    entries: usize,
+    emit_fail: usize,
+    emit_byte_identical: usize,
 }
 
 #[test]
@@ -85,6 +88,20 @@ fn exp03_every_public_page() {
             .iter()
             .map(|e| e.wikilinks(&src).iter().filter(|l| l.recovered).count())
             .sum::<usize>();
+        // Emit every real entry (maps, sequences of maps, flat lists) in the
+        // block's style and read it back.
+        for e in &fm.entries {
+            t.entries += 1;
+            let text = ontomark_parse::emit_entry(&e.key, &e.value, &fm.style);
+            if text == e.raw(&src) {
+                t.emit_byte_identical += 1;
+            }
+            let back = Document::parse(format!("---\n{text}---\n"));
+            if back.value(&e.key) != Some(&e.value) {
+                t.emit_fail += 1;
+                note("emit", i, &e.key, &mut first_failures);
+            }
+        }
         let idx = doc.body_index();
         t.body_links += idx.links.len();
         t.footnote_refs += idx.footnote_refs.len();

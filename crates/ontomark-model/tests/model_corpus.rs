@@ -41,7 +41,8 @@ fn model_builds_over_every_public_page() {
         .filter_map(|p| {
             let src = std::fs::read_to_string(p).ok()?;
             let doc = Document::parse(src);
-            (doc.value("public") == Some(&Value::Bool(true))).then(|| {
+            let all = std::env::var("ONTOMARK_ALL_PAGES").is_ok();
+            (all || doc.value("public") == Some(&Value::Bool(true))).then(|| {
                 (
                     DocId::new(p.strip_prefix(&root).unwrap().to_string_lossy()),
                     doc,
@@ -84,8 +85,9 @@ fn model_builds_over_every_public_page() {
     }
     let (res, amb, unres, ext) = m.resolution_counts();
     eprintln!(
-        "model corpus: public docs {}, built in {elapsed:?}",
-        docs.len()
+        "model corpus: docs {} (all pages: {}), built in {elapsed:?}",
+        docs.len(),
+        std::env::var("ONTOMARK_ALL_PAGES").is_ok()
     );
     eprintln!("  documents: {disp:?}");
     eprintln!("  references: resolved {res}, ambiguous {amb}, unresolved {unres}, external {ext}");

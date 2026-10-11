@@ -1,6 +1,7 @@
 //! Acceptance tests for ADR-2015: the four reference states and the
 //! baseline defects (planning/ontology-workspace README, "Baseline ontology
-//! review" 1–8). Every fixture is synthesised inline.
+//! review"): 1, 2, 4, 5, 7 in full; the model half of 3 (Turtle is WP-C) and
+//! of 6 (the reasoner is WP-B). Defect 8 is design-record drift, not code. Every fixture is synthesised inline.
 
 use ontomark_model::{
     codes, CyclePolicy, DeclarativeProfile, Disposition, DocDisposition, DocId, Iri, Kind,
@@ -519,10 +520,10 @@ fn d7_domain_is_not_a_required_field_rule() {
     );
 }
 
-// ---------- defect 8 (status per capability): lifecycle is profile data ----------
+// ---------- lifecycle is profile data (defect 8 is ADR status drift: not WP-A-owned) ----------
 
 #[test]
-fn d8_lifecycle_states_are_declared_by_the_profile_not_assumed() {
+fn lifecycle_states_are_profile_data() {
     let v = Vault::new(&[
         ("Animal.md", &page("Class", "urn:ngm:class:animal", "")),
         ("Draft.md", "---\ntype: Class\nresource: urn:ngm:class:draft\nstatus: draft\nis-a:\n- '[[Animal]]'\n---\n"),
