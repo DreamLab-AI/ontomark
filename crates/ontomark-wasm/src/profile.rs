@@ -1,9 +1,10 @@
 //! Vocabulary profiles: which frontmatter keys carry ontology meaning.
 //!
-//! **Interim.** The normative profiles belong to `ontomark-compile`
-//! (`profiles/estate/`) and the typed model to `ontomark-model`. This module
-//! holds the minimum the plugin needs to index a vault until those crates
-//! publish an in-memory projection; it is deleted when they do (EXP-10).
+//! The normative typed model belongs to `ontomark-model`; compiler 0.1.3
+//! provides an opt-in `model-projection` API. This module retains the engine's
+//! released document-profile semantics. Replacing it requires explicit
+//! generic/estate profile mapping and native/WASM wire parity (EXP-10);
+//! availability of the compiler API alone does not complete that migration.
 //!
 //! Two profiles exist. [`ProfileId::Generic`] is the default and works on any
 //! vault: a page is an ontology entity only when its `type` says so, and only

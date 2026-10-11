@@ -1,0 +1,465 @@
+{
+  "packages": 99,
+  "unique_repos": 76,
+  "results": [
+    {
+      "repo": "DreamLab-AI/ontomark",
+      "ok": true,
+      "canonical": "https://github.com/DreamLab-AI/ontomark",
+      "error": ""
+    },
+    {
+      "repo": "DreamLab-AI/vowl-wasm",
+      "ok": true,
+      "canonical": "https://github.com/DreamLab-AI/vowl-wasm",
+      "error": ""
+    },
+    {
+      "repo": "TanStack/query",
+      "ok": true,
+      "canonical": "https://github.com/TanStack/query",
+      "error": ""
+    },
+    {
+      "repo": "dcastil/tailwind-merge",
+      "ok": true,
+      "canonical": "https://github.com/dcastil/tailwind-merge",
+      "error": ""
+    },
+    {
+      "repo": "facebook/react",
+      "ok": true,
+      "canonical": "https://github.com/react/react",
+      "error": ""
+    },
+    {
+      "repo": "fb55/entities",
+      "ok": true,
+      "canonical": "https://github.com/fb55/entities",
+      "error": ""
+    },
+    {
+      "repo": "inikulin/parse5",
+      "ok": true,
+      "canonical": "https://github.com/inikulin/parse5",
+      "error": ""
+    },
+    {
+      "repo": "justmoon/node-extend",
+      "ok": true,
+      "canonical": "https://github.com/justmoon/node-extend",
+      "error": ""
+    },
+    {
+      "repo": "krisk/Fuse",
+      "ok": true,
+      "canonical": "https://github.com/krisk/Fuse",
+      "error": ""
+    },
+    {
+      "repo": "lukeed/clsx",
+      "ok": true,
+      "canonical": "https://github.com/lukeed/clsx",
+      "error": ""
+    },
+    {
+      "repo": "micromark/micromark",
+      "ok": true,
+      "canonical": "https://github.com/micromark/micromark",
+      "error": ""
+    },
+    {
+      "repo": "micromark/micromark-extension-gfm",
+      "ok": true,
+      "canonical": "https://github.com/micromark/micromark-extension-gfm",
+      "error": ""
+    },
+    {
+      "repo": "micromark/micromark-extension-gfm-autolink-literal",
+      "ok": true,
+      "canonical": "https://github.com/micromark/micromark-extension-gfm-autolink-literal",
+      "error": ""
+    },
+    {
+      "repo": "micromark/micromark-extension-gfm-footnote",
+      "ok": true,
+      "canonical": "https://github.com/micromark/micromark-extension-gfm-footnote",
+      "error": ""
+    },
+    {
+      "repo": "micromark/micromark-extension-gfm-strikethrough",
+      "ok": true,
+      "canonical": "https://github.com/micromark/micromark-extension-gfm-strikethrough",
+      "error": ""
+    },
+    {
+      "repo": "micromark/micromark-extension-gfm-table",
+      "ok": true,
+      "canonical": "https://github.com/micromark/micromark-extension-gfm-table",
+      "error": ""
+    },
+    {
+      "repo": "micromark/micromark-extension-gfm-task-list-item",
+      "ok": true,
+      "canonical": "https://github.com/micromark/micromark-extension-gfm-task-list-item",
+      "error": ""
+    },
+    {
+      "repo": "mrdoob/three.js",
+      "ok": true,
+      "canonical": "https://github.com/mrdoob/three.js",
+      "error": ""
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "ok": true,
+      "canonical": "https://github.com/pmndrs/zustand",
+      "error": ""
+    },
+    {
+      "repo": "rehypejs/rehype-minify",
+      "ok": true,
+      "canonical": "https://github.com/rehypejs/rehype-minify",
+      "error": ""
+    },
+    {
+      "repo": "rehypejs/rehype-raw",
+      "ok": true,
+      "canonical": "https://github.com/rehypejs/rehype-raw",
+      "error": ""
+    },
+    {
+      "repo": "remarkablemark/inline-style-parser",
+      "ok": true,
+      "canonical": "https://github.com/remarkablemark/inline-style-parser",
+      "error": ""
+    },
+    {
+      "repo": "remarkablemark/style-to-js",
+      "ok": true,
+      "canonical": "https://github.com/remarkablemark/style-to-js",
+      "error": ""
+    },
+    {
+      "repo": "remarkablemark/style-to-object",
+      "ok": true,
+      "canonical": "https://github.com/remarkablemark/style-to-object",
+      "error": ""
+    },
+    {
+      "repo": "remarkjs/react-markdown",
+      "ok": true,
+      "canonical": "https://github.com/remarkjs/react-markdown",
+      "error": ""
+    },
+    {
+      "repo": "remarkjs/remark",
+      "ok": true,
+      "canonical": "https://github.com/remarkjs/remark",
+      "error": ""
+    },
+    {
+      "repo": "remarkjs/remark-gfm",
+      "ok": true,
+      "canonical": "https://github.com/remarkjs/remark-gfm",
+      "error": ""
+    },
+    {
+      "repo": "remarkjs/remark-rehype",
+      "ok": true,
+      "canonical": "https://github.com/remarkjs/remark-rehype",
+      "error": ""
+    },
+    {
+      "repo": "remix-run/react-router",
+      "ok": true,
+      "canonical": "https://github.com/remix-run/react-router",
+      "error": ""
+    },
+    {
+      "repo": "sindresorhus/escape-string-regexp",
+      "ok": true,
+      "canonical": "https://github.com/sindresorhus/escape-string-regexp",
+      "error": ""
+    },
+    {
+      "repo": "sindresorhus/is-plain-obj",
+      "ok": true,
+      "canonical": "https://github.com/sindresorhus/is-plain-obj",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/estree-util-is-identifier-name",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/estree-util-is-identifier-name",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/hast-util-from-parse5",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/hast-util-from-parse5",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/hast-util-parse-selector",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/hast-util-parse-selector",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/hast-util-raw",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/hast-util-raw",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/hast-util-to-jsx-runtime",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/hast-util-to-jsx-runtime",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/hast-util-to-parse5",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/hast-util-to-parse5",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/hast-util-whitespace",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/hast-util-whitespace",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/hastscript",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/hastscript",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-find-and-replace",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-find-and-replace",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-from-markdown",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-from-markdown",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-gfm",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-gfm",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-gfm-autolink-literal",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-gfm-autolink-literal",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-gfm-footnote",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-gfm-footnote",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-gfm-strikethrough",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-gfm-strikethrough",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-gfm-table",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-gfm-table",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-gfm-task-list-item",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-gfm-task-list-item",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-phrasing",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-phrasing",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-to-hast",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-to-hast",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-to-markdown",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-to-markdown",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/mdast-util-to-string",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/mdast-util-to-string",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/unist-util-is",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/unist-util-is",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/unist-util-position",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/unist-util-position",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/unist-util-stringify-position",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/unist-util-stringify-position",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/unist-util-visit",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/unist-util-visit",
+      "error": ""
+    },
+    {
+      "repo": "syntax-tree/unist-util-visit-parents",
+      "ok": true,
+      "canonical": "https://github.com/syntax-tree/unist-util-visit-parents",
+      "error": ""
+    },
+    {
+      "repo": "ungap/structured-clone",
+      "ok": true,
+      "canonical": "https://github.com/ungap/structured-clone",
+      "error": ""
+    },
+    {
+      "repo": "unifiedjs/unified",
+      "ok": true,
+      "canonical": "https://github.com/unifiedjs/unified",
+      "error": ""
+    },
+    {
+      "repo": "vfile/vfile",
+      "ok": true,
+      "canonical": "https://github.com/vfile/vfile",
+      "error": ""
+    },
+    {
+      "repo": "vfile/vfile-location",
+      "ok": true,
+      "canonical": "https://github.com/vfile/vfile-location",
+      "error": ""
+    },
+    {
+      "repo": "vfile/vfile-message",
+      "ok": true,
+      "canonical": "https://github.com/vfile/vfile-message",
+      "error": ""
+    },
+    {
+      "repo": "vitejs/vite",
+      "ok": true,
+      "canonical": "https://github.com/vitejs/vite",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/bail",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/bail",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/ccount",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/ccount",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/comma-separated-tokens",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/comma-separated-tokens",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/decode-named-character-reference",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/decode-named-character-reference",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/devlop",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/devlop",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/html-void-elements",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/html-void-elements",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/longest-streak",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/longest-streak",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/markdown-table",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/markdown-table",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/property-information",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/property-information",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/space-separated-tokens",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/space-separated-tokens",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/trim-lines",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/trim-lines",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/trough",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/trough",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/web-namespaces",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/web-namespaces",
+      "error": ""
+    },
+    {
+      "repo": "wooorm/zwitch",
+      "ok": true,
+      "canonical": "https://github.com/wooorm/zwitch",
+      "error": ""
+    }
+  ],
+  "checked_at": "2026-10-11T22:07:55Z",
+  "consumer_source_commit": "9cf6cb87ef72f226b14bcf9a56126e1854683f6b",
+  "inventory_sha256": "ebea8f655b107935d6cffcf497aa0dc9bc7bcb35d1e35a581d1351899dc01ee2"
+}

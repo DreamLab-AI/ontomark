@@ -39,7 +39,7 @@ chmod +x ontomark-x86_64-unknown-linux-gnu
 ./ontomark-x86_64-unknown-linux-gnu --help
 ```
 
-The CLI prerelease implements the estate publication contract. Its `build`, `validate`, `gate`, `conflicts`, `migrate`, `attribute`, `assets` and `body-residue` commands are documented by `--help`. For a general vault, start with the parser/model crates or the Obsidian plugin. The library's generic profile and the CLI's estate compiler have different entry points.
+The CLI prerelease implements the estate publication contract. Its `build`, `validate`, `gate`, `conflicts`, `repair` and `migrate` commands are documented by `--help`. For a general vault, start with the parser/model crates or the Obsidian plugin. The library's generic profile and the CLI's estate compiler have different entry points.
 
 ## Rust crates
 

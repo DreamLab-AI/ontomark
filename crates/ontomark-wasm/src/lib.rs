@@ -2,8 +2,10 @@
 //!
 //! The crate turns a set of Markdown files into an in-memory ontology index,
 //! classifies it in resumable steps, answers local read-only SPARQL, and plans
-//! guarded Markdown patches. It never touches a filesystem, clock or network:
-//! the host supplies file text and applies the patches it approves.
+//! guarded Markdown patches. It never reads a filesystem or makes network
+//! requests: the host supplies file text and applies the patches it approves.
+//! Standard SPARQL functions such as `NOW`, `RAND` and `UUID` can read the
+//! runtime clock or entropy; their results are not deterministic fixtures.
 //!
 //! Everything goes through one JSON request/response protocol,
 //! [`engine::Request`] → [`engine::Response`], so the native API, the
@@ -28,8 +30,9 @@
 //!
 //! Classification is `ontomark-reason` (OWL 2 EL over `whelk-el`) behind the
 //! stepped [`reason::Reasoner`] seam. Modules [`profile`] and [`projection`]
-//! are interim stand-ins for `ontomark-model` and `ontomark-compile`; their
-//! removal criteria are in their module docs.
+//! retain the released engine's document semantics; adopting the compiler's
+//! available typed projection requires the mapping and parity checks described
+//! in their module docs.
 
 pub mod engine;
 pub mod profile;

@@ -62,5 +62,7 @@ the typed model route has separate synthetic migration tests.
 
 Remaining estate migrations include applying the typed projection through a
 normative estate profile, the native bundle's 690 SKOS-only class declarations,
-and other estate consumer replacements. The typed API declares every model class
+other estate consumer replacements, and the remaining `attribute`, `assets`
+and `body-residue` CLI verbs. Those three are not commands in the released CLI.
+The typed API declares every model class
 as `owl:Class`; this does not claim a completed full-corpus native migration.

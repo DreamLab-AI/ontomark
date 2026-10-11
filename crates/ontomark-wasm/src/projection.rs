@@ -1,7 +1,9 @@
 //! Documents → entities, asserted triples and EL axioms.
 //!
-//! **Interim** (see [`crate::profile`]): replaced by `ontomark-model` and the
-//! in-memory projection of `ontomark-compile` once they publish one (EXP-10).
+//! This is the engine's document adapter (see [`crate::profile`]). Compiler
+//! 0.1.3 provides a separate typed in-memory projection. Adopting it here
+//! requires explicit profile mapping and native/WASM wire parity (EXP-10);
+//! the released engine's identity defaults remain unchanged.
 //!
 //! Rules that hold whatever replaces this module:
 //!
