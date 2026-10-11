@@ -47,3 +47,17 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
    under `source scripts/env.sh && cargo test --workspace`, then pushes estate
    repos; VisionClaw via remote `dreamlab-github`, visionGraph via `origin`,
    both after the gates in their `CLAUDE.md`.
+- 18:20 queen: README (estate style), ADR-OM-001 and this log pushed (`3312780`).
+  spec-estate applied D1 to D3 (`1fe342a`). The D4 to D9 message was truncated in
+  transit; resent in three parts. Decisions as sent: D3 archive standalone
+  WasmVOWL; D4 thin AGPL `vault` adapter in VisionClaw for propose/apply/panel;
+  D5 both VisionClaw reasoner paths route through ontomark-reason, closure-only
+  path deleted once EXP-01 passes; D6 explorer TS NGG1 deleted, consumes
+  vowl-wasm re-export, ngg1-3n2e.bin golden gets a loading test; D7 visionGraph
+  Python hygiene scripts become `ontomark lint|migrate|attribute|assets`, then
+  deleted; D8 vowl-wasm markdown-ontology feature deleted; D9 Loom consumes the
+  bundle contract, one IRI function, one generation check. Phase 2 prep: failing
+  consumer tests first on `ontomark/<responsibility>` branches, doc and diagram
+  edits staged per step, `scripts/estate-guard.sh` migration guard. Lesson:
+  SendMessage bodies over about 1,300 characters can truncate; send decisions in
+  parts.
