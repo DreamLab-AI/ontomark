@@ -58,6 +58,76 @@ EXP-03 (2026-10-11, visionGraph b5e36abd1): 9,244/9,244 public pages
 round-trip, match an independent yaml-rust2 load, and pass five guarded
 patches each. Run: `just exp03 ../visionGraph/knowledge/pages`.
 
-## ontomark-model — IN PROGRESS
+## ontomark-model — STABLE
 
-Signatures land here when stable; see the next section revision.
+Owns the typed model (ADR-2015). Depends only on ontomark-parse, indexmap,
+serde, thiserror; builds for wasm32. All public types are serde-serialisable.
+
+```rust
+// Identity
+Iri::parse(s) -> Result<Iri, IriError>        // absolute IRI, verbatim; scheme >= 2 chars
+PrefixMap::standard() /* rdf rdfs owl xsd skos dcterms prov */ .insert(p, ns)
+  .expand("owl:Class" | "urn:x:y") -> Result<Iri, IriError>   // declared prefix wins; else absolute IRI kept
+  .compact(&iri) -> Option<String>
+DocId::new("dir/Note.md")  // "dir/Note"; .name() == "Note"   (document identity, distinct from IRI)
+
+// Kinds
+Kind::{Class, Individual, Property(PropertyKind::{Object, Data, Annotation})}; .owl_iri()
+
+// Profile: estate rules are injected
+trait Profile { id, prefixes, kind(&Document) -> KindDecision{Entity(Kind)|NotOntology|Refused},
+  identity(&Document) -> IdentityDecision{Iri|Missing|Invalid}, label, aliases, is_public,
+  lifecycle(&Document) -> Lifecycle{Declared|Unknown|Absent}, lifecycle_def,
+  predicate(key) -> Option<PredicateDef{key, iri, form, datatype, domain, range, transitive}>,
+  is_reserved(key), reference_candidates(target) -> Vec<Iri> /*default none*/,
+  publication_url(&Iri) -> Option<String> /*default none*/, cycle_policy() -> CyclePolicy }
+PredicateForm::{SubClassOf, ClassAssertion, Existential, ObjectAssertion, DataAssertion,
+  Annotation, Skos(SkosRelation), EquivalentClass, DisjointWith, SameAs, SubPropertyOf}
+ProfileSpec (serde, deny_unknown_fields): id, prefixes, type_key="type", kinds{value->KindSpec},
+  untyped, identity_key="iri", title_key, aliases_key, public_key, lenient_booleans,
+  lifecycle_key="status", lifecycle[LifecycleDef{id, reasoned, published}],
+  predicates{key->PredicateSpec{iri, form, datatype?, domain?, range?, transitive}},
+  curie_keys=true, reserved[], reference_namespaces[], publication?{namespace, base_url, suffix},
+  cycle_policy{allow|warn|refuse}
+DeclarativeProfile::new(spec)? ; DeclarativeProfile::generic()   // "generic/1", no estate rules
+
+// Model
+let m = Model::build(&profile, docs /* IntoIterator<(DocId, &Document)> */);
+m.entities: IndexMap<Iri, Entity{iri, kind, document, label, aliases, lifecycle, public,
+                                publication_url, statements, unmapped}>
+m.documents: IndexMap<DocId, DocumentRecord{id, digest, disposition, public}>
+  DocDisposition::{Entity(Iri), NotOntology, NoIdentity, Refused(String), IdentityConflict(Iri)}
+m.conflicts: BTreeMap<Iri, Vec<DocId>>      // duplicate claims: no entity, no first-wins
+m.diagnostics: Vec<Diagnostic{severity, code /* codes::* */, document, message}>
+m.policy: Vec<PolicyFinding{code: "SUBCLASS_CYCLE", severity, members}>  // policy, not logic
+Statement{predicate: Iri, form: StatementForm, object: Object::{Reference(Reference)|Literal(Literal)},
+          disposition: Disposition::{Supported|PreservedNotReasoned(why)|Rejected(why)},
+          origin: Origin{document, key, item, span}}
+Reference{written, link: Option<Wikilink>, state: Resolution, document: Option<DocId>}
+Resolution::{Resolved(Iri), Ambiguous(Vec<Iri>), Unresolved, External(Iri)}
+m.resolve_with(&profile, target) -> Reference;  m.entity_of(&DocId);  m.resolution_counts()
+```
+
+Semantics consumers rely on:
+
+- One authored value, one statement, one form. `Existential` on a class is
+  `C ⊑ ∃P.D`; the same predicate on an individual is an object assertion. No
+  second direct triple is implied (defect 5). WP-C decides Turtle shape from
+  `form` + `disposition` only.
+- `Supported` = in the EL fragment with a resolved, kind-compatible target.
+  Annotation, SKOS, data, external, unresolved, ambiguous and non-reasoned
+  lifecycle → `PreservedNotReasoned`; kind mismatches → `Rejected`. WP-B feeds
+  only `Supported` statements to Whelk.
+- Resolution never guesses: a CURIE/IRI is an identity (`Resolved` if declared,
+  else `External`); names (label, alias, note name, path, profile candidates)
+  give exactly one → `Resolved`, several → `Ambiguous`, none → `Unresolved`.
+  IRI tails are never indexed.
+- Body wikilinks never become statements; frontmatter keys the profile does
+  not declare are kept in `Entity::unmapped` with an `UNMAPPED_KEY` info.
+- Typed pages without an identity header get `NoIdentity`; nothing is minted.
+
+Corpus run (scratch estate-like spec derived from vocabulary.yaml; the real
+estate profile is WP-C's): 9,244 public pages → 9,244 entities, 0 conflicts,
+references resolved 133,316 / ambiguous 9 / unresolved 20,180 / external 99,
+0.9 s release. Run: `ONTOMARK_CORPUS=… ONTOMARK_PROFILE=spec.json cargo test
+--release -p ontomark-model --test model_corpus -- --nocapture`.
