@@ -161,10 +161,12 @@ pub fn project_model(model: &Model, profile: &dyn Profile, scope: Scope) -> Proj
                 .chain(std::iter::once(e.document.as_str().to_owned()))
         })
         .filter(|s| !s.is_empty())
-        .map(|s| s.to_lowercase())
+        // Match the model resolver's case comparison, including expanding
+        // sharp-s/ligature uppercase mappings and final-sigma variants.
+        .map(|s| s.to_uppercase().to_lowercase())
         .collect();
     let private_text = |s: &str| {
-        let text = s.to_lowercase();
+        let text = s.to_uppercase().to_lowercase();
         tokens.iter().any(|t| text.contains(t))
     };
     let mut graph = Graph::new();

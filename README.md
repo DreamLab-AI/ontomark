@@ -51,7 +51,7 @@ Each crate has its own README and inline rustdoc, including executable examples.
 | [ontomark-model](crates/ontomark-model) | 0.1.0 | Classes, individuals, properties, IRI resolution and pluggable profiles. |
 | [whelk-el](crates/whelk-el) | 0.1.1 | Portable saturation engine derived from Whelk, with optional native parallelism. |
 | [ontomark-reason](crates/ontomark-reason) | 0.1.1 | Supported-profile checking, explicit refusal reasons and cancellable classification. |
-| [ontomark-compile](crates/ontomark-compile) | 0.1.2 | Turtle, JSON-LD, SHACL, PROV-O, public projections and typed bundle readers. |
+| [ontomark-compile](crates/ontomark-compile) | 0.1.3 | Turtle, JSON-LD, SHACL, PROV-O, public projections and typed bundle readers. |
 | [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | Shared binary graph encoder and zero-copy reader. |
 | [ontomark-wasm](crates/ontomark-wasm) | Release asset | Worker-friendly index, update, classify, query and patch protocol. |
 | [ontomark-cli](crates/ontomark-cli) | Release asset | Native publication commands. |

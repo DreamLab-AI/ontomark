@@ -270,3 +270,48 @@ fn rejected_and_unresolved_assertions_do_not_become_an_unsupported_success() {
     assert!(!p.classify().is_complete());
     assert_eq!(p.omissions.rejected_statements, 1);
 }
+
+#[test]
+fn public_literals_withhold_private_unicode_case_variants_and_keep_controls() {
+    let mut spec = DeclarativeProfile::generic().spec().clone();
+    spec.predicates.insert(
+        "note".into(),
+        ontomark_model::PredicateSpec {
+            iri: "urn:description".into(),
+            form: ontomark_model::PredicateForm::Annotation,
+            datatype: None,
+            domain: None,
+            range: None,
+            transitive: false,
+        },
+    );
+    let profile = DeclarativeProfile::new(spec).unwrap();
+    let hidden = Document::parse(
+        "---\ntype: Class\niri: urn:hidden\npublic: false\naliases: [StraßeCanary, ΟΣCanary]\n---\n",
+    );
+    let visible = Document::parse(
+        "---\ntype: Class\niri: urn:visible\npublic: true\nnote: ['Meet STRASSECanary', 'Meet οςcanary', 'Public control remains']\n---\n",
+    );
+    let model = Model::build(
+        &profile,
+        [
+            (DocId::new("restricted"), &hidden),
+            (DocId::new("visible"), &visible),
+        ],
+    );
+    let authoring = triples(&project_model(&model, &profile, Scope::Authoring));
+    assert!(authoring.contains("STRASSECanary"));
+    assert!(authoring.contains("οςcanary"));
+    let public = project_model(&model, &profile, Scope::Public);
+    let text = triples(&public);
+    assert!(
+        !text.contains("STRASSECanary"),
+        "private sharp-s case variant escaped"
+    );
+    assert!(
+        !text.contains("οςcanary"),
+        "private final-sigma case variant escaped"
+    );
+    assert!(text.contains("Public control remains"));
+    assert_eq!(public.omissions.withheld_values, 2);
+}

@@ -11,7 +11,7 @@ Ontomark builds on the work of these upstream developers. Their licences remain 
 ## Current crate releases
 
 The packages published from source `340b8a0d3e5828dd3959dd115e7a0e67268de5f5`
-are `whelk-el` 0.1.1, `ontomark-reason` 0.1.1 and `ontomark-compile` 0.1.2.
+are `whelk-el` 0.1.1, `ontomark-reason` 0.1.1 and `ontomark-compile` 0.1.3.
 The reasoner requires Whelk 0.1.1 or later; the compiler requires reasoner 0.1.1
 or later. These minimums select the package carrying the corrected upstream
 attribution and preserved Scala BSD notice. Parser, model and NGG1 remain at

@@ -1,0 +1,43 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+   Doc-tests ontomark_compile
+
+running 36 tests
+test crates/ontomark-compile/src/bundle.rs - bundle (line 14) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies (line 47) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies::convert (line 78) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies::fix_images (line 645) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies::fix_macros (line 713) ... ok
+test crates/ontomark-compile/src/check/bodies.rs - check::bodies::same_but_trailing_whitespace (line 748) ... ok
+test crates/ontomark-compile/src/check/repair.rs - check::repair (line 42) ... ok
+test crates/ontomark-compile/src/input/consistency.rs - input::consistency (line 18) ... ok
+test crates/ontomark-compile/src/input/consistency.rs - input::consistency::class_key (line 56) ... ok
+test crates/ontomark-compile/src/input/consistency.rs - input::consistency::is_taxonomic (line 75) ... ok
+test crates/ontomark-compile/src/input/consistency.rs - input::consistency::whelk_inconsistent (line 137) ... ok
+test crates/ontomark-compile/src/input/definition.rs - input::definition (line 37) ... ok
+test crates/ontomark-compile/src/input/definition.rs - input::definition::refusal_code (line 106) ... ok
+test crates/ontomark-compile/src/input/frontmatter.rs - input::frontmatter::Frontmatter::sort_canonical (line 293) ... ok
+test crates/ontomark-compile/src/input/frontmatter.rs - input::frontmatter::Frontmatter::wikilinks (line 266) ... ok
+test crates/ontomark-compile/src/input/frontmatter.rs - input::frontmatter::Wikilink::parse (line 45) ... ok
+test crates/ontomark-compile/src/input/frontmatter.rs - input::frontmatter::split (line 109) ... ok
+test crates/ontomark-compile/src/input/page.rs - input::page::Page::leading_paragraph (line 249) ... ok
+test crates/ontomark-compile/src/input/promotion.rs - input::promotion::apply (line 205) ... ok
+test crates/ontomark-compile/src/input/secrets.rs - input::secrets (line 13) ... ok
+test crates/ontomark-compile/src/input/slug.rs - input::slug::iri_for (line 80) ... ok
+test crates/ontomark-compile/src/input/slug.rs - input::slug::ref_slug (line 41) ... ok
+test crates/ontomark-compile/src/input/slug.rs - input::slug::slugify (line 23) ... ok
+test crates/ontomark-compile/src/input/slug.rs - input::slug::target_slug (line 60) ... ok
+test crates/ontomark-compile/src/input/vocabulary.rs - input::vocabulary (line 24) ... ok
+test crates/ontomark-compile/src/input/vocabulary.rs - input::vocabulary::Vocabulary::existential_property (line 731) ... ok
+test crates/ontomark-compile/src/input/vocabulary.rs - input::vocabulary::Vocabulary::transitive_in_closure (line 797) ... ok
+test crates/ontomark-compile/src/json.rs - json::to_compact (line 124) ... ok
+test crates/ontomark-compile/src/json.rs - json::to_default_ascii (line 198) ... ok
+test crates/ontomark-compile/src/json.rs - json::to_default_utf8 (line 220) ... ok
+test crates/ontomark-compile/src/json.rs - json::to_indented (line 146) ... ok
+test crates/ontomark-compile/src/jsonld.rs - jsonld (line 56) ... ok
+test crates/ontomark-compile/src/migrate/m0001.rs - migrate::m0001 (line 17) ... ok
+test crates/ontomark-compile/src/profile.rs - profile (line 14) ... ok
+test crates/ontomark-compile/src/projection.rs - projection (line 8) ... ok
+test crates/ontomark-compile/src/shacl.rs - shacl (line 131) ... ok
+
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.72s
+

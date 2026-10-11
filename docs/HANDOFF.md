@@ -16,13 +16,13 @@ authoring scope, with privacy omissions and unsupported-profile refusals.
 It does not silently change the legacy estate CLI semantics.
 
 Published crates include `whelk-el` 0.1.1, `ontomark-reason` 0.1.1,
-`ontomark-compile` 0.1.2 and `ontomark-ngg1` 0.1.0. The corrected Whelk
+`ontomark-compile` 0.1.3 and `ontomark-ngg1` 0.1.0. The corrected Whelk
 packages preserve the Rust MIT and original Scala BSD notices. Historical
 published versions and release assets remain immutable.
 
 Ontomark’s locked workspace declares Rust 1.89. Native tests, Clippy, strict rustdoc,
 WASM builds and complete-history secret scanning pass in hosted core CI at
-`7fd8ae2` (run `38175300206`). Compiler all/no-default-feature tests, opt-in
+`f2b2598` (run `38176144759`). Compiler all/no-default-feature tests, opt-in
 projection WASM compilation and locked registry package verification passed
 separately. The complete committed corpus comparison reports zero differences
 over 32 artefact lines and 12 command outputs. Its explicit compatibility
@@ -81,3 +81,7 @@ Build targets and temporary executables belong under the roomy
 `/home/devuser/workspace/project` mount. `/tmp` is suitable for logs/data but
 is mounted without execution permission. Stream archives to host Docker;
 container bind paths do not address the edited container filesystem.
+
+## Typed projection privacy correction
+
+Compiler 0.1.3 corrects private literal filtering for Unicode case variants, using the model resolver’s comparison rule. Sharp-s and final-sigma canaries failed before the fix; authoring and unrelated-public-value controls pass afterwards. All 413 compiler unit tests and integration suites pass, including 10 typed projection cases; 36 doctests, strict Clippy/rustdoc and wasm32 compilation pass. An initial doctest link failure came from the full workspace temporary filesystem; rerunning those doctests with the roomy executable TMPDIR passed.

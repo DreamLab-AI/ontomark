@@ -9,7 +9,7 @@ Loom and other readers can disable the classifier dependency:
 
 ```toml
 [dependencies]
-ontomark-compile = { version = "0.1.2", default-features = false }
+ontomark-compile = { version = "0.1.3", default-features = false }
 ```
 
 ```rust
@@ -67,3 +67,7 @@ Whelk package with corrected upstream attribution and its Scala BSD notice.
 The extraction's relicensing grant and exclusions are recorded in the
 repository's `NOTICE`. Licensed under MIT OR Apache-2.0; governance posting
 and Nostr signing remain outside this crate.
+
+### Public text case comparison
+
+Version 0.1.3 makes private-text filtering use the same Unicode case comparison as model reference resolution. Public literals containing `STRASSE` for a private `Straße` alias, or a final-sigma spelling of a private Greek alias, are withheld. Authoring projections retain those values; unrelated public values remain. The regression covers both controls and identifier-free omission counts. The legacy CLI path is unchanged.
