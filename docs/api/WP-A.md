@@ -153,4 +153,4 @@ so the unresolved figure is not a public-projection effect. Run: `ONTOMARK_CORPU
 | Gate | Status |
 |---|---|
 | Cross-vendor evidence audit (Codex, `gpt-6-astra`, EDD step 4) | **NOT RUN, pending.** On 2026-10-11, `codex exec` exited with no output (refresh token expired, reproduced by team-lead). Re-run on this branch once `codex login` is restored. |
-| Same-family adversarial review (Claude, `code-reviewer`) | Degraded and supplementary. It does not substitute for the Codex audit. |
+| Same-family adversarial review (Claude Opus, `code-reviewer`, at a55f80c) | **Degraded and supplementary.** It does not substitute for the Codex audit. It confirmed 5 defects plus 6 minor ones by running falsifiers, and all 11 are fixed with regression tests (`ontomark-parse/tests/review_regressions.rs`, plus 3 tests in `ontomark-model/tests/adr2015.rs`). Not falsified: lossless tiling (C1), the char-to-byte span mapping, digest and lock guards, the emitter on about 80 adversarial strings, IRI-tail isolation, and one form plus one disposition per statement. |

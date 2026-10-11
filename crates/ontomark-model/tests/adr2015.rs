@@ -688,3 +688,133 @@ fn minting_is_explicit_single_sourced_and_collision_safe() {
         DocDisposition::NoIdentity
     );
 }
+
+// ---------- regressions from the 2026-10-11 adversarial review ----------
+
+fn generic_page(ty: &str, iri: &str, extra: &str) -> String {
+    format!("---\ntype: {ty}\niri: {iri}\n{extra}---\n")
+}
+
+fn only_statement(m: &Model, subject: &str) -> (StatementForm, Disposition) {
+    let st = &m.entities[&iri(subject)].statements;
+    assert_eq!(st.len(), 1, "{st:?}");
+    (st[0].form, st[0].disposition.clone())
+}
+
+#[test]
+fn sub_property_of_needs_the_same_property_kind_and_never_annotation() {
+    let v = Vault::new(&[
+        (
+            "P.md",
+            &generic_page(
+                "DatatypeProperty",
+                "https://ex.org/P",
+                "rdfs:subPropertyOf: ['[[Q]]']\n",
+            ),
+        ),
+        (
+            "Q.md",
+            &generic_page("ObjectProperty", "https://ex.org/Q", ""),
+        ),
+        (
+            "R.md",
+            &generic_page(
+                "ObjectProperty",
+                "https://ex.org/R",
+                "rdfs:subPropertyOf: ['[[Q]]']\n",
+            ),
+        ),
+        (
+            "A.md",
+            &generic_page(
+                "AnnotationProperty",
+                "https://ex.org/A",
+                "rdfs:subPropertyOf: ['[[B]]']\n",
+            ),
+        ),
+        (
+            "B.md",
+            &generic_page("AnnotationProperty", "https://ex.org/B", ""),
+        ),
+    ]);
+    let m = v.model(&DeclarativeProfile::generic());
+    assert!(matches!(
+        only_statement(&m, "https://ex.org/P").1,
+        Disposition::Rejected(_)
+    ));
+    assert_eq!(
+        only_statement(&m, "https://ex.org/R").1,
+        Disposition::Supported
+    );
+    assert!(matches!(
+        only_statement(&m, "https://ex.org/A").1,
+        Disposition::PreservedNotReasoned(_)
+    ));
+}
+
+#[test]
+fn a_colon_target_is_a_name_first_when_one_entity_carries_it() {
+    let v = Vault::new(&[
+        (
+            "A.md",
+            &generic_page("Class", "https://ex.org/A", "aliases: ['Foo:Bar']\n"),
+        ),
+        (
+            "B.md",
+            &generic_page(
+                "Class",
+                "https://ex.org/B",
+                "rdfs:subClassOf: ['[[Foo:Bar]]']\n",
+            ),
+        ),
+    ]);
+    let m = v.model(&DeclarativeProfile::generic());
+    let p = DeclarativeProfile::generic();
+    assert_eq!(
+        m.resolve_with(&p, "Foo:Bar").state,
+        Resolution::Resolved(iri("https://ex.org/A"))
+    );
+    // With no entity of that name, an IRI-shaped target is still External.
+    assert_eq!(
+        m.resolve_with(&p, "Baz:Qux").state,
+        Resolution::External(iri("Baz:Qux"))
+    );
+    assert_eq!(
+        only_statement(&m, "https://ex.org/B").1,
+        Disposition::Supported
+    );
+}
+
+#[test]
+fn a_conflicted_identity_never_resolves() {
+    let v = Vault::new(&[
+        ("C1.md", &generic_page("Class", "https://ex.org/C", "")),
+        ("C2.md", &generic_page("Class", "https://ex.org/C", "")),
+        (
+            "D.md",
+            &generic_page("Class", "https://ex.org/D", "rdfs:subClassOf: ['[[C1]]']\n"),
+        ),
+    ]);
+    let m = v.model(&DeclarativeProfile::generic());
+    let p = DeclarativeProfile::generic();
+    for target in ["C1", "https://ex.org/C"] {
+        let r = m.resolve_with(&p, target);
+        assert_eq!(
+            r.state,
+            Resolution::Ambiguous(vec![iri("https://ex.org/C")]),
+            "{target}"
+        );
+    }
+    // Every Resolved state names an entity.
+    for e in m.entities.values() {
+        for s in &e.statements {
+            if let Some(Resolution::Resolved(t)) = s.object.resolution() {
+                assert!(m.entities.contains_key(t), "{t} resolved but has no entity");
+            }
+        }
+    }
+    assert!(matches!(
+        only_statement(&m, "https://ex.org/D").1,
+        Disposition::PreservedNotReasoned(_)
+    ));
+}

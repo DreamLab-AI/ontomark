@@ -8,7 +8,7 @@ use ontomark_parse::{Document, FrontmatterState, SourceDigest, Span, Value, Wiki
 use serde::{Deserialize, Serialize};
 
 use crate::iri::{Iri, PrefixMap};
-use crate::kind::Kind;
+use crate::kind::{Kind, PropertyKind};
 use crate::policy;
 use crate::profile::{
     CyclePolicy, IdentityDecision, KindDecision, Lifecycle, PredicateForm, Profile, SkosRelation,
@@ -65,7 +65,8 @@ impl fmt::Display for DocId {
 pub enum Resolution {
     /// Exactly one entity.
     Resolved(Iri),
-    /// Several entities match; sorted.
+    /// Several entities match (sorted), or one IRI that several documents
+    /// claim (a one-element list): either way, no single referent.
     Ambiguous(Vec<Iri>),
     /// Nothing matches.
     Unresolved,
@@ -675,13 +676,18 @@ impl Model {
     /// Resolve a reference target (a wikilink target, CURIE, IRI or name)
     /// against this model.
     ///
-    /// 1. A declared-prefix CURIE or an absolute IRI is an identity: the
-    ///    entity that has it ([`Resolution::Resolved`]), else
-    ///    [`Resolution::External`].
-    /// 2. Otherwise every entity whose label, alias or note name equals the
-    ///    target (case-insensitive), whose document path equals it, or whose
-    ///    IRI is one of the profile's candidates for it, is a candidate.
-    ///    One candidate resolves; several are ambiguous; none is unresolved.
+    /// Candidates are every entity whose label, alias or note name equals the
+    /// target (case-insensitive), whose document path equals it, whose IRI
+    /// is one of the profile's candidates for it, or (when the target reads
+    /// as a declared-prefix CURIE or absolute IRI) whose IRI it is.
+    ///
+    /// - one candidate claimed by one document: [`Resolution::Resolved`];
+    /// - several candidates, or one IRI several documents claim:
+    ///   [`Resolution::Ambiguous`];
+    /// - none, and the target reads as an IRI: [`Resolution::External`];
+    /// - none otherwise: [`Resolution::Unresolved`].
+    ///
+    /// So `Resolved` always names a key of [`Model::entities`].
     ///
     /// IRI tails are never indexed: `urn:a:x` and `https://b/x` do not meet
     /// on `x`.
@@ -694,17 +700,18 @@ impl Model {
             state,
             document,
         };
-        if t.contains(':') && !t.contains(char::is_whitespace) {
-            if let Ok(iri) = self.prefixes.expand(t) {
-                return if self.claimed.contains(&iri) {
-                    mk(Resolution::Resolved(iri), None)
-                } else {
-                    mk(Resolution::External(iri), None)
-                };
-            }
-        }
+        // A target that reads as a CURIE or IRI is one candidate among the
+        // names, not a shortcut past them: `[[Foo:Bar]]` may be an alias.
+        let as_iri = (t.contains(':') && !t.contains(char::is_whitespace))
+            .then(|| self.prefixes.expand(t).ok())
+            .flatten();
         let key = t.to_lowercase();
         let mut cands: BTreeSet<Iri> = self.names.get(&key).cloned().unwrap_or_default();
+        if let Some(iri) = &as_iri {
+            if self.claimed.contains(iri) {
+                cands.insert(iri.clone());
+            }
+        }
         let mut doc_without_identity = None;
         if let Some(id) = self.paths.get(&key) {
             match self.claims.get(id) {
@@ -720,11 +727,19 @@ impl Model {
             }
         }
         match cands.len() {
-            0 => mk(Resolution::Unresolved, doc_without_identity),
-            1 => mk(
-                Resolution::Resolved(cands.into_iter().next().expect("one")),
-                None,
-            ),
+            0 => match as_iri {
+                Some(iri) => mk(Resolution::External(iri), None),
+                None => mk(Resolution::Unresolved, doc_without_identity),
+            },
+            1 => {
+                let iri = cands.into_iter().next().expect("one");
+                // Several documents claim it: no single entity to resolve to.
+                if self.conflicts.contains_key(&iri) {
+                    mk(Resolution::Ambiguous(vec![iri]), None)
+                } else {
+                    mk(Resolution::Resolved(iri), None)
+                }
+            }
             _ => mk(Resolution::Ambiguous(cands.into_iter().collect()), None),
         }
     }
@@ -869,9 +884,19 @@ fn shape(
             Reject("a literal cannot be the object of a logical axiom".into()),
         );
     };
+    if sf == StatementForm::SubPropertyOf && subject == Kind::Property(PropertyKind::Annotation) {
+        return (
+            sf,
+            Keep("annotation sub-properties are not logical axioms".into()),
+        );
+    }
     match &r.state {
         Resolution::Resolved(iri) => match (kinds.get(iri), obj_need) {
             (None, _) => (sf, Keep("target identity is conflicted".into())),
+            (Some(k), _) if sf == StatementForm::SubPropertyOf && *k != subject => (
+                sf,
+                Reject(format!("a {subject:?} cannot be a sub-property of a {k:?}")),
+            ),
             (Some(k), Some(ok)) if !ok(*k) => (sf, Reject(format!("{sf:?} target is a {k:?}"))),
             _ => (sf, Supported),
         },

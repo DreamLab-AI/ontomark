@@ -109,7 +109,8 @@ fn inline(v: &Value) -> String {
         Value::Bool(b) => b.to_string(),
         Value::Int(i) => i.to_string(),
         Value::Float(raw) => {
-            if matches!(resolve_plain(raw), Value::Float(_)) {
+            // `_` separators are YAML 1.1 only; the reader keeps them as text.
+            if !raw.contains('_') && matches!(resolve_plain(raw), Value::Float(_)) {
                 raw.clone()
             } else {
                 double_quoted(raw)
@@ -141,6 +142,10 @@ fn plain_safe(s: &str) -> bool {
         return false;
     }
     if "-?:,[]{}#&*!|>'\"%@`".contains(first) {
+        return false;
+    }
+    // Document markers: at column 0 (a key) they would end the document.
+    if s.starts_with("---") || s.starts_with("...") {
         return false;
     }
     if s.contains(": ") || s.contains(" #") || s.ends_with(':') {

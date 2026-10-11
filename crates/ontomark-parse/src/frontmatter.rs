@@ -247,6 +247,16 @@ pub(crate) fn parse_block(source: &str, open: Span, content: Span, close: Span) 
             ..BlockStyle::default()
         },
     };
+    // A `...` document-end marker would end the YAML stream mid-block: the
+    // bytes after it are not part of any entry. Keep them, but lock the block.
+    if text
+        .split('\n')
+        .map(|l| l.trim_end_matches('\r'))
+        .any(|l| l == "..." || l.starts_with("... ") || l.starts_with("...\t"))
+    {
+        fm.state = FrontmatterState::Unsupported("document-end marker `...` in frontmatter".into());
+        return fm;
+    }
     match read_events(text) {
         Ok(Read::Empty) => {
             if !text.is_empty() {
@@ -513,8 +523,10 @@ fn line_start_of(text: &str, at: usize) -> usize {
 }
 
 /// Pull `end` back over trailing blank lines and column-0 comment lines that
-/// sit between `start` and `end`, returning the new end.
-fn trim_trailing_trivia(text: &str, start: usize, end: usize) -> usize {
+/// sit between `start` and `end`, returning the new end. With `keep` (a
+/// keep-chomped block scalar, `|+` or `>+`) trailing blank lines are value
+/// content, so trimming stops at the first blank line.
+fn trim_trailing_trivia(text: &str, start: usize, end: usize, keep: bool) -> usize {
     let mut cut = end;
     loop {
         if cut <= start {
@@ -527,7 +539,7 @@ fn trim_trailing_trivia(text: &str, start: usize, end: usize) -> usize {
             return cut;
         }
         let line = text[prev_line_start..cut].trim_end_matches(['\n', '\r']);
-        if line.trim().is_empty() || line.starts_with('#') {
+        if (line.trim().is_empty() && !keep) || line.starts_with('#') {
             cut = prev_line_start;
         } else {
             return cut;
@@ -553,7 +565,7 @@ fn build_entries(fm: &mut Frontmatter, source: &str, content: Span, raw: Vec<Raw
     let mut style_map: Option<usize> = None;
     for (i, r) in raw.iter().enumerate() {
         let next_start = raw.get(i + 1).map_or(text.len(), |n| n.key_at);
-        let end = trim_trailing_trivia(text, r.key_at, next_start);
+        let end = trim_trailing_trivia(text, r.key_at, next_start, keep_chomped(text, r.key_at));
         if r.key_at > cursor {
             fm.gaps.push(Span::new(base + cursor, base + r.key_at));
         }
@@ -668,6 +680,22 @@ fn item_spans(text: &str, item_at: &[usize], entry_end: usize) -> Vec<Span> {
         out.push(Span::new(at, at + trimmed.len()));
     }
     out
+}
+
+/// `true` when the entry starting at `key_at` holds a keep-chomped block
+/// scalar: its header (after `key:`) is `|` or `>` with a `+` indicator.
+fn keep_chomped(text: &str, key_at: usize) -> bool {
+    let line_end = text[key_at..].find('\n').map_or(text.len(), |i| key_at + i);
+    let rest = &text[key_end_or(text, key_at, line_end)..line_end];
+    let header = rest.trim_start_matches(':').trim();
+    let header = header.split(" #").next().unwrap_or("").trim_end();
+    (header.starts_with('|') || header.starts_with('>'))
+        && header[1..].chars().all(|c| c.is_ascii_digit() || c == '+')
+        && header.contains('+')
+}
+
+fn key_end_or(text: &str, key_at: usize, line_end: usize) -> usize {
+    key_token_end(text, key_at).min(line_end)
 }
 
 #[cfg(test)]

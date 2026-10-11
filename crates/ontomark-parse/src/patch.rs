@@ -232,6 +232,10 @@ pub enum PatchError {
 
 struct Planned {
     op: usize,
+    /// Tie-break for insertions at the same byte: an insertion after an
+    /// anchor (0) precedes other key edits (1), which precede body edits (2).
+    /// This matches the key order the plan predicts.
+    rank: u8,
     range: Span,
     text: String,
 }
@@ -258,7 +262,7 @@ impl Document {
         let src = self.source();
         let (planned, keys, set_values) = self.plan(patch)?;
         let mut planned = planned;
-        planned.sort_by_key(|p| (p.range.start, p.range.end, p.op));
+        planned.sort_by_key(|p| (p.range.start, p.range.end, p.rank, p.op));
         for w in planned.windows(2) {
             let (a, b) = (&w[0], &w[1]);
             let overlap = a.range.end > b.range.start
@@ -335,6 +339,17 @@ impl Document {
         let mut new_block: Vec<(usize, String)> = Vec::new();
         let mut after: Vec<String> = Vec::new();
         let mut starts = 0usize;
+        // Keys this patch removes: an insertion may not anchor on one, in
+        // whichever order the two ops are written.
+        let removed: Vec<(&str, usize)> = patch
+            .ops
+            .iter()
+            .enumerate()
+            .filter_map(|(i, o)| match o {
+                PatchOp::Remove { key } => Some((key.as_str(), i)),
+                _ => None,
+            })
+            .collect();
         for (i, op) in patch.ops.iter().enumerate() {
             match op {
                 PatchOp::Set {
@@ -358,6 +373,7 @@ impl Document {
                         if &e.value != value {
                             planned.push(Planned {
                                 op: i,
+                                rank: 1,
                                 range: e.span,
                                 text,
                             });
@@ -368,6 +384,9 @@ impl Document {
                         Placement::End => f.content.end,
                         Placement::Start => f.content.start,
                         Placement::After(anchor) => {
+                            if let Some((_, j)) = removed.iter().find(|(k, _)| *k == anchor) {
+                                return Err(PatchError::Overlap(i.min(*j), i.max(*j)));
+                            }
                             let a = f
                                 .get(anchor)
                                 .ok_or_else(|| PatchError::AnchorNotFound(anchor.clone()))?;
@@ -376,11 +395,12 @@ impl Document {
                             let pos = order
                                 .iter()
                                 .position(|k| k == anchor)
-                                .unwrap_or(order.len());
+                                .ok_or_else(|| PatchError::AnchorNotFound(anchor.clone()))?;
                             order.insert(pos + 1 + prior, key.clone());
                             after.push(anchor.clone());
                             planned.push(Planned {
                                 op: i,
+                                rank: 0,
                                 range: Span::new(a.span.end, a.span.end),
                                 text,
                             });
@@ -396,6 +416,7 @@ impl Document {
                     }
                     planned.push(Planned {
                         op: i,
+                        rank: 1,
                         range: Span::new(at, at),
                         text,
                     });
@@ -410,6 +431,7 @@ impl Document {
                         order.retain(|k| k != key);
                         planned.push(Planned {
                             op: i,
+                            rank: 1,
                             range: e.span,
                             text: String::new(),
                         });
@@ -438,6 +460,7 @@ impl Document {
                     if expected != replacement {
                         planned.push(Planned {
                             op: i,
+                            rank: 2,
                             range: *range,
                             text: replacement.clone(),
                         });
@@ -456,6 +479,7 @@ impl Document {
             let at = self.body_span().start;
             planned.push(Planned {
                 op: new_block[0].0,
+                rank: 1,
                 range: Span::new(at, at),
                 text,
             });
@@ -490,6 +514,27 @@ impl Document {
             return fail("bytes after the last edit differ".into());
         }
         preserved += old_src.len() - oc;
+        // 1b. Every edit stays on its own side of the frontmatter/body
+        // boundary, and only key edits move that boundary. This is what stops
+        // a body edit from writing frontmatter, with or without key ops.
+        let new_body = new.body_span().start;
+        let mut delta: isize = 0;
+        for e in edits {
+            let body_op = matches!(patch.ops[e.op], PatchOp::ReplaceBody { .. });
+            if body_op {
+                if e.after.start < new_body {
+                    return fail(format!("body edit {} landed in the frontmatter", e.op));
+                }
+            } else {
+                if e.after.end > new_body {
+                    return fail(format!("key edit {} landed in the body", e.op));
+                }
+                delta += e.after.len() as isize - e.before.len() as isize;
+            }
+        }
+        if self.body_span().start as isize + delta != new_body as isize {
+            return fail("the body start moved by more than the key edits".into());
+        }
         // 5. Frontmatter presence: only a Set on a page without one creates it.
         let creates =
             self.frontmatter().is_none() && keys.as_ref().is_some_and(|k| !k.order.is_empty());
@@ -560,7 +605,7 @@ impl Document {
 }
 
 fn check_key(key: &str) -> Result<(), PatchError> {
-    if key.is_empty() || key.contains(['\n', '\r']) {
+    if key.contains(['\n', '\r']) {
         return Err(PatchError::InvalidKey(key.to_owned()));
     }
     Ok(())
