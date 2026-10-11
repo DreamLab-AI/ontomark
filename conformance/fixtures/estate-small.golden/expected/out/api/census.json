@@ -1,0 +1,14 @@
+{
+  "policy_version": 1,
+  "public_pages": 52,
+  "non_public_pages": 1,
+  "rejected": 0,
+  "excluded": 0,
+  "parsed": 53,
+  "counts": {
+    "included_private": 1,
+    "included_public": 52,
+    "input_files": 53
+  },
+  "balanced": true
+}

@@ -1,0 +1,522 @@
+# ontology/vocabulary.yaml — the governed vocabulary of the visionGraph corpus.
+#
+# Contract C1 of docs/engineering/sovereign-corpus-contracts.md (VisionFlow).
+# Derived from docs/fence-census-2026-09-22.md, which measured every json-ld
+# fence and every `key:: value` line in the corpus. Every relation key below
+# occurs in the corpus; no key below is absent from it.
+#
+# Authority: this file governs `vault validate` and `vault build`. An unknown frontmatter key in knowledge/ fails validation;
+# working/ tolerates unknown keys (OKF v0.2 §4.1).
+#
+# Changing this file is a Schema-level change: tier High, human-signed forum
+# 31403 (PRD-sovereign-corpus Q6/Q7). Bump `version` in the same change and
+# update vault.toml's `vocabulary.version`.
+#
+# OWL IRI STABILITY. The `owl:` value of every relation with `emitted: true`
+# is byte-identical to the property emitted by the current Rust Turtle builder.
+# Only the authoring syntax changes (json-ld fence -> frontmatter key). A
+# change to an `owl:` value is an ontology break, not a refactor.
+
+version: 1
+vocabulary_id: "urn:ngm:vocabulary:1"
+date: 2026-09-22
+derived_from: docs/fence-census-2026-09-22.md
+supersedes: "the two json-ld fences per page (Page + Class), schemaVersion 2"
+
+namespace: "urn:ngm:class:"
+individual_namespace: "urn:ngm:individual:"
+context: "https://narrativegoldmine.com/context/v1.jsonld"
+
+# OWL namespace bindings, unchanged from jsonld_to_turtle.py.
+prefixes:
+  vc:    "https://narrativegoldmine.com/ns/v1#"
+  ngm:   "https://narrativegoldmine.com/class/"
+  ngmi:  "https://narrativegoldmine.com/individual/"
+  owl:   "http://www.w3.org/2002/07/owl#"
+  rdfs:  "http://www.w3.org/2000/01/rdf-schema#"
+  skos:  "http://www.w3.org/2004/02/skos/core#"
+  prov:  "http://www.w3.org/ns/prov#"
+  dcterms: "http://purl.org/dc/terms/"
+  xsd:   "http://www.w3.org/2001/XMLSchema#"
+
+# `resource` is minted as namespace + slug(title) for NEW pages only.
+# It is NEVER recomputed for an existing page: 412 of the 8,446 classes carry a
+# slug produced by a case/digit-boundary splitter ("3D Asset" ->
+# "3-d-asset", not "3d-asset"), those IRIs are the subject of 104,731 edges and
+# of every published URL, and stability beats tidiness. `vault validate` checks
+# `resource` for presence, uniqueness and immutability, not for equality with
+# slug(filename). See docs/fence-census-2026-09-22.md §7.
+identity:
+  id: "vault-relative path without .md"          # contract C2
+  resource_rule: "namespace + slug(title), minted once, immutable thereafter"
+  slug: "lowercase; runs of non-alphanumerics -> '-'; trimmed"
+  title_rule: "omit `title` when it equals the filename stem"
+  stability: immutable
+
+# ---------------------------------------------------------------------------
+# Types
+# ---------------------------------------------------------------------------
+
+types:
+  Class:
+    owl: owl:Class
+    required: [resource, status]
+    count_2026_09_22: 8446
+  Property:
+    owl: owl:ObjectProperty
+    required: [resource, status]
+    count_2026_09_22: 0
+    note: >-
+      No page currently declares an ObjectProperty; relation properties are
+      declared by this file, not by pages. Retained so a future
+      property-per-page authoring style needs no schema change.
+  Individual:
+    owl: owl:NamedIndividual
+    required: [resource, status]
+    count_2026_09_22: 0
+    note: >-
+      The parser and Turtle emitter support Individual (urn:ngm:individual:,
+      `instance-of`); no knowledge page uses it, by design (pure TBox). The maturity levels are
+      the only named individuals the build mints, and it mints them itself.
+
+# OKF-conformant types for working/ (PRD Q9). working/ tolerates unknown keys.
+working_types: [Note, Episode, Transcript, Draft Concept, Journal, Canvas]
+
+# Documented episodic extensions of working/ (measured on 574 pages).
+working_extensions:
+  source:           { type: text }
+  topic:            { type: text }
+  episodes:         { type: number }
+  assertions:       { type: number }
+  promotion-status: { type: text, enum: [candidate, candidate_rejected, elevated] }
+
+# ---------------------------------------------------------------------------
+# Relations — list-of-wikilink frontmatter keys.
+#
+#   owl:           the emitted OWL property. Unchanged for every core relation.
+#   inverse:       an AUTHORING and BUILD hint only. The Turtle emitter
+#                  deliberately omits owl:inverseOf because inverse object
+#                  properties are not in the OWL 2 EL profile Whelk reasons
+#                  over. `vault build` materialises the reverse edge in the
+#                  graph, the page API and the scaffold index; it emits no
+#                  owl:inverseOf axiom.
+#   characteristics: emitted as owl:TransitiveProperty etc.
+#   sub_property_of: emitted as rdfs:subPropertyOf.
+#   restriction:   true => also emitted as
+#                  `C rdfs:subClassOf [owl:onProperty P ; owl:someValuesFrom D]`
+#                  when both endpoints are declared pages. Whelk uses these for
+#                  subsumption.
+#   emitted:       false => valid in frontmatter and carried in the page API and
+#                  graph, but NOT written to ontology.ttl. Flipping one to true
+#                  is a Schema-level, human-signed change.
+#   status:        core | provisional
+# ---------------------------------------------------------------------------
+
+relations:
+
+  # --- taxonomic -----------------------------------------------------------
+  instance-of:
+    owl: rdf:type
+    emitted: true
+    status: core
+    note: >-
+      Individual -> Class membership (urn:ngm:individual: pages). Declared so the
+      key validates; the published corpus stays pure TBox (terminology canon),
+      so no knowledge page uses it.
+
+  is-a:
+    owl: rdfs:subClassOf
+    characteristics: [transitive]
+    emitted: true
+    status: core
+    edges_2026_09_22: 8446      # top-level subClassOf; +27 misfiled inside relations
+    note: >-
+      Where the parent slug is one of the six domain roots or 34 taxonomy
+      categories the build additionally emits skos:broader, as part of the governed projection. 1,397 classes have more than one parent;
+      the cross-domain lattice is intentional and domain-root disjointness
+      stays off (domain membership is not disjointness).
+
+  # --- core, emitted -------------------------------------------------------
+  related-to:
+    owl: vc:relatedTo
+    emitted: true
+    status: core
+    symmetric_in_intent: true
+    edges_2026_09_22: 20193
+    note: >-
+      Associative, not symmetric in OWL: owl:SymmetricProperty needs inverses,
+      which OWL 2 EL excludes. Modelled as a plain associative link.
+  enables:
+    owl: vc:enables
+    inverse: enabled-by
+    emitted: true
+    status: core
+    edges_2026_09_22: 16424
+  uses:
+    owl: vc:uses
+    sub_property_of: vc:utilises
+    emitted: true
+    status: core
+    edges_2026_09_22: 12828
+  requires:
+    owl: vc:requires
+    characteristics: [transitive]
+    sub_property_of: vc:dependsOn
+    restriction: true
+    emitted: true
+    status: core
+    edges_2026_09_22: 11889
+  has-part:
+    owl: vc:hasPart
+    inverse: part-of
+    restriction: true
+    emitted: true
+    status: core
+    edges_2026_09_22: 9921
+  supports:
+    owl: vc:supports
+    sub_property_of: vc:utilises
+    emitted: true
+    status: core
+    edges_2026_09_22: 7654
+  bridges-to:
+    owl: vc:bridgesTo
+    emitted: true
+    status: core
+    edges_2026_09_22: 6083
+  contrasts-with:
+    owl: vc:contrastsWith
+    emitted: true
+    status: core
+    edges_2026_09_22: 4862
+  implements:
+    owl: vc:implements
+    sub_property_of: vc:utilises
+    emitted: true
+    status: core
+    edges_2026_09_22: 4194
+  depends-on:
+    owl: vc:dependsOn
+    characteristics: [transitive]
+    emitted: true
+    status: core
+    edges_2026_09_22: 4172        # 4,155 `dependsOn` + 17 `depends-on`
+  part-of:
+    owl: vc:isPartOf
+    inverse: has-part
+    emitted: true
+    status: core
+    edges_2026_09_22: 3421
+  standardized-by:
+    owl: vc:standardizedBy
+    emitted: true
+    status: core
+    edges_2026_09_22: 2950
+
+  # --- core, declared but unused in the corpus ------------------------------
+  enabled-by:
+    owl: vc:enabledBy
+    inverse: enables
+    emitted: true
+    status: core
+    edges_2026_09_22: 0
+    note: >-
+      Declared by jsonld_to_turtle.py and therefore part of the stable OWL
+      surface, but no page uses it. Retained so the declaration set is
+      unchanged by this migration.
+
+  # --- logical, provisional (ADR-2125) ---------------------------------------
+  disjoint-with:
+    owl: owl:disjointWith
+    emitted: true
+    status: provisional
+    edges_2026_10_05: 1  # Fungible Token, governance 6fe3c27e8273
+    note: >-
+      Sibling disjointness, emitted as owl:disjointWith and reasoned over by
+      Whelk as DisjointClasses. Both members must share a direct parent, and
+      neither may be a domain root or taxonomy category: `vault validate`
+      refuses anything else (DISJOINT_NOT_SIBLINGS), and `vault build` refuses
+      any unsatisfiable class. Provisional, so a page that adds it is a
+      Schema-level proposal. Domain-root disjointness stays off.
+
+  # --- logical, provisional (ADR-2124) ---------------------------------------
+  defines-as:
+    owl: owl:equivalentClass
+    emitted: true
+    status: provisional
+    edges_2026_10_05: 0
+    note: >-
+      A curated EL defined class: the class is equivalent to the conjunction
+      listed. Each item is a named class "[[Slug]]" or a one-entry map
+      `relation-key: "[[Slug]]"` read as an existential over that relation's
+      emitted object property, e.g. [ "[[Robot]]", { has-part: "[[Gripper]]" } ].
+      Emitted as owl:equivalentClass over owl:intersectionOf; the reasoner then
+      runs in Restrictions::Relevant mode. Anything outside that fragment
+      (only, cardinality, hasValue, not, or, inverse, nested expressions) is
+      refused by `vault validate` as NON_EL_DEFINITION. Tens, not thousands:
+      a definition needs a named owner, and one over a high-fan-out property
+      such as related-to should be refused at review. Provisional, so a page
+      that adds it is a Schema-level proposal.
+
+  # --- equivalence ---------------------------------------------------------
+  same-as:
+    owl: skos:exactMatch
+    emitted: false
+    status: core
+    edges_2026_09_22: 3580        # 3,579 top-level + 1 misfiled inside relations
+    note: >-
+      2,132 classes carry a non-empty `sameAs`, and the current Turtle emitter
+      writes NONE of them — there is no sameAs branch in build_graph. owl:sameAs
+      between owl:Class individuals is not OWL 2 EL, so the target mapping is
+      skos:exactMatch. `emitted: false` keeps golden-build parity against the
+      Python output; flipping it to true is a Schema-level proposal that adds
+      3,580 axioms and must be reasoned over before it lands.
+
+  # --- provisional: real corpus predicates the current emitter discards -----
+  # 34 keys, 75 edges. The original converter emitted twelve
+  # entries, so every one of these edges is dropped at build time today.
+  # They are valid frontmatter (so `vault validate` passes and nothing is lost)
+  # and absent from ontology.ttl (so the golden build matches the Python
+  # output). Promotion to `emitted: true` is Schema-level and human-signed.
+  produces:             { owl: vc:produces,     emitted: false, status: provisional, edges_2026_09_22: 10 }
+  governs:              { owl: vc:governs,      emitted: false, status: provisional, edges_2026_09_22: 7 }
+  informs:              { owl: vc:informs,      emitted: false, status: provisional, edges_2026_09_22: 6, inverse: informed-by }
+  implemented-by:       { owl: vc:implementedBy, emitted: false, status: provisional, edges_2026_09_22: 6, inverse: implements }
+  reduces:              { owl: vc:reduces,      emitted: false, status: provisional, edges_2026_09_22: 4 }
+  detected-by:          { owl: vc:detectedBy,   emitted: false, status: provisional, edges_2026_09_22: 3, inverse: detects }
+  mitigated-by:         { owl: vc:mitigatedBy,  emitted: false, status: provisional, edges_2026_09_22: 3, inverse: mitigates }
+  constrains:           { owl: vc:constrains,   emitted: false, status: provisional, edges_2026_09_22: 3 }
+  influences:           { owl: vc:influences,   emitted: false, status: provisional, edges_2026_09_22: 2 }
+  affects:              { owl: vc:affects,      emitted: false, status: provisional, edges_2026_09_22: 2 }
+  informed-by:          { owl: vc:informedBy,   emitted: false, status: provisional, edges_2026_09_22: 2, inverse: informs }
+  applies-to:           { owl: vc:appliesTo,    emitted: false, status: provisional, edges_2026_09_22: 2 }
+  improves:             { owl: vc:improves,     emitted: false, status: provisional, edges_2026_09_22: 2, inverse: improved-by }
+  enforced-by:          { owl: vc:enforcedBy,   emitted: false, status: provisional, edges_2026_09_22: 2 }
+  detects:              { owl: vc:detects,      emitted: false, status: provisional, edges_2026_09_22: 2, inverse: detected-by }
+  describes:            { owl: vc:describes,    emitted: false, status: provisional, edges_2026_09_22: 1 }
+  mitigates:            { owl: vc:mitigates,    emitted: false, status: provisional, edges_2026_09_22: 1, inverse: mitigated-by }
+  regulated-by:         { owl: vc:regulatedBy,  emitted: false, status: provisional, edges_2026_09_22: 1 }
+  supported-by:         { owl: vc:supportedBy,  emitted: false, status: provisional, edges_2026_09_22: 1, inverse: supports }
+  causes:               { owl: vc:causes,       emitted: false, status: provisional, edges_2026_09_22: 1 }
+  feeds-into:           { owl: vc:feedsInto,    emitted: false, status: provisional, edges_2026_09_22: 1 }
+  impacts:              { owl: vc:impacts,      emitted: false, status: provisional, edges_2026_09_22: 1 }
+  measured-by:          { owl: vc:measuredBy,   emitted: false, status: provisional, edges_2026_09_22: 1 }
+  improved-by:          { owl: vc:improvedBy,   emitted: false, status: provisional, edges_2026_09_22: 1, inverse: improves }
+  evaluates:            { owl: vc:evaluates,    emitted: false, status: provisional, edges_2026_09_22: 1 }
+  manages:              { owl: vc:manages,      emitted: false, status: provisional, edges_2026_09_22: 1 }
+  defines:              { owl: vc:defines,      emitted: false, status: provisional, edges_2026_09_22: 1 }
+  settled-on:           { owl: vc:settledOn,    emitted: false, status: provisional, edges_2026_09_22: 1 }
+  precedes:             { owl: vc:precedes,     emitted: false, status: provisional, edges_2026_09_22: 1 }
+  underpins:            { owl: vc:underpins,    emitted: false, status: provisional, edges_2026_09_22: 1 }
+  exploits:             { owl: vc:exploits,     emitted: false, status: provisional, edges_2026_09_22: 1 }
+  controls:             { owl: vc:controls,     emitted: false, status: provisional, edges_2026_09_22: 1 }
+  provides:             { owl: vc:provides,     emitted: false, status: provisional, edges_2026_09_22: 1 }
+  verifies:             { owl: vc:verifies,     emitted: false, status: provisional, edges_2026_09_22: 1 }
+
+  # --- provisional, from `key::` lines only ---------------------------------
+  implemented-in-layer:
+    owl: vc:implementedInLayer
+    emitted: false
+    status: provisional
+    lines_2026_09_22: 1025
+    note: Preserved historical predicate; not emitted by the ontology builder.
+
+# Super-properties the emitter declares that are never authored directly.
+# Declared here so `vault build` reproduces the current declaration set exactly.
+super_properties:
+  vc:utilises:
+    label: utilises
+    domain: owl:Thing
+    range: owl:Thing
+    supers_of: [uses, supports, implements]
+
+# ---------------------------------------------------------------------------
+# Scalars
+# ---------------------------------------------------------------------------
+
+scalars:
+
+  domain:
+    type: text
+    required: true
+    owl: vc:sourceDomain          # owl:AnnotationProperty
+    count_2026_09_22: 8446
+    # Free text, not an enum: the corpus uses 17 values, six of which are the
+    # taxonomic domain roots and eleven of which are not. Normalising `ai`
+    # (513) onto `artificial-intelligence` and placing `machine-learning`,
+    # `metaverse` and the rest is a CONTENT decision, so it goes through the
+    # governance loop as a content-level proposal, not silently through
+    # `vault migrate`. See docs/fence-census-2026-09-22.md §5.
+    roots: [artificial-intelligence, spatial-computing, blockchain,
+            infrastructure, distributed-collaboration, robotics,
+            space-science-and-systems, earth-observation-and-geospatial-sensing]
+    observed:
+      blockchain: 1212
+      infrastructure: 1205
+      artificial-intelligence: 1139
+      spatial-computing: 1078
+      robotics: 601
+      governance: 560
+      ai: 513
+      security: 484
+      machine-learning: 450
+      finance: 243
+      data: 225
+      standards: 212
+      metaverse: 154
+      distributed-collaboration: 146
+      distributed-systems: 95
+      economics: 84
+      supply-chain: 45
+    open_question: "ai/artificial-intelligence split — content proposal, WS-F"
+
+  maturity:
+    type: text
+    required: true
+    owl: vc:hasMaturity           # owl:ObjectProperty -> ngmi:maturity-<value>
+    enum: [emerging, established, mature, draft, stub, deprecated]
+    count_2026_09_22: 8446
+    # `mature` is ADDED to the emitter's five-value enum. It occurs 955 times
+    # and jsonld_to_turtle.py coerces every one of those classes to `draft`,
+    # so the build silently downgrades 11% of the corpus today. Admitting it
+    # mints one new named individual, ngmi:maturity-mature, and is the single
+    # deliberate delta against the current Turtle output.
+    # `stub` and `deprecated` occur zero times; `deprecated` is the OKF
+    # demotion target (PRD §3.3) and both are already declared by the emitter.
+    observed: { established: 4638, emerging: 1966, mature: 955, draft: 848,
+                experimental: 27, growing: 9, active-research: 1, stable: 1,
+                developing: 1 }
+
+  quality:
+    type: number
+    min: 0.0
+    max: 1.0
+    owl: vc:qualityScore          # owl:AnnotationProperty, xsd:float
+    count_2026_09_22: 7651
+    observed: { min: 0.35, max: 0.95, mean: 0.647, median: 0.70, distinct: 34 }
+
+  authority:
+    type: number
+    min: 0.0
+    max: 1.0
+    owl: vc:authorityScore        # owl:AnnotationProperty, xsd:float
+    emitted: false
+    count_2026_09_22: 29
+    note: >-
+      8 `vc:authorityScore` values plus 21 `authority-score::` lines. Admitted
+      so the values survive; not emitted, so parity holds.
+
+  gloss:
+    type: text
+    owl: skos:altLabel
+    emitted: false
+    count_2026_09_22: 56
+    note: "`vc:plainGloss` — a plain-language restatement of the definition."
+
+  legacy-term-id:
+    type: text
+    emitted: false
+    count_2026_09_22: 2466
+    note: >-
+      Pre-urn identifiers (AI-0376, RB-0162, BC-0042) from `vc:termId`,
+      `term-id::` and vc:legacyProperties. Kept as an OKF identifier so old
+      references resolve.
+
+  governance-case:
+    type: text
+    emitted: false
+    count_2026_09_22: 1
+    pattern: "acsp:31402:<panel>:<slug>"
+    note: The forum case that authorised the page. Written by `vault edit` on Promote.
+
+  public:
+    type: boolean
+    required: true
+    default: false
+    note: >-
+      The publish gate (Quartz ExplicitPublish). Fail-closed: absent means
+      private. 8,608 true / 14 false in frontmatter today; the fence
+      `vc:public` agrees on all 8,433 pages carrying both.
+
+  title:
+    type: text
+    note: Display only; omitted when it equals the filename stem. Never the identity.
+
+  aliases:
+    type: list
+    note: Obsidian aliases and KG alias metadata. 571 pages carry one today.
+
+  tags:
+    type: list
+    note: Obsidian tags.
+
+# ---------------------------------------------------------------------------
+# OKF v0.2 fields the build validates
+# ---------------------------------------------------------------------------
+
+okf:
+  lifecycle:
+    status:
+      type: text
+      required: true
+      enum: [draft, stable, deprecated]
+      default: draft
+    stale_after:
+      type: date
+      note: Policy defaults live in vault.toml [policy].
+  trust:
+    generated:
+      by: actor
+      at: datetime
+      rule: text          # extension: the inferenceRule that produced the page
+      required: true
+    verified:
+      type: list
+      items: { by: actor, at: datetime }
+      note: Appended by `vault edit` when a human 31403 Approve lands.
+  sources:
+    type: list
+    items:
+      id: text            # e.g. origin, episode, wasDerivedFrom
+      resource: text      # a wikilink, a URL, or an IRI
+    note: >-
+      Absorbs `elevatedFrom` (187), `sources::` (4,422 lines, 2,198 empty),
+      `source::` (2,607), `prov:wasDerivedFrom` (8) and the podcast
+      `provenance.episode` (286).
+  actors:
+    human:   "human:<npub>"
+    process: "process:<name>/<version>"
+    agent:   "<producer>/<version>"
+    did:     "did:<method>:<id>"
+    # `did:` is an ADDITIVE extension of contract C1, because it is what the
+    # corpus actually carries: did:nostr:ontology-mesh 3,819,
+    # did:nostr:lcr-swarm 1,575, did:nostr:jjohare 1,077,
+    # did:nostr:enrichment-swarm 225, did:nostr:visionclaw-server 1.
+    # A DID is a stronger actor identifier than either alternative, and
+    # did:nostr:jjohare is the identity the forum signing loop matches.
+
+# ---------------------------------------------------------------------------
+# Validation
+# ---------------------------------------------------------------------------
+
+validation:
+  unknown_keys:
+    knowledge: fail
+    working: allow
+  rejected_constructs:                 # `vault validate` fails on any of these
+    - "```json-ld fences"
+    - "`key:: value` lines"
+    - "{{embed …}}"
+    - "((block-ref))"
+    - "`a___b.md` namespace filenames"
+    - "journals/ and `YYYY_MM_DD.md` filenames"
+    - "TODO/DOING/NOW/LATER/DONE markers"
+    - "`#[[multi word]]` tags"
+  required_knowledge_keys: [type, title, resource, public, status, generated]
+  blockers:                            # never approvable; see PRD Q6
+    - WHELK_INCONSISTENCY
+    - SUBCLASS_CYCLE
+    - RELATION_CONTRADICTION
+    - VOCABULARY_VIOLATION
+    - RESOURCE_COLLISION
+    - RESOURCE_MUTATED

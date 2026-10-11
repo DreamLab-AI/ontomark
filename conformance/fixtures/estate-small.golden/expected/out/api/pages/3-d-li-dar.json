@@ -1,0 +1,93 @@
+{
+  "id": "urn:visionflow:page:bc54d8d8625320088b1e463caf4a4e51899c9ed028d3984cb89af781213f59dc",
+  "title": "3D LiDAR",
+  "slug": "3-d-li-dar",
+  "public": true,
+  "classIri": "urn:ngm:class:3-d-li-dar",
+  "domain": "robotics",
+  "definition": "3D LiDAR is a active ranging sensor that emits pulsed laser light across multiple vertical channels to capture dense three-dimensional point clouds of the surrounding environment. Spinning or solid-state variants measure range and intensity for hundreds of thousands of points per second, enabling robots and autonomous vehicles to perform obstacle detection, SLAM, and high-fidelity scene reconstruction in real time.",
+  "subClassOf": [
+    {
+      "id": "urn:ngm:class:robo-perception",
+      "label": "Perception and Sensing"
+    }
+  ],
+  "entityType": "Class",
+  "qualityScore": 0.8,
+  "maturity": "established",
+  "relationships": {
+    "hasPart": [],
+    "requires": [],
+    "enables": [
+      {
+        "id": "urn:ngm:class:point-cloud",
+        "label": "Point Cloud"
+      },
+      {
+        "id": "urn:ngm:class:slam",
+        "label": "SLAM"
+      },
+      {
+        "id": "urn:ngm:class:simultaneous-localisation-and-mapping",
+        "label": "Simultaneous Localisation and Mapping"
+      },
+      {
+        "id": "urn:ngm:class:autonomous-navigation",
+        "label": "Autonomous Navigation"
+      }
+    ],
+    "dependsOn": [],
+    "implements": [],
+    "contrastsWith": [],
+    "bridgesTo": [
+      {
+        "id": "urn:ngm:class:lidar",
+        "label": "Lidar"
+      }
+    ],
+    "uses": [
+      {
+        "id": "urn:ngm:class:sensor-fusion",
+        "label": "Sensor Fusion"
+      },
+      {
+        "id": "urn:ngm:class:perception-system",
+        "label": "Perception System"
+      }
+    ],
+    "supports": [],
+    "standardizedBy": [],
+    "partOf": [],
+    "relatedTo": [
+      {
+        "id": "urn:ngm:class:2-d-li-dar",
+        "label": "2D LiDAR"
+      },
+      {
+        "id": "urn:ngm:class:lidar-scanning",
+        "label": "Lidar Scanning"
+      },
+      {
+        "id": "urn:ngm:class:stereo-camera",
+        "label": "Stereo Camera"
+      },
+      {
+        "id": "urn:ngm:class:multirotor-uav",
+        "label": "Multirotor UAV"
+      }
+    ]
+  },
+  "inferredSuperClasses": [],
+  "inheritedRelations": {},
+  "wikilinks": [
+    {
+      "slug": "lidar",
+      "label": "Lidar"
+    },
+    {
+      "slug": "robotics",
+      "label": "Robotics"
+    }
+  ],
+  "backlinks": []
+}

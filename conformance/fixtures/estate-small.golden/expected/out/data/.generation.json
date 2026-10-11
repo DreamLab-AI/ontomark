@@ -1,0 +1,98 @@
+{
+  "id": "visionGraph@cfbc690da876d6c828a1934a2ac9b6e59ebf8a69",
+  "commit": "cfbc690da876d6c828a1934a2ac9b6e59ebf8a69",
+  "dirty": false,
+  "content_digest": "b01de727399e9bf618d43c3ec0dbc422720701c56bdb2ccc3fd8132d34bcc572",
+  "ontology_digest": "sha256-12-80be0f5150b3",
+  "generated_at": "2026-10-11T17:51:22.444889+00:00",
+  "class_count": 52,
+  "page_count": 52,
+  "vocabulary_version": 1,
+  "artifacts": [
+    {
+      "name": "ontology.ttl",
+      "sha256": "fa9840f2866e0b8c1ab2baac7d72ad346b091d80fb7d46db7ebc03c719485e7d",
+      "bytes": 114681
+    },
+    {
+      "name": "ontology-inferred.ttl",
+      "sha256": "3fb46febea80060548ec48bc39131b0906da2127a132d3fa99354bf68cd975b4",
+      "bytes": 1510
+    },
+    {
+      "name": "scaffold-index.json",
+      "sha256": "298c9ba612eaf39c502b5eb4bae6a34a894839a3b110018e4198d2b767533a29",
+      "bytes": 46207
+    },
+    {
+      "name": "prose-index.json",
+      "sha256": "e2d39531fbe35f270ada91b47c62eff7125ca5f9f826cc0e7ba622038798d5de",
+      "bytes": 42595
+    },
+    {
+      "name": "ontology.json",
+      "sha256": "542f20ac5650e976a60b58e7dd6100136d1e8353cd1b25efee46e56fc14928f7",
+      "bytes": 55874
+    },
+    {
+      "name": "graph/overview.json",
+      "sha256": "98f91b15e433d3cab4224d0bc7b84f14feb099435b0a2de0688c274f6ae60ac2",
+      "bytes": 24605
+    },
+    {
+      "name": "graph/full.bin",
+      "sha256": "ac782c0b088dabbd11b51197d704cbb7652aca0ef1842da207fc532a54e52b7a",
+      "bytes": 5556
+    },
+    {
+      "name": "graph/domain-artificial-intelligence.bin",
+      "sha256": "b315a47936e40ade1a26807bf5faf0c9421ea35f5034a4ff25256ea59d14a910",
+      "bytes": 647
+    },
+    {
+      "name": "graph/domain-blockchain.bin",
+      "sha256": "018f1a9b3c0204b76e828e446007fce2ae6e0ae843595b4f54ffa1e8c0bded2f",
+      "bytes": 396
+    },
+    {
+      "name": "graph/domain-spatial-computing.bin",
+      "sha256": "728574a1afc20f2696396f775918edbb9fa6e4835c0aec35db8d28a4fbc1102f",
+      "bytes": 3254
+    },
+    {
+      "name": "graph/domain-robotics.bin",
+      "sha256": "5538b4f34dce070929489749b5506f40e5682fb32dec5d36bf0bffd7767acffb",
+      "bytes": 348
+    },
+    {
+      "name": "graph/domain-distributed-collaboration.bin",
+      "sha256": "4824e2cdf7f9cbc6d6210759a8dc389d9123223270037240ce4803799a98e7e1",
+      "bytes": 44
+    },
+    {
+      "name": "graph/domain-infrastructure.bin",
+      "sha256": "39050becd9747a934446410602417744334aa797da25f1a033ec0ec8e82b45df",
+      "bytes": 1011
+    },
+    {
+      "name": "graph/domain-space-science-and-systems.bin",
+      "sha256": "4824e2cdf7f9cbc6d6210759a8dc389d9123223270037240ce4803799a98e7e1",
+      "bytes": 44
+    },
+    {
+      "name": "graph/domain-earth-observation-and-geospatial-sensing.bin",
+      "sha256": "4824e2cdf7f9cbc6d6210759a8dc389d9123223270037240ce4803799a98e7e1",
+      "bytes": 44
+    },
+    {
+      "name": "graph/stats.json",
+      "sha256": "ba377fde2bb0273ce3caea6c72925c6803edce847fa656ce4e538a39b411061c",
+      "bytes": 2952
+    },
+    {
+      "name": "graph/bridges.json",
+      "sha256": "3d69ba9df80f9907373268c86da30804a458f3484cd3b5ae8ab9910e950de9cc",
+      "bytes": 633
+    }
+  ]
+}

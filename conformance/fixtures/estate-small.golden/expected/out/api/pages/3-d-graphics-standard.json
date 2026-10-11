@@ -1,0 +1,137 @@
+{
+  "id": "urn:visionflow:page:21be090f4909a2c3e087912c1529535588f73bd718459334d02ac92d33bb0a78",
+  "title": "3D Graphics Standard",
+  "slug": "3-d-graphics-standard",
+  "public": true,
+  "classIri": "urn:ngm:class:3-d-graphics-standard",
+  "domain": "spatial-computing",
+  "definition": "3D Graphics Standards are technical specifications and conventions governing the representation, rendering, and interchange of three-dimensional visual data, including APIs like OpenGL, DirectX, and Vulkan, shader languages, and coordinate system conventions.",
+  "subClassOf": [
+    {
+      "id": "urn:ngm:class:sc-display-and-rendering",
+      "label": "Display and Rendering"
+    },
+    {
+      "id": "urn:ngm:class:sc-content-and-assets",
+      "label": "Content and Assets"
+    }
+  ],
+  "entityType": "Class",
+  "qualityScore": 0.5,
+  "maturity": "draft",
+  "relationships": {
+    "hasPart": [],
+    "requires": [
+      {
+        "id": "urn:ngm:class:driver-software",
+        "label": "Driver Implementation"
+      },
+      {
+        "id": "urn:ngm:class:gpu",
+        "label": "GPU Support"
+      }
+    ],
+    "enables": [
+      {
+        "id": "urn:ngm:class:cross-platform-compatibility",
+        "label": "Cross-Platform Compatibility"
+      },
+      {
+        "id": "urn:ngm:class:hardware-acceleration",
+        "label": "Hardware Acceleration"
+      },
+      {
+        "id": "urn:ngm:class:real-time-rendering",
+        "label": "Real-Time Rendering"
+      }
+    ],
+    "dependsOn": [],
+    "implements": [
+      {
+        "id": "urn:ngm:class:technical-standard",
+        "label": "Technical Specification"
+      }
+    ],
+    "contrastsWith": [],
+    "bridgesTo": [],
+    "uses": [],
+    "supports": [],
+    "standardizedBy": [],
+    "partOf": [],
+    "relatedTo": []
+  },
+  "inferredSuperClasses": [],
+  "inheritedRelations": {},
+  "wikilinks": [
+    {
+      "slug": "cross-platform-compatibility",
+      "label": "Cross-Platform Compatibility"
+    },
+    {
+      "slug": "direct-x",
+      "label": "DirectX"
+    },
+    {
+      "slug": "driver-implementation",
+      "label": "Driver Implementation"
+    },
+    {
+      "slug": "gpu-architecture",
+      "label": "GPU Architecture"
+    },
+    {
+      "slug": "gpu-support",
+      "label": "GPU Support"
+    },
+    {
+      "slug": "open-gl",
+      "label": "OpenGL"
+    },
+    {
+      "slug": "rendering-standard",
+      "label": "Rendering Standard"
+    },
+    {
+      "slug": "technical-specification",
+      "label": "Technical Specification"
+    },
+    {
+      "slug": "vulkan",
+      "label": "Vulkan"
+    },
+    {
+      "slug": "3-d-rendering-engine",
+      "label": "3D Rendering Engine"
+    },
+    {
+      "slug": "computer-vision",
+      "label": "Computer Vision"
+    },
+    {
+      "slug": "hardware-acceleration",
+      "label": "Hardware Acceleration"
+    },
+    {
+      "slug": "real-time-rendering",
+      "label": "Real-time Rendering"
+    },
+    {
+      "slug": "rendering-pipeline",
+      "label": "Rendering Pipeline"
+    },
+    {
+      "slug": "shader-language",
+      "label": "Shader Language"
+    }
+  ],
+  "backlinks": [
+    {
+      "slug": "3-d-development",
+      "label": "3D Development"
+    },
+    {
+      "slug": "3-d-scene-exchange-protocol-sxp",
+      "label": "3D Scene Exchange Protocol (SXP)"
+    }
+  ]
+}

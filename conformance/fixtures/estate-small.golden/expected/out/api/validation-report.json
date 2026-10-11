@@ -1,0 +1,19 @@
+{
+  "total_pages": 53,
+  "total_journals": 0,
+  "skipped": [],
+  "pages_with_ontology": 53,
+  "public_pages": 52,
+  "total_issues": 874,
+  "errors": 0,
+  "warnings": 867,
+  "info": 7,
+  "by_code": {
+    "DANGLING_LINK": 801,
+    "MULTI_PARENT": 7,
+    "PUBLIC_LINKS_PRIVATE": 1,
+    "SLUG_MISMATCH": 14,
+    "UNVERIFIED_STABLE": 51
+  },
+  "issues": []
+}
