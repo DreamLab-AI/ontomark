@@ -1,18 +1,37 @@
 [package]
 name = "ontomark-wasm"
-description = "ontomark: wasm"
+description = "Portable ontomark engine for hosts such as the Obsidian plugin: vault index, generation-guarded classification, local read-only SPARQL and guarded Markdown patch proposals, with a wasm-bindgen surface"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+keywords = ["obsidian", "ontology", "sparql", "wasm", "owl"]
+categories = ["wasm", "text-processing"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = "0.2"
+ontomark-parse = { workspace = true, features = ["serde"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+# SPARQL: Oxigraph's parser and evaluator over an in-memory oxrdf::Dataset (MIT OR Apache-2.0).
+spargebra = "0.4.7"
+spareval = { version = "0.2.7", default-features = false }
+oxrdf = "0.3.4"
+similar = { version = "2", default-features = false, features = ["text"] }
+# Pinned to the installed wasm-bindgen-cli so the offline build never downloads a matching CLI.
+wasm-bindgen = "=0.2.127"
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+# spareval reads the clock for NOW() and its planner timer; without `js`, oxsdatatypes calls
+# SystemTime::now(), which panics on wasm32-unknown-unknown.
+oxsdatatypes = { version = "0.2", features = ["js"] }
+# rand (pulled by oxrdf/spareval for BNODE/RAND/UUID) needs a browser entropy backend.
+getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [lints]
 workspace = true
