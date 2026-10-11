@@ -272,3 +272,15 @@ memory key `ontomark-sprint-state-2026-10-11` (namespace `project-state`).
   one receipt-parity unit test, fmt, clippy and diff checks passed. Parent
   migration suite remains red (2 pass, 5 fail); existing build-info test fails
   in linked worktrees. Held from main; no deployment or timer activation.
+
+### Continued release and consumer integration
+
+Published CLI prerelease `v0.1.0-rc.1` from `21cd9ff`; visionGraph main
+`366236b38` pins the portable asset after 17 green consumer contracts.
+Published shared reader package `ontomark-compile` 0.1.1 and prerequisite
+`whelk-el` 0.1.0 after package verification. Core main `409cffe` contains
+crate READMEs/licences, no-default-feature test fixes and strict rustdoc fixes.
+Actual Rust 1.89 all-target verification passed after explicit string type
+arguments corrected inference differences. CI now pins Binaryen 132 and the
+open-source Gitleaks 8.30.1 scanner; complete 109-commit history scan passed.
+The standalone Obsidian consumer and installed-sidecar acceptance are underway.
