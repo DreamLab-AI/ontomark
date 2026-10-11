@@ -59,6 +59,39 @@ them.
 10. **Ownership.** DreamLab-AI owns the repository. Secret scanning and push
     protection are on from the first commit.
 
+### Decisions taken during the sprint
+
+11. **Unresolved references are reported, never invented.** A reference that
+    matches no page is `Unresolved`. The legacy exporter's phantom parents and
+    its first-claimant choice for the nine IRIs claimed by several pages live
+    only in named compatibility adapters in `ontomark-compile`, off by default,
+    listed as divergences, used solely by the golden-parity test.
+12. **One IRI minter.** `Model::mint_iri(profile, kind, title)` is the only
+    entry point; building a model never mints. It returns
+    `Result<Iri, MintRefusal>` and refuses any title an entity already has
+    (case-insensitive, aliases included), naming the existing IRI, so a fresh
+    mint can never create a second IRI beside a legacy-rule one such as
+    `3-d-animation`. The 418 legacy-rule pairs are the fixture.
+13. **Private-link redaction is on by default.** Staged Markdown drops
+    frontmatter relations whose target is non-public and renders such body
+    wikilinks as unlinked display text; `--no-redact-private-links` exists for
+    parity runs only. Divergence 1 from legacy output; a permanent canary
+    greps every public artefact and the staging tree for every private title.
+14. **NGG1 has a dependency-free owner.** `ontomark-ngg1` (zero dependencies)
+    owns the format; `ontomark-compile` re-exports it; `vowl-wasm` depends on
+    it directly so its bundle does not grow.
+15. **No source fallback in deploys.** `publish.yml` fetches a release asset by
+    tag and verifies its sha256; a source fallback would run code the digest
+    does not cover.
+16. **Governance verbs stay AGPL in VisionClaw** (restates 4 after the
+    census): `propose`, `apply`, `panel` only; everything else ships here.
+17. **Loom's reload path becomes a tested Rust binary**, not a deletion:
+    `reload_published_generation` in loom-facade replaces the Python timer
+    once a fixture-bundle test passes.
+18. **Cross-vendor audit is a recorded gate.** Each slice records its Codex
+    audit verdict; while Codex was unavailable the row read NOT RUN, never
+    "passed". Same-family Claude reviews are labelled degraded.
+
 ## Facts established by the census (2026-10-11)
 
 - `vault` 20.5k lines and `vault-core` 6.3k lines, both AGPL-3.0-only at the
