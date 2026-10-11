@@ -1,0 +1,15 @@
+[package]
+name = "ontomark-profile-estate"
+description = "The DreamLab estate profile for ontomark: taxonomy, IRI rules, attribution roster and governance kinds of the visionGraph corpus"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+ontomark-compile = { path = "../../crates/ontomark-compile", default-features = false }
+
+[lints]
+workspace = true

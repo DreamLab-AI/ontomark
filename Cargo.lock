@@ -580,6 +580,13 @@ name = "ontomark-parse"
 version = "0.1.0"
 
 [[package]]
+name = "ontomark-profile-estate"
+version = "0.1.0"
+dependencies = [
+ "ontomark-compile",
+]
+
+[[package]]
 name = "ontomark-reason"
 version = "0.1.0"
 
