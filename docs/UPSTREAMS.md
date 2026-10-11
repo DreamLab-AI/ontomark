@@ -8,6 +8,19 @@ Ontomark builds on the work of these upstream developers. Their licences remain 
 - [whelk-rs](https://github.com/b-gehrke/whelk-rs), the Rust implementation by Björn (`b-gehrke`) and contributors, is MIT. Ontomark derives from the [jjohare fork at `79a1ee21789add5a66faa0ec1a830c32dba9b539`](https://github.com/jjohare/whelk-rs/tree/79a1ee21789add5a66faa0ec1a830c32dba9b539).
 - `whelk-el` preserves the Rust MIT notice in `LICENSE-WHELK` and the Scala BSD notice in `LICENSE-WHELK-BSD`. DreamLab changes use MIT OR Apache-2.0. The older published `whelk-el` 0.1.0 package contains the previous incomplete attribution; these corrections do not rewrite that immutable package.
 
+## Current crate releases
+
+The packages published from source `340b8a0d3e5828dd3959dd115e7a0e67268de5f5`
+are `whelk-el` 0.1.1, `ontomark-reason` 0.1.1 and `ontomark-compile` 0.1.2.
+The reasoner requires Whelk 0.1.1 or later; the compiler requires reasoner 0.1.1
+or later. These minimums select the package carrying the corrected upstream
+attribution and preserved Scala BSD notice. Parser, model and NGG1 remain at
+0.1.0. Each publication passed locked registry package verification.
+
+The inventory below remains tied to the earlier rc1 engine archive. These crate
+releases do not change that archive or its recorded dependency versions; a new
+engine distribution needs an inventory bound to its own source and digest.
+
 ## Portable engine audit scope
 
 This inventory covers the engine archive `ontomark-engine-0.1.0-rc.1.tar.gz`, source `21cd9ffd7b08317248afb4e06b74b650290de5b4`, SHA-256 `f810962b1b71e28653737f2cbbe3a06a5e1a8e6c059e452a2292b6af05b2023a`. It was produced from the locked `ontomark-wasm` dependency graph for `wasm32-unknown-unknown`, including build and procedural-macro dependencies and excluding dev dependencies. The graph has 80 package/version pairs: four Ontomark/Whelk packages and 76 registry packages. It is not an inventory of every native CLI or compiler feature.

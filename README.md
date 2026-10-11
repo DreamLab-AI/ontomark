@@ -45,17 +45,17 @@ The CLI prerelease implements the estate publication contract. Its `build`, `val
 
 Each crate has its own README and inline rustdoc, including executable examples.
 
-| Crate | Purpose |
-| --- | --- |
-| [ontomark-parse](crates/ontomark-parse) | Lossless frontmatter, body spans, links, footnotes and guarded patches. |
-| [ontomark-model](crates/ontomark-model) | Classes, individuals, properties, IRI resolution and pluggable profiles. |
-| [whelk-el](crates/whelk-el) | Portable saturation engine derived from Whelk, with optional native parallelism. |
-| [ontomark-reason](crates/ontomark-reason) | Supported-profile checking, explicit refusal reasons and cancellable classification. |
-| [ontomark-compile](crates/ontomark-compile) | Turtle, JSON-LD, SHACL, PROV-O, public projections and typed bundle readers. |
-| [ontomark-ngg1](crates/ontomark-ngg1) | Shared binary graph encoder and zero-copy reader. |
-| [ontomark-wasm](crates/ontomark-wasm) | Worker-friendly index, update, classify, query and patch protocol. |
-| [ontomark-cli](crates/ontomark-cli) | Native publication commands. |
-| [ontomark-graph](packages/graph) | Shared offline graph renderer, hierarchy adapter and focus traversal for desktop and web hosts. |
+| Component | Version / distribution | Purpose |
+| --- | --- | --- |
+| [ontomark-parse](crates/ontomark-parse) | 0.1.0 | Lossless frontmatter, body spans, links, footnotes and guarded patches. |
+| [ontomark-model](crates/ontomark-model) | 0.1.0 | Classes, individuals, properties, IRI resolution and pluggable profiles. |
+| [whelk-el](crates/whelk-el) | 0.1.1 | Portable saturation engine derived from Whelk, with optional native parallelism. |
+| [ontomark-reason](crates/ontomark-reason) | 0.1.1 | Supported-profile checking, explicit refusal reasons and cancellable classification. |
+| [ontomark-compile](crates/ontomark-compile) | 0.1.2 | Turtle, JSON-LD, SHACL, PROV-O, public projections and typed bundle readers. |
+| [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | Shared binary graph encoder and zero-copy reader. |
+| [ontomark-wasm](crates/ontomark-wasm) | Release asset | Worker-friendly index, update, classify, query and patch protocol. |
+| [ontomark-cli](crates/ontomark-cli) | Release asset | Native publication commands. |
+| [ontomark-graph](packages/graph) | Workspace JS package | Shared offline graph renderer, hierarchy adapter and focus traversal for desktop and web hosts. |
 
 Parser, model and reasoner crates support native and `wasm32` targets. The compiler's portable feature set disables its optional native backend. The [estate profile](profiles/estate) owns DreamLab vocabulary and policy; applications can provide their own profile.
 
@@ -93,4 +93,4 @@ Maintained by [John O'Hare](https://github.com/jjohare) and [DreamLab AI](https:
 
 ## Licence
 
-MIT OR Apache-2.0. [NOTICE](NOTICE) records the rights holder's relicensing grant and exclusions. Whelk's inherited MIT attribution remains with the reasoner package; see [its README](crates/whelk-el/README.md).
+MIT OR Apache-2.0. [NOTICE](NOTICE) records the rights holder's relicensing grant and exclusions. The reasoner preserves the Rust port's MIT notice and Scala Whelk's BSD-3-Clause notice; see [its README](crates/whelk-el/README.md).
