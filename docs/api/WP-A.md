@@ -147,3 +147,10 @@ references resolved 133,316 / ambiguous 9 / unresolved 20,180 / external 99,
 0.9 s release. Including the 42 non-public pages moves unresolved to 20,211,
 so the unresolved figure is not a public-projection effect. Run: `ONTOMARK_CORPUS=… ONTOMARK_PROFILE=spec.json cargo test
 --release -p ontomark-model --test model_corpus -- --nocapture`.
+
+## Audit status
+
+| Gate | Status |
+|---|---|
+| Cross-vendor evidence audit (Codex, `gpt-6-astra`, EDD step 4) | **NOT RUN, pending.** On 2026-10-11, `codex exec` exited with no output (refresh token expired, reproduced by team-lead). Re-run on this branch once `codex login` is restored. |
+| Same-family adversarial review (Claude, `code-reviewer`) | Degraded and supplementary. It does not substitute for the Codex audit. |
