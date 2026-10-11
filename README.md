@@ -25,7 +25,7 @@ subclass-of: ["[[Animal]]"]
 ---
 ```
 
-The generic profile recognises these as classes and treats Dog as a subclass of Animal. Plain notes remain plain notes; links in prose are navigation, rather than ontology axioms. The Obsidian plugin indexes, classifies and queries the vault locally, and previews frontmatter edits before applying them.
+Ontomark’s generic profile recognises these as classes and treats Dog as a subclass of Animal. Plain notes remain plain notes; links in prose are navigation, rather than ontology axioms. The Obsidian plugin indexes, classifies and queries the vault locally, and previews frontmatter edits before applying them.
 
 ## CLI prerelease
 
@@ -39,7 +39,7 @@ chmod +x ontomark-x86_64-unknown-linux-gnu
 ./ontomark-x86_64-unknown-linux-gnu --help
 ```
 
-The current CLI implements the estate publication contract. Its `build`, `validate`, `gate`, `conflicts`, `migrate`, `attribute`, `assets` and `body-residue` commands are documented by `--help`. For a general vault, start with the parser/model crates or the Obsidian plugin. The library's generic profile and the CLI's estate compiler have different entry points.
+The CLI prerelease implements the estate publication contract. Its `build`, `validate`, `gate`, `conflicts`, `migrate`, `attribute`, `assets` and `body-residue` commands are documented by `--help`. For a general vault, start with the parser/model crates or the Obsidian plugin. The library's generic profile and the CLI's estate compiler have different entry points.
 
 ## Rust crates
 
@@ -56,7 +56,7 @@ Each crate has its own README and inline rustdoc, including executable examples.
 | [ontomark-wasm](crates/ontomark-wasm) | Worker-friendly index, update, classify, query and patch protocol. |
 | [ontomark-cli](crates/ontomark-cli) | Native publication commands. |
 
-The parser, model and reasoner support native and `wasm32` targets. The compiler's portable feature set disables its optional native backend. The [estate profile](profiles/estate) owns DreamLab vocabulary and policy; applications can provide their own profile.
+Parser, model and reasoner crates support native and `wasm32` targets. The compiler's portable feature set disables its optional native backend. The [estate profile](profiles/estate) owns DreamLab vocabulary and policy; applications can provide their own profile.
 
 ## Build and check
 

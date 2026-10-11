@@ -20,7 +20,7 @@ const env = { ...process.env, CARGO_HOME: cargoHome };
 // Older distro optimisers can cap wasm-bindgen's growable externref table.
 // Keep the optimiser used locally and in CI reproducible.
 const optimizer = execFileSync("wasm-opt", ["--version"], { encoding: "utf8" }).trim();
-if (optimizer !== "wasm-opt version 132") {
+if (!/^wasm-opt version 132(?: \(version_132\))?$/.test(optimizer)) {
   throw new Error(`Binaryen 132 required, found ${optimizer}`);
 }
 run("cargo", ["build", "-p", "ontomark-wasm", "--target", "wasm32-unknown-unknown", "--release"], { env });
