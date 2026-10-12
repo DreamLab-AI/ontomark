@@ -39,7 +39,7 @@
       "timeoutSecs": 1800
     },
     "compiler-rustdoc": {
-      "cmd": "RUSTDOCFLAGS='-D warnings' cargo doc --locked -p ontomark-compile --all-features --no-deps",
+      "cmd": "sh scripts/doc-strict.sh",
       "required": true,
       "timeoutSecs": 900
     }
