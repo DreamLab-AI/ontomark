@@ -30,7 +30,7 @@ assert_eq!(doc.body_index().links.len(), 1);     // body index: one wikilink
 assert!(doc.value("aliases").is_some());         // typed frontmatter value
 ```
 
-## The one write path: `Patch`
+## One write path: `Patch`
 
 Nothing is ever re-rendered from the typed view. The only way to change a
 document is a `Patch`, and a patch is a contract:

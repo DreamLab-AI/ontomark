@@ -6,7 +6,7 @@ express (and says why), and a classification facade over
 subsumptions, unsatisfiable classes, their root causes and the disjointness
 axioms behind them.
 
-The crate takes logical axioms, never Markdown; it does not depend on the
+Input is logical axioms, never Markdown; nothing here depends on the
 parser or the model, and it performs no I/O. It runs unchanged on
 `wasm32-unknown-unknown`, which is how the same reasoner serves an Obsidian
 worker and a server.

@@ -7,7 +7,7 @@ If `ontomark-parse` owns the format, this crate owns the *meaning*: it reads
 `Document`s through a `Profile` and produces a read-only `Model`. The model is
 derived, never edited; changes go back to Markdown through `ontomark_parse::Patch`.
 
-## The rules the model enforces
+## Rules the model enforces
 
 These are the decisions that make a vault safe to reason over, and the crate
 refuses rather than guesses on each of them:

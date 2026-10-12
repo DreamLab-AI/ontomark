@@ -28,7 +28,7 @@ artifact paths and unique claims. A hosting application must still verify
 file bytes, expiry and loaded identity before activating a bundle. Legacy
 artifact-map markers require an explicit legacy reader.
 
-The index's trust fields are generic. Bind `ScaffoldIndex<A, M, C>` to the
+Trust fields on the index are generic. Bind `ScaffoldIndex<A, M, C>` to the
 hosting application's attestation, mapping and computation types; the compiler
 does not interpret or grant those claims. Omitted legacy fields remain
 optional and unknown extensions survive an index round-trip.
@@ -47,13 +47,13 @@ requires checking source diagnostics and explicit profile mapping. The native
 legacy build remains the recorded compatibility route; the typed API has no
 phantom-parent or first-claimant compatibility defaults.
 
-The native build pipeline preserves the legacy estate compatibility path.
+Native builds keep the legacy estate compatibility path.
 Publication redaction resolves private aliases, fragments and sibling-vault
 references before reasoning and all public exports. `--no-redact-private-links`
 exists for recorded legacy comparisons; it is not a public-export privacy gate.
 
 Both compiler routes now use `ontomark-reason`'s supported fragment over Whelk.
-The native class adapter preserves legacy class closure and refuses reported
+On the native side, the class adapter keeps legacy class closure and refuses reported
 unsupported input before saturation. The typed API reports shared refusals
 (including individual assertions), and preserves data assertions in RDF with
 an omission count for reasoning. Use `ProjectionClassification::is_complete`
@@ -64,7 +64,7 @@ Markdown remains the source of truth.
 Version 0.1.2 requires `ontomark-reason` 0.1.1 or later so new builds use the
 Whelk package with corrected upstream attribution and its Scala BSD notice.
 
-The extraction's relicensing grant and exclusions are recorded in the
+Relicensing grant and exclusions for the extraction are recorded in the
 repository's `NOTICE`. Licensed under MIT OR Apache-2.0; governance posting
 and Nostr signing remain outside this crate.
 

@@ -5,13 +5,13 @@ classifies supported OWL 2 EL axioms, evaluates local read-only SPARQL and
 proposes guarded frontmatter patches. The host supplies file contents and owns
 approved writes; the engine makes no network requests.
 
-The native `engine::Engine::handle_json` API and JavaScript `WasmEngine.handle`
+Both entry points, native `engine::Engine::handle_json` and JavaScript `WasmEngine.handle`,
 binding share the [JSON protocol](../../docs/api/WP-E.md). Requests carry a
 generation; stale reads and patches are refused. Queries cannot use UPDATE,
 SERVICE or external dataset clauses. Standard functions such as NOW, RAND and
 UUID use runtime clock or entropy and can return different values across runs.
 
-The crate-level [rustdoc example](src/lib.rs) demonstrates loading two classes,
+A crate-level [rustdoc example](src/lib.rs) loads two classes,
 querying their relation and refusing a stale request. Generic is the default
 profile; estate vocabulary is an explicit choice. Unsupported reasoner input
 and budget fallbacks are reported as incomplete classification.
@@ -23,7 +23,7 @@ replies into evidence-bearing candidates, a withheld list and a proven patch
 preview in the `propose_patch` shape. The transcript fixture exercises both,
 so native and WASM answers are byte-equal here too.
 
-The engine's document-profile adapters remain in place for its own axioms.
+For its own axioms the engine keeps its document-profile adapters.
 Each engine profile also implements `ontomark_model::Profile`, the explicit
 mapping EXP-10 asks for; ingest reads the vault through it, and
 `tests/profile_parity.rs` proves both sides index the same entities. Adopting

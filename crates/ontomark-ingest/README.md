@@ -5,7 +5,7 @@ that turns a model's proposed names and values into evidence-bearing, guarded
 Markdown patch candidates. Specified by
 [ADR-OM-003](../../docs/adr/ADR-OM-003-native-assisted-ingest.md).
 
-The crate never calls a model and performs no I/O. A host (the Obsidian
+No model is called from here and no I/O happens. A host (the Obsidian
 plugin, Loom, Agentbox) owns transport, credentials and the user's
 confirmation; this crate owns everything deterministic in between.
 

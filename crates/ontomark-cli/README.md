@@ -2,9 +2,9 @@
 
 Native publication CLI for Markdown ontology vaults. It implements the estate
 publication contract through the shared compiler and a caller-selected profile.
-The binary is named `ontomark`; it is distributed as a GitHub release asset.
+`ontomark` is the binary, distributed as a GitHub release asset.
 
-The released command set is `build`, `validate`, `gate`, `conflicts`, `repair`
+Released commands: `build`, `validate`, `gate`, `conflicts`, `repair`
 and `migrate`. Use `ontomark --help` and each command's `--help` for flags.
 `repair` has `bodies` and `fences` subcommands; `migrate` has `list`, `plan`,
 `apply`, `rollback` and `status`. `attribute`, `assets` and `body-residue` remain
@@ -16,7 +16,7 @@ write publication outputs, repair source files or apply migrations; review
 migration plans before applying them. Journals under `.ontomark/` preserve
 original bytes, including private pages, and must stay outside publication.
 
-The legacy estate projection delegates classification to the shared reasoner.
+Classification in the legacy estate projection is delegated to the shared reasoner.
 It preserves recorded corpus compatibility; adopting the compiler's typed
 in-memory API requires separate profile and identity migration.
 

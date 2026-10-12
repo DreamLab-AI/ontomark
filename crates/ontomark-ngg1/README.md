@@ -31,5 +31,5 @@ from `vowl-wasm` 0.1.2 (MIT, Copyright (c) 2025-2026 DreamLab-AI); the encoder
 derives from VisionClaw's `crates/vault/src/build/ngg1.rs` at `1044b0722`. See
 `NOTICE`.
 
-The public API of `vowl-wasm`'s `ngg1` module is kept name for name, so that
+`vowl-wasm`'s `ngg1` public API is kept name for name, so that
 crate can replace its module with `pub use ontomark_ngg1::*;`.
