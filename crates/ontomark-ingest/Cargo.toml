@@ -1,7 +1,7 @@
 [package]
 name = "ontomark-ingest"
 description = "Assisted ingest for Ontomark: a pure, host-driven plan/accept contract that turns model-proposed names and values into evidence-bearing, guarded Markdown patch candidates"
-version.workspace = true
+version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true

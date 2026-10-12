@@ -13,7 +13,7 @@ name = "ontomark"
 path = "src/main.rs"
 
 [dependencies]
-ontomark-compile = { path = "../ontomark-compile" }
+ontomark-compile = { path = "../ontomark-compile", version = "0.2.0" }
 ontomark-profile-estate = { path = "../../profiles/estate" }
 anyhow = "1"
 clap = { version = "4.5", features = ["derive", "env"] }
