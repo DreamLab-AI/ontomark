@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: DreamLab-AI/ontomark-obsidian
-          ref: 003956f94dd0d4dbc29a2c75d64efb2d1a55e521
+          ref: b2bf90043f74477c0b06af449a1efd9018b4cb06
           path: .plugin-consumer
       - run: bash scripts/test-plugin-consumer.sh .plugin-consumer
   secrets:
