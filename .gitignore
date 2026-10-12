@@ -6,3 +6,6 @@
 
 # Isolated, pinned Obsidian consumer checkout used by CI
 /.plugin-consumer
+
+# agent tooling state
+.claude-flow/
