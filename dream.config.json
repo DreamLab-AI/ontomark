@@ -16,6 +16,10 @@
     {
       "deep": "bundle-and-rdf",
       "scan": ["crates/ontomark-compile/src/bundle.rs", "crates/ontomark-compile/tests/bundle_contract.rs", "crates/ontomark-compile/tests/w3c_turtle.rs", "crates/ontomark-compile/tests/jsonld_matches_turtle.rs", "conformance/"]
+    },
+    {
+      "deep": "assisted-ingest",
+      "scan": ["crates/ontomark-ingest/", "docs/adr/ADR-OM-003-native-assisted-ingest.md", "docs/ONTOCAST-TRIAGE.md"]
     }
   ],
   "buildStep": {
@@ -40,6 +44,11 @@
     },
     "compiler-rustdoc": {
       "cmd": "sh scripts/doc-strict.sh",
+      "required": true,
+      "timeoutSecs": 900
+    },
+    "ingest-wasm-build": {
+      "cmd": "cargo build --locked -p ontomark-ingest --target wasm32-unknown-unknown --release",
       "required": true,
       "timeoutSecs": 900
     }

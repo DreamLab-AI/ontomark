@@ -28,6 +28,26 @@ verification also passed. The complete committed corpus comparison reports zero 
 over 32 artefact lines and 12 command outputs. Its explicit compatibility
 flag is a comparison mechanism; default public exports retain privacy tests.
 
+## Assisted ingest (landed, unreleased)
+
+`crates/ontomark-ingest` implements the first slice of
+[ADR-OM-003](adr/ADR-OM-003-native-assisted-ingest.md): a pure `plan`/`accept`
+contract with no I/O and no model call. `plan` returns the prompt contract as
+data, heading-aware chunks, the profile's assertion keys and a response JSON
+schema; `accept` grounds model-proposed names against the vault (exact, then
+OntoCast's lexical tiers, strongest tier wins), checks literals against their
+XSD datatype, requires a located evidence quote for every value, and returns one
+digest-bound `Patch` that has already been applied once in memory to prove it.
+Facts only, against the existing vocabulary; ontology growth, the critic pass and
+numeric repair are deferred. 20 unit, 8 integration and 6 doc tests pass; strict
+Clippy and rustdoc pass; the crate compiles for `wasm32-unknown-unknown` and CI
+builds it for that target. It is not published, not exposed through
+`ontomark-wasm`, and not consumed by the plugin; those are the next steps and
+each needs its own gate (engine prerelease and `engine.json` repin, installed
+Obsidian acceptance with EXP-11 unchanged when ingest is off). Methods adapted
+from OntoCast and SPIRES are credited in [UPSTREAMS](UPSTREAMS.md) and the
+crate's NOTICE.
+
 ## Releases and consumers
 
 | Component | Release and status |

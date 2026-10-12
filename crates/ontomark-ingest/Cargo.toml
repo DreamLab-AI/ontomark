@@ -1,0 +1,27 @@
+[package]
+name = "ontomark-ingest"
+description = "Assisted ingest for Ontomark: a pure, host-driven plan/accept contract that turns model-proposed names and values into evidence-bearing, guarded Markdown patch candidates"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+readme = "README.md"
+keywords = ["ontology", "obsidian", "knowledge-graph", "extraction", "wasm"]
+categories = ["text-processing", "parser-implementations"]
+
+[dependencies]
+ontomark-parse = { workspace = true, features = ["serde"] }
+ontomark-model = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+indexmap = { workspace = true }
+# Jaro-Winkler for near-miss suggestions (MIT, no dependencies, wasm32-clean).
+strsim = "0.11"
+# NFD decomposition for diacritic folding in label normalisation (MIT OR Apache-2.0).
+unicode-normalization = { version = "0.1", default-features = false }
+
+[lints]
+workspace = true

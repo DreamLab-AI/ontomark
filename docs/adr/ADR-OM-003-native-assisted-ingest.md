@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-10-12
-- Implementation: none. No ingest crate exists; nothing in a release contains OntoCast code.
+- Implementation: first slice landed in `crates/ontomark-ingest` (facts only; native tests, strict lints and docs, wasm32 build pass). Not published; not exposed through `ontomark-wasm`; not consumed by the plugin. No release contains OntoCast code.
 - Activation: inactive
 - Related: [ADR-OM-002](ADR-OM-002-shared-graph-and-obsidian-boundary.md), [OntoCast triage](../ONTOCAST-TRIAGE.md), [ADR-OBS-002](https://github.com/DreamLab-AI/ontomark-obsidian/blob/main/docs/adr/ADR-OBS-002-assisted-ingest-boundary-and-estate-notes.md), [upstream credits](../UPSTREAMS.md)
 
@@ -25,6 +25,24 @@ A new crate, `ontomark-ingest`, depends only on `ontomark-parse`, `ontomark-mode
 ```text
 plan(note, revision, profile, vocabulary, options) -> ModelRequest
 accept(revision, ModelResponse)                    -> Candidates
+```
+
+```mermaid
+sequenceDiagram
+    participant H as Host (plugin, Loom, Agentbox)
+    participant I as ontomark-ingest
+    participant M as Model (host-supplied)
+    participant P as ontomark-parse
+
+    H->>I: plan(note, profile, model)
+    I-->>H: ModelRequest {instructions, keys, chunks, schema, digest}
+    H->>M: request as JSON
+    M-->>H: ModelResponse[] {key, name or literal, evidence quote}
+    H->>I: accept(note, request, responses)
+    Note over I: digest check · locate evidence · ground names<br/>(exact → lexical tiers → suggestions) · XSD checks · kind guard
+    I->>P: Patch bound to digest, applied once in memory to prove it
+    I-->>H: Candidates {patch?, accepted[], withheld[reason], diagnostics[]}
+    H->>H: diff preview; apply on confirm; undo stays available
 ```
 
 - `ModelRequest` is plain data: the prompt contract (a versioned data file, not code), the chunks, the vocabulary slice the model may use, and the expected response schema. The host sends it to whatever model it chooses.
@@ -83,6 +101,13 @@ Any model call is made by the **host**, never by the core. For the Obsidian plug
 - Attribution is mandatory. The Apache-2.0 licence text, upstream commit `abb8d7b8d6db1a765d4f091a7423937c2cbc5d78` and the `CITATION.cff` reference are added to `UPSTREAMS.md` and `THIRD-PARTY-NOTICES.md` in the same change as the first adapted code.
 - The nightly dream gates native contracts only. Ingest changes that touch WASM or the plugin need their dedicated acceptance harnesses.
 - A second model pass (the critic), ontology growth, numeric and unit repair, and long-document preprocessing are deferred, not rejected.
+
+## Deviations recorded during implementation
+
+- **Strongest tier wins.** OntoCast merges every pair a tier accepts into one cluster. Grounding must choose one target, so terms matching at the strongest tier win and only a tie there is `Ambiguous`. Otherwise OntoCast's initials tier, which lets the one-word label `graph` alias `knowledge graph`, made every multi-word name ambiguous.
+- **Lower-casing, not case-folding**, as in Python `str.lower()`: `ß` stays `ß`. The sequence ratio omits `difflib`'s junk heuristics, which only engage at 200 or more characters.
+- **Suggestion scores are rounded to four decimal places** so they round-trip through any host's JSON float parser; `serde_json` without `float_roundtrip` returned a 17-digit score one ulp off.
+- **Jaccard is implemented in the crate** (three lines) rather than taken from `textdistance`, to keep the WASM dependency inventory small.
 
 ## Verification required before activation
 

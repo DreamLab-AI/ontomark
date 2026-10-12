@@ -45,6 +45,15 @@ Bucket meanings: **Drop** is not carried across; **Replace** is already covered 
 | `agent/external_evidence.py`, `prompt/web_grounding.py` | ~490 | Drop | Web grounding has no place in a local, user-invoked action. |
 | RDF 1.2 provenance emission | n/a | Replace | Evidence spans on candidates, bound to a source revision. |
 
+## Status of the Port rows (12 Oct 2026)
+
+| Port row | State in `ontomark-ingest` |
+|---|---|
+| Heading-aware chunking | Landed: `chunk.rs` (headings, bare headings, merge to min, split to max, fences respected). Section labels and the LLM section classifier were not carried. |
+| Merge guards | Landed as grounding tiers: `similarity.rs` (exact, shared label, initials, label Jaccard, sequence ratio, token Jaccard; initials-distinct refusal). Sibling, literal-conflict and functional-IRI guards concern merging extracted entities with each other, which the facts-only slice does not do; they return with ontology growth. |
+| Deterministic fact checks and literal repair | Landed in part: XSD lexical checks with trim, unquote and thousands-separator repair; single-value conflict and already-present refusals. Numeric inventory and unit lexicon deferred. |
+| Render prompt contract as data | Landed: `prompts/facts-v1.md` plus a generated response JSON schema. SPIRES grounding replaces OntoCast's model-emitted IRIs. |
+
 ## Mapping to the estate
 
 The retired RDF-to-Logseq adapter (`knowledgeGraph/docs/integrations/ontocast.md`) already decided several things worth keeping:

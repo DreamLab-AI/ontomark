@@ -8,6 +8,12 @@ Ontomark builds on the work of these upstream developers. Their licences remain 
 - [whelk-rs](https://github.com/b-gehrke/whelk-rs), the Rust implementation by Björn (`b-gehrke`) and contributors, is MIT. Ontomark derives from the [jjohare fork at `79a1ee21789add5a66faa0ec1a830c32dba9b539`](https://github.com/jjohare/whelk-rs/tree/79a1ee21789add5a66faa0ec1a830c32dba9b539).
 - `whelk-el` preserves the Rust MIT notice in `LICENSE-WHELK` and the Scala BSD notice in `LICENSE-WHELK-BSD`. DreamLab changes use MIT OR Apache-2.0. The older published `whelk-el` 0.1.0 package contains the previous incomplete attribution; these corrections do not rewrite that immutable package.
 
+## OntoCast and SPIRES (assisted ingest methods)
+
+- [OntoCast](https://github.com/growgraph/ontocast), by GrowGraph (Alexander Belikov and contributors), is Apache-2.0 ([licence](https://github.com/growgraph/ontocast/blob/main/LICENSE), [citation](https://github.com/growgraph/ontocast/blob/main/CITATION.cff), DOI 10.5281/zenodo.17796467). `ontomark-ingest` re-implements, from documented behaviour, its heading-aware chunking, lexical alias tiers, initials guards and deterministic literal checks, as reviewed at commit `abb8d7b8d6db1a765d4f091a7423937c2cbc5d78` (0.6.7). No OntoCast source is included and OntoCast is not a dependency. The adapted files are named in the rustdoc of `normalize`, `similarity` and `chunk`; the full inventory of what was adapted, replaced, deferred or dropped is the [triage](ONTOCAST-TRIAGE.md).
+- SPIRES, by Caufield et al. (*Bioinformatics* 40(3), 2024, [doi:10.1093/bioinformatics/btae104](https://doi.org/10.1093/bioinformatics/btae104)), is the source of the names-in, grounded-identifiers-out extraction contract. Its implementation [OntoGPT](https://github.com/monarch-initiative/ontogpt) is BSD-3-Clause; no OntoGPT code is included.
+- `ontomark-ingest` depends on [strsim](https://github.com/rapidfuzz/strsim-rs) (MIT) for Jaro-Winkler and [unicode-normalization](https://github.com/unicode-rs/unicode-normalization) (MIT OR Apache-2.0) for NFD folding. Neither is yet part of a released engine archive; a distribution that includes the crate needs an inventory bound to its own source and digest, as for the engine below.
+
 ## Current crate releases
 
 The packages published from source `340b8a0d3e5828dd3959dd115e7a0e67268de5f5`

@@ -4,6 +4,10 @@ This distribution includes software by the upstream authors listed below. The or
 
 This file covers the portable rc1 engine source `21cd9ffd7b08317248afb4e06b74b650290de5b4` and the standalone plugin’s build/test tool lock at `93b6a05`. See the core repository’s `docs/UPSTREAMS.md` for the full inventory and audit method.
 
+## Method attribution (source tree, not yet in a distribution)
+
+`crates/ontomark-ingest` re-implements methods from OntoCast (GrowGraph, Apache-2.0, https://github.com/growgraph/ontocast, reviewed at `abb8d7b8d6db1a765d4f091a7423937c2cbc5d78`) and follows the SPIRES extraction contract (Caufield et al., 2024; OntoGPT, BSD-3-Clause). No source from either project is included, so no licence text is reproduced here; the crate’s `NOTICE` and `docs/UPSTREAMS.md` carry the credit. The crate adds `strsim` (MIT) and `unicode-normalization` (MIT OR Apache-2.0) to the dependency graph. It is not part of the rc1 engine archive this file inventories; a distribution that includes it must extend this file with those licence texts and bind the inventory to its own source digest.
+
 ## MPL source availability
 
 The embedded engine uses these unchanged libraries under the Mozilla Public License 2.0. Their complete source packages, with the original notices, are available at:

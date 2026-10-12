@@ -18,6 +18,7 @@ jobs:
           cargo test --locked -p ontomark-compile --all-features
           cargo test --locked -p ontomark-compile --no-default-features
       - run: cargo build -p ontomark-wasm --target wasm32-unknown-unknown --release
+      - run: cargo build -p ontomark-ingest --target wasm32-unknown-unknown --release
       - run: cargo doc --workspace --no-deps
         env: { RUSTDOCFLAGS: "-D warnings" }
   plugin:

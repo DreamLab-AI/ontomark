@@ -53,11 +53,12 @@ Each crate has its own README and inline rustdoc, including executable examples.
 | [ontomark-reason](crates/ontomark-reason) | 0.1.1 | Supported-profile checking, explicit refusal reasons and cancellable classification. |
 | [ontomark-compile](crates/ontomark-compile) | 0.1.3 | Turtle, JSON-LD, SHACL, PROV-O, public projections and typed bundle readers. |
 | [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | Shared binary graph encoder and zero-copy reader. |
+| [ontomark-ingest](crates/ontomark-ingest) | Unreleased | Host-driven assisted ingest: plan a model request, accept names and values back as evidence-bearing, guarded patch candidates. |
 | [ontomark-wasm](crates/ontomark-wasm) | Release asset | Worker-friendly index, update, classify, query and patch protocol. |
 | [ontomark-cli](crates/ontomark-cli) | Release asset | Native publication commands. |
 | [ontomark-graph](packages/graph) | [0.1.0 release](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.1.0) | Shared offline graph renderer, hierarchy adapter and focus traversal for desktop and web hosts. |
 
-Parser, model and reasoner crates support native and `wasm32` targets. The compiler's portable feature set disables its optional native backend. The [estate profile](profiles/estate) owns DreamLab vocabulary and policy; applications can provide their own profile.
+Parser, model, reasoner and ingest crates support native and `wasm32` targets. The compiler's portable feature set disables its optional native backend. The [estate profile](profiles/estate) owns DreamLab vocabulary and policy; applications can provide their own profile.
 
 ## Build and check
 
@@ -69,6 +70,7 @@ cargo test --locked --workspace
 cargo clippy --locked --workspace --all-targets -- -D warnings
 RUSTDOCFLAGS='-D warnings' cargo doc --locked --workspace --no-deps
 cargo build --locked -p ontomark-wasm --target wasm32-unknown-unknown --release
+cargo build --locked -p ontomark-ingest --target wasm32-unknown-unknown --release
 ```
 
 `just check`, `just wasm-test` and `just conformance` provide the repository gates. CI checks formatting, Clippy, native tests, compiler all/no-default-feature tests, WASM, strict rustdoc, plugin contracts and complete Git history for secrets. The plugin tests include actual WASM/native transcript parity and an offline Obsidian API shim; that shim does not substitute for installed Obsidian acceptance.
@@ -85,6 +87,7 @@ Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surfac
 - [API documentation](docs/api/): crate contracts and capabilities.
 - [Design decisions](docs/adr/ADR-OM-001-sprint-decisions.md): profiles, licensing and reasoner choices.
 - [Shared graph and plugin boundary](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md): code ownership and consumer contracts.
+- [Native assisted ingest](docs/adr/ADR-OM-003-native-assisted-ingest.md) and the [OntoCast triage](docs/ONTOCAST-TRIAGE.md): the host-driven extraction contract, what was adapted from OntoCast and what was not.
 - [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md): credited sources and distribution licences.
 - [Estate migration plan](docs/DEPRECATION.md) and [branch recovery](docs/BRANCH-RECOVERY.md): consumer replacements and preserved interrupted work.
 - [Run log](docs/RUNLOG.md) and [evidence](docs/evidence/resume/): reproducible checks and historical receipts.

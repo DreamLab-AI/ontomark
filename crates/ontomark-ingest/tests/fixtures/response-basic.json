@@ -1,0 +1,14 @@
+[
+  {
+    "chunk": 0,
+    "assertions": [
+      { "key": "is-a", "value": "graph", "evidence": "is a directed graph" },
+      { "key": "population", "value": "1,200", "evidence": "holds 1,200 nodes" },
+      { "key": "founded", "value": "2019-03-01", "evidence": "first built on 2019-03-01" },
+      { "key": "colour", "value": "indigo", "evidence": "indigo" },
+      { "key": "is-a", "value": "Grph", "evidence": "is a directed graph" },
+      { "key": "is-a", "value": "urn:x:Invented", "evidence": "directed" },
+      { "key": "note", "value": "a sentence that is not there", "evidence": "nowhere in the chunk" }
+    ]
+  }
+]

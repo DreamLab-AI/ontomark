@@ -1,0 +1,36 @@
+ontomark-ingest
+Copyright 2026 DreamLab AI
+
+Licensed under MIT OR Apache-2.0, at your option.
+
+## Method attribution
+
+The chunking rules, lexical alias tiers, initials guards and literal checks in
+this crate are re-implementations, from documented behaviour, of methods in
+OntoCast by GrowGraph (Alexander Belikov and contributors), Apache License 2.0,
+https://github.com/growgraph/ontocast, reviewed at commit
+abb8d7b8d6db1a765d4f091a7423937c2cbc5d78 (version 0.6.7). No OntoCast source
+code is included. The specific upstream files consulted are named in the
+rustdoc of the modules that adapt them (`normalize`, `similarity`, `chunk`).
+
+The names-in, grounded-identifiers-out extraction contract follows SPIRES:
+Caufield JH, Hegde H, Emonet V, et al. "Structured prompt interrogation and
+recursive extraction of semantics (SPIRES): a method for populating knowledge
+bases using zero-shot learning." Bioinformatics 40(3), 2024,
+doi:10.1093/bioinformatics/btae104. Its implementation, OntoGPT
+(https://github.com/monarch-initiative/ontogpt), is BSD-3-Clause; no OntoGPT
+code is included.
+
+The starting confidence (0.5) and method ("inferred") of every candidate
+follow the retired RDF-to-Logseq adapter in DreamLab-AI/knowledgeGraph,
+authored by DreamLab AI and covered by the workspace relicensing grant
+(see the repository NOTICE).
+
+## Dependencies
+
+strsim 0.11 (MIT), https://github.com/rapidfuzz/strsim-rs
+unicode-normalization 0.1 (MIT OR Apache-2.0),
+https://github.com/unicode-rs/unicode-normalization
+
+Their licence texts accompany any binary or WebAssembly distribution that
+includes this crate; see the repository THIRD-PARTY-NOTICES.md.
