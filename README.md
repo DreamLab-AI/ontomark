@@ -14,7 +14,7 @@ Ontomark exists because two things usually sold as opposites are both true: peop
 Three ideas carry the whole design:
 
 1. **The note is the record.** Nothing is re-rendered from a typed view. The only write path is a guarded patch that proves every byte it did not name is unchanged. Identity is an IRI the author wrote, never a title the tool slugified.
-2. **Reasoning is honest about its limits.** The engine implements a profile of OWL 2 EL and *names* what it refuses. A result that dropped an axiom says so, rather than reporting a classification that is quietly incomplete.
+2. **Refusals are named, never silent.** The engine implements a profile of OWL 2 EL and reports each construct it cannot reason over. A result that dropped an axiom says so, rather than reporting a classification that is quietly incomplete.
 3. **Models propose, the vault decides.** Assisted ingest lets a language model read a note and suggest values, but the model never sees an identifier and never writes: the engine grounds each proposed name against the vault, requires a located quote as evidence, and returns candidates for a human to accept.
 
 If you want to see it work before reading more, install the [Obsidian plugin](https://github.com/DreamLab-AI/ontomark-obsidian) and write the two notes below. If you want to use it as a library, start with `ontomark-parse`, then `ontomark-model`; everything else is built on those two. If you are here for the DreamLab estate pipeline, read [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) first and the CLI section below.
@@ -39,7 +39,7 @@ subclass-of: ["[[Animal]]"]
 ---
 ```
 
-The generic profile reads these as two classes with Dog a subclass of Animal. Prose links stay navigation; only frontmatter makes axioms. The Obsidian plugin indexes, classifies and queries the vault locally, and previews every frontmatter edit as a diff before applying it.
+Under the generic profile these are two classes, with Dog a subclass of Animal. Prose links stay navigation; only frontmatter makes axioms. In Obsidian, the plugin indexes, classifies and queries the vault locally, and previews every frontmatter edit as a diff before applying it.
 
 ## How the pieces fit
 
@@ -84,7 +84,7 @@ Every arrow out of the CLI carries a **generation**: `visionGraph@<commit>` plus
 | [VisionClaw](https://github.com/DreamLab-AI/VisionClaw) | The XR/GPU knowledge-graph application. Consumes the machine-scope bundle for its force layout. |
 | [agentbox](https://github.com/DreamLab-AI/agentbox) | The agent runtime. Bakes the released CLI and routes the grounding skill through it. |
 
-## The CLI
+## Command line
 
 Each [release](https://github.com/DreamLab-AI/ontomark/releases) ships a static Linux x86-64 binary (runs on glibc and Nix hosts alike), a SHA-256 receipt, and the versioned WASM engine bundle the plugin pins.
 
@@ -128,7 +128,7 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 
 Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.
 
-## The case for structure, measured on the estate
+## Structure pays, measured on the estate
 
 Ontomark is the engine under the DreamLab estate's own corpus, so the argument for typed Markdown can be made with numbers rather than principle. Figures are from the corpus and the [Ontology Loom](https://github.com/DreamLab-AI/loom) at generation `visionGraph@ae913f93` (12 October 2026).
 
