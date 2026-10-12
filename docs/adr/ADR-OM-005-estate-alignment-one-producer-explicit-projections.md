@@ -75,3 +75,14 @@ The ontomark compile/build pipeline was mapped into the VisionFlow diagrams-as-c
 - **`--with-rvdb` exists in ontomark** (`build::records`, pure; transport in the CLI). The C3 line that called it VisionClaw-only is withdrawn.
 - **VC-60 still ships** S1.1 (fail-open redactor), S1.2 (frontmatter unscanned), S1.5 (`--vault all` = knowledge only), S2.3 (non-atomic publish-out) and S3.1 until it retires under decision 2's gates; the fixes are in ontomark only.
 - **Step 10's private machine bundle** is now specified against the reconciled `run()` (OM-00.4) and is the next code item.
+
+## Amendment 2026-10-12 (same day): the machine-scope bundle design, locked
+
+Design brief: `docs/design/machine-bundle-brief.md` (advisor-reviewed; the first draft's hook point and identity scheme were wrong and are replaced). Surface: `ontomark build --scope public|machine` (clap enum, default `public`; the marker gains `scope`, omitted when public so public markers stay byte-identical). Defaults taken under the owner's standing instruction, each reversible:
+
+- **D1 twins.** A public `working/` page whose un-prefixed identity matches a *private* knowledge page is a publication collision (fail closed); one matching a *public* knowledge page yields to knowledge (dropped, counted), as VisionClaw's §V1 merge does.
+- **D2 identity.** Working records are keyed on the vault-relative path: `page_id = working/<id>`, slug per path segment, `page_iri = <page_namespace>working/<id>`. Machine scope only; a public bundle never carries one.
+- **D3 one resolver.** The `PrivateLinks` lookup (home vault, whole target, `#fragment` stripped, `.md` stripped) serves both redaction and plain-record links, mapped to post-disambiguation slugs; knowledge links are not re-resolved, so working edges are one-directional in v1.
+- **D4 Loom's `data/` is scope-invariant.** Scaffold gets a knowledge-only backlink map, so every `data/` artefact but the markers is byte-identical across scopes; `api/pages` backlinks may include working sources.
+
+Implementation status: in progress on `main` after this record; the C3 contract is amended when the field list ships.
