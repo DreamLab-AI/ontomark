@@ -21,7 +21,7 @@ model-projection = ["dep:ontomark-model", "dep:ontomark-reason"]
 
 [dependencies]
 ontomark-model = { workspace = true, optional = true }
-ontomark-reason = { path = "../ontomark-reason", version = "0.1.1", optional = true }
+ontomark-reason = { path = "../ontomark-reason", version = "0.1.2", optional = true }
 ontomark-ngg1 = { path = "../ontomark-ngg1", version = "0.1.0" }
 serde = { workspace = true }
 # preserve_order: every JSON artefact's key order is part of the byte contract.

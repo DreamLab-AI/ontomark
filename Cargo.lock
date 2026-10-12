@@ -977,7 +977,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-model"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "indexmap 2.14.2",
  "ontomark-parse",
@@ -992,7 +992,7 @@ version = "0.1.0"
 
 [[package]]
 name = "ontomark-parse"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "indexmap 2.14.2",
  "serde",
@@ -1010,7 +1010,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-reason"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "oxrdf",
  "oxttl",

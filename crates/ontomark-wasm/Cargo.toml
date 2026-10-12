@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 ontomark-parse = { workspace = true, features = ["serde"] }
-ontomark-reason = { path = "../ontomark-reason", version = "0.1.1" }
+ontomark-reason = { path = "../ontomark-reason", version = "0.1.2" }
 ontomark-model = { workspace = true }
 ontomark-ingest = { workspace = true }
 serde.workspace = true
