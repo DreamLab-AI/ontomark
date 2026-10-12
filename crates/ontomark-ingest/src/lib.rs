@@ -76,7 +76,7 @@ pub mod normalize;
 pub mod similarity;
 
 pub use accept::{
-    codes, CandidateAssertion, Candidates, EvidenceSpan, IngestDiagnostic, Withheld,
+    codes, CandidateAssertion, Candidates, EvidenceSpan, IngestDiagnostic, Utf16Span, Withheld,
     WithholdReason, CONFIDENCE, METHOD,
 };
 pub use chunk::Chunk;
@@ -90,9 +90,12 @@ pub use vocabulary::{Grounding, Suggestion, Term, Vocabulary};
 
 use ontomark_model::{DocId, Model, Profile};
 use ontomark_parse::Document;
+use serde::{Deserialize, Serialize};
 
 /// Tunable limits. Defaults follow OntoCast's chunking and lexical settings.
-#[derive(Debug, Clone, PartialEq)]
+/// Every field has a default, so a host may pass a partial object.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Options {
     /// Chunks shorter than this merge with their neighbour (OntoCast
     /// `CHUNK_MIN_SIZE`, 3000 characters).

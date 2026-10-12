@@ -62,6 +62,12 @@ impl Vault {
                 ),
                 page("Company S", "type: NamedIndividual\niri: urn:x:CS", ""),
                 page("Company T", "type: NamedIndividual\niri: urn:x:CT", ""),
+                // One note whose own names differ only by an initial.
+                page(
+                    "Company X",
+                    "type: NamedIndividual\niri: urn:x:CX\naliases:\n- Company Y",
+                    "",
+                ),
                 page("Dup one", "type: Class\niri: urn:x:Dup\naliases:\n- Duplicate", ""),
                 page("Dup two", "type: Class\niri: urn:x:Dup", ""),
                 page(
@@ -207,7 +213,7 @@ fn recorded_response_yields_one_patch_and_named_refusals() {
     assert_eq!(ev.span.slice(kg.source()), "is a directed graph");
     assert_eq!(ev.quote, "is a directed graph");
     let idx = kg.utf16_index();
-    assert_eq!(idx.span(ev.span), Some(ev.utf16));
+    assert_eq!(idx.span(ev.span), Some((ev.utf16.start, ev.utf16.end)));
     assert!(out
         .diagnostics
         .iter()
@@ -242,7 +248,8 @@ fn recorded_response_yields_one_patch_and_named_refusals() {
         after.value("is-a"),
         Some(&Value::strings(["[[Thing]]", "[[Graph]]"]))
     );
-    assert_eq!(after.value("population"), Some(&Value::string("1200")));
+    // Written typed, as the RDF reads it.
+    assert_eq!(after.value("population"), Some(&Value::Int(1200)));
     // Untouched keys keep their bytes.
     assert!(after.source().contains("aliases:\n- KG\n"));
     assert_eq!(after.body(), kg.body());
@@ -654,4 +661,20 @@ fn vocabulary_grounding_is_inspectable() {
         vocab.ground(&p, &m, "", t, 3),
         Grounding::Ungrounded { ref suggestions } if suggestions.is_empty()
     ));
+    // A name that is one of a term's own names is never that term's
+    // initials conflict, even when its other names differ by an initial.
+    assert_eq!(
+        vocab.ground(&p, &m, "company y", t, 3),
+        Grounding::Resolved {
+            iri: iri("urn:x:CX"),
+            tier: AliasTier::Exact
+        }
+    );
+    // A name differing from a term only by an initial is still a conflict.
+    assert_eq!(
+        vocab.ground(&p, &m, "Company Z", t, 3),
+        Grounding::InitialsConflict {
+            with: iri("urn:x:CS")
+        }
+    );
 }

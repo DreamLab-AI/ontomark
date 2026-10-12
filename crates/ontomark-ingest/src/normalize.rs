@@ -31,7 +31,8 @@ pub fn normalize_text(text: &str) -> String {
     let mut out = String::with_capacity(lower.len());
     let mut pending_space = false;
     for c in lower.chars() {
-        if c.is_whitespace() {
+        // Python's `\s` also covers U+001C..U+001F.
+        if c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c) {
             pending_space = !out.is_empty();
         } else {
             if pending_space {
@@ -57,8 +58,9 @@ pub fn normalize_label(text: &str) -> String {
     let chars: Vec<char> = text.chars().collect();
     let mut split = String::with_capacity(text.len() + 4);
     for (i, &c) in chars.iter().enumerate() {
-        let next_lower = chars.get(i + 1).is_some_and(|n| n.is_lowercase());
-        if i > 0 && c.is_uppercase() && next_lower {
+        // Upstream's `(?=[A-Z][a-z])` is ASCII-only; so is this.
+        let next_lower = chars.get(i + 1).is_some_and(char::is_ascii_lowercase);
+        if i > 0 && c.is_ascii_uppercase() && next_lower {
             split.push(' ');
         }
         split.push(c);

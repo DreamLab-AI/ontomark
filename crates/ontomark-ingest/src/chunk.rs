@@ -2,11 +2,13 @@
 //!
 //! Adapted from the documented behaviour of OntoCast's chunker
 //! (`tool/chunk/{chunker,sections,sizing}.py`, growgraph/ontocast `abb8d7b`,
-//! Apache-2.0): cuts follow the document's headings so no chunk spans two
-//! sections; a heading with no text of its own opens the chunk that follows
-//! it; neighbouring short sections are joined until the chunk reaches the
-//! minimum size; a chunk over the maximum splits at paragraph, then line,
-//! boundaries. Fenced code is never cut and its `#` lines are not headings.
+//! Apache-2.0): cuts fall on the document's headings; a heading with no
+//! text of its own opens the chunk that follows it; neighbouring short
+//! sections are joined until the chunk reaches the minimum size, so one
+//! chunk may cover several sections but a section is never split across
+//! chunks unless it alone exceeds the maximum, when it splits at paragraph,
+//! then line, boundaries. `#` lines inside fenced code are not headings; an
+//! oversize split may fall inside a fence.
 //!
 //! Every chunk's `text` is the exact byte slice of the document named by its
 //! `span`, so evidence found in a chunk maps back to the source without
@@ -57,7 +59,7 @@ pub fn chunk_document(doc: &Document, min_chars: usize, max_chars: usize) -> Vec
         return Vec::new();
     }
     let max_chars = max_chars.max(1);
-    let units = merge(sections(body), min_chars, max_chars);
+    let units = merge(body, sections(body), min_chars, max_chars);
     let mut out = Vec::new();
     for (path, start, end) in units {
         for (s, e) in split_oversize(&body[start..end], max_chars) {
@@ -151,7 +153,14 @@ fn sections(body: &str) -> Vec<Section> {
 /// Join neighbouring sections into units: a bare heading opens the next
 /// section; a unit under `min` absorbs the next while the result stays
 /// within `max`.
-fn merge(sections: Vec<Section>, min: usize, max: usize) -> Vec<(Vec<String>, usize, usize)> {
+fn merge(
+    body: &str,
+    sections: Vec<Section>,
+    min: usize,
+    max: usize,
+) -> Vec<(Vec<String>, usize, usize)> {
+    // Limits are in characters, as the options say; spans are bytes.
+    let chars = |a: usize, b: usize| body[a..b].chars().count();
     let mut out: Vec<(Vec<String>, usize, usize)> = Vec::new();
     // A bare heading waiting for content: (path, start, end).
     let mut carry: Option<(Vec<String>, usize, usize)> = None;
@@ -165,8 +174,7 @@ fn merge(sections: Vec<Section>, min: usize, max: usize) -> Vec<(Vec<String>, us
             continue;
         }
         if let Some(last) = out.last_mut() {
-            let last_len = last.2 - last.1;
-            if last_len < min && s.end - last.1 <= max {
+            if chars(last.1, last.2) < min && chars(last.1, s.end) <= max {
                 last.2 = s.end;
                 continue;
             }
@@ -209,7 +217,29 @@ fn split_oversize(text: &str, max: usize) -> Vec<(usize, usize)> {
         pieces.push((start, start + cut));
         start += cut;
     }
-    pieces
+    // A piece that is only whitespace joins its neighbour rather than
+    // standing as a chunk with nothing to quote.
+    let mut merged: Vec<(usize, usize)> = Vec::new();
+    let mut pending_start: Option<usize> = None;
+    for (s, e) in pieces {
+        if text[s..e].trim().is_empty() {
+            match merged.last_mut() {
+                Some(last) => last.1 = e,
+                None => {
+                    pending_start.get_or_insert(s);
+                }
+            }
+            continue;
+        }
+        merged.push((pending_start.take().unwrap_or(s), e));
+    }
+    if pending_start.is_some() {
+        match merged.last_mut() {
+            Some(last) => last.1 = text.len(),
+            None => merged.push((0, text.len())),
+        }
+    }
+    merged
 }
 
 fn byte_at_char(s: &str, n: usize) -> usize {

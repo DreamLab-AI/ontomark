@@ -124,6 +124,17 @@ An Opus review of the first slice found seven defects, all fixed and pinned by t
 
 The review confirmed `sequence_ratio` equals CPython `difflib.SequenceMatcher.ratio()` without autojunk, including tie-breaking, and found the offset handling otherwise correct.
 
+A second pass from the same review, lower severity, was applied in the following commit:
+
+- Promoting an existing scalar to a list keeps the scalar's YAML type; it is no longer re-written as a string.
+- Literals are written typed (`true`, `1200`, `3.5` as YAML boolean, integer and float) so Obsidian types the property the way the RDF reads it; dates, URIs and strings stay strings.
+- `xsd:int`, `short` and `byte` are range-checked; `xsd:decimal` refuses exponent forms; dates must be all digits; strings refuse C0 control characters other than tab, LF and CR.
+- A name that is one of a term's own names is never that term's initials conflict; and a conflicting initial is not outranked by a match at a weaker tier than shared-label, which now withholds as `InitialsConflict` instead of silently writing the weak match.
+- Frontmatter the parser could not read (`Unsupported` or `Malformed`) withholds every value as `UnpatchableKey` instead of failing the batch at the proof.
+- Chunk limits are counted in characters, as the options say; a whitespace-only piece from an oversize split joins its neighbour; the module docs no longer claim that a chunk never spans two sections or that fenced code is never cut.
+- The CamelCase split is ASCII-only and U+001C–U+001F count as whitespace, both as upstream.
+- API hygiene: `Term` and `Vocabulary` no longer derive `Deserialize` (their sorted private indexes cannot be rebuilt from JSON) and do not serialise those fields; `Options` derives serde with defaults so a host can pass a partial object; `EvidenceSpan::utf16` is a `{start, end}` struct like `Span`.
+
 ## Verification required before activation
 
 1. Fixtures for every adapted guard, written failing first.

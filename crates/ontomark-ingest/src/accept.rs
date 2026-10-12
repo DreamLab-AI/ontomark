@@ -22,6 +22,15 @@ pub const CONFIDENCE: f32 = 0.5;
 /// Starting grounding method of every candidate.
 pub const METHOD: &str = "inferred";
 
+/// A span in UTF-16 code units, as Obsidian's editor counts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Utf16Span {
+    /// First code unit.
+    pub start: usize,
+    /// One past the last code unit.
+    pub end: usize,
+}
+
 /// Where in the note a value is supported.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EvidenceSpan {
@@ -29,8 +38,8 @@ pub struct EvidenceSpan {
     pub chunk: usize,
     /// Byte span in the document source.
     pub span: Span,
-    /// The same span in UTF-16 code units, as Obsidian's editor counts.
-    pub utf16: (usize, usize),
+    /// The same span in UTF-16 code units.
+    pub utf16: Utf16Span,
     /// The source text of the span.
     pub quote: String,
 }
@@ -245,6 +254,9 @@ pub(crate) fn accept(
     }
     let utf16 = doc.utf16_index();
     let subject = &request.note;
+    // Frontmatter the parser could not read is never patched; every value
+    // is withheld rather than the whole batch failing at the proof.
+    let locked = doc.frontmatter().is_some_and(|f| !f.is_parsed());
     let mut diagnostics = Vec::new();
     let mut withheld = Vec::new();
     // key -> identity -> candidate, in first-seen order. A name's identity
@@ -278,6 +290,10 @@ pub(crate) fn accept(
                 refuse(WithholdReason::UnknownKey, None);
                 continue;
             };
+            if locked {
+                refuse(WithholdReason::UnpatchableKey, None);
+                continue;
+            }
             let evidence = locate(&chunk.text, &a.evidence).map(|(s, e)| {
                 let span = Span::new(chunk.span.start + s, chunk.span.start + e);
                 EvidenceSpan {
@@ -287,6 +303,7 @@ pub(crate) fn accept(
                     // `locate` returns char boundaries, so this holds.
                     utf16: utf16
                         .span(span)
+                        .map(|(start, end)| Utf16Span { start, end })
                         .expect("evidence spans lie on char boundaries of the source"),
                     quote: span.slice(doc.source()).to_owned(),
                 }
@@ -478,18 +495,27 @@ pub(crate) fn accept(
             }
             continue;
         }
-        let new: Vec<String> = values.values().map(|c| c.written.clone()).collect();
+        // Literals are written with their YAML type so Obsidian types the
+        // property the same way the RDF does; names are strings.
+        let new: Vec<Value> = values
+            .values()
+            .map(|c| match &c.datatype {
+                Some(dt) => literal_value(dt, &c.written),
+                None => Value::string(&c.written),
+            })
+            .collect();
         let value = match (existing, &spec.value) {
-            (None, ValueKind::Literal { .. }) if new.len() == 1 => Value::string(&new[0]),
-            (None, _) => Value::strings(new),
+            (None, ValueKind::Literal { .. }) if new.len() == 1 => new[0].clone(),
+            (None, _) => Value::Seq(new),
             (Some(Value::Seq(items)), _) => {
                 let mut items = items.clone();
-                items.extend(new.into_iter().map(Value::String));
+                items.extend(new);
                 Value::Seq(items)
             }
             (Some(scalar), _) => {
-                let mut items = vec![Value::String(scalar.scalar_text().unwrap_or_default())];
-                items.extend(new.into_iter().map(Value::String));
+                // Promote the scalar as it is, keeping its type.
+                let mut items = vec![scalar.clone()];
+                items.extend(new);
                 Value::Seq(items)
             }
         };
@@ -746,6 +772,35 @@ fn strip_thousands(v: &str) -> String {
     out
 }
 
+/// The local name of an XSD datatype IRI (`integer`, `date`, ...).
+fn xsd_local(datatype: &Iri) -> &str {
+    datatype
+        .as_str()
+        .rsplit(['#', '/'])
+        .next()
+        .unwrap_or_default()
+}
+
+/// The YAML value to write for a checked literal: typed for booleans and
+/// numbers, a string otherwise.
+fn literal_value(datatype: &Iri, lexical: &str) -> Value {
+    match xsd_local(datatype) {
+        "boolean" => Value::Bool(lexical == "true"),
+        "integer" | "int" | "long" | "short" | "byte" | "nonNegativeInteger"
+        | "positiveInteger" | "negativeInteger" | "nonPositiveInteger" => lexical
+            .parse()
+            .map_or_else(|_| Value::string(lexical), Value::Int),
+        "decimal" | "float" | "double" => Value::Float(lexical.to_owned()),
+        _ => Value::string(lexical),
+    }
+}
+
+/// `true` when `v` has a C0 control character other than tab, LF and CR.
+fn has_control(v: &str) -> bool {
+    v.chars()
+        .any(|c| c.is_control() && !matches!(c, '\t' | '\n' | '\r'))
+}
+
 /// Check a literal against its datatype's lexical space, repairing what a
 /// model commonly gets wrong: surrounding whitespace, wrapping quotes and
 /// thousands separators in numbers. Returns the lexical form to write.
@@ -759,11 +814,10 @@ fn check_literal(datatype: &Iri, raw: &str) -> Result<String, String> {
     if v.is_empty() {
         return Err("empty".into());
     }
-    let local = datatype
-        .as_str()
-        .rsplit(['#', '/'])
-        .next()
-        .unwrap_or_default();
+    if has_control(v) {
+        return Err(format!("{v:?} has a control character"));
+    }
+    let local = xsd_local(datatype);
     match local {
         "integer" | "int" | "long" | "short" | "byte" | "nonNegativeInteger"
         | "positiveInteger" | "negativeInteger" | "nonPositiveInteger" => {
@@ -776,6 +830,9 @@ fn check_literal(datatype: &Iri, raw: &str) -> Result<String, String> {
                 "positiveInteger" => n > 0,
                 "negativeInteger" => n < 0,
                 "nonPositiveInteger" => n <= 0,
+                "int" => i32::try_from(n).is_ok(),
+                "short" => i16::try_from(n).is_ok(),
+                "byte" => i8::try_from(n).is_ok(),
                 _ => true,
             };
             if !ok {
@@ -785,6 +842,10 @@ fn check_literal(datatype: &Iri, raw: &str) -> Result<String, String> {
         }
         "decimal" | "float" | "double" => {
             let digits = strip_thousands(v);
+            // xsd:decimal has no exponent form.
+            if local == "decimal" && digits.contains(['e', 'E']) {
+                return Err(format!("{v:?} is not a decimal"));
+            }
             digits
                 .parse::<f64>()
                 .map_err(|_| format!("{v:?} is not a number"))
@@ -829,7 +890,12 @@ fn check_literal(datatype: &Iri, raw: &str) -> Result<String, String> {
 fn check_date(v: &str) -> Result<(), String> {
     let parts: Vec<&str> = v.splitn(3, '-').collect();
     let err = || format!("{v:?} is not a YYYY-MM-DD date");
-    if parts.len() != 3 || parts[0].len() != 4 || parts[1].len() != 2 || parts[2].len() != 2 {
+    if parts.len() != 3
+        || parts[0].len() != 4
+        || parts[1].len() != 2
+        || parts[2].len() != 2
+        || !parts.iter().all(|p| p.bytes().all(|b| b.is_ascii_digit()))
+    {
         return Err(err());
     }
     let y: i32 = parts[0].parse().map_err(|_| err())?;
@@ -927,6 +993,30 @@ mod tests {
         assert!(check_literal(&xsd("anyURI"), "not a uri").is_err());
         assert_eq!(check_literal(&xsd("string"), "  text "), Ok("text".into()));
         assert!(check_literal(&xsd("string"), "\"\"").is_err());
+        // Second review pass.
+        assert!(check_literal(&xsd("date"), "+202-+5-01").is_err());
+        assert!(check_literal(&xsd("decimal"), "1e3").is_err());
+        assert_eq!(check_literal(&xsd("double"), "1e3"), Ok("1e3".into()));
+        assert!(check_literal(&xsd("byte"), "200").is_err());
+        assert!(check_literal(&xsd("short"), "40000").is_err());
+        assert!(check_literal(&xsd("int"), "3000000000").is_err());
+        assert_eq!(check_literal(&xsd("int"), "-5"), Ok("-5".into()));
+        assert!(check_literal(&xsd("string"), "a\u{0}b").is_err());
+        assert_eq!(check_literal(&xsd("string"), "a\tb"), Ok("a\tb".into()));
+    }
+
+    #[test]
+    fn literals_are_written_typed() {
+        assert_eq!(literal_value(&xsd("boolean"), "true"), Value::Bool(true));
+        assert_eq!(literal_value(&xsd("integer"), "1200"), Value::Int(1200));
+        assert_eq!(
+            literal_value(&xsd("decimal"), "3.50"),
+            Value::Float("3.50".into())
+        );
+        assert_eq!(
+            literal_value(&xsd("date"), "2024-05-01"),
+            Value::string("2024-05-01")
+        );
     }
 
     #[test]

@@ -11,7 +11,7 @@ use crate::similarity::{
 };
 
 /// One entity the model may name.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Term {
     /// Its IRI.
     pub iri: Iri,
@@ -26,8 +26,10 @@ pub struct Term {
     /// `true` when several notes claim the IRI.
     pub conflicted: bool,
     /// Normalised primary form (the label).
+    #[serde(skip)]
     normal: String,
     /// Normalised label, aliases and note name, deduplicated and sorted.
+    #[serde(skip)]
     names: Vec<String>,
 }
 
@@ -87,7 +89,7 @@ pub enum Grounding {
 }
 
 /// Every entity of a model, indexed for grounding.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Vocabulary {
     terms: Vec<Term>,
 }
@@ -183,10 +185,15 @@ impl Vocabulary {
         let mut matches: Vec<(&Term, AliasTier)> = Vec::new();
         let mut initials_conflict: Option<&Term> = None;
         for term in &self.terms {
-            if labels_differ_only_by_initials(
-                left_labels.iter().map(String::as_str),
-                term.names.iter().map(String::as_str),
-            ) {
+            // A term the name matches outright is never an initials
+            // conflict, whatever else its aliases look like.
+            let outright = term.normal == normal || term.names.binary_search(&normal).is_ok();
+            if !outright
+                && labels_differ_only_by_initials(
+                    left_labels.iter().map(String::as_str),
+                    term.names.iter().map(String::as_str),
+                )
+            {
                 initials_conflict.get_or_insert(term);
                 continue;
             }
@@ -200,6 +207,16 @@ impl Vocabulary {
         }
         if let Some(best) = matches.iter().map(|(_, t)| *t).min() {
             matches.retain(|(_, t)| *t == best);
+            // A weak match does not outrank a conflicting initial: `Company
+            // U` against `Company S` is withheld even if some other term
+            // shares enough tokens to pass a similarity tier.
+            if best > AliasTier::SharedLabel {
+                if let Some(term) = initials_conflict {
+                    return Grounding::InitialsConflict {
+                        with: term.iri.clone(),
+                    };
+                }
+            }
         }
         match matches.len() {
             1 => {
