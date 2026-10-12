@@ -1,6 +1,6 @@
 //! Reproductions for the SEV-3 register items S3.2 (a symlinked page is dropped
 //! without a `Skip` record) and S3.3 (an unclosed opening `---` is read as "no
-//! frontmatter"). Each test fails today for the register's stated reason.
+//! frontmatter"). Written red against ffe06e4; green since 8d654d1.
 
 use ontomark_compile::input::page::walk_pages;
 use ontomark_compile::ir::projection::{inspect_inputs, PublicationBlocked};

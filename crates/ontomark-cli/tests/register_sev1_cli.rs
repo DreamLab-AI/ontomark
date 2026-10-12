@@ -1,7 +1,7 @@
 //! Reproduction of register item S1.5 (OM-00.2): under `--vault all`, `gate`
 //! and `conflicts` look only at the first vault (`ontomark-cli/src/main.rs:334-337`
 //! and `369-372`, `.into_iter().next()`), so a finding that exists only in
-//! `working/` is never reported. Expected to FAIL until both iterate the vaults.
+//! `working/` is never reported. Written red against ffe06e4; green since 8d654d1, where both iterate the vaults.
 
 use std::path::Path;
 use std::process::{Command, Output};

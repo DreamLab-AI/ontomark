@@ -1,6 +1,6 @@
 //! Reproductions for the SEV-1 anomalies in the Phase 2 register
 //! (`VisionFlow/docs/diagrams/ontomark/00-anomaly-register-and-reconciliation.md`,
-//! OM-00.2 and OM-00.3). Each test is expected to FAIL until the product is
+//! OM-00.2 and OM-00.3). Written red against ffe06e4; green since 8d654d1, when the product was
 //! fixed; the failure message names the register item. The CLI-side S1.5 lives
 //! in `ontomark-cli/tests/register_sev1_cli.rs`.
 

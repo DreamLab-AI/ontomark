@@ -3,7 +3,7 @@
 //! silently fall back to `quick` / `high`. A typo in a CI gate must be refused
 //! (exit 2) with the bad value named, not run a weaker check and exit 0.
 //!
-//! Expected to FAIL today. No product code is changed by this file.
+//! Written red against ffe06e4 (OM-00); green since the reconciliation at 8d654d1.
 
 use std::path::Path;
 use std::process::{Command, Output};

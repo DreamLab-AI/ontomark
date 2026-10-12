@@ -3,7 +3,7 @@
 //! OM-00.2 / OM-00.3), S2.1, S2.2, S2.3 and S2.5. (S2.4 is CLI-level and lives in
 //! `ontomark-cli/tests/register_sev2_cli.rs`.)
 //!
-//! Every test here is EXPECTED TO FAIL today: each asserts the corrected
+//! Written red against ffe06e4 and green since 8d654d1: each asserts the corrected
 //! behaviour and fails for the register's stated reason. No product code is
 //! changed by this file.
 
