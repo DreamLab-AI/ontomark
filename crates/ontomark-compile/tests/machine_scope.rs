@@ -701,3 +701,126 @@ fn machine_scope_page_iris_carry_no_spaces_and_equal_the_slug_path() {
     assert!(!iri.contains(' '), "D2: no spaces in a page IRI: {iri}");
     assert!(iri.ends_with("working/sub-dir/two-words"), "{iri}");
 }
+
+#[test]
+fn a_non_ascii_working_folder_keeps_its_own_slug_segment() {
+    // Review finding 1: `slugify("東京")` is empty, which collapsed
+    // `a/東京/Foo` onto `a//foo` and let two records claim one output file.
+    let (scratch, repo) = fixture_repo();
+    write(
+        &repo.join("working/pages/a/Foo.md"),
+        &note("Foo", true, "resource: urn:ngm:class:foo-a\n", "First."),
+    );
+    write(
+        &repo.join("working/pages/a/東京/Foo.md"),
+        &note(
+            "Foo Tokyo",
+            true,
+            "resource: urn:ngm:class:foo-tokyo\n",
+            "Second.",
+        ),
+    );
+    let (out, _report) = built(&scratch, &repo, Scope::Machine);
+    let names: Vec<String> = tree(&out)
+        .into_keys()
+        .filter(|p| p.starts_with("api/pages/working/a/"))
+        .collect();
+    assert!(
+        names.iter().any(|p| p == "api/pages/working/a/foo.json"),
+        "{names:?}"
+    );
+    assert!(
+        names
+            .iter()
+            .any(|p| p.starts_with("api/pages/working/a/x-") && p.ends_with("/foo.json")),
+        "the non-ASCII folder must keep a non-empty segment: {names:?}"
+    );
+    assert!(
+        !names.iter().any(|p| p.contains("//")),
+        "no empty segment: {names:?}"
+    );
+}
+
+#[test]
+fn two_working_pages_with_one_slug_are_refused_before_staging() {
+    // Two folders that slugify to one segment, with distinct titles and
+    // resources so DUPLICATE_IRI does not fire first: a Collision, not a late
+    // output clash.
+    let (scratch, repo) = fixture_repo();
+    write(
+        &repo.join("working/pages/A B/Foo.md"),
+        &note(
+            "Foo One",
+            true,
+            "resource: urn:ngm:class:foo-one\n",
+            "First.",
+        ),
+    );
+    write(
+        &repo.join("working/pages/A-B/Foo.md"),
+        &note(
+            "Foo Two",
+            true,
+            "resource: urn:ngm:class:foo-two\n",
+            "Second.",
+        ),
+    );
+    let (_out, report) = build_scope(&scratch, &repo, Scope::Machine);
+    let err = report.expect_err("one slug for two pages is refused");
+    match blocked(&err) {
+        PublicationBlocked::Collision(msg) => {
+            assert!(
+                msg.contains("working slug") && msg.contains("claimed by two"),
+                "{msg}"
+            );
+        }
+        other => panic!("expected Collision, got {other:?}"),
+    }
+}
+
+#[test]
+fn a_private_working_twins_title_is_still_masked_in_public_working_prose() {
+    // Review finding 2: the private twin shares `page_id` with a public
+    // knowledge page, but its TITLE is its own and private. Dropping the whole
+    // record let that title ship unmasked in another working page's prose.
+    let (scratch, repo) = fixture_repo();
+    write(
+        &repo.join("knowledge/pages/Nightjar.md"),
+        &class("Nightjar", true, "nightjar"),
+    );
+    write(
+        &repo.join("working/pages/Nightjar.md"),
+        &note(
+            "Project Nightjar Alpha",
+            false,
+            "resource: urn:ngm:class:nightjar-private\n",
+            "Private notes.",
+        ),
+    );
+    write(
+        &repo.join("working/pages/Diary.md"),
+        // A plain record publishes only its title, so the title is the prose
+        // surface a private name could escape through.
+        &note(
+            "Diary of Project Nightjar Alpha",
+            true,
+            "resource: urn:ngm:class:diary\n",
+            "Body.",
+        ),
+    );
+    let (out, _report) = built(&scratch, &repo, Scope::Machine);
+    let files = tree(&out);
+    let diary_path = files
+        .keys()
+        .find(|p| p.starts_with("api/pages/working/diary"))
+        .expect("the diary record is published");
+    let diary = String::from_utf8(files[diary_path].clone()).unwrap();
+    assert!(
+        !diary.contains("Project Nightjar Alpha"),
+        "private twin title leaked: {diary}"
+    );
+    assert!(
+        diary.contains("Diary of"),
+        "the public part of the title stays: {diary}"
+    );
+}

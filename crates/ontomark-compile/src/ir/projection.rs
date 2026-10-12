@@ -248,6 +248,28 @@ fn held_identities(page: &crate::input::page::Page, id: &str, out: &mut HashSet<
 }
 
 /// A page's identity values: its id, slug, page IRI and class IRI.
+/// A private record with every identity it shares with a public knowledge page
+/// blanked. The shared values are public by right (the knowledge page publishes
+/// them), so they must not count as private markers or as collisions; every
+/// other identity and the record's names stay private. Public records pass
+/// through unchanged: a public twin is decided by the yield rule, not here.
+fn strip_shared_public_identity(mut record: ClassRecord, public: &HashSet<String>) -> ClassRecord {
+    if record.public {
+        return record;
+    }
+    for field in [
+        &mut record.page_id,
+        &mut record.slug,
+        &mut record.page_iri,
+        &mut record.iri,
+    ] {
+        if public.contains(field.as_str()) {
+            field.clear();
+        }
+    }
+    record
+}
+
 fn identity(record: &ClassRecord) -> Vec<String> {
     [
         record.page_id.clone(),
@@ -655,8 +677,23 @@ fn hold_back(vault: &Vault) -> Vault {
 /// two `Foo.md` in different folders do not share one.
 #[must_use]
 pub fn working_slug(page_id: &str) -> String {
-    let segments: Vec<String> = page_id.split('/').map(slugify).collect();
+    let segments: Vec<String> = page_id.split('/').map(slug_segment).collect();
     format!("working/{}", segments.join("/"))
+}
+
+/// One path segment of a working slug. `slugify` empties a segment with no
+/// `[a-z0-9]` in it (CJK, Greek, emoji, punctuation-only folder names), which
+/// would collapse `a/東京/Foo` onto `a//foo` and let two records claim one
+/// output file. Such a segment keeps a stable, non-empty, filesystem-safe form
+/// derived from its bytes instead.
+fn slug_segment(raw: &str) -> String {
+    let s = slugify(raw);
+    if !s.is_empty() {
+        return s;
+    }
+    use sha2::{Digest, Sha256};
+    let digest = Sha256::digest(raw.as_bytes());
+    format!("x-{}", hex::encode(&digest[..4]))
 }
 
 /// The machine scope's projection: the knowledge projection exactly as the
@@ -745,7 +782,7 @@ pub fn project_machine(
         Corpus::build(&hold_back(working), vocab)
             .records
             .into_iter()
-            .filter(|r| r.public || !identity(r).iter().any(|id| public_knowledge.contains(id))),
+            .map(|r| strip_shared_public_identity(r, &public_knowledge)),
     );
     Split::checked(&raw, &union_extra)?;
 
@@ -810,16 +847,35 @@ pub fn project_machine(
 
     let knowledge_len = cleaned_knowledge.records.len();
     let mut union = cleaned_knowledge.records;
-    // Private working twins of public knowledge pages were cleared above;
-    // they contribute no marker either, since their name is a public one.
-    union.extend(working_corpus.records.into_iter().filter(|r| {
-        r.public
-            || !identity(r)
-                .iter()
-                .any(|id| knowledge_identities.contains(id))
-    }));
+    // A private working twin of a public knowledge page stays in the union: its
+    // shared identities are public by right and are removed, but its title,
+    // label and any identity of its own remain private, so they become markers
+    // and a public working note that names them in prose is masked.
+    union.extend(
+        working_corpus
+            .records
+            .into_iter()
+            .map(|r| strip_shared_public_identity(r, &knowledge_identities)),
+    );
     let split = Split::checked(&union, &union_extra)?;
     let union_redactor = split.redactor(profile)?;
+
+    // Two plain records may not share one publish slug: `Staged` compares
+    // paths as strings and `promote` would write both to one file.
+    {
+        let mut seen: HashSet<String> = HashSet::new();
+        for record in &union[knowledge_len..] {
+            if !record.public || yielded_ids.contains(&record.page_id) {
+                continue;
+            }
+            let slug = working_slug(&record.page_id);
+            if !seen.insert(slug.clone()) {
+                return Err(PublicationBlocked::Collision(format!(
+                    "working slug `{slug}` is claimed by two public working pages"
+                )));
+            }
+        }
+    }
 
     let mut plain = Vec::new();
     for record in &union[knowledge_len..] {
