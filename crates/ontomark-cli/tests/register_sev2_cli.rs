@@ -60,7 +60,10 @@ fn s2_4a_gate_refuses_an_unknown_tier() {
         Some(2),
         "S2.4: `--tier bogus` must exit 2, not fall back to quick; stderr: {stderr}"
     );
-    assert!(stderr.contains("bogus"), "stderr must name the value: {stderr}");
+    assert!(
+        stderr.contains("bogus"),
+        "stderr must name the value: {stderr}"
+    );
 }
 
 #[test]
@@ -81,5 +84,8 @@ fn s2_4b_conflicts_refuses_an_unknown_severity() {
         Some(2),
         "S2.4: `--severity bogus` must exit 2, not fall back to high; stderr: {stderr}"
     );
-    assert!(stderr.contains("bogus"), "stderr must name the value: {stderr}");
+    assert!(
+        stderr.contains("bogus"),
+        "stderr must name the value: {stderr}"
+    );
 }

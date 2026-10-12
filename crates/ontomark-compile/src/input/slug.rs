@@ -6,7 +6,6 @@
 //! * [`slugify`] is `re.sub(r'[^a-z0-9]+', '-', s.lower()).strip('-')`;
 //! * [`ref_slug`] is `iri.split(":")[-1]` — the *last colon segment*, with no
 //!   re-slugification, matching `pipeline/reason.py::ref_slug`;
-//! * [`iri_for`] builds `urn:ngm:class:<slug>` from a title.
 
 use std::sync::OnceLock;
 
@@ -73,20 +72,6 @@ pub fn target_slug(target: &str) -> String {
     } else {
         slugify(target)
     }
-}
-
-/// Build the canonical class IRI for a page title under `namespace`.
-///
-/// ```
-/// # use ontomark_compile::input::slug::iri_for;
-/// assert_eq!(
-///     iri_for("urn:ngm:class:", "Knowledge Graph"),
-///     "urn:ngm:class:knowledge-graph"
-/// );
-/// ```
-#[must_use]
-pub fn iri_for(namespace: &str, title: &str) -> String {
-    format!("{namespace}{}", slugify(title))
 }
 
 /// `owl:Thing`, in any of the spellings the corpus has used, is never a useful

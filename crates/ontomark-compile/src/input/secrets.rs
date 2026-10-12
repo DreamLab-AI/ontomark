@@ -183,15 +183,6 @@ pub fn scan(text: &str) -> Vec<Finding> {
     out
 }
 
-/// `true` when `text` carries at least one credential.
-///
-/// Cheaper to read at a call site that only gates on presence, and it short
-/// circuits.
-#[must_use]
-pub fn has_secret(text: &str) -> bool {
-    patterns().iter().any(|(_, re)| re.is_match(text))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -254,7 +245,7 @@ mod tests {
                 "{expected} not found in {text:?}: {:?}",
                 kinds(text)
             );
-            assert!(has_secret(text), "{text:?}");
+            assert!(!scan(text).is_empty(), "{text:?}");
         }
     }
 
@@ -270,7 +261,7 @@ mod tests {
             "export OPENAI_API_KEY=$OPENAI_API_KEY",
         ] {
             assert!(scan(text).is_empty(), "{text:?} -> {:?}", kinds(text));
-            assert!(!has_secret(text));
+            assert!(scan(text).is_empty());
         }
     }
 

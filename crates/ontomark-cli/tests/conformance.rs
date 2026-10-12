@@ -1,6 +1,10 @@
 //! Offline conformance: `ontomark` against the legacy golden for the
 //! `estate-small` fixture (`conformance/fixtures/estate-small.golden`).
 //!
+//! Byte parity holds for every artefact except the two generation markers,
+//! which are compared structurally (see `marker_diff`): their `content_digest`
+//! and `artifacts` fields changed by decision on 2026-10-12 (OM-00 S2.2, S2.5).
+//!
 //! The golden was produced by VisionClaw's `vault` at tag
 //! `ontomark-census-baseline` (`1044b0722`) by `conformance/golden/capture.sh`.
 //! Every artefact of the build (`out/` and the `publish/` staging) must be
@@ -89,12 +93,22 @@ fn ontomark() -> Command {
 }
 
 /// Compare two trees, returning one line per difference.
+///
+/// Every artefact is compared byte for byte except the two generation markers,
+/// which are compared structurally ([`marker_diff`]): since 2026-10-12 ontomark
+/// defines `content_digest` over every byte the build read (OM-00 S2.2) and
+/// lists the data marker and `--publish-out` files among the artefacts (S2.5),
+/// so those two fields deliberately differ from the legacy `vault`. Everything
+/// else in the marker, and every legacy artefact's hash, must still agree.
 fn tree_diff(label: &str, want: &Path, got: &Path) -> Vec<String> {
     let (want, got) = (files(want), files(got));
     let mut diffs = Vec::new();
     for (path, bytes) in &want {
         match got.get(path) {
             None => diffs.push(format!("{label}/{path}: missing")),
+            Some(b) if path.ends_with(".generation.json") => {
+                diffs.extend(marker_diff(&format!("{label}/{path}"), bytes, b));
+            }
             Some(b) if b != bytes => diffs.push(format!("{label}/{path}: bytes differ")),
             Some(_) => {}
         }
@@ -104,6 +118,45 @@ fn tree_diff(label: &str, want: &Path, got: &Path) -> Vec<String> {
             .filter(|p| !want.contains_key(*p))
             .map(|p| format!("{label}/{p}: unexpected")),
     );
+    diffs
+}
+
+/// The legacy and current markers must agree on identity (`id`, `commit`,
+/// `dirty`, `ontology_digest`, `generated_at`, the counts, the vocabulary
+/// version, `stale_after`), and every artefact the legacy marker lists must
+/// appear in the current one with the same hash and size. `content_digest` is a
+/// different digest by definition (S2.2) and the current list may be longer
+/// (S2.5); both are reported only when they fail to be exactly that.
+fn marker_diff(label: &str, want: &[u8], got: &[u8]) -> Vec<String> {
+    let parse = |b: &[u8]| -> serde_json::Value {
+        serde_json::from_slice(b).expect("a generation marker is JSON")
+    };
+    let (mut want, mut got) = (parse(want), parse(got));
+    let mut diffs = Vec::new();
+    let take = |v: &mut serde_json::Value, key: &str| v.as_object_mut().and_then(|o| o.remove(key));
+    let want_digest = take(&mut want, "content_digest");
+    let got_digest = take(&mut got, "content_digest");
+    if want_digest.is_none() || got_digest.is_none() {
+        diffs.push(format!("{label}: a marker has no content_digest"));
+    }
+    let want_artifacts = take(&mut want, "artifacts").unwrap_or_default();
+    let got_artifacts = take(&mut got, "artifacts").unwrap_or_default();
+    if want != got {
+        diffs.push(format!(
+            "{label}: identity fields differ\n  legacy: {want}\n  current: {got}"
+        ));
+    }
+    let got_set: std::collections::BTreeSet<String> = got_artifacts
+        .as_array()
+        .map(|a| a.iter().map(ToString::to_string).collect())
+        .unwrap_or_default();
+    for artifact in want_artifacts.as_array().into_iter().flatten() {
+        if !got_set.contains(&artifact.to_string()) {
+            diffs.push(format!(
+                "{label}: legacy artefact missing or changed in the current marker: {artifact}"
+            ));
+        }
+    }
     diffs
 }
 

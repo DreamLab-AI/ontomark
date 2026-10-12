@@ -23,6 +23,7 @@ pub mod ngg1;
 pub mod okf;
 pub mod page_api;
 pub mod publish;
+pub mod records;
 pub mod redact;
 pub mod turtle;
 pub mod webvowl;
@@ -30,7 +31,7 @@ pub mod webvowl;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::input::page::{load_vault, Page, Vault, VaultKind};
+use crate::input::page::{vault_kind_of, walk_pages, Page, Vault, VaultKind};
 use crate::input::vocabulary::Vocabulary;
 use crate::json::{to_compact, to_default_ascii, to_default_utf8, to_indented};
 use anyhow::Context as _;
@@ -100,7 +101,10 @@ pub struct Report {
     pub graph_nodes: usize,
     /// Graph-tier resolvable edge count.
     pub graph_edges: usize,
-    /// Classes Whelk found unsatisfiable. Non-empty is a broken corpus.
+    /// Classes Whelk found unsatisfiable. Always empty in a report that is
+    /// returned: a non-empty set refuses the build with [`Unsatisfiable`]
+    /// before any report exists. Kept because the JSON report is a published
+    /// shape.
     pub unsatisfiable: Vec<String>,
     /// The restriction mode the reasoner ran under (`skip` or `relevant`;
     /// ADR-2124): decided by whether any class carries a `defines-as`.
@@ -151,6 +155,83 @@ impl std::fmt::Display for OutputCollision {
 
 impl std::error::Error for OutputCollision {}
 
+/// The reasoner found at least one unsatisfiable class (ADR-2125 item 4). An
+/// unsatisfiable class is a broken corpus, never a warning: nothing is written
+/// and the root causes (not every class that inherits `owl:Nothing` from them)
+/// are named.
+///
+/// A distinct type so the CLI exits **2**: the corpus does not permit this
+/// build, the same refusal class as [`OutputCollision`] (S2.1).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Unsatisfiable {
+    /// Every unsatisfiable class IRI, in reasoner order.
+    pub unsatisfiable: Vec<String>,
+    /// The subset whose unsatisfiability is not inherited from another
+    /// unsatisfiable class; empty when they all sit under one another.
+    pub root_causes: Vec<String>,
+}
+
+impl std::fmt::Display for Unsatisfiable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        const SHOWN: usize = 20;
+        let roots = if self.root_causes.is_empty() {
+            &self.unsatisfiable
+        } else {
+            &self.root_causes
+        };
+        let mut named = roots
+            .iter()
+            .take(SHOWN)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(", ");
+        if roots.len() > SHOWN {
+            named = format!("{named} (+{} more)", roots.len() - SHOWN);
+        }
+        write!(
+            f,
+            "UNSATISFIABLE_CLASSES: {} unsatisfiable class(es); no bundle written. \
+             {} root cause(s): {named}",
+            self.unsatisfiable.len(),
+            roots.len()
+        )
+    }
+}
+
+impl std::error::Error for Unsatisfiable {}
+
+/// Replace `out` with the fully written `stage` directory: `out` is moved
+/// aside, `stage` is renamed into its place, and the old tree is removed only
+/// once the rename succeeded. On failure the old tree is put back. The window
+/// in which `out` does not exist is the gap between two renames, and nothing
+/// is ever deleted before the new tree is complete (S2.3).
+pub(crate) fn swap_in(stage: &Path, out: &Path) -> std::io::Result<()> {
+    let parent = out.parent().unwrap_or(Path::new("."));
+    let retired = parent.join(format!(".publication-retired-{}", std::process::id()));
+    if retired.exists() {
+        std::fs::remove_dir_all(&retired)?;
+    }
+    if out.exists() {
+        std::fs::rename(out, &retired)?;
+    }
+    match std::fs::rename(stage, out) {
+        Ok(()) => {
+            if retired.exists() {
+                let _ = std::fs::remove_dir_all(&retired);
+            }
+            Ok(())
+        }
+        Err(e) => {
+            // Put the previous tree back before surfacing the failure.
+            if retired.exists() {
+                let _ = std::fs::rename(&retired, out);
+            }
+            let _ = std::fs::remove_dir_all(stage);
+            Err(e)
+        }
+    }
+}
+
 /// The claimant named for an artefact the build itself emits, rather than
 /// one page.
 const BUILD_OWNER: &str = "the build";
@@ -164,6 +245,9 @@ struct Staged {
     files: Vec<(String, Vec<u8>)>,
     owners: HashMap<String, String>,
     clashes: Vec<(String, String, String)>,
+    /// Artefacts this build wrote somewhere other than `out` (`--publish-out`),
+    /// listed in the generation stamp but not promoted with the bundle (S2.5).
+    external: Vec<generation::Artifact>,
 }
 
 impl Staged {
@@ -172,7 +256,14 @@ impl Staged {
             files: Vec::new(),
             owners: HashMap::new(),
             clashes: Vec::new(),
+            external: Vec::new(),
         }
+    }
+
+    /// Record an artefact written outside the bundle, so the stamp lists
+    /// everything the build produced.
+    fn record_external(&mut self, path: impl Into<String>, content: &[u8]) {
+        self.external.push(generation::Artifact::of(path, content));
     }
 
     /// Stage a build-level artefact.
@@ -215,10 +306,12 @@ impl Staged {
         self.files
             .iter()
             .map(|(name, content)| generation::Artifact::of(name.clone(), content))
+            .chain(self.external.iter().cloned())
             .collect()
     }
 
-    /// Write into a fresh staging directory beside `out`, then swap it in.
+    /// Write into a fresh staging directory beside `out`, then swap it in
+    /// ([`swap_in`]): the previous bundle survives any failure.
     fn promote(&self, out: &Path) -> anyhow::Result<()> {
         let parent = out.parent().unwrap_or(Path::new("."));
         std::fs::create_dir_all(parent)
@@ -238,27 +331,9 @@ impl Staged {
                 .with_context(|| format!("writing {}", target.display()))?;
         }
 
-        // Replace the destination wholesale so no obsolete export survives.
-        let retired = parent.join(format!(".publication-retired-{}", std::process::id()));
-        if out.exists() {
-            std::fs::rename(out, &retired)?;
-        }
-        match std::fs::rename(&stage, out) {
-            Ok(()) => {
-                if retired.exists() {
-                    let _ = std::fs::remove_dir_all(&retired);
-                }
-                Ok(())
-            }
-            Err(e) => {
-                // Put the previous bundle back before surfacing the failure.
-                if retired.exists() {
-                    let _ = std::fs::rename(&retired, out);
-                }
-                let _ = std::fs::remove_dir_all(&stage);
-                Err(e).context("promoting the staged bundle")
-            }
-        }
+        swap_in(&stage, out)
+            .with_context(|| format!("promoting the bundle into {}", out.display()))?;
+        Ok(())
     }
 }
 
@@ -298,21 +373,46 @@ fn alias_map(vault: &Vault) -> HashMap<String, Vec<String>> {
 /// The census refusing an input, an identity collision, a validation error,
 /// a [`reason::ReasoningError`] (a definition the reasoner would not finish
 /// on), or any I/O failure while staging or promoting the bundle.
-#[allow(clippy::too_many_lines)] // The pipeline, in the order it must run.
 pub fn run(
     options: &Options,
     profile: &Profile,
     vocab: &Vocabulary,
     classifier: &dyn reason::Classifier,
 ) -> anyhow::Result<Report> {
-    let pages_dir = options.vault_root.join("pages");
-    let census = projection::inspect_inputs(&pages_dir)?;
+    run_with(options, profile, vocab, classifier, None)
+}
 
-    let vault = load_vault(&options.vault_root)?;
+/// [`run`], optionally embedding the corpus into
+/// `data/ontology-corpus.records.jsonl` (contract C3, `--with-rvdb`) through
+/// the host's [`records::Embedder`]. The compile crate never opens a socket:
+/// the embedder is the one place the build reaches the network, and only when
+/// the host hands one in.
+///
+/// # Errors
+/// As [`run`], plus the embedder's failure or a vector of the wrong width.
+#[allow(clippy::too_many_lines)] // The pipeline, in the order it must run.
+pub fn run_with(
+    options: &Options,
+    profile: &Profile,
+    vocab: &Vocabulary,
+    classifier: &dyn reason::Classifier,
+    embedder: Option<&dyn records::Embedder>,
+) -> anyhow::Result<Report> {
+    // One walk of `pages/` feeds the census, the load and the held-page
+    // identities (OM-00 step 1): three filters over one listing rather than
+    // three listings with three filters that drifted apart.
+    let pages_dir = options.vault_root.join("pages");
+    let walk = walk_pages(&pages_dir)?;
+    let census = projection::inspect_walk(&pages_dir, &walk)?;
+    let vault = Vault::load_with_walk(
+        &options.vault_root,
+        vault_kind_of(&options.vault_root),
+        walk,
+    )?;
     let aliases = alias_map(&vault);
     let raw = Corpus::build(&vault, vocab);
 
-    // --- the credential gate, FIRST ------------------------------------------
+    // --- the credential gate, before validation -------------------------------
     //
     // The union of both vaults' `public: true` pages, and the last gate before
     // bytes leave the machine. It runs *before* validation on purpose. A
@@ -321,9 +421,10 @@ pub fn run(
     // general "validation rejected N errors" message (exit 1) swallow it — the
     // reader would be told the corpus is invalid rather than that it was about
     // to publish a key. It is also the cheapest check, so failing here skips
-    // the reasoner entirely.
+    // the reasoner entirely. (The census runs earlier still: it is the input
+    // accounting every later step relies on.)
     let working = if options.with_working_publish {
-        publish::sibling_working(&options.vault_root)?
+        publish::sibling_vault(&options.vault_root, VaultKind::Working)?
     } else {
         None
     };
@@ -361,7 +462,7 @@ pub fn run(
         report.errors()[0]
     );
 
-    let excluded = projection::excluded_identities(&pages_dir)?;
+    let excluded = projection::excluded_identities_of(&vault);
     let (corpus, prose_redactor) = if let Some(links) = &private_links {
         projection::project_vault_with_links(profile, &vault, vocab, &excluded, links)?
     } else {
@@ -392,11 +493,13 @@ pub fn run(
     // ADR-2125 item 4: the zero-unsatisfiable gate. An unsatisfiable class is
     // a broken corpus, never a warning; nothing is written and the root causes
     // (not every class that inherits `owl:Nothing` from them) are named.
-    anyhow::ensure!(
-        reasoning.is_consistent(),
-        "{}",
-        unsatisfiable_message(&reasoning)
-    );
+    if !reasoning.is_consistent() {
+        return Err(Unsatisfiable {
+            unsatisfiable: reasoning.unsatisfiable.clone(),
+            root_causes: reasoning.root_causes.clone(),
+        }
+        .into());
+    }
     let generated = options.generated_at.clone().unwrap_or_else(now_iso);
     // `today()` in the legacy build: the same instant's date, so one
     // injected clock fixes both.
@@ -411,6 +514,12 @@ pub fn run(
     if options.publish_out.is_none() {
         for file in &staging.files {
             staged.add_for(file.path.clone(), file.content.clone(), file.path.clone());
+        }
+    } else {
+        // Written to `publish_out` below, so not promoted with the bundle, but
+        // still produced by this build and therefore still stamped (S2.5).
+        for file in &staging.files {
+            staged.record_external(file.path.clone(), file.content.as_bytes());
         }
     }
     staged.add("data/ontology.ttl", turtle::serialise(profile, &graph));
@@ -572,18 +681,39 @@ pub fn run(
         staged.add(format!("okf/{}", file.path), file.content);
     }
 
+    if let Some(embedder) = embedder {
+        let mut concept_records = records::concept_records(&scaffold, &prose, &generation_id);
+        records::embed_all(&mut concept_records, embedder)
+            .context("embedding the corpus for --with-rvdb")?;
+        staged.add(records::RECORDS_PATH, records::to_jsonl(&concept_records)?);
+    }
+
     // Write-once: refuse before anything is stamped or promoted.
     staged.ensure_single_claims()?;
 
-    let sources: Vec<(String, Vec<u8>)> = vault
-        .pages
-        .iter()
-        .map(|p| {
-            let bytes = std::fs::read(&p.path).unwrap_or_default();
-            (p.rel_path.to_string_lossy().into_owned(), bytes)
-        })
-        .collect();
-    let content_digest = generation::content_digest(sources);
+    // Every byte the build read, hashed as it was parsed (S2.2): the pages and
+    // journals of every vault it loaded (the knowledge vault, `working/` when
+    // its pages are staged, the sibling read for link resolution) and the
+    // vocabulary, which fixes the Turtle as surely as the pages do.
+    let mut sources: Vec<(String, String)> = Vec::new();
+    for v in [Some(&vault), working.as_ref(), other_vault.as_ref()]
+        .into_iter()
+        .flatten()
+    {
+        for page in v.all_pages() {
+            sources.push((
+                format!("{}/{}", v.kind.dir_name(), page.rel_path.to_string_lossy()),
+                page.source_sha256.clone(),
+            ));
+        }
+    }
+    sources.push((
+        "ontology/vocabulary.yaml".to_owned(),
+        hex::encode(<sha2::Sha256 as sha2::Digest>::digest(
+            serde_yaml::to_string(vocab).unwrap_or_default().as_bytes(),
+        )),
+    ));
+    let content_digest = generation::content_digest_of_hashes(sources);
     // Pages alone do not fix the Turtle (the vocabulary and the emitter do
     // too), so the ontology carries its own digest — the tail of its
     // `owl:versionIRI` — recorded here beside the page digest (ADR-2128).
@@ -603,9 +733,18 @@ pub fn run(
     );
     // Loom serves `data/` and reads its marker from there, verifying each
     // artefact relative to that directory; the root marker keeps the whole
-    // bundle's view. Both carry the same identity.
-    staged.add("data/.generation.json", to_indented(&gen.scoped("data"))?);
-    staged.add(".generation.json", to_indented(&gen)?);
+    // bundle's view. Both carry the same identity. A marker cannot list its
+    // own hash, so the rule is: no marker lists itself, and the root marker
+    // lists the data marker (S2.5).
+    let data_marker = to_indented(&gen.scoped("data"))?;
+    let mut artifacts = gen.artifacts.clone();
+    artifacts.push(generation::Artifact::of(
+        "data/.generation.json",
+        data_marker.as_bytes(),
+    ));
+    let root_marker = generation::Generation { artifacts, ..gen };
+    staged.add("data/.generation.json", data_marker);
+    staged.add(".generation.json", to_indented(&root_marker)?);
     staged.ensure_single_claims()?;
     staged.promote(&options.out)?;
     if let Some(dir) = &options.publish_out {
@@ -613,7 +752,7 @@ pub fn run(
     }
 
     Ok(Report {
-        generation: gen,
+        generation: root_marker,
         class_count,
         page_count,
         triples: graph.len(),
@@ -643,34 +782,6 @@ pub fn run(
                 mirror: mirror_redaction,
             }),
     })
-}
-
-/// The refusal `vault build` gives for an unsatisfiable corpus: the count,
-/// then up to twenty root causes. A corpus whose unsatisfiable classes all sit
-/// under one another (a cycle) has no root by that definition, so every
-/// unsatisfiable class is named instead.
-fn unsatisfiable_message(reasoning: &reason::Reasoning) -> String {
-    const SHOWN: usize = 20;
-    let roots = if reasoning.root_causes.is_empty() {
-        &reasoning.unsatisfiable
-    } else {
-        &reasoning.root_causes
-    };
-    let mut named = roots
-        .iter()
-        .take(SHOWN)
-        .cloned()
-        .collect::<Vec<_>>()
-        .join(", ");
-    if roots.len() > SHOWN {
-        named = format!("{named} (+{} more)", roots.len() - SHOWN);
-    }
-    format!(
-        "UNSATISFIABLE_CLASSES: {} unsatisfiable class(es); no bundle written. \
-         {} root cause(s): {named}",
-        reasoning.unsatisfiable.len(),
-        roots.len()
-    )
 }
 
 /// Read a JSON artefact back out of a bundle, for `--verify` and the tests.

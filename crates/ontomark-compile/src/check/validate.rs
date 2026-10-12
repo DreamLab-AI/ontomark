@@ -317,6 +317,55 @@ fn page_level_checks(
             ),
         );
     }
+    // The frontmatter is published as well as the body, so a credential in a
+    // `sources:` or `title:` value is the same defect (S1.2). The block opens
+    // on file line 1, so its rendered line is the file line.
+    for finding in crate::input::secrets::scan(&page.frontmatter.render().unwrap_or_default()) {
+        report.push(
+            path,
+            Severity::Error,
+            "SECRET_DETECTED",
+            format!(
+                "{}:{} (frontmatter) carries what looks like a {} credential; \
+                 the value is deliberately not reported",
+                page.rel_path.display(),
+                finding.line,
+                finding.kind
+            ),
+        );
+    }
+
+    // --- the publication flag and the fence ----------------------------------
+    //
+    // Both are refused by the build census; reporting them here keeps
+    // `validate` and `build` in agreement (S1.3, S3.3).
+    if page.unterminated_frontmatter {
+        report.push(
+            path,
+            Severity::Error,
+            "UNCLOSED_FRONTMATTER",
+            format!(
+                "{} opens a `---` frontmatter fence on line 1 and never closes it; \
+                 the page would be read as private prose",
+                page.rel_path.display()
+            ),
+        );
+    }
+    if let Some(value) = page.frontmatter.get("public") {
+        if !matches!(value, serde_yaml::Value::Bool(_)) {
+            report.push(
+                path,
+                Severity::Error,
+                "INVALID_PUBLIC_FLAG",
+                format!(
+                    "{} has `public: {}`; publication permission must be a YAML boolean \
+                     (`true`/`false`), never a quoted string or a number",
+                    page.rel_path.display(),
+                    serde_yaml::to_string(value).unwrap_or_default().trim()
+                ),
+            );
+        }
+    }
 }
 
 /// Validate a loaded vault against its vocabulary.
@@ -424,12 +473,16 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
                         }
                     }
                 },
-                ScalarType::Boolean if page.frontmatter.boolean(key).is_none() => report.push(
-                    path,
-                    Severity::Error,
-                    "INVALID_BOOLEAN",
-                    format!("`{key}: {raw}` is not a boolean"),
-                ),
+                ScalarType::Boolean
+                    if key != "public" && page.frontmatter.boolean(key).is_none() =>
+                {
+                    report.push(
+                        path,
+                        Severity::Error,
+                        "INVALID_BOOLEAN",
+                        format!("`{key}: {raw}` is not a boolean"),
+                    )
+                }
                 _ => {}
             }
             if !def.r#enum.is_empty() && !def.r#enum.contains(&raw) {

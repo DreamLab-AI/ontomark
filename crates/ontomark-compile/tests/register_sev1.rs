@@ -87,64 +87,46 @@ fn run_validate(repo: &Path) -> validate::Report {
 fn control_clean_vault_builds_and_validates() {
     let (_scratch, repo, out) = repo();
     let pages = repo.join("knowledge/pages");
-    write(&pages.join("Alpha.md"), &class("true", "alpha", "", "Alpha."));
+    write(
+        &pages.join("Alpha.md"),
+        &class("true", "alpha", "", "Alpha."),
+    );
     write(&pages.join("Beta.md"), &class("false", "beta", "", "Beta."));
     run_build(&repo, &out).expect("a clean vault builds");
     let report = run_validate(&repo);
     let codes: Vec<String> = report.errors().iter().map(|i| i.to_string()).collect();
-    assert!(codes.is_empty(), "control vault has validation errors: {codes:?}");
+    assert!(
+        codes.is_empty(),
+        "control vault has validation errors: {codes:?}"
+    );
 }
 
-/// S1.1 — the prose redactor fails OPEN.
+/// S1.1 — the prose redactor must fail CLOSED.
 ///
-/// Reproduces `ir/projection.rs:232` (`Regex::new(..).ok()` leaves
-/// `pattern: None`) and `ir/projection.rs:243-245` (`redact` then returns the
-/// text unchanged). With enough private titles the escaped alternation exceeds
-/// the regex size limit; the build must refuse instead of publishing prose
-/// that still names private pages.
-///
-/// `Redactor` is private and `Regex::new` offers no hook, so the test drives
-/// the real path (`build::run`) and first proves, with the same alternation,
-/// that the regex really fails to compile. That precondition does not hold at
-/// any feasible vault size today (hence `#[ignore]`); once the redactor can be
-/// given a size limit, lower `PRIVATE`/title length to match and un-ignore.
+/// Reproduced `ir/projection.rs:232` (`Regex::new(..).ok()` left `pattern: None`)
+/// and `:243-245` (`redact` then returned the text unchanged). The limit is
+/// unreachable through `build::run` at any feasible vault size (measured: 100k
+/// titles still compile, literals take the aho-corasick path), so the refusal
+/// is driven through the redactor's own API with an injected size limit: the
+/// build path calls exactly this constructor and propagates its error as
+/// `PublicationBlocked::Redactor`.
 #[test]
-#[ignore = "needs ProseRedactor::new to be fallible or take a size limit: Redactor is private, \
-Regex::new exposes no hook, and measured escaped-literal alternations of 100k titles x ~130 bytes \
-still compile (literals take the aho-corasick path), so the limit is unreachable via build::run"]
-fn s1_1_redactor_fails_open_when_the_alternation_exceeds_the_regex_limit() {
-    let (_scratch, repo, out) = repo();
-    let pages = repo.join("knowledge/pages");
-    const PRIVATE: usize = 4000;
-    // Long, distinct, word-shaped titles: the alternation is their escaped union.
-    let titles: Vec<String> = (0..PRIVATE)
-        .map(|i| format!("Confidential Programme Codename {i:05} {}", "x".repeat(900)))
+fn s1_1_redactor_refuses_rather_than_fails_open() {
+    use ontomark_compile::ir::projection::{ProseRedactor, PublicationBlocked};
+    use std::collections::HashSet;
+    let markers: HashSet<String> = (0..256)
+        .map(|i| format!("Confidential Programme Codename {i:05}"))
         .collect();
-    for (i, title) in titles.iter().enumerate() {
-        write(
-            &pages.join(format!("private-{i:05}.md")),
-            &class("false", &format!("private-{i:05}"), &format!("title: {title}\n"), "Private."),
-        );
+    match ProseRedactor::with_size_limit(markers.clone(), 8) {
+        Err(PublicationBlocked::Redactor(_)) => {}
+        Err(other) => panic!("S1.1: refused, but not as a redactor failure: {other}"),
+        Ok(_) => panic!("S1.1: an 8-byte program limit must not compile 256 markers"),
     }
-    write(
-        &pages.join("Public.md"),
-        &class("true", "public", "", &format!("This page mentions {}.", titles[0])),
-    );
-
-    // Precondition: the alternation the redactor builds really does not compile.
-    let mut sorted: Vec<&String> = titles.iter().collect();
-    sorted.sort_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
-    let alternation: Vec<String> = sorted.iter().map(|m| regex::escape(m)).collect();
-    assert!(
-        regex::Regex::new(&alternation.join("|")).is_err(),
-        "fixture too small: the alternation compiles, so S1.1 is not reached"
-    );
-
-    let result = run_build(&repo, &out);
-    assert!(
-        result.is_err(),
-        "S1.1: build succeeded although the redactor could not compile; \
-         unredacted prose was emitted (ir/projection.rs:232,243-245)"
+    // And the default limit still redacts: fail-closed must not mean refuse-always.
+    let redactor = ProseRedactor::new(markers).expect("the default limit compiles");
+    assert_eq!(
+        redactor.redact("about Confidential Programme Codename 00042, see"),
+        "about [private], see"
     );
 }
 
@@ -160,7 +142,12 @@ fn s1_2_build_refuses_a_credential_in_published_frontmatter() {
     let pages = repo.join("knowledge/pages");
     write(
         &pages.join("Leaky.md"),
-        &class("true", "leaky", &format!("sources:\n- {SYNTHETIC_KEY}\n"), "A clean body."),
+        &class(
+            "true",
+            "leaky",
+            &format!("sources:\n- {SYNTHETIC_KEY}\n"),
+            "A clean body.",
+        ),
     );
     let error = match run_build(&repo, &out) {
         Ok(_) => panic!(
@@ -170,7 +157,9 @@ fn s1_2_build_refuses_a_credential_in_published_frontmatter() {
         Err(e) => e,
     };
     assert!(
-        error.downcast_ref::<build::publish::SecretsFound>().is_some(),
+        error
+            .downcast_ref::<build::publish::SecretsFound>()
+            .is_some(),
         "S1.2: build refused, but not with the credential error: {error:#}"
     );
 }
@@ -184,14 +173,23 @@ fn s1_2_validate_reports_a_credential_in_frontmatter() {
     let pages = repo.join("knowledge/pages");
     write(
         &pages.join("Leaky.md"),
-        &class("true", "leaky", &format!("sources:\n- {SYNTHETIC_KEY}\n"), "A clean body."),
+        &class(
+            "true",
+            "leaky",
+            &format!("sources:\n- {SYNTHETIC_KEY}\n"),
+            "A clean body.",
+        ),
     );
     let report = run_validate(&repo);
     assert!(
         report.errors().iter().any(|i| i.code == "SECRET_DETECTED"),
         "S1.2: validate did not report SECRET_DETECTED for a frontmatter credential \
          (check/validate.rs:305 scans the body only); errors: {:?}",
-        report.errors().iter().map(|i| i.to_string()).collect::<Vec<_>>()
+        report
+            .errors()
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<_>>()
     );
 }
 
@@ -205,13 +203,19 @@ fn s1_2_validate_reports_a_credential_in_frontmatter() {
 fn s1_3_validate_and_build_agree_on_a_string_public_flag() {
     let (_scratch, repo, out) = repo();
     let pages = repo.join("knowledge/pages");
-    write(&pages.join("Quoted.md"), &class("\"true\"", "quoted", "", "Quoted."));
+    write(
+        &pages.join("Quoted.md"),
+        &class("\"true\"", "quoted", "", "Quoted."),
+    );
 
     let build_refuses = run_build(&repo, &out).is_err();
     let validate_report = run_validate(&repo);
     let validate_refuses = !validate_report.errors().is_empty();
 
-    assert!(build_refuses, "control: the build census must refuse `public: \"true\"`");
+    assert!(
+        build_refuses,
+        "control: the build census must refuse `public: \"true\"`"
+    );
     assert_eq!(
         validate_refuses, build_refuses,
         "S1.3: validate and build disagree on `public: \"true\"` \
@@ -238,7 +242,10 @@ fn s1_4_c3_records_jsonl_has_an_emitter() {
         .find(|w| w.ends_with(".records.jsonl"))
         .map(|w| w.rsplit('/').next().unwrap().to_owned())
         .expect("the contract names a *.records.jsonl file");
-    assert_eq!(name, "ontology-corpus.records.jsonl", "contract filename moved");
+    assert_eq!(
+        name, "ontology-corpus.records.jsonl",
+        "contract filename moved"
+    );
 
     let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
     let emitters: Vec<String> = walkdir::WalkDir::new(&src)

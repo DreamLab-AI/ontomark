@@ -9,3 +9,5 @@ generated_at=2026-10-11T19:05:13.504876+00:00
 content_digest=cbe3eaffe819352339dccb176d0214710f22ce549e833f4098f5350c48a5bca6
 ontology_digest=sha256-12-b4ff9705d14d
 captured_at=2026-10-11T19:05:14Z
+marker_note=2026-10-12: ontomark's .generation.json differs from this golden in content_digest (now over every byte read, incl. vocabulary, journals and sibling vault; OM-00 S2.2) and artifacts (lists data/.generation.json and --publish-out files; S2.5); conformance.rs compares the markers structurally and every other artefact byte for byte
+reblessed_note=2026-10-12: expected/verbs/gate-full.{prose,json} re-captured from ontomark, not vault: the legacy golden recorded `gate --vault all` running knowledge/ only (OM-00 S1.5); the fixed verb gates both vaults (knowledge verdict byte-identical to the legacy capture, working verdict added, exit code unchanged)

@@ -70,8 +70,9 @@ fn options(repo: &Path, out: &Path) -> build::Options {
 /// The first `public: true` page in the knowledge vault.
 fn a_public_page(repo: &Path) -> PathBuf {
     let pages = repo.join("knowledge/pages");
-    let mut candidates: Vec<PathBuf> = ontomark_compile::input::page::page_files(&pages)
+    let mut candidates: Vec<PathBuf> = ontomark_compile::input::page::walk_pages(&pages)
         .expect("walk the pages")
+        .files
         .into_iter()
         .filter(|p| {
             std::fs::read_to_string(p)

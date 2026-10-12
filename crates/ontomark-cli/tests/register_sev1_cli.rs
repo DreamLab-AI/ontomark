@@ -64,7 +64,10 @@ fn text(output: &Output) -> String {
 #[test]
 fn control_working_only_findings_are_reported_for_vault_working() {
     let repo = repo(&[
-        ("Leaky.md", class("Leaky", "leaky", &format!("key {SYNTHETIC_KEY}"))),
+        (
+            "Leaky.md",
+            class("Leaky", "leaky", &format!("key {SYNTHETIC_KEY}")),
+        ),
         ("Twin A.md", class("Twin Concept", "twin-a", "One.")),
         ("Twin B.md", class("Twin Concept", "twin-b", "Two.")),
     ]);

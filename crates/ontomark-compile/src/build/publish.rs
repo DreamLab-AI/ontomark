@@ -229,6 +229,18 @@ pub fn stage_redacted(
                     kind: finding.kind,
                 });
             }
+            // The frontmatter is published too (`render` re-emits it), so it
+            // is scanned too (S1.2). It is scanned as rendered, which is what
+            // leaves the machine; the line is the rendered block's line, and
+            // the block opens on file line 1.
+            for finding in secrets::scan(&page.frontmatter.render().unwrap_or_default()) {
+                findings.push(SecretFinding {
+                    vault: name.clone(),
+                    path: page.rel_path.display().to_string(),
+                    line: finding.line,
+                    kind: finding.kind,
+                });
+            }
             let mut tally = Tally::default();
             let content = render(page, links, vault, &mut tally);
             if let Some(report) = staging.redaction.as_mut() {
@@ -307,43 +319,34 @@ fn index_page(staging: &Staging) -> String {
 /// Used by `--publish-out`, which promotes the markdown separately from the C3
 /// bundle. The tree is rebuilt rather than merged: a stale page left behind
 /// from a previous generation is a page that is still published after being
-/// un-published, which is the same failure the atomic bundle promotion exists
-/// to prevent.
+/// un-published, which is the same failure the bundle promotion exists to
+/// prevent.
+///
+/// The new tree is written beside `dir` and swapped in, exactly as the bundle
+/// is: a failure part-way leaves the previous publication in place rather
+/// than a deleted or half-written one (S2.3).
 ///
 /// # Errors
-/// Any I/O failure while clearing or writing the tree.
+/// Any I/O failure while writing the new tree or swapping it in.
 pub fn write_to(staging: &Staging, dir: &Path) -> std::io::Result<()> {
-    if dir.exists() {
-        std::fs::remove_dir_all(dir)?;
+    let parent = dir.parent().unwrap_or(Path::new("."));
+    std::fs::create_dir_all(parent)?;
+    let stage = parent.join(format!(".publish-staging-{}", std::process::id()));
+    if stage.exists() {
+        std::fs::remove_dir_all(&stage)?;
     }
+    std::fs::create_dir_all(&stage)?;
     for file in &staging.files {
         // Paths are `publish/{pages,working}/<id>.md` and `publish/index.md`;
         // `dir` replaces the `publish/`.
         let rel = file.path.strip_prefix("publish/").unwrap_or(&file.path);
-        let target = dir.join(rel);
+        let target = stage.join(rel);
         if let Some(parent) = target.parent() {
             std::fs::create_dir_all(parent)?;
         }
         std::fs::write(&target, &file.content)?;
     }
-    Ok(())
-}
-
-/// Load the `working/` vault beside a knowledge vault root, when it exists.
-///
-/// # Errors
-/// Any read or parse failure in the working vault.
-pub fn sibling_working(
-    vault_root: &Path,
-) -> Result<Option<Vault>, crate::input::error::VaultError> {
-    let Some(repo) = vault_root.parent() else {
-        return Ok(None);
-    };
-    let working = repo.join("working");
-    if !working.join("pages").is_dir() {
-        return Ok(None);
-    }
-    Vault::load(&working, crate::input::page::VaultKind::Working).map(Some)
+    crate::build::swap_in(&stage, dir)
 }
 
 /// Load the vault of `kind` beside `vault_root`, when it has a `pages/` tree.

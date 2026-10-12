@@ -19,7 +19,9 @@ fn s3_2_symlinked_page_is_reported_not_dropped() {
     let walk = walk_pages(&pages).expect("walk");
 
     assert!(
-        walk.skipped.iter().any(|s| s.path.as_path() == std::path::Path::new("b.md")),
+        walk.skipped
+            .iter()
+            .any(|s| s.path.as_path() == std::path::Path::new("b.md")),
         "S3.2: symlinked b.md was neither loaded nor reported; files={:?} skipped={:?}",
         walk.files,
         walk.skipped
@@ -36,8 +38,17 @@ fn s3_2_symlinked_page_is_reported_not_dropped() {
     let mut accounted: Vec<String> = walk
         .files
         .iter()
-        .map(|p| p.strip_prefix(&pages).unwrap_or(p).to_string_lossy().into_owned())
-        .chain(walk.skipped.iter().map(|s| s.path.to_string_lossy().into_owned()))
+        .map(|p| {
+            p.strip_prefix(&pages)
+                .unwrap_or(p)
+                .to_string_lossy()
+                .into_owned()
+        })
+        .chain(
+            walk.skipped
+                .iter()
+                .map(|s| s.path.to_string_lossy().into_owned()),
+        )
         .collect();
     accounted.sort();
     assert_eq!(

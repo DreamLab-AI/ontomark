@@ -149,10 +149,7 @@ fn s2_2a_content_digest_covers_published_working_pages() {
         );
         let mut opts = options(&repo, &scratch.path().join("out"));
         opts.with_working_publish = true;
-        run(&repo, &opts)
-            .expect("builds")
-            .generation
-            .content_digest
+        run(&repo, &opts).expect("builds").generation.content_digest
     };
     let first = digest_with_working_page("Working note, first revision.");
     let second = digest_with_working_page("Working note, second revision.");
@@ -225,7 +222,10 @@ fn s2_3_failed_publish_out_replacement_keeps_the_previous_publication() {
     first.publish_out = Some(published.clone());
     run(&repo, &first).expect("the first build publishes");
     let index = published.join("index.md");
-    assert!(index.is_file(), "precondition: the first publication landed");
+    assert!(
+        index.is_file(),
+        "precondition: the first publication landed"
+    );
     let previous = std::fs::read(&index).unwrap();
 
     let _unlock = Unlock(holder.clone());
@@ -261,12 +261,18 @@ fn s2_5a_generation_markers_are_listed_among_the_artifacts() {
         .iter()
         .map(|a| a.name.as_str())
         .collect();
-    for marker in ["data/.generation.json", ".generation.json"] {
-        assert!(
-            names.contains(&marker),
-            "S2.5: {marker} is not in the artefact list it stamps"
-        );
-    }
+    // A marker cannot list its own hash, so the rule is: the root marker lists
+    // the data marker (real hash), and no marker lists itself. The register's
+    // "both markers" wording was corrected to this at fix time.
+    let marker = "data/.generation.json";
+    assert!(
+        names.contains(&marker),
+        "S2.5: {marker} is not in the artefact list it stamps"
+    );
+    assert!(
+        !names.contains(&".generation.json"),
+        "S2.5: the root marker must not list itself"
+    );
 }
 
 /// S2.5(b) — `build/mod.rs:411`: when `publish_out` is set the `publish/`

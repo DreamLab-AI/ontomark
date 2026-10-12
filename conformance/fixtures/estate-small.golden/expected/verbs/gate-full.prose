@@ -1,4 +1,8 @@
-[gate:full] PASS — A passed gate proves graph consistency only, NOT enrichment correctness.
+[gate:full knowledge] PASS — A passed gate proves graph consistency only, NOT enrichment correctness.
   [pass] validate: 54 pages, 53 public, 0 errors, 867 warnings
   [pass] conflicts: 0 conflicts, none blocking
   [pass] whelk: 99 classes classified, 17 inferred subsumptions, 0 unsatisfiable
+[gate:full working] PASS — A passed gate proves graph consistency only, NOT enrichment correctness.
+  [pass] validate: 2 pages, 1 public, 0 errors, 3 warnings
+  [pass] conflicts: 0 conflicts, none blocking
+  [pass] whelk: 4 classes classified, 0 inferred subsumptions, 0 unsatisfiable

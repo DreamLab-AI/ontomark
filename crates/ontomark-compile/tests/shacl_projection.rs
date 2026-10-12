@@ -285,9 +285,10 @@ fn the_data_graph_reads_values_the_way_validate_does() {
         assert_eq!(found.len(), 1, "{id}.{key}: {found:?}");
         found[0].clone()
     };
-    // A string "true" is a boolean to validate; "yes" is not.
+    // A quoted "true" is NOT a boolean: publication permission is never coerced
+    // (S1.3, 2026-10-12), so it stays a plain literal exactly like "yes".
     assert!(matches!(one("C03 String Boolean", "public"),
-        Term::Literal { datatype: Some(d), value, .. } if d.ends_with("#boolean") && value == "true"));
+        Term::Literal { datatype: None, value, .. } if value == "true"));
     assert!(matches!(one("M02 Public Yes", "public"),
         Term::Literal { datatype: None, value, .. } if value == "yes"));
     // A status is trimmed and lower-cased when it is a known state.

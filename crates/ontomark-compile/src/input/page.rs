@@ -31,7 +31,7 @@ use crate::input::slug::slugify;
 /// over from `jsonld_parser.UNPUBLISHED_DIRS`).
 ///
 /// This list is a *publication* rule and belongs to the projection, not to
-/// enumeration. Applying it in [`page_files`] meant `vault validate` never
+/// enumeration. Applying it in the page walk meant `vault validate` never
 /// saw a `_misc` page, `vault find` could not retrieve one, and `vault
 /// migrate` left them unconverted — a publication decision silently became an
 /// existence decision.
@@ -64,12 +64,18 @@ pub enum SkipReason {
     /// A path component starts with `.` — `.obsidian/`, `.trash/`,
     /// `.deleted/`. Editor and tombstone state, not corpus.
     HiddenDirectory,
+    /// A `.md` entry that is not a regular file: a symlink (the walk never
+    /// follows links, so a page cannot alias another or escape the vault) or a
+    /// device. Reported rather than dropped, so an absent page is never
+    /// mistaken for a page that does not exist (S3.2).
+    NotARegularFile,
 }
 
 impl std::fmt::Display for SkipReason {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::HiddenDirectory => f.write_str("hidden directory"),
+            Self::NotARegularFile => f.write_str("not a regular file (symlink or device)"),
         }
     }
 }
@@ -139,6 +145,13 @@ pub struct Page {
     /// The 1-based file line [`Page::body`] starts on, so a body offset can be
     /// reported as a file position.
     pub body_line: usize,
+    /// The file opened a `---` fence and never closed it (S3.3). The page is
+    /// loaded as prose so `validate` can report it; the build census refuses it.
+    pub unterminated_frontmatter: bool,
+    /// Lowercase hex SHA-256 of the source bytes as read, so the build's
+    /// `content_digest` is computed from what was parsed rather than from a
+    /// second read of the file (S2.2).
+    pub source_sha256: String,
 }
 
 impl Page {
@@ -169,6 +182,8 @@ impl Page {
             frontmatter: fm,
             body: split.body.to_owned(),
             body_line: split.body_line,
+            unterminated_frontmatter: split.unterminated,
+            source_sha256: hex::encode(<sha2::Sha256 as sha2::Digest>::digest(text.as_bytes())),
         })
     }
 
@@ -207,9 +222,17 @@ impl Page {
     }
 
     /// `public: true`? Absent means private — the gate fails closed.
+    ///
+    /// Only a real YAML boolean grants publication. A quoted `"true"`, a
+    /// number or anything else is **not** public here and is refused by the
+    /// build census and reported by `validate` as `INVALID_PUBLIC_FLAG`, so
+    /// every gate reads the same rule (S1.3).
     #[must_use]
     pub fn is_public(&self) -> bool {
-        self.frontmatter.boolean("public").unwrap_or(false)
+        matches!(
+            self.frontmatter.get("public"),
+            Some(serde_yaml::Value::Bool(true))
+        )
     }
 
     /// The OKF lifecycle and trust block.
@@ -388,15 +411,31 @@ impl Vault {
     /// Never in practice: the walk only yields paths under `root/pages`, and
     /// the two `strip_prefix` calls assert that invariant rather than hide it.
     pub fn load(root: impl AsRef<Path>, kind: VaultKind) -> Result<Self> {
-        let root = root.as_ref().to_path_buf();
+        let root = root.as_ref();
         let pages_dir = root.join("pages");
         if !pages_dir.is_dir() {
             return Err(VaultError::NotAVault {
-                root,
+                root: root.to_path_buf(),
                 message: "no pages/ directory".into(),
             });
         }
         let walk = walk_pages(&pages_dir)?;
+        Self::load_with_walk(root, kind, walk)
+    }
+
+    /// [`Vault::load`] from a [`PageWalk`] the caller already made of
+    /// `root/pages`, so a build that also runs the input census over the same
+    /// listing walks the tree once (OM-00 step 1).
+    ///
+    /// # Errors
+    /// [`VaultError::Io`] or [`VaultError::Frontmatter`] on a bad page.
+    ///
+    /// # Panics
+    /// Never in practice: `walk` was made of `root/pages`, and the two
+    /// `strip_prefix` calls assert that invariant rather than hide it.
+    pub fn load_with_walk(root: impl AsRef<Path>, kind: VaultKind, walk: PageWalk) -> Result<Self> {
+        let root = root.as_ref().to_path_buf();
+        let pages_dir = root.join("pages");
         let mut pages = Vec::new();
         for path in walk.files {
             let rel_to_pages = path
@@ -483,7 +522,8 @@ impl Vault {
 /// compares part tuples). A plain string sort differs whenever a file name
 /// contains a byte below `/`, so it is not interchangeable.
 ///
-/// Only dot-directories are skipped, and each skip is reported. [`UNPUBLISHED_DIRS`]
+/// Only dot-directories and non-regular `.md` entries (symlinks, which the walk
+/// never follows) are skipped, and each skip is reported. [`UNPUBLISHED_DIRS`]
 /// is **not** applied here: it is a publication rule, and the publish scope in
 /// `vault`'s projection is where it belongs.
 ///
@@ -498,9 +538,6 @@ pub fn walk_pages(pages_dir: impl AsRef<Path>) -> Result<PageWalk> {
             let path = e.path().unwrap_or(pages_dir).to_path_buf();
             VaultError::io(path, e.into())
         })?;
-        if !entry.file_type().is_file() {
-            continue;
-        }
         let path = entry.path();
         if path.extension().and_then(|e| e.to_str()) != Some("md") {
             continue;
@@ -508,6 +545,17 @@ pub fn walk_pages(pages_dir: impl AsRef<Path>) -> Result<PageWalk> {
         let Ok(rel) = path.strip_prefix(pages_dir) else {
             continue;
         };
+        if !entry.file_type().is_file() {
+            // A `.md` symlink or device: never read, always reported (S3.2).
+            // A directory named `*.md` is not a page and is not reported.
+            if !entry.file_type().is_dir() {
+                skipped.push(Skip {
+                    path: rel.to_path_buf(),
+                    reason: SkipReason::NotARegularFile,
+                });
+            }
+            continue;
+        }
         let parts: Vec<OsString> = rel.iter().map(std::ffi::OsStr::to_os_string).collect();
         if parts.iter().any(|p| p.to_string_lossy().starts_with('.')) {
             skipped.push(Skip {
@@ -529,14 +577,6 @@ pub fn walk_pages(pages_dir: impl AsRef<Path>) -> Result<PageWalk> {
     })
 }
 
-/// [`walk_pages`], keeping only the files.
-///
-/// # Errors
-/// As [`walk_pages`].
-pub fn page_files(pages_dir: impl AsRef<Path>) -> Result<Vec<PathBuf>> {
-    Ok(walk_pages(pages_dir)?.files)
-}
-
 /// `true` when the first path component of `rel` is an [`UNPUBLISHED_DIRS`]
 /// folder — the pages that are loaded but never published.
 #[must_use]
@@ -549,8 +589,9 @@ pub fn is_unpublished(rel: impl AsRef<Path>) -> bool {
 
 /// Parse a single page given its path within a vault root.
 ///
-/// This is the entry point `VisionClaw`'s `CorpusSource::LocalDirectory` calls
-/// for one file; [`Vault::load`] is the whole-tree form.
+/// The per-file entry point for a consumer that reads one page at a time (the
+/// shape `VisionClaw`'s `CorpusSource::LocalDirectory` adapter takes when it
+/// moves onto this crate; ADR-OM-005). [`Vault::load`] is the whole-tree form.
 ///
 /// # Errors
 /// [`VaultError::Frontmatter`] on an invalid YAML block.
@@ -567,12 +608,18 @@ pub fn parse_page(pages_dir: impl AsRef<Path>, path: impl AsRef<Path>, text: &st
 /// As [`Vault::load`].
 pub fn load_vault(root: impl AsRef<Path>) -> Result<Vault> {
     let root = root.as_ref();
-    let kind = if root.file_name().and_then(|n| n.to_str()) == Some("working") {
+    Vault::load(root, vault_kind_of(root))
+}
+
+/// The [`VaultKind`] a vault root's directory name declares: `working/` is the
+/// curator's space, anything else is governed knowledge.
+#[must_use]
+pub fn vault_kind_of(root: &Path) -> VaultKind {
+    if root.file_name().and_then(|n| n.to_str()) == Some("working") {
         VaultKind::Working
     } else {
         VaultKind::Knowledge
-    };
-    Vault::load(root, kind)
+    }
 }
 
 #[cfg(test)]

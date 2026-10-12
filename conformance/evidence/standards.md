@@ -176,7 +176,7 @@ express are listed as procedural.
 | M26 `resource: ngm:compact-look-alike` (a compact-IRI look-alike) | nothing | profile-only `ResourceIri`; the JSON-LD of its data graph is isomorphic to the Turtle (`iris_that_look_like_compact_iris_stay_absolute`) | yes (profile-only) |
 | C01 clean | nothing | nothing | yes |
 | C02 `status: Stable` plus a human `verified` | nothing | nothing (status normalised as validate does) | yes |
-| C03 `public: "true"` | nothing | nothing (string boolean accepted as validate does) | yes |
+| C03 `public: "true"` | INVALID_PUBLIC_FLAG | plain literal `"true"`, no datatype (a quoted boolean is not a boolean; S1.3, 2026-10-12, was: accepted) | yes |
 | journals: undated name / `type: Gadget` | JOURNAL_NOT_DATED / INVALID_TYPE | same | yes |
 | working: `type: Gadget`; unknown key allowed | INVALID_TYPE; nothing | INVALID_TYPE; nothing | yes |
 

@@ -5,8 +5,11 @@
 //! Every subcommand accepts `--json`. Exit codes are contractual and match
 //! `vault`: `0` success, `1` a failed check or execution error, `2` a refused
 //! operation (a credential on a page selected for publication, two artefacts
-//! claiming one path, a definition the reasoner would not finish on) or an
-//! invalid argument.
+//! claiming one path, a definition the reasoner would not finish on, an
+//! unsatisfiable class — the corpus does not permit this build) or an invalid
+//! argument (an unknown `--vault`, `--tier` or `--severity` value included).
+//!
+//! `--vault all` means **both** vaults for every verb that takes it.
 //!
 //! Relocated from `VisionClaw` `crates/vault/src/main.rs` at `1044b0722`; the
 //! governance verbs (`propose`, `apply`, `panel`, `edit`, `create`) and the
@@ -26,7 +29,9 @@ use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::ir::model::Corpus;
 use ontomark_compile::profile::Profile;
 
+mod embed;
 mod migrate_cmd;
+use migrate_cmd::{vault_kinds, VAULT_VALUES};
 use ontomark_compile::{build, reason};
 
 /// Markdown ontology vaults to standard artefacts.
@@ -125,26 +130,10 @@ impl VaultSelector {
     }
 }
 
-/// The three legal `--vault` values. Used as clap's `value_parser` on every
-/// subcommand, so an unknown value is rejected by the parser (exit 2) rather
-/// than silently falling through to `knowledge`.
-pub(crate) const VAULT_VALUES: [&str; 3] = ["knowledge", "working", "all"];
-
-/// The vaults a `--vault` value names.
-///
-/// `all` means BOTH, everywhere — earlier commands accepted the
-/// word and quietly run `knowledge/` only, which is the worst of the three
-/// possible behaviours: it looks like it did what you asked.
-///
-/// The `_` arm is `knowledge` because the parser has already rejected anything
-/// that is not one of [`VAULT_VALUES`]; it is not a silent default.
-fn vault_kinds(value: &str) -> Vec<VaultKind> {
-    match value.trim().to_ascii_lowercase().as_str() {
-        "working" => vec![VaultKind::Working],
-        "all" => vec![VaultKind::Knowledge, VaultKind::Working],
-        _ => vec![VaultKind::Knowledge],
-    }
-}
+/// The legal `--tier` values, rejected by the parser otherwise (S2.4).
+const TIER_VALUES: [&str; 2] = ["quick", "full"];
+/// The legal `--severity` values, rejected by the parser otherwise (S2.4).
+const SEVERITY_VALUES: [&str; 4] = ["high", "medium", "low", "all"];
 
 #[derive(Debug, Args)]
 struct ValidateArgs {
@@ -160,7 +149,7 @@ struct GateArgs {
     #[command(flatten)]
     selector: VaultSelector,
     /// `quick` (validate only) or `full` (+ conflicts + Whelk).
-    #[arg(long, default_value = "quick")]
+    #[arg(long, default_value = "quick", value_parser = TIER_VALUES)]
     tier: String,
 }
 
@@ -168,8 +157,9 @@ struct GateArgs {
 struct ConflictsArgs {
     #[command(flatten)]
     selector: VaultSelector,
-    /// The severity at or above which a conflict fails the run.
-    #[arg(long, default_value = "high")]
+    /// The severity at or above which a conflict fails the run: `high`,
+    /// `medium`, `low` or `all` (= `low`).
+    #[arg(long, default_value = "high", value_parser = SEVERITY_VALUES)]
     severity: String,
 }
 
@@ -199,6 +189,15 @@ struct BuildArgs {
     /// default: no consumer, 124 MB, and the Pages budget is 1 GB.
     #[arg(long)]
     with_markdown_mirror: bool,
+    /// Embed the corpus and emit the portable `data/ontology-corpus.records.jsonl`
+    /// (contract C3). Needs the embedder at `--embed-endpoint`; the rest of the
+    /// build never does.
+    #[arg(long)]
+    with_rvdb: bool,
+    /// The OpenAI-compatible `/v1/embeddings` endpoint `--with-rvdb` calls
+    /// (`bge-small-en-v1.5`, 384 dimensions, locked).
+    #[arg(long, default_value = embed::DEFAULT_ENDPOINT, env = "ONTOMARK_EMBED_ENDPOINT")]
+    embed_endpoint: String,
     /// An expiry to stamp into `.generation.json`.
     #[arg(long)]
     stale_after: Option<String>,
@@ -330,61 +329,110 @@ fn run() -> anyhow::Result<ExitCode> {
         }
 
         Command::Gate(args) => {
+            // Every selected vault is gated; `all` is both (S1.5). One vault
+            // prints the legacy shape byte for byte (the conformance golden);
+            // several print a verdict per vault and a JSON map keyed by vault,
+            // and the exit code is the worst verdict.
             let tier = gate::Tier::parse(&args.tier);
-            let vault = load(&root, &args.selector.kinds())?
-                .into_iter()
-                .next()
-                .context("no vault selected")?;
-            let corpus = Corpus::build(&vault, &vocab);
-            let report = validate::validate(&profile, &vault, &corpus, &vocab);
-            let graph = (tier == gate::Tier::Full && report.errors().is_empty())
-                .then(|| build::turtle::build_graph(&profile, &corpus, &vocab, false));
             let classifier = ontomark_compile::whelk::WhelkEl;
-            let verdict = gate::run(
-                &report,
-                &corpus,
-                graph
-                    .as_ref()
-                    .map(|g| (g, &classifier as &dyn reason::Classifier)),
-                tier,
-            );
-            let value = serde_json::to_value(&verdict)?;
-            emit(cli.json, &value, || {
-                println!(
-                    "[gate:{}] {} — {}",
-                    verdict.tier,
-                    verdict.gate.to_uppercase(),
-                    verdict.caveat
+            let mut verdicts: Vec<(&'static str, gate::Verdict)> = Vec::new();
+            for vault in load(&root, &args.selector.kinds())? {
+                let corpus = Corpus::build(&vault, &vocab);
+                let report = validate::validate(&profile, &vault, &corpus, &vocab);
+                let graph = (tier == gate::Tier::Full && report.errors().is_empty())
+                    .then(|| build::turtle::build_graph(&profile, &corpus, &vocab, false));
+                let verdict = gate::run(
+                    &report,
+                    &corpus,
+                    graph
+                        .as_ref()
+                        .map(|g| (g, &classifier as &dyn reason::Classifier)),
+                    tier,
                 );
-                for check in &verdict.checks {
-                    println!("  [{}] {}: {}", check.status, check.name, check.detail);
+                verdicts.push((vault.kind.dir_name(), verdict));
+            }
+            let worst = verdicts
+                .iter()
+                .map(|(_, v)| v.exit_code())
+                .max()
+                .unwrap_or(0);
+            let several = verdicts.len() > 1;
+            let value = if several {
+                let mut map = serde_json::Map::new();
+                for (name, verdict) in &verdicts {
+                    map.insert((*name).to_owned(), serde_json::to_value(verdict)?);
+                }
+                serde_json::Value::Object(map)
+            } else {
+                serde_json::to_value(verdicts.first().map(|(_, v)| v))?
+            };
+            emit(cli.json, &value, || {
+                for (name, verdict) in &verdicts {
+                    if several {
+                        println!(
+                            "[gate:{} {name}] {} — {}",
+                            verdict.tier,
+                            verdict.gate.to_uppercase(),
+                            verdict.caveat
+                        );
+                    } else {
+                        println!(
+                            "[gate:{}] {} — {}",
+                            verdict.tier,
+                            verdict.gate.to_uppercase(),
+                            verdict.caveat
+                        );
+                    }
+                    for check in &verdict.checks {
+                        println!("  [{}] {}: {}", check.status, check.name, check.detail);
+                    }
                 }
             })?;
-            Ok(ExitCode::from(
-                u8::try_from(verdict.exit_code()).unwrap_or(1),
-            ))
+            Ok(ExitCode::from(u8::try_from(worst).unwrap_or(1)))
         }
 
         Command::Conflicts(args) => {
-            let vault = load(&root, &args.selector.kinds())?
-                .into_iter()
-                .next()
-                .context("no vault selected")?;
-            let corpus = Corpus::build(&vault, &vocab);
-            let report = conflicts::analyse(&corpus, &args.severity);
-            let value = serde_json::to_value(&report)?;
+            // Every selected vault is analysed; `all` is both (S1.5). The same
+            // one-vault legacy shape / several-vault keyed shape as `gate`.
+            let mut reports: Vec<(&'static str, conflicts::Report)> = Vec::new();
+            for vault in load(&root, &args.selector.kinds())? {
+                let corpus = Corpus::build(&vault, &vocab);
+                reports.push((
+                    vault.kind.dir_name(),
+                    conflicts::analyse(&corpus, &args.severity),
+                ));
+            }
+            let worst = reports
+                .iter()
+                .map(|(_, r)| r.exit_code())
+                .max()
+                .unwrap_or(0);
+            let several = reports.len() > 1;
+            let value = if several {
+                let mut map = serde_json::Map::new();
+                for (name, report) in &reports {
+                    map.insert((*name).to_owned(), serde_json::to_value(report)?);
+                }
+                serde_json::Value::Object(map)
+            } else {
+                serde_json::to_value(reports.first().map(|(_, r)| r))?
+            };
             emit(cli.json, &value, || {
-                println!("Conflicts: {} total", report.summary.total);
-                for conflict in report.conflicts.iter().take(40) {
-                    println!(
-                        "  [{:?}] {}: {}",
-                        conflict.severity, conflict.kind, conflict.detail
-                    );
+                for (name, report) in &reports {
+                    if several {
+                        println!("Conflicts in {name}: {} total", report.summary.total);
+                    } else {
+                        println!("Conflicts: {} total", report.summary.total);
+                    }
+                    for conflict in report.conflicts.iter().take(40) {
+                        println!(
+                            "  [{:?}] {}: {}",
+                            conflict.severity, conflict.kind, conflict.detail
+                        );
+                    }
                 }
             })?;
-            Ok(ExitCode::from(
-                u8::try_from(report.exit_code()).unwrap_or(1),
-            ))
+            Ok(ExitCode::from(u8::try_from(worst).unwrap_or(1)))
         }
 
         Command::Build(args) => {
@@ -415,11 +463,18 @@ fn run() -> anyhow::Result<ExitCode> {
                 stale_after: args.stale_after.clone(),
                 redact_private_links: args.no_redact_private_links.then_some(false),
             };
-            let report = match build::run(
+            // `--with-rvdb` is the only network the build ever touches, and the
+            // transport lives here, not in the compile crate.
+            let embedder: Option<Box<dyn build::records::Embedder>> = args.with_rvdb.then(|| {
+                Box::new(embed::Xinference::new(args.embed_endpoint.clone()))
+                    as Box<dyn build::records::Embedder>
+            });
+            let report = match build::run_with(
                 &options,
                 &profile,
                 &vocab,
                 &ontomark_compile::whelk::WhelkEl,
+                embedder.as_deref(),
             ) {
                 Ok(report) => report,
                 Err(e) => {
@@ -440,6 +495,12 @@ fn run() -> anyhow::Result<ExitCode> {
                     // refused before reasoning, same refusal class.
                     if let Some(cap) = e.downcast_ref::<reason::ReasoningError>() {
                         eprintln!("ontomark: {cap}; no bundle written");
+                        return Ok(ExitCode::from(2));
+                    }
+                    // An unsatisfiable class is a broken corpus: the corpus does
+                    // not permit this build, the same refusal class (S2.1).
+                    if let Some(unsat) = e.downcast_ref::<build::Unsatisfiable>() {
+                        eprintln!("ontomark: {unsat}");
                         return Ok(ExitCode::from(2));
                     }
                     return Err(e);

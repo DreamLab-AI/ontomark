@@ -98,6 +98,12 @@ pub struct Split<'a> {
     /// a diagnostic that says `line 1845` when the file means `line 1854` sends
     /// the reader to the wrong place. `1` when there is no frontmatter.
     pub body_line: usize,
+    /// `true` when the file opened a `---` fence on line 1 and never closed it.
+    /// The YAML is then `None` and the whole file is the body, but the author
+    /// almost certainly meant frontmatter: the census refuses the build and
+    /// `validate` reports `UNCLOSED_FRONTMATTER` rather than publishing the
+    /// page as private prose (S3.3).
+    pub unterminated: bool,
 }
 
 /// Split `text` into its frontmatter block and body without parsing the YAML.
@@ -114,6 +120,9 @@ pub struct Split<'a> {
 /// // `---` is line 1, `public: true` line 2, `---` line 3, so the body is line 4.
 /// assert_eq!(s.body_line, 4);
 /// assert_eq!(split("# No frontmatter\n").body_line, 1);
+/// // An opening fence that is never closed is flagged, not silently prose.
+/// let open = split("---\ntitle: x\n");
+/// assert!(open.yaml.is_none() && open.unterminated);
 /// ```
 #[must_use]
 pub fn split(text: &str) -> Split<'_> {
@@ -126,18 +135,19 @@ pub fn split(text: &str) -> Split<'_> {
             yaml: None,
             body: stripped,
             body_line: 1,
+            unterminated: false,
         };
     };
-    for (idx, line) in rest.match_indices('\n') {
+    for (idx, _) in rest.match_indices('\n') {
         let line_start = rest[..idx].rfind('\n').map_or(0, |p| p + 1);
         let candidate = rest[line_start..idx].trim_end_matches('\r');
         if candidate == "---" {
-            let _ = line;
             return Split {
                 yaml: Some(&rest[..line_start]),
                 body: &rest[idx + 1..],
                 // The opening `---`, the YAML lines, and the closing `---`.
                 body_line: 2 + rest[..idx].matches('\n').count() + 1,
+                unterminated: false,
             };
         }
     }
@@ -148,12 +158,14 @@ pub fn split(text: &str) -> Split<'_> {
             yaml: Some(&rest[..line_start]),
             body: "",
             body_line: 2 + rest[..line_start].matches('\n').count() + 1,
+            unterminated: false,
         };
     }
     Split {
         yaml: None,
         body: stripped,
         body_line: 1,
+        unterminated: true,
     }
 }
 
@@ -224,17 +236,17 @@ impl Frontmatter {
         }
     }
 
-    /// The boolean under `key`. Accepts a real YAML bool or the strings
-    /// `"true"` / `"false"` (case-insensitive), which is how Logseq wrote them.
+    /// The boolean under `key`: a real YAML bool only.
+    ///
+    /// A quoted `"true"` is a string. Logseq wrote booleans as strings and the
+    /// migration normalised them; accepting the string form here let
+    /// `public: "true"` pass `validate` while the build census refused it
+    /// (S1.3). Publication permission is never coerced, and neither is any
+    /// other boolean scalar: the validator reports the typing fault instead.
     #[must_use]
     pub fn boolean(&self, key: &str) -> Option<bool> {
         match self.get(key)? {
             Yaml::Bool(b) => Some(*b),
-            Yaml::String(s) => match s.trim().to_ascii_lowercase().as_str() {
-                "true" => Some(true),
-                "false" => Some(false),
-                _ => None,
-            },
             _ => None,
         }
     }
@@ -416,9 +428,11 @@ mod tests {
     }
 
     #[test]
-    fn typed_accessors_coerce_logseq_spellings() {
-        let fm = Frontmatter::parse("public: \"true\"\nquality: \"0.35\"\n").unwrap();
-        assert_eq!(fm.boolean("public"), Some(true));
+    fn numbers_coerce_logseq_spellings_but_booleans_do_not() {
+        let fm = Frontmatter::parse("public: \"true\"\nquality: \"0.35\"\nflag: true\n").unwrap();
+        // A quoted boolean is a string (S1.3); only a YAML bool reads as one.
+        assert_eq!(fm.boolean("public"), None);
+        assert_eq!(fm.boolean("flag"), Some(true));
         assert!((fm.number("quality").unwrap() - 0.35).abs() < f64::EPSILON);
     }
 

@@ -28,7 +28,7 @@ pub enum MigrateCommand {
         /// Migration id, for example `m0001-obsidian-bodies`.
         migration: String,
         /// Vaults to consider: `knowledge`, `working` or `all`.
-        #[arg(long, default_value = "all", value_parser = ["knowledge", "working", "all"])]
+        #[arg(long, default_value = "all", value_parser = VAULT_VALUES)]
         vault: String,
         /// Write the plan JSON here (needed to apply it).
         #[arg(long)]
@@ -56,12 +56,30 @@ pub enum MigrateCommand {
     Status,
 }
 
-fn kinds(value: &str) -> Vec<VaultKind> {
-    match value {
-        "knowledge" => vec![VaultKind::Knowledge],
+/// The three legal `--vault` values. Used as clap's `value_parser` on every
+/// subcommand, so an unknown value is rejected by the parser (exit 2) rather
+/// than silently falling through to `knowledge`.
+pub(crate) const VAULT_VALUES: [&str; 3] = ["knowledge", "working", "all"];
+
+/// The vaults a `--vault` value names.
+///
+/// `all` means BOTH, everywhere — earlier commands accepted the
+/// word and quietly run `knowledge/` only, which is the worst of the three
+/// possible behaviours: it looks like it did what you asked.
+///
+/// The `_` arm is `knowledge` because the parser has already rejected anything
+/// that is not one of [`VAULT_VALUES`]; it is not a silent default.
+pub(crate) fn vault_kinds(value: &str) -> Vec<VaultKind> {
+    match value.trim().to_ascii_lowercase().as_str() {
         "working" => vec![VaultKind::Working],
-        _ => vec![VaultKind::Knowledge, VaultKind::Working],
+        "all" => vec![VaultKind::Knowledge, VaultKind::Working],
+        _ => vec![VaultKind::Knowledge],
     }
+}
+
+fn kinds(value: &str) -> Vec<VaultKind> {
+    // One reading of `--vault` for every verb (OM-05 #3).
+    vault_kinds(value)
 }
 
 fn emit(json: bool, value: &serde_json::Value, prose: impl FnOnce()) -> anyhow::Result<()> {

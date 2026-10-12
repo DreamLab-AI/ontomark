@@ -27,7 +27,7 @@ use crate::input::page::is_unpublished;
 use crate::input::page::Vault;
 use crate::input::vocabulary::Vocabulary;
 use indexmap::IndexMap;
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 
 use crate::ir::model::{ClassRecord, Conjunct, Corpus, Ref};
 use crate::profile::Profile;
@@ -41,6 +41,11 @@ pub enum PublicationBlocked {
     /// One identity is claimed by both a public and a private page.
     #[error("public/private identity collision on {0}; resolve in the authoring source")]
     Collision(String),
+    /// The private-marker redactor could not be compiled, so prose redaction
+    /// cannot be guaranteed. The build refuses rather than publish unredacted
+    /// text (S1.1).
+    #[error("public build refused: the private-marker redactor did not compile ({0})")]
+    Redactor(String),
 }
 
 /// The `census.json` document.
@@ -68,37 +73,57 @@ pub struct Census {
 ///
 /// # Errors
 /// [`PublicationBlocked::Census`] when any file has an invalid or conflicting
-/// publication flag, or cannot be read.
+/// publication flag, an unclosed frontmatter fence, or cannot be read.
 pub fn inspect_inputs(pages_dir: impl AsRef<Path>) -> Result<Census, PublicationBlocked> {
     let pages_dir = pages_dir.as_ref();
+    let walk = crate::input::page::walk_pages(pages_dir).map_err(|e| {
+        PublicationBlocked::Census(format!("cannot walk {}: {e}", pages_dir.display()))
+    })?;
+    inspect_walk(pages_dir, &walk)
+}
+
+/// [`inspect_inputs`] over a walk the caller already made, so a build walks
+/// `pages/` once for the census and the load (OM-00 step 1).
+///
+/// The census and the vault load now share one listing and one skip rule: a
+/// hidden-directory skip counts as `excluded_directory`, a non-regular `.md`
+/// entry as `excluded_not_regular_file`, and both are visible in the counts.
+///
+/// # Errors
+/// As [`inspect_inputs`].
+pub fn inspect_walk(
+    pages_dir: &Path,
+    walk: &crate::input::page::PageWalk,
+) -> Result<Census, PublicationBlocked> {
+    use crate::input::page::SkipReason;
     let mut counts: BTreeMap<String, usize> = BTreeMap::new();
     let mut bump = |k: &str| *counts.entry(k.to_owned()).or_insert(0) += 1;
 
-    let mut all: Vec<std::path::PathBuf> = walkdir::WalkDir::new(pages_dir)
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-        .filter(|e| e.file_type().is_file())
-        .map(walkdir::DirEntry::into_path)
-        .filter(|p| p.extension().and_then(|e| e.to_str()) == Some("md"))
-        .collect();
-    all.sort();
-
-    for path in all {
+    for skip in &walk.skipped {
         bump("input_files");
-        let rel = path.strip_prefix(pages_dir).unwrap_or(&path);
-        let parts: Vec<String> = rel
-            .iter()
-            .map(|p| p.to_string_lossy().into_owned())
-            .collect();
-        if parts.iter().any(|p| p.starts_with('.')) || is_unpublished(rel) {
+        bump(match skip.reason {
+            SkipReason::HiddenDirectory => "excluded_directory",
+            SkipReason::NotARegularFile => "excluded_not_regular_file",
+        });
+    }
+    for path in &walk.files {
+        bump("input_files");
+        let rel = path.strip_prefix(pages_dir).unwrap_or(path);
+        if is_unpublished(rel) {
             bump("excluded_directory");
             continue;
         }
-        let Ok(text) = std::fs::read_to_string(&path) else {
+        let Ok(text) = std::fs::read_to_string(path) else {
             bump("invalid_input");
             continue;
         };
         let split = frontmatter::split(&text);
+        if split.unterminated {
+            // An opening fence with no close is a malformed page, not a
+            // private one (S3.3).
+            bump("invalid_input");
+            continue;
+        }
         let Some(yaml) = split.yaml else {
             bump("excluded_no_frontmatter");
             continue;
@@ -139,8 +164,13 @@ pub fn inspect_inputs(pages_dir: impl AsRef<Path>) -> Result<Census, Publication
         policy_version: 1,
         public_pages: get("included_public"),
         non_public_pages: get("included_private"),
+        // Always 0: a page the census cannot classify refuses the whole build
+        // above, so nothing is ever "rejected" in a census that is returned.
+        // Kept because `api/census.json` is a published shape.
         rejected: 0,
-        excluded: get("excluded_directory") + get("excluded_no_frontmatter"),
+        excluded: get("excluded_directory")
+            + get("excluded_no_frontmatter")
+            + get("excluded_not_regular_file"),
         parsed: get("included_public") + get("included_private"),
         balanced: input_files == accounted,
         counts,
@@ -165,38 +195,55 @@ pub fn inspect_inputs(pages_dir: impl AsRef<Path>) -> Result<Census, Publication
 /// Deletion is not a publication hold.
 ///
 /// # Errors
-/// [`PublicationBlocked::Census`] when the tree cannot be walked.
+/// `std::io::Error` when the tree cannot be walked. (A page that fails to
+/// parse is skipped: the vault load has already refused it by then.)
 pub fn excluded_identities(pages_dir: impl AsRef<Path>) -> Result<HashSet<String>, std::io::Error> {
     let pages_dir = pages_dir.as_ref();
+    let walk = crate::input::page::walk_pages(pages_dir)
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
     let mut out = HashSet::new();
-    for entry in walkdir::WalkDir::new(pages_dir)
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-    {
-        if !entry.file_type().is_file()
-            || entry.path().extension().and_then(|e| e.to_str()) != Some("md")
-        {
-            continue;
-        }
-        let rel = entry.path().strip_prefix(pages_dir).unwrap_or(entry.path());
+    for path in &walk.files {
+        let rel = path.strip_prefix(pages_dir).unwrap_or(path);
         if !is_unpublished(rel) {
             continue;
         }
-        let Ok(text) = std::fs::read_to_string(entry.path()) else {
+        let Ok(text) = std::fs::read_to_string(path) else {
             continue;
         };
         let id = rel.with_extension("").to_string_lossy().replace('\\', "/");
-        let Ok(page) = crate::input::page::Page::parse(entry.path(), rel, &id, &text) else {
+        let Ok(page) = crate::input::page::Page::parse(path, rel, &id, &text) else {
             continue;
         };
-        out.insert(id);
-        out.insert(page.slug());
-        if let Some(r) = page.frontmatter.text("resource") {
-            out.insert(r);
-        }
-        out.insert(page.title());
+        held_identities(&page, &id, &mut out);
     }
     Ok(out)
+}
+
+/// [`excluded_identities`] from a vault that is already loaded: the held pages
+/// are in [`Vault::pages`] (the walk does not apply the publication rule), so
+/// no second walk or parse is needed.
+#[must_use]
+pub fn excluded_identities_of(vault: &Vault) -> HashSet<String> {
+    let mut out = HashSet::new();
+    for page in &vault.pages {
+        let rel = page
+            .rel_path
+            .strip_prefix("pages")
+            .unwrap_or(&page.rel_path);
+        if is_unpublished(rel) {
+            held_identities(page, &page.id, &mut out);
+        }
+    }
+    out
+}
+
+fn held_identities(page: &crate::input::page::Page, id: &str, out: &mut HashSet<String>) {
+    out.insert(id.to_owned());
+    out.insert(page.slug());
+    if let Some(r) = page.frontmatter.text("resource") {
+        out.insert(r);
+    }
+    out.insert(page.title());
 }
 
 /// A page's identity values: its id, slug, page IRI and class IRI.
@@ -212,15 +259,28 @@ fn identity(record: &ClassRecord) -> Vec<String> {
     .collect()
 }
 
+/// The compiled-program size the private-marker alternation may reach
+/// (`regex`'s own default). Past it the redactor **refuses** rather than runs
+/// without a pattern: see [`PublicationBlocked::Redactor`].
+pub const REDACTOR_SIZE_LIMIT: usize = 10 * (1 << 20);
+
 /// The redactor: a compiled alternation over every private marker plus the
 /// word-boundary rule Python expressed with look-around.
+///
+/// `pattern` is `None` only when there is nothing to redact. A compile failure
+/// is an error, never an empty pattern (S1.1).
+#[derive(Debug)]
 struct Redactor {
     pattern: Option<Regex>,
     markers: HashSet<String>,
 }
 
 impl Redactor {
-    fn new(markers: HashSet<String>) -> Self {
+    fn new(markers: HashSet<String>) -> Result<Self, regex::Error> {
+        Self::with_size_limit(markers, REDACTOR_SIZE_LIMIT)
+    }
+
+    fn with_size_limit(markers: HashSet<String>, size_limit: usize) -> Result<Self, regex::Error> {
         let mut sorted: Vec<&String> = markers.iter().filter(|m| !m.is_empty()).collect();
         // Longest first, then lexicographic, so the alternation is
         // deterministic and never matches a prefix of a longer marker.
@@ -229,9 +289,13 @@ impl Redactor {
             None
         } else {
             let alt: Vec<String> = sorted.iter().map(|m| regex::escape(m)).collect();
-            Regex::new(&alt.join("|")).ok()
+            Some(
+                RegexBuilder::new(&alt.join("|"))
+                    .size_limit(size_limit)
+                    .build()?,
+            )
         };
-        Self { pattern, markers }
+        Ok(Self { pattern, markers })
     }
 
     /// `\w` or `-` — the characters Python's look-around forbade on either side.
@@ -364,9 +428,33 @@ pub fn project(
 /// The marker redactor [`project`] applies to every public record, exposed so a
 /// prose surface built from raw text (the markdown mirror) can apply exactly
 /// the same masking after its own link rewriting.
+#[derive(Debug)]
 pub struct ProseRedactor(Redactor);
 
 impl ProseRedactor {
+    /// Compile a redactor over `markers` at [`REDACTOR_SIZE_LIMIT`].
+    ///
+    /// # Errors
+    /// [`PublicationBlocked::Redactor`] when the alternation does not compile.
+    /// The caller must refuse to publish: there is no safe fallback.
+    pub fn new(markers: HashSet<String>) -> Result<Self, PublicationBlocked> {
+        Self::with_size_limit(markers, REDACTOR_SIZE_LIMIT)
+    }
+
+    /// [`ProseRedactor::new`] with an explicit compiled-program size limit, so
+    /// the refusal path can be exercised without a vault of millions of pages.
+    ///
+    /// # Errors
+    /// As [`ProseRedactor::new`].
+    pub fn with_size_limit(
+        markers: HashSet<String>,
+        size_limit: usize,
+    ) -> Result<Self, PublicationBlocked> {
+        Redactor::with_size_limit(markers, size_limit)
+            .map(Self)
+            .map_err(|e| PublicationBlocked::Redactor(e.to_string()))
+    }
+
     /// Mask every private marker in `text` with `[private]`.
     #[must_use]
     pub fn redact(&self, text: &str) -> String {
@@ -378,7 +466,8 @@ impl ProseRedactor {
 ///
 /// # Errors
 /// [`PublicationBlocked::Collision`] when an identity is claimed by both a
-/// public and a private page.
+/// public and a private page; [`PublicationBlocked::Redactor`] when the
+/// private-marker alternation does not compile.
 #[allow(clippy::implicit_hasher)] // The build always uses the default hasher.
 pub fn project_with_redactor(
     profile: &Profile,
@@ -422,7 +511,8 @@ pub fn project_with_redactor(
         markers.remove(name);
     }
 
-    let redactor = Redactor::new(markers);
+    let redactor =
+        Redactor::new(markers).map_err(|e| PublicationBlocked::Redactor(e.to_string()))?;
     let records: Vec<ClassRecord> = public.iter().map(|r| redactor.clean_record(r)).collect();
 
     let mut by_class_slug = IndexMap::new();
@@ -503,6 +593,24 @@ pub fn project_vault_with_links(
 mod tests {
     use super::*;
     use crate::ir::model::EntityType;
+
+    #[test]
+    fn redactor_refuses_when_the_alternation_exceeds_the_size_limit() {
+        let markers: HashSet<String> = (0..64).map(|i| format!("Private Programme {i}")).collect();
+        let err = ProseRedactor::with_size_limit(markers.clone(), 16).unwrap_err();
+        assert!(matches!(err, PublicationBlocked::Redactor(_)), "{err}");
+        let ok = ProseRedactor::new(markers).unwrap();
+        assert_eq!(
+            ok.redact("see Private Programme 7 here"),
+            "see [private] here"
+        );
+    }
+
+    #[test]
+    fn an_empty_marker_set_compiles_to_no_pattern() {
+        let r = ProseRedactor::new(HashSet::new()).unwrap();
+        assert_eq!(r.redact("untouched"), "untouched");
+    }
 
     fn record(id: &str, public: bool) -> ClassRecord {
         ClassRecord {

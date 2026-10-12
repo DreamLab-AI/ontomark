@@ -168,6 +168,24 @@ pub fn content_digest(mut entries: Vec<(String, Vec<u8>)>) -> String {
     hex::encode(h.finalize())
 }
 
+/// [`content_digest`] over `(path, sha256-hex)` pairs: the pages the build
+/// parsed, hashed as they were read, so the digest never re-reads a file after
+/// parsing it (a time-of-check gap) and never hashes empty bytes on a read
+/// error (S2.2). Path-ordered, like [`content_digest`]; the two are different
+/// digests of the same inputs and are not interchangeable.
+#[must_use]
+pub fn content_digest_of_hashes(mut entries: Vec<(String, String)>) -> String {
+    entries.sort_by(|a, b| a.0.cmp(&b.0));
+    let mut h = Sha256::new();
+    for (path, sha) in entries {
+        h.update(path.as_bytes());
+        h.update(b"\0");
+        h.update(sha.as_bytes());
+        h.update(b"\n");
+    }
+    hex::encode(h.finalize())
+}
+
 /// The ADR-2023 content address of `bytes`: `sha256-12-` plus the first 12
 /// lowercase hex characters of their SHA-256, byte-identical to the agentbox
 /// `sha12()` contract (and to `services::proposal_spine::sha256_12` in the

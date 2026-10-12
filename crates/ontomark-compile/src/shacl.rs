@@ -105,7 +105,9 @@
 //! | `EMBED_RESIDUE` | procedural | page body text |
 //! | `BLOCK_REF_RESIDUE` | procedural | page body text |
 //! | `UNTERMINATED_FENCE` | procedural | page body text |
-//! | `SECRET_DETECTED` | procedural | page body text |
+//! | `SECRET_DETECTED` | procedural | page body and frontmatter text |
+//! | `UNCLOSED_FRONTMATTER` | procedural | file structure: the fence never closes |
+//! | `INVALID_PUBLIC_FLAG` | procedural | publication permission must be a YAML bool, not a string |
 //!
 //! Note 1: `MISSING_CLASS_IRI` and the `resource` half of `MISSING_REQUIRED`
 //! cannot fire in `validate`, because a page without `resource` has an identity
@@ -284,7 +286,9 @@ pub const RULES: &[Rule] = &[
     procedural("EMBED_RESIDUE", "page body text"),
     procedural("BLOCK_REF_RESIDUE", "page body text"),
     procedural("UNTERMINATED_FENCE", "page body text"),
-    procedural("SECRET_DETECTED", "page body text"),
+    procedural("SECRET_DETECTED", "page body and frontmatter text"),
+    procedural("UNCLOSED_FRONTMATTER", "file structure: the fence never closes"),
+    procedural("INVALID_PUBLIC_FLAG", "publication permission must be a YAML bool, not a string"),
 ];
 
 // ---------------------------------------------------------------------------

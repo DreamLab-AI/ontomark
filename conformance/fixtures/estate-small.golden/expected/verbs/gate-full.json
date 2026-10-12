@@ -1,22 +1,46 @@
 {
-  "gate": "pass",
-  "tier": "full",
-  "caveat": "A passed gate proves graph consistency only, NOT enrichment correctness.",
-  "checks": [
-    {
-      "name": "validate",
-      "status": "pass",
-      "detail": "54 pages, 53 public, 0 errors, 867 warnings"
-    },
-    {
-      "name": "conflicts",
-      "status": "pass",
-      "detail": "0 conflicts, none blocking"
-    },
-    {
-      "name": "whelk",
-      "status": "pass",
-      "detail": "99 classes classified, 17 inferred subsumptions, 0 unsatisfiable"
-    }
-  ]
+  "knowledge": {
+    "gate": "pass",
+    "tier": "full",
+    "caveat": "A passed gate proves graph consistency only, NOT enrichment correctness.",
+    "checks": [
+      {
+        "name": "validate",
+        "status": "pass",
+        "detail": "54 pages, 53 public, 0 errors, 867 warnings"
+      },
+      {
+        "name": "conflicts",
+        "status": "pass",
+        "detail": "0 conflicts, none blocking"
+      },
+      {
+        "name": "whelk",
+        "status": "pass",
+        "detail": "99 classes classified, 17 inferred subsumptions, 0 unsatisfiable"
+      }
+    ]
+  },
+  "working": {
+    "gate": "pass",
+    "tier": "full",
+    "caveat": "A passed gate proves graph consistency only, NOT enrichment correctness.",
+    "checks": [
+      {
+        "name": "validate",
+        "status": "pass",
+        "detail": "2 pages, 1 public, 0 errors, 3 warnings"
+      },
+      {
+        "name": "conflicts",
+        "status": "pass",
+        "detail": "0 conflicts, none blocking"
+      },
+      {
+        "name": "whelk",
+        "status": "pass",
+        "detail": "4 classes classified, 0 inferred subsumptions, 0 unsatisfiable"
+      }
+    ]
+  }
 }
