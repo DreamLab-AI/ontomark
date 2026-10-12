@@ -74,6 +74,8 @@ Ontomark is the engine under the DreamLab estate's own corpus, so the argument f
 
 The Loom benchmark is 37 held-out questions with gold answers derived from the graph, so it measures faithful restatement of checked facts, which is the job, not open-domain knowledge. Its lift concentrates in niche domains the models did not already know and vanishes where they were already right; prose renderings of the same facts added nothing measurable. The structure carries the value, which is why the engine's output is a typed model and an RDF closure rather than text.
 
+External figures the READMEs cite, with verification status, are in [`docs/GROUNDING-EVIDENCE.md`](docs/GROUNDING-EVIDENCE.md).
+
 The same reasoner, parser and (next) ingest guards run unchanged in the [Obsidian plugin](https://github.com/DreamLab-AI/ontomark-obsidian), which is deliberately light on this material: it exists for vaults of ten notes as much as ten thousand.
 
 ## Build and check
