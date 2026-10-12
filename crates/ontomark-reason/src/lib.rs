@@ -31,6 +31,12 @@
 //! For long-running work in a host that must stay responsive, and whose
 //! source changes underneath the reasoner, use [`session`].
 
+// The README's examples are compiled and run by `cargo test` through this
+// doctest-only module; it adds nothing to the rendered documentation.
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+mod readme_examples {}
+
 pub mod axiom;
 pub mod classify;
 pub mod profile;

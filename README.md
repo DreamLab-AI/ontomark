@@ -1,9 +1,23 @@
 # Ontomark
 
-Ontologies in Markdown: a lossless parser, typed model, portable reasoner and compiler for Markdown notes with YAML frontmatter. Use the Rust crates in your application, build publication artefacts with the CLI, or work inside Obsidian with the [separate plugin](https://github.com/DreamLab-AI/ontomark-obsidian).
+**Ontologies written as Markdown notes, read and reasoned over by machines.**
+
+You keep writing notes the way you already do. A line or two of YAML frontmatter on a note (`type: class`, `subclass-of: [[Animal]]`) turns it into an ontology statement; everything else stays prose. Ontomark parses those notes without losing a byte, builds a typed model from them, reasons over it with an OWL 2 EL engine, compiles it to RDF and the web, and, when asked, lets a language model propose new facts for a note, grounded against the vocabulary the vault already has, with the quote that justifies each one. It is a Rust workspace, compiles to WebAssembly, and runs the same code inside Obsidian as on a server.
 
 [![CI](https://github.com/DreamLab-AI/ontomark/actions/workflows/ci.yml/badge.svg)](https://github.com/DreamLab-AI/ontomark/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/badge/licence-MIT%20OR%20Apache--2.0-blue)](NOTICE)
+
+## If you are new here
+
+Ontomark exists because two things usually sold as opposites are both true: people think and write best in free text, and machines are only useful with structure. Most tools pick one. Ontomark keeps the notes as the source of truth and derives the structure from them, so the author never leaves Markdown and the machine never has to guess.
+
+Three ideas carry the whole design:
+
+1. **The note is the record.** Nothing is re-rendered from a typed view. The only write path is a guarded patch that proves every byte it did not name is unchanged. Identity is an IRI the author wrote, never a title the tool slugified.
+2. **Reasoning is honest about its limits.** The engine implements a profile of OWL 2 EL and *names* what it refuses. A result that dropped an axiom says so, rather than reporting a classification that is quietly incomplete.
+3. **Models propose, the vault decides.** Assisted ingest lets a language model read a note and suggest values, but the model never sees an identifier and never writes: the engine grounds each proposed name against the vault, requires a located quote as evidence, and returns candidates for a human to accept.
+
+If you want to see it work before reading more, install the [Obsidian plugin](https://github.com/DreamLab-AI/ontomark-obsidian) and write the two notes below. If you want to use it as a library, start with `ontomark-parse`, then `ontomark-model`; everything else is built on those two. If you are here for the DreamLab estate pipeline, read [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) first and the CLI section below.
 
 ## Start with two notes
 
@@ -25,44 +39,98 @@ subclass-of: ["[[Animal]]"]
 ---
 ```
 
-Ontomark’s generic profile recognises these as classes and treats Dog as a subclass of Animal. Plain notes remain plain notes; links in prose are navigation, rather than ontology axioms. The Obsidian plugin indexes, classifies and queries the vault locally, and previews frontmatter edits before applying them.
+The generic profile reads these as two classes with Dog a subclass of Animal. Prose links stay navigation; only frontmatter makes axioms. The Obsidian plugin indexes, classifies and queries the vault locally, and previews every frontmatter edit as a diff before applying it.
 
-## CLI prerelease
+## How the pieces fit
 
-The [v0.1.0-rc.1 release](https://github.com/DreamLab-AI/ontomark/releases/tag/v0.1.0-rc.1) includes a Linux x86-64 binary, SHA-256 receipt and versioned WASM engine bundle. The Linux binary was built from clean source and verified on Debian 12 with networking disabled.
-
-```bash
-curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v0.1.0-rc.1/ontomark-x86_64-unknown-linux-gnu
-curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v0.1.0-rc.1/ontomark-x86_64-unknown-linux-gnu.sha256
-sha256sum --check ontomark-x86_64-unknown-linux-gnu.sha256
-chmod +x ontomark-x86_64-unknown-linux-gnu
-./ontomark-x86_64-unknown-linux-gnu --help
+```mermaid
+flowchart LR
+  subgraph write["AUTHORING"]
+    OB["Obsidian plugin<br/>(ontomark-obsidian)"]
+    ED["any editor"]
+  end
+  VAULT[("Markdown vault<br/>knowledge/ + working/")]
+  subgraph core["ONTOMARK (this repo)"]
+    P["parse<br/>lossless Document, guarded Patch"]
+    M["model<br/>typed entities, IRIs, profiles"]
+    R["reason<br/>whelk-el, OWL 2 EL, named refusals"]
+    I["ingest<br/>plan → model → accept"]
+    C["compile<br/>Turtle, JSON-LD, SHACL, NGG1, site data"]
+    W["wasm engine"]
+    CLI["CLI"]
+  end
+  subgraph consume["CONSUMERS"]
+    SITE["published site"]
+    LOOM["Ontology Loom<br/>reasoned closure, SPARQL"]
+    VC["VisionClaw<br/>GPU force projection"]
+    AB["Agentbox agents"]
+  end
+  OB & ED --> VAULT --> P --> M --> R
+  M --> I
+  R & I --> W --> OB
+  R --> C --> CLI
+  CLI -->|"--scope public"| SITE & LOOM & AB
+  CLI -->|"--scope machine"| VC
 ```
 
-The CLI prerelease implements the estate publication contract. Its `build`, `validate`, `gate`, `conflicts`, `repair` and `migrate` commands are documented by `--help`. For a general vault, start with the parser/model crates or the Obsidian plugin. The library's generic profile and the CLI's estate compiler have different entry points.
+Every arrow out of the CLI carries a **generation**: `visionGraph@<commit>` plus a content digest, stamped into each bundle. A consumer can always say which corpus it is reading, and a stale read is refused rather than served. One producer builds every bundle; consumers project from it rather than re-parsing the vault.
+
+| Repository | Role |
+| --- | --- |
+| **ontomark** (here) | The engine: crates, CLI, wasm build, estate profile. The only producer of published bundles. |
+| [ontomark-obsidian](https://github.com/DreamLab-AI/ontomark-obsidian) | The desktop plugin. Embeds the wasm engine; offline by default; one optional network call for assisted ingest. |
+| [visionGraph](https://github.com/DreamLab-AI/visionGraph) | The DreamLab corpus itself: ~9,250 typed notes. Its publish pipeline runs the pinned `ontomark` release. |
+| [loom](https://github.com/DreamLab-AI/loom) | The Ontology Loom: serves the reasoned closure, SPARQL and grounded answers over a published generation. |
+| [VisionClaw](https://github.com/DreamLab-AI/VisionClaw) | The XR/GPU knowledge-graph application. Consumes the machine-scope bundle for its force layout. |
+| [agentbox](https://github.com/DreamLab-AI/agentbox) | The agent runtime. Bakes the released CLI and routes the grounding skill through it. |
+
+## The CLI
+
+Each [release](https://github.com/DreamLab-AI/ontomark/releases) ships a static Linux x86-64 binary (runs on glibc and Nix hosts alike), a SHA-256 receipt, and the versioned WASM engine bundle the plugin pins.
+
+```bash
+V=0.2.0
+curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v$V/ontomark-x86_64-unknown-linux-gnu
+curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v$V/ontomark-x86_64-unknown-linux-gnu.sha256
+sha256sum --check ontomark-x86_64-unknown-linux-gnu.sha256
+chmod +x ontomark-x86_64-unknown-linux-gnu && ./ontomark-x86_64-unknown-linux-gnu --help
+```
+
+| Command | What it does |
+| --- | --- |
+| `validate` | OKF conformance, vocabulary and link integrity for the selected vaults. |
+| `gate`, `conflicts` | The autonomous quality gate and the conflict detector, over every selected vault. |
+| `build` | The publication build: Turtle (asserted and inferred), JSON-LD, SHACL, OKF, NGG1 graph tiers, search and scaffold indexes, the page API, a redacted `publish/` tree, and the generation marker. |
+| `build --scope machine` | A second bundle for machine consumers: the same ontology artefacts byte for byte, plus the public `working/` notes as plain records. Never writes `publish/`. |
+| `build --with-rvdb` | Also emits `data/ontology-corpus.records.jsonl`, the portable vector records the Loom promotes into its store. |
+| `repair`, `migrate` | Fence and body repairs; registry-driven corpus migrations with plan/apply/rollback. |
+
+Exit codes are a contract: `0` success, `1` failure, `2` a *refusal* (a credential in published content, an identity collision, an unsatisfiable corpus, a non-boolean `public:` flag, an unknown `--tier`, a scope conflict). Refusals name what they refused.
+
+The CLI implements the DreamLab estate's publication contract through the [estate profile](profiles/estate). For a general vault, start with the crates or the plugin; the library's generic profile and the estate compiler have different entry points.
 
 ## Rust crates
 
-Each crate has its own README and inline rustdoc, including executable examples.
+Each crate has a README and full rustdoc with executable examples. Read them in this order if you are learning the codebase.
 
-| Component | Version / distribution | Purpose |
+| Crate | Version | What it owns |
 | --- | --- | --- |
-| [ontomark-parse](crates/ontomark-parse) | 0.1.0 | Lossless frontmatter, body spans, links, footnotes and guarded patches. |
-| [ontomark-model](crates/ontomark-model) | 0.1.0 | Classes, individuals, properties, IRI resolution and pluggable profiles. |
-| [whelk-el](crates/whelk-el) | 0.1.1 | Portable saturation engine derived from Whelk, with optional native parallelism. |
-| [ontomark-reason](crates/ontomark-reason) | 0.1.1 | Supported-profile checking, explicit refusal reasons and cancellable classification. |
-| [ontomark-compile](crates/ontomark-compile) | 0.1.3 | Turtle, JSON-LD, SHACL, PROV-O, public projections and typed bundle readers. |
-| [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | Shared binary graph encoder and zero-copy reader. |
-| [ontomark-ingest](crates/ontomark-ingest) | Unreleased | Host-driven assisted ingest: plan a model request, accept names and values back as evidence-bearing, guarded patch candidates. |
-| [ontomark-wasm](crates/ontomark-wasm) | Release asset | Worker-friendly index, update, classify, query and patch protocol. |
-| [ontomark-cli](crates/ontomark-cli) | Release asset | Native publication commands. |
-| [ontomark-graph](packages/graph) | [0.1.0 release](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.1.0) | Shared offline graph renderer, hierarchy adapter and focus traversal for desktop and web hosts. |
+| [ontomark-parse](crates/ontomark-parse) | 0.1.0 | The Markdown format: lossless `Document`, frontmatter and body indexes, the guarded `Patch`. |
+| [ontomark-model](crates/ontomark-model) | 0.1.1 | Meaning: typed entities, IRIs as identity, predicate forms, reference resolution, pluggable `Profile`. |
+| [whelk-el](crates/whelk-el) | 0.1.1 | The saturation engine, a Rust port of Whelk, with optional native parallelism. |
+| [ontomark-reason](crates/ontomark-reason) | 0.1.1 | The OWL 2 EL profile check and classification facade: named refusals, root causes, cancellable sessions. |
+| [ontomark-ingest](crates/ontomark-ingest) | 0.1.0 | Assisted ingest: the pure plan/accept contract, grounding, lexical guards, evidence spans. No I/O, no model. |
+| [ontomark-compile](crates/ontomark-compile) | 0.2.0 | The publication compiler: emitters, redaction, the two-scope build, generation identity. |
+| [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | The shared binary graph format and its zero-copy reader. |
+| [ontomark-wasm](crates/ontomark-wasm) | release asset | The worker-friendly engine protocol: index, update, classify, query, patch, ingest. |
+| [ontomark-cli](crates/ontomark-cli) | release asset | The native commands above. |
+| [ontomark-graph](packages/graph) | [0.1.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.1.0) | The shared offline graph renderer for desktop and web hosts. |
 
-Parser, model, reasoner and ingest crates support native and `wasm32` targets. The compiler's portable feature set disables its optional native backend. The [estate profile](profiles/estate) owns DreamLab vocabulary and policy; applications can provide their own profile.
+Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.
 
 ## The case for structure, measured on the estate
 
-Ontomark is the engine under the DreamLab estate's own corpus, so the argument for typed Markdown can be made with numbers rather than principle. Figures below are from the corpus and the [Ontology Loom](https://github.com/DreamLab-AI/loom) at generation `visionGraph@ae913f93` (12 October 2026).
+Ontomark is the engine under the DreamLab estate's own corpus, so the argument for typed Markdown can be made with numbers rather than principle. Figures are from the corpus and the [Ontology Loom](https://github.com/DreamLab-AI/loom) at generation `visionGraph@ae913f93` (12 October 2026).
 
 | What | Figure | What it shows |
 | --- | --- | --- |
@@ -74,13 +142,11 @@ Ontomark is the engine under the DreamLab estate's own corpus, so the argument f
 
 The Loom benchmark is 37 held-out questions with gold answers derived from the graph, so it measures faithful restatement of checked facts, which is the job, not open-domain knowledge. Its lift concentrates in niche domains the models did not already know and vanishes where they were already right; prose renderings of the same facts added nothing measurable. The structure carries the value, which is why the engine's output is a typed model and an RDF closure rather than text.
 
-External figures the READMEs cite, with verification status, are in [`docs/GROUNDING-EVIDENCE.md`](docs/GROUNDING-EVIDENCE.md).
-
-The same reasoner, parser and (next) ingest guards run unchanged in the [Obsidian plugin](https://github.com/DreamLab-AI/ontomark-obsidian), which is deliberately light on this material: it exists for vaults of ten notes as much as ten thousand.
+External figures the READMEs cite, with verification status, are in [`docs/GROUNDING-EVIDENCE.md`](docs/GROUNDING-EVIDENCE.md). The same parser, reasoner and ingest guards run unchanged in the plugin, which is deliberately light on this material: it exists for vaults of ten notes as much as ten thousand.
 
 ## Build and check
 
-Rust 1.89 or later is required by the locked workspace. Install `wasm32-unknown-unknown` to build the browser engine. The plugin repository builds with Node and a checksum-pinned engine release, independently of this Rust workspace.
+Rust 1.89 or later is required by the locked workspace. Install `wasm32-unknown-unknown` to build the browser engine; `x86_64-unknown-linux-musl` to build the release binary. The plugin repository builds with Node against a checksum-pinned engine release, independently of this workspace.
 
 ```bash
 cargo build --locked --workspace
@@ -91,26 +157,25 @@ cargo build --locked -p ontomark-wasm --target wasm32-unknown-unknown --release
 cargo build --locked -p ontomark-ingest --target wasm32-unknown-unknown --release
 ```
 
-`just check`, `just wasm-test` and `just conformance` provide the repository gates. CI checks formatting, Clippy, native tests, compiler all/no-default-feature tests, WASM, strict rustdoc, plugin contracts and complete Git history for secrets. The plugin tests include actual WASM/native transcript parity and an offline Obsidian API shim; that shim does not substitute for installed Obsidian acceptance.
+`just check`, `just wasm-test` and `just conformance` are the repository gates. CI checks formatting, Clippy, native tests, compiler all/no-default-feature tests, WASM, strict rustdoc, plugin contracts and the complete Git history for secrets. The plugin tests include WASM/native transcript parity and an offline Obsidian API shim; that shim does not substitute for installed-Obsidian acceptance.
 
 ## Current limits
 
-This is experimental software. The reasoner implements a subset of OWL 2 EL and reports unsupported constructs explicitly. Dropped existential restrictions make a classification incomplete. The native publication compiler retains its legacy estate profile semantics while using the shared reasoner. Typed in-memory projection is available through the compiler's `model-projection` feature; adopting it across estate consumers requires explicit profile and identity migration.
+This is experimental software. The reasoner implements a subset of OWL 2 EL and reports unsupported constructs explicitly; dropped existential restrictions make a classification incomplete ([ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) records why EL, and how non-EL is named rather than dropped). The native publication compiler retains its legacy estate profile semantics while using the shared reasoner; typed in-memory projection is available through the compiler's `model-projection` feature.
 
-Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surface. Public projections omit private content and sanitise links to private targets. Conformance and privacy tests record the supported behaviour; no claim of complete OWL 2 EL or universal standards conformance is made.
+Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surface. Public projections omit private content and sanitise links to private targets. Conformance and privacy tests record the supported behaviour; no claim of complete OWL 2 EL or universal standards conformance is made. The NGG1 graph format collapses named relations to one edge type; per-relation edges need a format bump.
 
 ## Project documentation
 
 - [Current hand-off](docs/HANDOFF.md): verified results, outstanding work and integration boundaries.
 - [API documentation](docs/api/): crate contracts and capabilities.
-- [Design decisions](docs/adr/ADR-OM-001-sprint-decisions.md): profiles, licensing and reasoner choices.
-- [Shared graph and plugin boundary](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md): code ownership and consumer contracts.
-- [Estate alignment](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, explicit consumer projections, the generation loop) and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
-- [Native assisted ingest](docs/adr/ADR-OM-003-native-assisted-ingest.md) and the [OntoCast triage](docs/ONTOCAST-TRIAGE.md): the host-driven extraction contract, what was adapted from OntoCast and what was not.
-- [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md): credited sources and distribution licences.
-- [Estate migration plan](docs/DEPRECATION.md) and [branch recovery](docs/BRANCH-RECOVERY.md): consumer replacements and preserved interrupted work.
-- [Run log](docs/RUNLOG.md) and [evidence](docs/evidence/resume/): reproducible checks and historical receipts.
-- [Nightly dreaming](docs/dream-cycle/README.md): native contract evaluation in the existing estate cycle, with required checks and automatic merging disabled.
+- Decisions: [ADR-OM-001](docs/adr/ADR-OM-001-sprint-decisions.md) (profiles, licensing, reasoner), [ADR-OM-002](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md) (shared graph and plugin boundary), [ADR-OM-003](docs/adr/ADR-OM-003-native-assisted-ingest.md) (assisted ingest), [ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) (OWL 2 EL), [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, the generation loop), and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
+- [OntoCast triage](docs/ONTOCAST-TRIAGE.md): what the ingest design adapted from OntoCast and what it did not.
+- [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md).
+- [Estate migration plan](docs/DEPRECATION.md) and [branch recovery](docs/BRANCH-RECOVERY.md).
+- [Run log](docs/RUNLOG.md) and [evidence](docs/evidence/resume/).
+- [Nightly dreaming](docs/dream-cycle/README.md): native contract evaluation in the estate's nightly cycle.
+- The architecture is drawn, citation by citation, in the VisionFlow diagrams corpus under `docs/diagrams/ontomark/`.
 
 Maintained by [John O'Hare](https://github.com/jjohare) and [DreamLab AI](https://github.com/DreamLab-AI).
 

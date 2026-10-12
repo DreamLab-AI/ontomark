@@ -35,6 +35,12 @@
 //! The crate is portable: no filesystem, clock, network or
 //! threads, so it builds for `wasm32-unknown-unknown` unchanged.
 
+// The README's examples are compiled and run by `cargo test` through this
+// doctest-only module; it adds nothing to the rendered documentation.
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+mod readme_examples {}
+
 mod body;
 mod document;
 mod emit;

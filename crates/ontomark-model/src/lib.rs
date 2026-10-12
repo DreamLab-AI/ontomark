@@ -36,6 +36,12 @@
 //! assert_eq!(e.kind, Kind::Property(PropertyKind::Object));
 //! ```
 
+// The README's examples are compiled and run by `cargo test` through this
+// doctest-only module; it adds nothing to the rendered documentation.
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+mod readme_examples {}
+
 mod axiom;
 mod iri;
 mod kind;
