@@ -25,7 +25,7 @@ WASM builds and complete-history secret scanning pass in hosted core CI at
 `c29c2b2` (run `38179654820`). Compiler all/no-default-feature tests are explicit
 hosted gates; opt-in projection WASM compilation and locked registry package
 verification also passed. The complete committed corpus comparison reports zero differences
-over 32 artefact lines and 12 command outputs. Its explicit compatibility
+over 32 artefact lines and 12 command outputs (since `8d654d1`: 30 artefacts byte-identical, the two generation markers structurally equal, and `gate-full` re-captured because the legacy output recorded OM-00 S1.5; see `conformance.rs` and the golden MANIFEST). Its explicit compatibility
 flag is a comparison mechanism; default public exports retain privacy tests.
 
 ## Assisted ingest (landed, unreleased)
