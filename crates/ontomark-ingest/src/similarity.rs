@@ -110,10 +110,11 @@ fn matching_blocks(a: &[char], b: &[char]) -> usize {
 /// the earliest start in `b` (difflib's order).
 fn longest_match(a: &[char], b: &[char]) -> (usize, usize, usize) {
     let mut best = (0, 0, 0);
-    // prev[j] = length of the common suffix ending at a[i-1], b[j-1].
+    // prev[j] = length of the common suffix ending at a[i-1], b[j-1]. Two
+    // rows, swapped, rather than one allocation per row of `a`.
     let mut prev = vec![0usize; b.len() + 1];
+    let mut cur = vec![0usize; b.len() + 1];
     for (i, &ca) in a.iter().enumerate() {
-        let mut cur = vec![0usize; b.len() + 1];
         for (j, &cb) in b.iter().enumerate() {
             if ca == cb {
                 let k = prev[j] + 1;
@@ -124,17 +125,31 @@ fn longest_match(a: &[char], b: &[char]) -> (usize, usize, usize) {
                 if better {
                     best = (start_a, start_b, k);
                 }
+            } else {
+                cur[j + 1] = 0;
             }
         }
-        prev = cur;
+        std::mem::swap(&mut prev, &mut cur);
     }
     best
+}
+
+/// difflib's `real_quick_ratio`: an upper bound on [`sequence_ratio`] from
+/// the lengths alone, so the quadratic pass can be skipped when it cannot
+/// reach a threshold.
+#[must_use]
+pub fn sequence_ratio_bound(a: &str, b: &str) -> f64 {
+    let (n, m) = (a.chars().count(), b.chars().count());
+    if n + m == 0 {
+        return 1.0;
+    }
+    2.0 * n.min(m) as f64 / (n + m) as f64
 }
 
 /// Exact token match, or one side is a single character that starts the
 /// other (`d` for `dmitry`, `u` for `us`).
 #[must_use]
-pub fn tokens_alias_compatible(left: &str, right: &str) -> bool {
+pub(crate) fn tokens_alias_compatible(left: &str, right: &str) -> bool {
     if left == right {
         return true;
     }
@@ -146,32 +161,31 @@ pub fn tokens_alias_compatible(left: &str, right: &str) -> bool {
     shorter.chars().count() == 1 && longer.starts_with(shorter)
 }
 
+/// The tokens of each label, computed once so the tiers never re-tokenise.
+#[must_use]
+pub(crate) fn tokenize_labels(labels: &[String]) -> Vec<Vec<String>> {
+    labels
+        .iter()
+        .map(|l| label_tokens(l).into_iter().map(str::to_owned).collect())
+        .collect()
+}
+
 /// True when some label pair matches token-injectively allowing initials:
 /// every token of the shorter label matches a distinct token of the longer,
 /// exactly or as an initial, and at least one matched token is a full word
-/// (more than two characters). `baranov d` aliases `dmitry baranov`.
+/// (more than two characters). `baranov d` aliases `dmitry baranov`. Both
+/// sides are the token lists of their labels (see [`tokenize_labels`]).
 #[must_use]
-pub fn labels_alias_with_initials<'a, L, R>(left: L, right: R) -> bool
-where
-    L: IntoIterator<Item = &'a str>,
-    R: IntoIterator<Item = &'a str> + Clone,
-{
-    for l in left {
-        let lt = label_tokens(l);
-        if lt.is_empty() {
-            continue;
-        }
-        for r in right.clone() {
-            let rt = label_tokens(r);
-            if rt.is_empty() {
-                continue;
-            }
+pub(crate) fn labels_alias_with_initials(left: &[Vec<String>], right: &[Vec<String>]) -> bool {
+    for lt in left.iter().filter(|t| !t.is_empty()) {
+        for rt in right.iter().filter(|t| !t.is_empty()) {
             let (shorter, longer) = if lt.len() <= rt.len() {
-                (&lt, &rt)
+                (lt, rt)
             } else {
-                (&rt, &lt)
+                (rt, lt)
             };
-            let mut available: Vec<Option<&str>> = longer.iter().map(|t| Some(*t)).collect();
+            let mut available: Vec<Option<&str>> =
+                longer.iter().map(|t| Some(t.as_str())).collect();
             let mut shared_full = false;
             let mut matched_all = true;
             for token in shorter {
@@ -184,7 +198,7 @@ where
                         break;
                     }
                     Some(ix) => {
-                        if available[ix] == Some(*token) && token.chars().count() > 2 {
+                        if available[ix] == Some(token.as_str()) && token.chars().count() > 2 {
                             shared_full = true;
                         }
                         available[ix] = None;
@@ -201,33 +215,29 @@ where
 
 /// True when some label pair is identical except for conflicting short
 /// tokens: `french company s` against `french company t`. Authors write this
-/// shape to *distinguish* entities, so it is evidence of distinctness.
+/// shape to *distinguish* entities, so it is evidence of distinctness. Both
+/// sides are token lists (see [`tokenize_labels`]).
 #[must_use]
-pub fn labels_differ_only_by_initials<'a, L, R>(left: L, right: R) -> bool
-where
-    L: IntoIterator<Item = &'a str>,
-    R: IntoIterator<Item = &'a str> + Clone,
-{
-    let split = |label: &'a str| {
-        let toks = label_tokens(label);
+pub(crate) fn labels_differ_only_by_initials(left: &[Vec<String>], right: &[Vec<String>]) -> bool {
+    fn split(toks: &[String]) -> (BTreeSet<&str>, BTreeSet<&str>) {
         let long: BTreeSet<&str> = toks
             .iter()
-            .copied()
+            .map(String::as_str)
             .filter(|t| t.chars().count() > 2)
             .collect();
         let short: BTreeSet<&str> = toks
             .iter()
-            .copied()
+            .map(String::as_str)
             .filter(|t| t.chars().count() <= 2)
             .collect();
         (long, short)
-    };
+    }
     for l in left {
         let (ll, ls) = split(l);
         if ll.is_empty() || ls.is_empty() {
             continue;
         }
-        for r in right.clone() {
+        for r in right {
             let (rl, rs) = split(r);
             if rl.is_empty() || rs.is_empty() || ll != rl {
                 continue;
@@ -243,14 +253,16 @@ where
     false
 }
 
-/// One side of a lexical comparison: a normal form plus the normalised
-/// labels it is known by.
+/// One side of a lexical comparison: a normal form, the normalised labels
+/// it is known by, and those labels' tokens (from [`tokenize_labels`]).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Names<'a> {
+pub(crate) struct Names<'a> {
     /// The normalised primary form.
     pub normal: &'a str,
     /// Normalised labels, aliases and note names.
     pub labels: &'a [String],
+    /// `tokens[i]` are the tokens of `labels[i]`.
+    pub tokens: &'a [Vec<String>],
 }
 
 /// Decide whether two names are lexical aliases, returning the tier that
@@ -259,7 +271,7 @@ pub struct Names<'a> {
 /// is a strict word-prefix of the other (`graph` against `graph theory`)
 /// never passes the ratio and token tiers.
 #[must_use]
-pub fn lexical_alias(
+pub(crate) fn lexical_alias(
     left: &Names<'_>,
     right: &Names<'_>,
     t: &LexicalThresholds,
@@ -267,20 +279,24 @@ pub fn lexical_alias(
     if left.normal == right.normal {
         return Some(AliasTier::Exact);
     }
-    let ll: BTreeSet<&str> = left.labels.iter().map(String::as_str).collect();
-    let rl: BTreeSet<&str> = right.labels.iter().map(String::as_str).collect();
-    if ll.intersection(&rl).next().is_some() {
+    // Labels are sorted and deduplicated by the caller, so a merge walk
+    // finds a shared one without building sets.
+    if left
+        .labels
+        .iter()
+        .any(|l| right.labels.binary_search(l).is_ok())
+    {
         return Some(AliasTier::SharedLabel);
     }
-    if labels_alias_with_initials(ll.iter().copied(), rl.iter().copied()) {
+    if labels_alias_with_initials(left.tokens, right.tokens) {
         return Some(AliasTier::Initials);
     }
-    if !ll.is_empty() && !rl.is_empty() {
+    if !left.labels.is_empty() && !right.labels.is_empty() {
         let mut best = 0.0f64;
-        for a in &ll {
-            let at: BTreeSet<&str> = label_tokens(a).into_iter().collect();
-            for b in &rl {
-                let bt: BTreeSet<&str> = label_tokens(b).into_iter().collect();
+        for at in left.tokens {
+            let at: BTreeSet<&str> = at.iter().map(String::as_str).collect();
+            for bt in right.tokens {
+                let bt: BTreeSet<&str> = bt.iter().map(String::as_str).collect();
                 best = best.max(jaccard(&at, &bt));
             }
         }
@@ -295,7 +311,9 @@ pub fn lexical_alias(
     {
         return None;
     }
-    if sequence_ratio(left.normal, right.normal) >= t.sequence_ratio {
+    if sequence_ratio_bound(left.normal, right.normal) >= t.sequence_ratio
+        && sequence_ratio(left.normal, right.normal) >= t.sequence_ratio
+    {
         return Some(AliasTier::SequenceRatio);
     }
     let at: BTreeSet<&str> = label_tokens(left.normal).into_iter().collect();
@@ -343,95 +361,127 @@ mod tests {
         }
     }
 
+    fn toks(labels: &[&str]) -> Vec<Vec<String>> {
+        tokenize_labels(&labels.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>())
+    }
+
     #[test]
     fn initials_alias_and_distinctness() {
         assert!(labels_alias_with_initials(
-            ["baranov d"],
-            ["dmitry baranov"]
+            &toks(&["baranov d"]),
+            &toks(&["dmitry baranov"])
         ));
-        assert!(labels_alias_with_initials(["j. o'hare"], ["john o'hare"]));
+        assert!(labels_alias_with_initials(
+            &toks(&["j. o'hare"]),
+            &toks(&["john o'hare"])
+        ));
         // Two initials only: no full word shared.
-        assert!(!labels_alias_with_initials(["j d"], ["john doe"]));
-        assert!(!labels_alias_with_initials(["baranov"], ["ivanov"]));
+        assert!(!labels_alias_with_initials(
+            &toks(&["j d"]),
+            &toks(&["john doe"])
+        ));
+        assert!(!labels_alias_with_initials(
+            &toks(&["baranov"]),
+            &toks(&["ivanov"])
+        ));
 
         assert!(labels_differ_only_by_initials(
-            ["french company s"],
-            ["french company t"]
+            &toks(&["french company s"]),
+            &toks(&["french company t"])
         ));
         // `u` is an initial of `us`: spelling variance, not a distinguishing mark.
         assert!(!labels_differ_only_by_initials(
-            ["company u"],
-            ["company us"]
+            &toks(&["company u"]),
+            &toks(&["company us"])
         ));
-        assert!(!labels_differ_only_by_initials(["company"], ["company t"]));
+        assert!(!labels_differ_only_by_initials(
+            &toks(&["company"]),
+            &toks(&["company t"])
+        ));
+    }
+
+    #[test]
+    fn quick_bound_never_undercuts_the_ratio() {
+        for (a, b) in [
+            ("abcd", "bcde"),
+            ("kitten", "sitting"),
+            ("", ""),
+            ("abc", ""),
+            ("knowledge graph", "knowledge graphs"),
+            ("dvorak", "dvorak quartet"),
+        ] {
+            assert!(sequence_ratio_bound(a, b) >= sequence_ratio(a, b) - 1e-12);
+        }
+    }
+
+    /// Labels sorted as `Vocabulary` stores them, with their tokens.
+    struct Side {
+        labels: Vec<String>,
+        tokens: Vec<Vec<String>>,
+    }
+
+    impl Side {
+        fn new(labels: &[&str]) -> Self {
+            let mut labels: Vec<String> = labels.iter().map(|s| (*s).to_owned()).collect();
+            labels.sort();
+            labels.dedup();
+            let tokens = tokenize_labels(&labels);
+            Self { labels, tokens }
+        }
+        fn names<'a>(&'a self, normal: &'a str) -> Names<'a> {
+            Names {
+                normal,
+                labels: &self.labels,
+                tokens: &self.tokens,
+            }
+        }
     }
 
     #[test]
     fn alias_tiers_fire_in_order() {
         let t = LexicalThresholds::default();
-        let kg = vec!["knowledge graph".to_owned(), "kg".to_owned()];
-        let left = Names {
-            normal: "knowledge graph",
-            labels: &kg,
-        };
-        let same = Names {
-            normal: "knowledge graph",
-            labels: &[],
-        };
-        assert_eq!(lexical_alias(&left, &same, &t), Some(AliasTier::Exact));
-
-        let shared_label = vec!["kg".to_owned()];
-        let right = Names {
-            normal: "k g",
-            labels: &shared_label,
-        };
+        let kg = Side::new(&["knowledge graph", "kg"]);
+        let left = kg.names("knowledge graph");
+        let none = Side::new(&[]);
         assert_eq!(
-            lexical_alias(&left, &right, &t),
+            lexical_alias(&left, &none.names("knowledge graph"), &t),
+            Some(AliasTier::Exact)
+        );
+
+        let shared = Side::new(&["kg"]);
+        assert_eq!(
+            lexical_alias(&left, &shared.names("k g"), &t),
             Some(AliasTier::SharedLabel)
         );
 
-        let plural = vec!["knowledge graphs".to_owned()];
-        let right = Names {
-            normal: "knowledge graphs",
-            labels: &plural,
-        };
         // Label Jaccard of {knowledge, graph} vs {knowledge, graphs} is 1/3 < 0.5,
         // so the ratio tier (30/31) decides.
+        let plural = Side::new(&["knowledge graphs"]);
         assert_eq!(
-            lexical_alias(&left, &right, &t),
+            lexical_alias(&left, &plural.names("knowledge graphs"), &t),
             Some(AliasTier::SequenceRatio)
         );
 
         // Upstream behaviour: a one-word label that is a full word of a
         // longer label aliases it through the initials tier.
-        let prefix = vec!["graph".to_owned()];
-        let right = Names {
-            normal: "graph",
-            labels: &prefix,
-        };
-        let graph_theory = vec!["graph theory".to_owned()];
-        let left2 = Names {
-            normal: "graph theory",
-            labels: &graph_theory,
-        };
-        assert_eq!(lexical_alias(&left2, &right, &t), Some(AliasTier::Initials));
+        let prefix = Side::new(&["graph"]);
+        let graph_theory = Side::new(&["graph theory"]);
+        assert_eq!(
+            lexical_alias(
+                &graph_theory.names("graph theory"),
+                &prefix.names("graph"),
+                &t
+            ),
+            Some(AliasTier::Initials)
+        );
         // Without labels the initials tier is skipped and the strict
         // word-prefix guard refuses the ratio and token tiers.
-        let bare_left = Names {
-            normal: "graph theory",
-            labels: &[],
-        };
-        let bare_right = Names {
-            normal: "graph",
-            labels: &[],
-        };
-        assert_eq!(lexical_alias(&bare_left, &bare_right, &t), None);
+        assert_eq!(
+            lexical_alias(&none.names("graph theory"), &none.names("graph"), &t),
+            None
+        );
 
-        let other = vec!["blockchain".to_owned()];
-        let right = Names {
-            normal: "blockchain",
-            labels: &other,
-        };
-        assert_eq!(lexical_alias(&left, &right, &t), None);
+        let other = Side::new(&["blockchain"]);
+        assert_eq!(lexical_alias(&left, &other.names("blockchain"), &t), None);
     }
 }

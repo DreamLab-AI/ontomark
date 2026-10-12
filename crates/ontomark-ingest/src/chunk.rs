@@ -200,9 +200,10 @@ fn split_oversize(text: &str, max: usize) -> Vec<(usize, usize)> {
     }
     let mut pieces = Vec::new();
     let mut start = 0usize;
+    let mut remaining = text.chars().count();
     while start < text.len() {
         let rest = &text[start..];
-        if rest.chars().count() <= max {
+        if remaining <= max {
             pieces.push((start, text.len()));
             break;
         }
@@ -211,10 +212,10 @@ fn split_oversize(text: &str, max: usize) -> Vec<(usize, usize)> {
         let cut = window
             .rfind("\n\n")
             .map(|i| i + 2)
-            .filter(|i| *i > 0)
-            .or_else(|| window.rfind('\n').map(|i| i + 1).filter(|i| *i > 0))
+            .or_else(|| window.rfind('\n').map(|i| i + 1))
             .unwrap_or(limit);
         pieces.push((start, start + cut));
+        remaining -= window[..cut].chars().count();
         start += cut;
     }
     // A piece that is only whitespace joins its neighbour rather than

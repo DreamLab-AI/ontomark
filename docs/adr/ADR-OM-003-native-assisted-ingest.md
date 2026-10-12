@@ -133,6 +133,7 @@ A second pass from the same review, lower severity, was applied in the following
 - Frontmatter the parser could not read (`Unsupported` or `Malformed`) withholds every value as `UnpatchableKey` instead of failing the batch at the proof.
 - Chunk limits are counted in characters, as the options say; a whitespace-only piece from an oversize split joins its neighbour; the module docs no longer claim that a chunk never spans two sections or that fenced code is never cut.
 - The CamelCase split is ASCII-only and U+001C–U+001F count as whitespace, both as upstream.
+- Third tranche (simplifications and efficiency): label tokens are computed once per term and stored, instead of re-tokenised for every assertion; `longest_match` reuses two rows; difflib's `real_quick_ratio` length bound skips the quadratic pass when it cannot reach the threshold; the oversize splitter tracks remaining characters instead of recounting; the comparison helpers are `pub(crate)` with only `jaccard`, `sequence_ratio` and the bound public; the unused profile parameter and a one-line wrapper are gone.
 - API hygiene: `Term` and `Vocabulary` no longer derive `Deserialize` (their sorted private indexes cannot be rebuilt from JSON) and do not serialise those fields; `Options` derives serde with defaults so a host can pass a partial object; `EvidenceSpan::utf16` is a `{start, end}` struct like `Span`.
 
 ## Verification required before activation

@@ -20,7 +20,8 @@
 //! exact label, alias or note-name match first, then the lexical alias tiers
 //! adapted from OntoCast's merge guards ([`similarity`]), with Jaro-Winkler
 //! near-misses reported as suggestions when nothing grounds. An ungrounded,
-//! ambiguous or out-of-vocabulary name yields a diagnostic, never an edit.
+//! ambiguous or out-of-vocabulary name is withheld with its reason, never
+//! written.
 //!
 //! Every accepted value carries the retired RDF-to-Logseq adapter's starting
 //! provenance: [`CONFIDENCE`] and [`METHOD`]. Ingest never raises them; a
@@ -133,7 +134,7 @@ impl<'a> Ingest<'a> {
     /// Build the engine. The vocabulary is derived once from `model`.
     #[must_use]
     pub fn new(profile: &'a dyn Profile, model: &'a Model, options: Options) -> Self {
-        let vocabulary = Vocabulary::from_model(profile, model);
+        let vocabulary = Vocabulary::from_model(model);
         Self {
             profile,
             model,

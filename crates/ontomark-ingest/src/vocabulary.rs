@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::normalize::normalize_label;
 use crate::similarity::{
-    labels_differ_only_by_initials, lexical_alias, AliasTier, LexicalThresholds, Names,
+    labels_differ_only_by_initials, lexical_alias, tokenize_labels, AliasTier, LexicalThresholds,
+    Names,
 };
 
 /// One entity the model may name.
@@ -31,19 +32,17 @@ pub struct Term {
     /// Normalised label, aliases and note name, deduplicated and sorted.
     #[serde(skip)]
     names: Vec<String>,
+    /// `tokens[i]` are the tokens of `names[i]`, computed once.
+    #[serde(skip)]
+    tokens: Vec<Vec<String>>,
 }
 
 impl Term {
     /// The Obsidian note name (file name without `.md`) a wikilink targets.
     #[must_use]
     pub fn note_name(&self) -> &str {
-        note_name(&self.document)
+        self.document.name()
     }
-}
-
-/// `DocId::new` already drops `.md`, so the name is the link target.
-pub(crate) fn note_name(id: &DocId) -> &str {
-    id.name()
 }
 
 /// A near miss offered when a name does not ground.
@@ -97,7 +96,7 @@ pub struct Vocabulary {
 impl Vocabulary {
     /// Derive the vocabulary from a built model. Terms are sorted by IRI.
     #[must_use]
-    pub fn from_model(_profile: &dyn Profile, model: &Model) -> Self {
+    pub fn from_model(model: &Model) -> Self {
         let mut terms: Vec<Term> = model
             .entities
             .values()
@@ -105,8 +104,10 @@ impl Vocabulary {
                 let mut names: BTreeSet<String> = BTreeSet::new();
                 names.insert(normalize_label(&e.label));
                 names.extend(e.aliases.iter().map(|a| normalize_label(a)));
-                names.insert(normalize_label(note_name(&e.document)));
+                names.insert(normalize_label(e.document.name()));
                 names.retain(|n| !n.is_empty());
+                let names: Vec<String> = names.into_iter().collect();
+                let tokens = tokenize_labels(&names);
                 Term {
                     iri: e.iri.clone(),
                     kind: e.kind,
@@ -115,7 +116,8 @@ impl Vocabulary {
                     aliases: e.aliases.clone(),
                     conflicted: model.conflicts.contains_key(&e.iri),
                     normal: normalize_label(&e.label),
-                    names: names.into_iter().collect(),
+                    names,
+                    tokens,
                 }
             })
             .collect();
@@ -178,9 +180,11 @@ impl Vocabulary {
             };
         }
         let left_labels = [normal.clone()];
+        let left_tokens = tokenize_labels(&left_labels);
         let left = Names {
             normal: &normal,
             labels: &left_labels,
+            tokens: &left_tokens,
         };
         let mut matches: Vec<(&Term, AliasTier)> = Vec::new();
         let mut initials_conflict: Option<&Term> = None;
@@ -188,18 +192,14 @@ impl Vocabulary {
             // A term the name matches outright is never an initials
             // conflict, whatever else its aliases look like.
             let outright = term.normal == normal || term.names.binary_search(&normal).is_ok();
-            if !outright
-                && labels_differ_only_by_initials(
-                    left_labels.iter().map(String::as_str),
-                    term.names.iter().map(String::as_str),
-                )
-            {
+            if !outright && labels_differ_only_by_initials(&left_tokens, &term.tokens) {
                 initials_conflict.get_or_insert(term);
                 continue;
             }
             let right = Names {
                 normal: &term.normal,
                 labels: &term.names,
+                tokens: &term.tokens,
             };
             if let Some(tier) = lexical_alias(&left, &right, thresholds) {
                 matches.push((term, tier));
