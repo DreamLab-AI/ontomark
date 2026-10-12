@@ -60,6 +60,22 @@ Each crate has its own README and inline rustdoc, including executable examples.
 
 Parser, model, reasoner and ingest crates support native and `wasm32` targets. The compiler's portable feature set disables its optional native backend. The [estate profile](profiles/estate) owns DreamLab vocabulary and policy; applications can provide their own profile.
 
+## The case for structure, measured on the estate
+
+Ontomark is the engine under the DreamLab estate's own corpus, so the argument for typed Markdown can be made with numbers rather than principle. Figures below are from the corpus and the [Ontology Loom](https://github.com/DreamLab-AI/loom) at generation `visionGraph@ae913f93` (12 October 2026).
+
+| What | Figure | What it shows |
+| --- | --- | --- |
+| Typed notes in the corpus | 9,258 | Every page is a `type: Class` note with frontmatter relations |
+| Asserted `is-a` edges | 13,638 | What authors wrote; 2,378 notes declare more than one parent |
+| Subclass statements in the reasoned closure | 118,872 | What follows from it: about nine times what was written, all derivable, none guessed |
+| Properties | 15 | A small, stable vocabulary carries a large corpus |
+| Grounded answer score (Loom benchmark) | 0.146 → 0.94 and 0.268 → 0.94 | Two models with very different unaided scores converge once given the reasoned slice as a structured scaffold, at three to six times lower latency |
+
+The Loom benchmark is 37 held-out questions with gold answers derived from the graph, so it measures faithful restatement of checked facts, which is the job, not open-domain knowledge. Its lift concentrates in niche domains the models did not already know and vanishes where they were already right; prose renderings of the same facts added nothing measurable. The structure carries the value, which is why the engine's output is a typed model and an RDF closure rather than text.
+
+The same reasoner, parser and (next) ingest guards run unchanged in the [Obsidian plugin](https://github.com/DreamLab-AI/ontomark-obsidian), which is deliberately light on this material: it exists for vaults of ten notes as much as ten thousand.
+
 ## Build and check
 
 Rust 1.89 or later is required by the locked workspace. Install `wasm32-unknown-unknown` to build the browser engine. The plugin repository builds with Node and a checksum-pinned engine release, independently of this Rust workspace.
