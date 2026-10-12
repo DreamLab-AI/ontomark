@@ -1,0 +1,87 @@
+# ADR-OM-003: native, host-driven assisted ingest
+
+- Status: Proposed
+- Date: 2026-10-12
+- Implementation: none. No ingest crate exists; nothing in a release contains OntoCast code.
+- Activation: inactive
+- Related: [ADR-OM-002](ADR-OM-002-shared-graph-and-obsidian-boundary.md), [OntoCast triage](../ONTOCAST-TRIAGE.md), [ADR-OBS-002](https://github.com/DreamLab-AI/ontomark-obsidian/blob/main/docs/adr/ADR-OBS-002-assisted-ingest-boundary-and-estate-notes.md), [upstream credits](../UPSTREAMS.md)
+
+## Context
+
+The estate wants optional, assisted extraction of typed structure from Markdown notes. [OntoCast](https://github.com/growgraph/ontocast) (Apache-2.0, Python) solves the adjacent problem well, but it is a service stack: LangGraph orchestration, vector stores, a triple store, an HTTP API and a document converter. The [triage](../ONTOCAST-TRIAGE.md) shows that most of its 67,000 lines are infrastructure Ontomark already replaces or deliberately excludes. What is worth carrying across is a small set of methods: heading-aware chunking, deterministic entity-merge guards, deterministic fact checks, and the render prompt contract.
+
+Three constraints from the existing system shape the design:
+
+1. **Markdown is the source of truth.** Query and reasoning never bypass the notes (EXP-12). An extraction result is therefore a note change, not an RDF graph to be stored.
+2. **The engine does no I/O.** `ontomark-wasm` runs in a Blob worker and compiles to wasm32. It cannot call a model.
+3. **The plugin is offline by contract.** EXP-11 and its network-isolated shim forbid any socket, DNS, fetch or XHR attempt, and the manifest says "Offline".
+
+## Decision
+
+### 1. A pure, two-phase core in a new crate
+
+A new crate, `ontomark-ingest`, depends only on `ontomark-parse`, `ontomark-model` and `ontomark-reason`. It performs no I/O, spawns nothing and is `wasm32`-clean. Its public surface is a state machine the host drives:
+
+```text
+plan(note, revision, profile, vocabulary, options) -> ModelRequest
+accept(revision, ModelResponse)                    -> Candidates
+```
+
+- `ModelRequest` is plain data: the prompt contract (a versioned data file, not code), the chunks, the vocabulary slice the model may use, and the expected response schema. The host sends it to whatever model it chooses.
+- `Candidates` holds `ontomark-parse` patches bound to the source digest, an evidence span for each asserted value, and diagnostics. A `ModelResponse` that is malformed, empty or out of vocabulary yields diagnostics and no patch, never a partial edit.
+- Spans use the same UTF-16 conventions as `ontomark-parse` (`span.rs`, `utf16.rs`) so Obsidian offsets are correct.
+- The "mock model" used in tests is simply recorded `ModelResponse` fixtures. Native and WASM parity is a byte-equality test over `Candidates`.
+
+### 2. First slice: facts only, against the existing vocabulary
+
+The first slice corresponds to OntoCast's `facts` mode. It proposes typed frontmatter values and relations using terms already in the vault's profile and vocabulary. It does not propose new classes or properties. Ontology growth collides with estate governance and is a later, separate candidate kind with its own ADR.
+
+Identity uses `ontomark-model::mint`. Extracted source IRIs are kept as evidence, and project-local identity is re-minted, following the decision already taken in the retired RDF-to-Logseq adapter. No second identity scheme is introduced.
+
+### 3. What is carried across from OntoCast
+
+Only the **Port** rows of the [triage](../ONTOCAST-TRIAGE.md): heading-aware chunking, the deterministic merge guards, deterministic fact checks and literal repair, and the render prompt contract as data. Embedding-based candidate generation is optional and host-supplied; the lexical guards run in core. SHACL, vector stores, converters, the HTTP API, LangChain and web grounding are not carried across. Behaviour is specified by fixtures first, not transliterated from Python.
+
+### 4. Confidence and review
+
+Candidates start with low confidence and an `inferred` method, as in the retired adapter. Ingest never raises confidence or promotes a statement. Applying a candidate is a user action over a diff preview, built on the same guarded-edit path as today's patches, and is undoable.
+
+### 5. The offline contract is amended, not bypassed
+
+Any model call is made by the **host**, never by the core. For the Obsidian plugin this is a decision for the plugin's own ADR, with these requirements recorded here so the engine API does not foreclose them:
+
+- The adapter is off by default and calls only an endpoint the user configures.
+- The README and manifest description disclose the network use.
+- The credential is not stored in plaintext `data.json` without an explicit decision and warning.
+- EXP-11 and the isolation shim must pass unchanged with ingest disabled. A separate, explicit test covers the enabled path.
+
+### 6. Ownership
+
+| Layer | Owns |
+|---|---|
+| `ontomark-ingest` | Request/response contract, chunking, guards, checks, candidates, evidence spans, native/WASM parity |
+| `ontomark-wasm` | Exposing `plan` and `accept` to the worker |
+| Host (plugin, Loom, Agentbox) | Model transport, credentials, scheduling, UI, undo |
+| VisionFlow and visionGraph | Corpus vocabulary and publication policy |
+
+## Consequences
+
+- No Python, bridge or service enters a build, test or release artefact.
+- The plugin can use ingest only after a new engine prerelease and an `engine.json` repin.
+- Attribution is mandatory. The Apache-2.0 licence text, upstream commit `abb8d7b8d6db1a765d4f091a7423937c2cbc5d78` and the `CITATION.cff` reference are added to `UPSTREAMS.md` and `THIRD-PARTY-NOTICES.md` in the same change as the first adapted code.
+- The nightly dream gates native contracts only. Ingest changes that touch WASM or the plugin need their dedicated acceptance harnesses.
+- A second model pass (the critic), ontology growth, numeric and unit repair, and long-document preprocessing are deferred, not rejected.
+
+## Verification required before activation
+
+1. Fixtures for every adapted guard, written failing first.
+2. Native/WASM byte-equality of `Candidates` over the fixture set.
+3. `cargo clippy -D warnings`, strict `cargo doc`, and a wasm32 build.
+4. Repeat-run determinism, stale-revision refusal, malformed and empty responses, and cancellation.
+5. For the plugin: installed-Obsidian acceptance of spans, repeat runs, stale edits, cancellation, undo and the model-unavailable case, with EXP-11 unchanged when ingest is disabled.
+
+## Open questions
+
+- Which section labels, if any, are worth keeping for long notes.
+- Where the host-supplied embedding similarity enters the API, or whether the first slice omits it.
+- Whether ingest candidates target frontmatter only, or also body text.
