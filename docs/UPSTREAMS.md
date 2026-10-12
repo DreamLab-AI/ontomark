@@ -361,3 +361,7 @@ Audit date: 2026-10-11. This addendum does not alter the rc1 assets or the engin
 ## Compiler privacy correction
 
 `ontomark-compile` 0.1.3 fixes Unicode private-name case variants in the opt-in typed public projection. Version 0.1.2 is yanked from new resolution; its historical publication is retained. Whelk/reasoner versions and frozen CLI/WASM assets are unchanged.
+
+## Optional LGPL adapter: `horned-owl` (recorded 2026-10-12)
+
+`whelk-el` exposes an opt-in `horned-owl` Cargo feature (`crates/whelk-el/Cargo.toml`). `horned-owl` is LGPL-3.0. The feature is **off by default**, is not part of the released CLI, engine or plugin trees (`cargo tree -i horned-owl -p ontomark-cli` reports no match), and appears only under `--all-features`. Anyone enabling it in a downstream build takes on LGPL-3.0 obligations for that build; permissive consumers must not enable it by accident (ADR-2136 §5, ADR-OM-005). This paragraph closes the gap that neither this file nor `THIRD-PARTY-NOTICES.md` mentioned the dependency.

@@ -105,6 +105,7 @@ Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surfac
 - [API documentation](docs/api/): crate contracts and capabilities.
 - [Design decisions](docs/adr/ADR-OM-001-sprint-decisions.md): profiles, licensing and reasoner choices.
 - [Shared graph and plugin boundary](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md): code ownership and consumer contracts.
+- [Estate alignment](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, explicit consumer projections, the generation loop) and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
 - [Native assisted ingest](docs/adr/ADR-OM-003-native-assisted-ingest.md) and the [OntoCast triage](docs/ONTOCAST-TRIAGE.md): the host-driven extraction contract, what was adapted from OntoCast and what was not.
 - [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md): credited sources and distribution licences.
 - [Estate migration plan](docs/DEPRECATION.md) and [branch recovery](docs/BRANCH-RECOVERY.md): consumer replacements and preserved interrupted work.
