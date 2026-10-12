@@ -63,3 +63,18 @@ The Markdown frontmatter form of that mapping is specified in ADR-OM-003.
 3. Do not translate the Python line by line. Treat it as a specification for behaviour, not a source to transliterate.
 4. Add the Apache-2.0 licence text, the upstream commit and the `CITATION.cff` reference to `UPSTREAMS.md` and `THIRD-PARTY-NOTICES.md` in the same change as the first adapted code.
 5. Where a file's logic is substantially derived, note it in the rustdoc of the Rust item.
+
+## Survey of alternatives (12 Oct 2026)
+
+A Perplexity survey, with crate licence, version and update dates checked against crates.io and GitHub, found no Rust tool covering OntoCast's combination of ontology-guided LLM extraction, insert/delete patches, cross-chunk disambiguation, SHACL and passage provenance. Building blocks:
+
+| Need | Choice | Licence |
+|---|---|---|
+| String scoring | `strsim` 0.11.1 | MIT |
+| Jaccard | `textdistance` 1.1.1 | MIT |
+| RDF model and I/O (if needed) | `oxrdf`, `oxrdfio` (not archived Rio) | MIT or Apache-2.0 |
+| SHACL, native only | `rudof` `shacl_validation` | MIT or Apache-2.0 |
+| Extraction method | SPIRES (OntoGPT) | BSD-3-Clause |
+| Design references | edgextract, Open Ontologies, cognee-rs | Apache-2.0, MIT, MIT or Apache-2.0 |
+
+Python methods worth reading, with licences as reported and not individually verified: Graphiti (Apache-2.0), KGGen (MIT; a third-party inventory disagrees, so verify the exact revision), iText2KG (Apache-2.0), Neo4j GraphRAG (Apache-2.0 with marked PSF-2.0 portions), LightRAG and Microsoft GraphRAG (MIT).

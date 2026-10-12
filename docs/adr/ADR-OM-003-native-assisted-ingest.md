@@ -38,9 +38,13 @@ The first slice corresponds to OntoCast's `facts` mode. It proposes typed frontm
 
 Identity uses `ontomark-model::mint`. Extracted source IRIs are kept as evidence, and project-local identity is re-minted, following the decision already taken in the retired RDF-to-Logseq adapter. No second identity scheme is introduced.
 
+### 2a. Extraction contract: names in, grounded identifiers out
+
+Following SPIRES ([Caufield et al., Bioinformatics 2024](https://academic.oup.com/bioinformatics/article/40/3/btae104/7612230), OntoGPT, BSD-3-Clause), the model is asked for **names and values, never identifiers**. The core grounds each name against the vault vocabulary by normalised string similarity, mints or resolves identity through `ontomark-model::mint`, and reports ungrounded or ambiguous names as diagnostics. A host may re-prompt the model with those diagnostics; the core does not. This removes the need to trust model-invented IRIs.
+
 ### 3. What is carried across from OntoCast
 
-Only the **Port** rows of the [triage](../ONTOCAST-TRIAGE.md): heading-aware chunking, the deterministic merge guards, deterministic fact checks and literal repair, and the render prompt contract as data. Embedding-based candidate generation is optional and host-supplied; the lexical guards run in core. SHACL, vector stores, converters, the HTTP API, LangChain and web grounding are not carried across. Behaviour is specified by fixtures first, not transliterated from Python.
+Only the **Port** rows of the [triage](../ONTOCAST-TRIAGE.md): heading-aware chunking, the deterministic merge guards, deterministic fact checks and literal repair, and the render prompt contract as data. Embedding-based candidate generation is optional and host-supplied; the lexical guards run in core. Rust building blocks are `strsim` (MIT: Jaro-Winkler, Levenshtein, Sørensen-Dice) and `textdistance` (MIT: Jaccard). `strsim` has no Jaccard and neither has Python `difflib`'s sequence ratio, so the ratio is implemented in the crate and fixture-tested, not assumed byte-equal to Python. SHACL, vector stores, converters, the HTTP API, LangChain and web grounding are not carried across. Behaviour is specified by fixtures first, not transliterated from Python.
 
 ### 4. Confidence and review
 
@@ -63,6 +67,14 @@ Any model call is made by the **host**, never by the core. For the Obsidian plug
 | `ontomark-wasm` | Exposing `plan` and `accept` to the worker |
 | Host (plugin, Loom, Agentbox) | Model transport, credentials, scheduling, UI, undo |
 | VisionFlow and visionGraph | Corpus vocabulary and publication policy |
+
+### 7. Reference reading and licence cautions
+
+- [edgextract](https://github.com/raphaelmansuy/edgextract) (Apache-2.0): ontology-constrained extraction with evidence offsets and a browser build. Design reference for `plan`/`accept`; it is sentence-level and does not emit RDF.
+- [Open Ontologies](https://github.com/fabio-rovai/open-ontologies) (MIT, Rust): SHACL, plan/apply/rollback and lineage. Governance reference, not an extractor.
+- [rudof](https://github.com/rudof-project/rudof) `shacl_validation` (MIT or Apache-2.0): optional native SHACL. Its wasm32 build is unverified, so it stays out of the WASM path.
+- [cognee-rs](https://github.com/topoteretes/cognee-rs) (MIT or Apache-2.0): study its cassette-backed mock model; do not depend on it.
+- VisionClaw is reported as AGPL-3.0-only (unverified here). Do not copy its code into this permissively licensed crate without an explicit decision.
 
 ## Consequences
 
