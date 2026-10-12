@@ -67,6 +67,7 @@ fn options(repo: &Path, out: &Path) -> build::Options {
         redact_private_links: None,
         publish_out: None,
         stale_after: None,
+        scope: build::Scope::Public,
     }
 }
 

@@ -29,7 +29,8 @@ use crate::input::vocabulary::Vocabulary;
 use indexmap::IndexMap;
 use regex::{Regex, RegexBuilder};
 
-use crate::ir::model::{ClassRecord, Conjunct, Corpus, Ref};
+use crate::input::slug::slugify;
+use crate::ir::model::{ClassRecord, Conjunct, Corpus, EntityType, Ref};
 use crate::profile::Profile;
 
 /// An input could not safely cross the public build boundary.
@@ -474,60 +475,94 @@ pub fn project_with_redactor(
     corpus: &Corpus,
     extra_private: &HashSet<String>,
 ) -> Result<(Corpus, ProseRedactor), PublicationBlocked> {
-    let (public, private): (Vec<&ClassRecord>, Vec<&ClassRecord>) =
-        corpus.records.iter().partition(|r| r.public);
-
-    let public_ids: HashSet<String> = public.iter().flat_map(|r| identity(r)).collect();
-    let mut private_ids: HashSet<String> = private.iter().flat_map(|r| identity(r)).collect();
-    private_ids.extend(extra_private.iter().cloned());
-
-    if let Some(clash) = public_ids.intersection(&private_ids).next() {
-        return Err(PublicationBlocked::Collision(clash.clone()));
-    }
-
-    let public_names: HashSet<String> = public
+    let split = Split::checked(&corpus.records, extra_private)?;
+    let redactor = split.redactor(profile)?;
+    let records: Vec<ClassRecord> = split
+        .public
         .iter()
-        .flat_map(|r| [r.title.clone(), r.label.clone()])
-        .filter(|s| !s.is_empty())
+        .map(|r| redactor.clean_record(r))
         .collect();
-    let private_names: HashSet<String> = private
-        .iter()
-        .flat_map(|r| [r.title.clone(), r.label.clone()])
-        .filter(|s| !s.is_empty())
-        .collect();
+    Ok((corpus_of(records), ProseRedactor(redactor)))
+}
 
-    let mut markers: HashSet<String> = private_ids.clone();
-    markers.extend(private_names.difference(&public_names).cloned());
-    for value in &private_ids {
-        // A redacted URN must not reappear as a resolvable web IRI.
-        if let Some(published) = profile.iris.project(value) {
-            markers.insert(published);
-        }
-    }
-    // An identity that is also a public name must not be redacted out of the
-    // public bundle; the collision check above already proved no page claims
-    // both, so this only strips names that coincide.
-    for name in &public_names {
-        markers.remove(name);
-    }
-
-    let redactor =
-        Redactor::new(markers).map_err(|e| PublicationBlocked::Redactor(e.to_string()))?;
-    let records: Vec<ClassRecord> = public.iter().map(|r| redactor.clean_record(r)).collect();
-
+/// A [`Corpus`] over `records`, with the class-slug index the projection
+/// builds: only records that declare an ontology identity are keyed.
+fn corpus_of(records: Vec<ClassRecord>) -> Corpus {
     let mut by_class_slug = IndexMap::new();
     for (i, r) in records.iter().enumerate() {
         if r.has_ontology && !r.iri.is_empty() {
             by_class_slug.entry(r.class_slug()).or_insert(i);
         }
     }
-    Ok((
-        Corpus {
-            records,
-            by_class_slug,
-        },
-        ProseRedactor(redactor),
-    ))
+    Corpus {
+        records,
+        by_class_slug,
+    }
+}
+
+/// Records divided into the public and the private, once the identity check
+/// has passed.
+struct Split<'a> {
+    public: Vec<&'a ClassRecord>,
+    private: Vec<&'a ClassRecord>,
+    private_ids: HashSet<String>,
+}
+
+impl<'a> Split<'a> {
+    /// Divide `records` and refuse when one identity (page id, slug, page IRI
+    /// or class IRI) is claimed on both sides. `extra_private` carries the
+    /// identities of held pages, which count as private whatever their flag.
+    fn checked(
+        records: &'a [ClassRecord],
+        extra_private: &HashSet<String>,
+    ) -> Result<Self, PublicationBlocked> {
+        let (public, private): (Vec<&ClassRecord>, Vec<&ClassRecord>) =
+            records.iter().partition(|r| r.public);
+
+        let public_ids: HashSet<String> = public.iter().flat_map(|r| identity(r)).collect();
+        let mut private_ids: HashSet<String> = private.iter().flat_map(|r| identity(r)).collect();
+        private_ids.extend(extra_private.iter().cloned());
+
+        if let Some(clash) = public_ids.intersection(&private_ids).next() {
+            return Err(PublicationBlocked::Collision(clash.clone()));
+        }
+        Ok(Self {
+            public,
+            private,
+            private_ids,
+        })
+    }
+
+    /// The marker redactor for this division: every private identity, every
+    /// private name no public page also carries, and the published web form of
+    /// each private identity.
+    fn redactor(&self, profile: &Profile) -> Result<Redactor, PublicationBlocked> {
+        let names = |records: &[&ClassRecord]| -> HashSet<String> {
+            records
+                .iter()
+                .flat_map(|r| [r.title.clone(), r.label.clone()])
+                .filter(|s| !s.is_empty())
+                .collect()
+        };
+        let public_names = names(&self.public);
+        let private_names = names(&self.private);
+
+        let mut markers: HashSet<String> = self.private_ids.clone();
+        markers.extend(private_names.difference(&public_names).cloned());
+        for value in &self.private_ids {
+            // A redacted URN must not reappear as a resolvable web IRI.
+            if let Some(published) = profile.iris.project(value) {
+                markers.insert(published);
+            }
+        }
+        // An identity that is also a public name must not be redacted out of the
+        // public bundle; the collision check already proved no page claims
+        // both, so this only strips names that coincide.
+        for name in &public_names {
+            markers.remove(name);
+        }
+        Redactor::new(markers).map_err(|e| PublicationBlocked::Redactor(e.to_string()))
+    }
 }
 
 /// Build the public projection using the same cross-vault link resolution as
@@ -548,6 +583,15 @@ pub fn project_vault_with_links(
     links: &crate::build::redact::PrivateLinks,
 ) -> Result<(Corpus, ProseRedactor), PublicationBlocked> {
     project(profile, &Corpus::build(vault, vocab), extra_private)?;
+    let cleaned = clean_vault(vault, links);
+    project_with_redactor(profile, &Corpus::build(&cleaned, vocab), extra_private)
+}
+
+/// `vault` as the public surfaces may see it: held pages forced private, and
+/// every public page's curated links, relation targets, `defines-as` and body
+/// stripped of whatever `links` resolves to a non-public page. Links resolve
+/// from the page's own vault (`vault.kind`), then the other.
+fn clean_vault(vault: &Vault, links: &crate::build::redact::PrivateLinks) -> Vault {
     let mut cleaned = vault.clone();
     for page in &mut cleaned.pages {
         let rel = page
@@ -586,7 +630,221 @@ pub fn project_vault_with_links(
             .insert("links".into(), public_links.into());
         page.body = links.body(vault.kind, &page.body, &mut Default::default());
     }
-    project_with_redactor(profile, &Corpus::build(&cleaned, vocab), extra_private)
+    cleaned
+}
+
+/// `vault` with its held pages forced private and nothing else changed: the
+/// raw view the identity check reads, so a page the publish staging holds back
+/// is not counted as public.
+fn hold_back(vault: &Vault) -> Vault {
+    let mut held = vault.clone();
+    for page in &mut held.pages {
+        let rel = page
+            .rel_path
+            .strip_prefix("pages")
+            .unwrap_or(&page.rel_path);
+        if crate::build::publish::held_back(rel) {
+            page.frontmatter.map.insert("public".into(), false.into());
+        }
+    }
+    held
+}
+
+/// The publish slug of a `working/` page in the machine bundle: `working/`
+/// plus the page id with each path segment slugified, subdirectories kept so
+/// two `Foo.md` in different folders do not share one.
+#[must_use]
+pub fn working_slug(page_id: &str) -> String {
+    let segments: Vec<String> = page_id.split('/').map(slugify).collect();
+    format!("working/{}", segments.join("/"))
+}
+
+/// The machine scope's projection: the knowledge projection exactly as the
+/// public build makes it, plus `working/`'s public pages as plain records.
+#[derive(Debug)]
+pub struct MachineProjection {
+    /// The knowledge projection, byte for byte what a public build projects.
+    /// Every ontology artefact is emitted from it.
+    pub knowledge: Corpus,
+    /// The redactor of the knowledge projection, for the surfaces that carry
+    /// knowledge prose.
+    pub redactor: ProseRedactor,
+    /// The plain `working/` records, already redacted and renamed.
+    pub plain: Vec<ClassRecord>,
+    /// Public `working/` pages dropped because a public knowledge page has the
+    /// same identity.
+    pub yielded: usize,
+}
+
+impl MachineProjection {
+    /// The knowledge records followed by the plain ones: the corpus the page
+    /// API and the search index are built from.
+    #[must_use]
+    pub fn merged(&self) -> Corpus {
+        let mut records = self.knowledge.records.clone();
+        records.extend(self.plain.iter().cloned());
+        Corpus {
+            records,
+            by_class_slug: self.knowledge.by_class_slug.clone(),
+        }
+    }
+}
+
+/// Project `knowledge` as a public build does and add `working`'s public pages
+/// as plain records (`--scope machine`).
+///
+/// * The knowledge side is not touched by `working/`: it takes the same
+///   identity check, the same marker set and the same link cleaning as in a
+///   public build, so every ontology artefact keeps its bytes.
+/// * The identity check and the marker set cover **both** vaults, on identities
+///   as authored (before the `working/` prefix). The twin rule is directional:
+///   a public working page beside a private page of either vault with the same
+///   identity is a [`PublicationBlocked::Collision`]; a public working page
+///   whose identity a public knowledge page already holds *yields* to it; and a
+///   private working page whose identity a public knowledge page holds is
+///   harmless and yields silently (it is never published and adds no marker).
+/// * A working record's links resolve through `links`, the resolver redaction
+///   uses, to the target's published slug.
+/// * What survives is renamed under `working/` and stripped of any ontology
+///   identity.
+///
+/// # Errors
+/// [`PublicationBlocked::Collision`] or [`PublicationBlocked::Redactor`], as
+/// [`project_vault_with_links`].
+pub fn project_machine(
+    profile: &Profile,
+    knowledge: &Vault,
+    working: &Vault,
+    vocab: &Vocabulary,
+    extra_private: &HashSet<String>,
+    links: &crate::build::redact::PrivateLinks,
+) -> Result<MachineProjection, PublicationBlocked> {
+    use crate::input::page::VaultKind;
+
+    let (knowledge_corpus, redactor) =
+        project_vault_with_links(profile, knowledge, vocab, extra_private, links)?;
+
+    // The union's extra identities: the held pages of both vaults.
+    let mut union_extra = extra_private.clone();
+    union_extra.extend(excluded_identities_of(working));
+
+    // Identity check over the authored records, before any rewriting could
+    // conceal a clash. The twin rule is directional: a PRIVATE working page
+    // whose identity a PUBLIC knowledge page holds is harmless (nothing of it
+    // is published) and yields silently; a PUBLIC working page beside a
+    // PRIVATE page of either vault would expose the private identity through
+    // its own, and is refused.
+    let knowledge_raw = Corpus::build(knowledge, vocab).records;
+    let public_knowledge: HashSet<String> = knowledge_raw
+        .iter()
+        .filter(|r| r.public)
+        .flat_map(identity)
+        .collect();
+    let mut raw = knowledge_raw;
+    raw.extend(
+        Corpus::build(&hold_back(working), vocab)
+            .records
+            .into_iter()
+            .filter(|r| r.public || !identity(r).iter().any(|id| public_knowledge.contains(id))),
+    );
+    Split::checked(&raw, &union_extra)?;
+
+    let cleaned_knowledge = Corpus::build(&clean_vault(knowledge, links), vocab);
+    let cleaned_working = clean_vault(working, links);
+    let mut working_corpus = Corpus::build(&cleaned_working, vocab);
+
+    // A public working page whose identity a public knowledge page already
+    // holds yields to it (knowledge wins, as in `VisionClaw`'s merge). Decided
+    // here, on identities as authored, so the links below can honour it.
+    let knowledge_identities: HashSet<String> = cleaned_knowledge
+        .records
+        .iter()
+        .filter(|r| r.public)
+        .flat_map(identity)
+        .collect();
+    let yields: HashSet<usize> = working_corpus
+        .records
+        .iter()
+        .enumerate()
+        .filter(|(_, r)| {
+            r.public
+                && identity(r)
+                    .iter()
+                    .any(|id| knowledge_identities.contains(id))
+        })
+        .map(|(i, _)| i)
+        .collect();
+    let yielded_ids: HashSet<String> = yields
+        .iter()
+        .filter_map(|i| working_corpus.records.get(*i).map(|r| r.page_id.clone()))
+        .collect();
+
+    // A working page's curated links point at the target's published slug:
+    // the post-disambiguation slug for a knowledge page, the `working/` slug
+    // for a working one. A target that resolves to nothing, or to a page that
+    // yielded and so has no record, stays slug-verbatim, as a knowledge page's
+    // does.
+    for (page, record) in cleaned_working
+        .pages
+        .iter()
+        .zip(&mut working_corpus.records)
+    {
+        if !record.public {
+            continue;
+        }
+        for (link, target) in page.outbound_links().into_iter().zip(&mut record.links) {
+            let slug = match links.resolve_public(VaultKind::Working, &link.target) {
+                Some((VaultKind::Knowledge, i)) => {
+                    cleaned_knowledge.records.get(i).map(|r| r.slug.clone())
+                }
+                Some((VaultKind::Working, i)) if !yields.contains(&i) => {
+                    working.pages.get(i).map(|p| working_slug(&p.id))
+                }
+                _ => None,
+            };
+            if let Some(slug) = slug {
+                target.iri = format!("{}{slug}", vocab.namespace);
+            }
+        }
+    }
+
+    let knowledge_len = cleaned_knowledge.records.len();
+    let mut union = cleaned_knowledge.records;
+    // Private working twins of public knowledge pages were cleared above;
+    // they contribute no marker either, since their name is a public one.
+    union.extend(working_corpus.records.into_iter().filter(|r| {
+        r.public
+            || !identity(r)
+                .iter()
+                .any(|id| knowledge_identities.contains(id))
+    }));
+    let split = Split::checked(&union, &union_extra)?;
+    let union_redactor = split.redactor(profile)?;
+
+    let mut plain = Vec::new();
+    for record in &union[knowledge_len..] {
+        if !record.public || yielded_ids.contains(&record.page_id) {
+            continue;
+        }
+        let mut record = union_redactor.clean_record(record);
+        // D2: the machine-scope page IRI is the page namespace plus the
+        // working slug, so it carries no spaces and matches the record's slug.
+        record.slug = working_slug(&record.page_id);
+        record.page_iri = format!("{}{}", profile.iris.page_namespace, record.slug);
+        record.page_id = format!("working/{}", record.page_id);
+        record.has_ontology = false;
+        record.iri.clear();
+        record.entity_type = EntityType::Class;
+        plain.push(record);
+    }
+    let yielded = yields.len();
+
+    Ok(MachineProjection {
+        knowledge: knowledge_corpus,
+        redactor,
+        plain,
+        yielded,
+    })
 }
 
 #[cfg(test)]
@@ -780,6 +1038,68 @@ mod tests {
         )
         .unwrap();
         assert_eq!(p.records[0].links, []);
+    }
+
+    #[test]
+    fn a_working_slug_keeps_its_folders_and_slugifies_each_segment() {
+        assert_eq!(
+            working_slug("Fixture Public Note"),
+            "working/fixture-public-note"
+        );
+        assert_eq!(working_slug("a/Foo Bar"), "working/a/foo-bar");
+    }
+
+    #[test]
+    fn machine_projection_masks_private_working_names_in_plain_prose() {
+        use crate::input::page::{Page, Vault, VaultKind};
+        let vault = |kind: VaultKind, pages: &[(&str, &str)]| Vault {
+            root: std::path::PathBuf::new(),
+            kind,
+            journals: Vec::new(),
+            skipped: Vec::new(),
+            pages: pages
+                .iter()
+                .map(|(id, text)| {
+                    Page::parse(
+                        format!("/v/pages/{id}.md"),
+                        format!("pages/{id}.md"),
+                        *id,
+                        text,
+                    )
+                    .unwrap()
+                })
+                .collect(),
+        };
+        let knowledge = vault(VaultKind::Knowledge, &[]);
+        let working = vault(
+            VaultKind::Working,
+            &[
+                (
+                    "Open",
+                    "---\ntype: Note\npublic: true\n---\nRefer to Secret Project for detail.\n",
+                ),
+                ("Secret Project", "---\ntype: Note\n---\nHidden.\n"),
+            ],
+        );
+        let vocab =
+            Vocabulary::from_yaml_str("version: 1\nnamespace: \"urn:ngm:class:\"\n").unwrap();
+        let links = crate::build::redact::PrivateLinks::new(&[&knowledge, &working]);
+        let projected = project_machine(
+            &crate::profile::test_estate(),
+            &knowledge,
+            &working,
+            &vocab,
+            &HashSet::new(),
+            &links,
+        )
+        .unwrap();
+        assert_eq!(projected.plain.len(), 1);
+        let record = &projected.plain[0];
+        assert_eq!(record.body.trim(), "Refer to [private] for detail.");
+        assert_eq!(record.page_id, "working/Open");
+        assert_eq!(record.slug, "working/open");
+        assert!(!record.has_ontology && record.iri.is_empty());
+        assert_eq!(projected.merged().by_class_slug.len(), 0);
     }
 
     #[test]

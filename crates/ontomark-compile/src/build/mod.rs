@@ -28,6 +28,8 @@ pub mod redact;
 pub mod turtle;
 pub mod webvowl;
 
+pub use generation::Scope;
+
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -80,6 +82,10 @@ pub struct Options {
     /// `None` takes the profile's `publication.redact_private_links`;
     /// `Some(false)` is the byte-parity switch (`--no-redact-private-links`).
     pub redact_private_links: Option<bool>,
+    /// Which consumer the bundle is for. [`Scope::Public`] is today's build;
+    /// [`Scope::Machine`] adds `working/`'s public pages as plain records and
+    /// writes no `publish/` tree (see [`ScopeConflict`] for what it refuses).
+    pub scope: Scope,
 }
 
 /// What the build produced.
@@ -124,6 +130,19 @@ pub struct Report {
     /// What private-link redaction changed; `None` when it was off.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redaction: Option<redact::RedactionReport>,
+    /// What the machine scope added; `None` in a public build.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub machine: Option<MachineSummary>,
+}
+
+/// What `--scope machine` added to the knowledge projection.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+pub struct MachineSummary {
+    /// Plain `working/` records in the bundle.
+    pub working_records: usize,
+    /// Public `working/` pages dropped because a public knowledge page has the
+    /// same identity: the knowledge page wins, as in `VisionClaw`'s merge.
+    pub yielded: usize,
 }
 
 /// Two artefacts claimed one output path. The build refuses rather than let
@@ -199,6 +218,33 @@ impl std::fmt::Display for Unsatisfiable {
 }
 
 impl std::error::Error for Unsatisfiable {}
+
+/// `--scope machine` was asked for alongside something it cannot honour, or on
+/// a repository it cannot read. The build refuses before reading any page,
+/// naming every conflict.
+///
+/// A distinct type so the CLI exits **2**, the code for "the corpus does not
+/// permit this build". The machine bundle's inputs are fixed (`knowledge/` plus
+/// `working/`), it never writes the Quartz `publish/` tree, and private-link
+/// redaction is not optional in it, so each of those is a refusal rather than a
+/// quiet override.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ScopeConflict {
+    /// One line per conflict, in the order they were found.
+    pub conflicts: Vec<String>,
+}
+
+impl std::fmt::Display for ScopeConflict {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "SCOPE_CONFLICT: `--scope machine` cannot be built as asked; nothing was written: {}",
+            self.conflicts.join("; ")
+        )
+    }
+}
+
+impl std::error::Error for ScopeConflict {}
 
 /// Replace `out` with the fully written `stage` directory: `out` is moved
 /// aside, `stage` is renamed into its place, and the old tree is removed only
@@ -367,11 +413,65 @@ fn alias_map(vault: &Vault) -> HashMap<String, Vec<String>> {
         .collect()
 }
 
+/// The `working/` vault root beside a knowledge vault root.
+fn machine_working_root(vault_root: &Path) -> PathBuf {
+    vault_root
+        .parent()
+        .unwrap_or(Path::new("."))
+        .join(VaultKind::Working.dir_name())
+}
+
+/// Refuse the options and repository `--scope machine` cannot build from,
+/// naming every conflict rather than the first.
+fn ensure_machine_scope(options: &Options, profile: &Profile) -> Result<(), ScopeConflict> {
+    let mut conflicts = Vec::new();
+    if options.publish_out.is_some() {
+        conflicts.push(
+            "`--publish-out`: a machine bundle writes no publish/ tree to put anywhere".to_owned(),
+        );
+    }
+    if options.with_working_publish {
+        conflicts.push(
+            "`--vault working|all`: the machine bundle always reads knowledge/ and working/"
+                .to_owned(),
+        );
+    }
+    if !options
+        .redact_private_links
+        .unwrap_or(profile.publication.redact_private_links)
+    {
+        conflicts.push(
+            "`--no-redact-private-links` (or a profile with publication.redact_private_links \
+             off): the machine bundle is always redacted"
+                .to_owned(),
+        );
+    }
+    if vault_kind_of(&options.vault_root) != VaultKind::Knowledge {
+        conflicts.push(format!(
+            "the vault root {} is not a knowledge vault",
+            options.vault_root.display()
+        ));
+    }
+    let working_pages = machine_working_root(&options.vault_root).join("pages");
+    if !working_pages.is_dir() {
+        conflicts.push(format!(
+            "working/pages is absent ({} is not a directory)",
+            working_pages.display()
+        ));
+    }
+    if conflicts.is_empty() {
+        Ok(())
+    } else {
+        Err(ScopeConflict { conflicts })
+    }
+}
+
 /// Run the whole build.
 ///
 /// # Errors
-/// The census refusing an input, an identity collision, a validation error,
-/// a [`reason::ReasoningError`] (a definition the reasoner would not finish
+/// The census refusing an input, an identity collision, a validation error
+/// (in `working/` too, under [`Scope::Machine`]), a [`ScopeConflict`], a
+/// [`reason::ReasoningError`] (a definition the reasoner would not finish
 /// on), or any I/O failure while staging or promoting the bundle.
 pub fn run(
     options: &Options,
@@ -398,6 +498,13 @@ pub fn run_with(
     classifier: &dyn reason::Classifier,
     embedder: Option<&dyn records::Embedder>,
 ) -> anyhow::Result<Report> {
+    // The machine bundle's inputs are fixed, so what cannot be honoured is
+    // refused before a page is read.
+    let machine = options.scope == Scope::Machine;
+    if machine {
+        ensure_machine_scope(options, profile)?;
+    }
+
     // One walk of `pages/` feeds the census, the load and the held-page
     // identities (OM-00 step 1): three filters over one listing rather than
     // three listings with three filters that drifted apart.
@@ -423,7 +530,19 @@ pub fn run_with(
     // to publish a key. It is also the cheapest check, so failing here skips
     // the reasoner entirely. (The census runs earlier still: it is the input
     // accounting every later step relies on.)
-    let working = if options.with_working_publish {
+    //
+    // The machine bundle reads `working/` as well, and under the same census:
+    // a `public` flag that is not a boolean refuses the build there too. Its
+    // census is not published (`api/census.json` stays `knowledge/`'s), so the
+    // result is dropped once it has passed. Loaded once, here, so the digest
+    // lists each of its pages once.
+    let working = if machine {
+        let root = machine_working_root(&options.vault_root);
+        let pages = root.join("pages");
+        let walk = walk_pages(&pages)?;
+        projection::inspect_walk(&pages, &walk)?;
+        Some(Vault::load_with_walk(&root, VaultKind::Working, walk)?)
+    } else if options.with_working_publish {
         publish::sibling_vault(&options.vault_root, VaultKind::Working)?
     } else {
         None
@@ -462,13 +581,40 @@ pub fn run_with(
         report.errors()[0]
     );
 
+    // `validate` pairs `vault.pages` with the corpus built from it by position,
+    // so `working/` is checked on its own, under its own role.
+    if machine {
+        if let Some(working) = &working {
+            let working_report =
+                validate::validate(profile, working, &Corpus::build(working, vocab), vocab);
+            anyhow::ensure!(
+                working_report.errors().is_empty(),
+                "validation rejected {} error(s) in working/; no bundle written. First: {}",
+                working_report.errors().len(),
+                working_report.errors()[0]
+            );
+        }
+    }
+
     let excluded = projection::excluded_identities_of(&vault);
-    let (corpus, prose_redactor) = if let Some(links) = &private_links {
-        projection::project_vault_with_links(profile, &vault, vocab, &excluded, links)?
-    } else {
-        // Explicit compatibility mode retains the legacy projection bytes.
-        projection::project_with_redactor(profile, &raw, &excluded)?
-    };
+    let mut merged: Option<Corpus> = None;
+    let mut machine_summary = None;
+    let (corpus, prose_redactor) =
+        if let (true, Some(links), Some(working)) = (machine, &private_links, &working) {
+            let projected =
+                projection::project_machine(profile, &vault, working, vocab, &excluded, links)?;
+            merged = Some(projected.merged());
+            machine_summary = Some(MachineSummary {
+                working_records: projected.plain.len(),
+                yielded: projected.yielded,
+            });
+            (projected.knowledge, projected.redactor)
+        } else if let Some(links) = &private_links {
+            projection::project_vault_with_links(profile, &vault, vocab, &excluded, links)?
+        } else {
+            // Explicit compatibility mode retains the legacy projection bytes.
+            projection::project_with_redactor(profile, &raw, &excluded)?
+        };
 
     let structural = closure::compute(profile, &corpus);
     let backlinks = indexes::backlink_index(&corpus);
@@ -506,12 +652,20 @@ pub fn run_with(
     let today = generated.get(..10).map_or_else(today, str::to_owned);
 
     let class_count = corpus.public_classes().count();
-    let page_count = corpus.records.len();
+    // What the page API and the search index are built from: in the machine
+    // scope the knowledge records plus the plain `working/` ones. Everything
+    // ontological (Turtle, reasoner, indexes Loom reads, graph tiers, OKF) is
+    // built from `corpus`, so a plain record cannot reach it.
+    let listed = merged.as_ref().unwrap_or(&corpus);
+    let page_count = listed.records.len();
 
     let mut staged = Staged::new();
     // `publish/` either rides inside the bundle or is promoted on its own —
     // the latter only after the write-once check below passes.
-    if options.publish_out.is_none() {
+    if machine {
+        // The credential gate has scanned `working/`'s public pages; the
+        // staged Markdown is not part of this bundle.
+    } else if options.publish_out.is_none() {
         for file in &staging.files {
             staged.add_for(file.path.clone(), file.content.clone(), file.path.clone());
         }
@@ -533,12 +687,19 @@ pub fn run_with(
     let prose = indexes::prose_index(&corpus, &generated);
     staged.add("data/prose-index.json", to_default_utf8(&prose)?);
 
-    let search = indexes::search_index(&corpus, &aliases);
+    let search = indexes::search_index(listed, &aliases);
     let search_entries = search.as_array().map_or(0, Vec::len);
     staged.add("api/search-index.json", to_indented(&search)?);
 
-    let (documents, domain_index) =
-        page_api::build_attributed(&corpus, &structural, &backlinks, &roster);
+    // The page documents' backlinks see the plain records too; the scaffold
+    // index above does not (D4), so `data/` is the same in both scopes.
+    let page_backlinks = merged.as_ref().map(indexes::backlink_index);
+    let (documents, domain_index) = page_api::build_attributed(
+        listed,
+        &structural,
+        page_backlinks.as_ref().unwrap_or(&backlinks),
+        &roster,
+    );
     for doc in &documents {
         staged.add_for(
             format!("api/pages/{}.json", doc.slug),
@@ -664,13 +825,15 @@ pub fn run_with(
         (commit.clone(), *dirty)
     } else {
         let commit = generation::git_sha(&options.repo_root);
-        // The paths a build reads: the vault, the vocabulary beside it, and
-        // `working/` when its public pages are staged too.
+        // The paths a build reads: the vault, the vocabulary beside it, and the
+        // sibling vault whenever it was loaded (for publication, for machine
+        // scope, or for link redaction), so a dirty sibling never stamps a
+        // clean generation while `content_digest` covers its bytes.
         let vocabulary_dir = options.repo_root.join("ontology");
         let working_root = options.vault_root.parent().map(|repo| repo.join("working"));
         let mut read_paths: Vec<&Path> =
             vec![options.vault_root.as_path(), vocabulary_dir.as_path()];
-        if options.with_working_publish {
+        if working.is_some() || other_vault.is_some() {
             read_paths.extend(working_root.as_deref());
         }
         let dirty = generation::git_dirty(&options.repo_root, &read_paths);
@@ -719,7 +882,7 @@ pub fn run_with(
     // `owl:versionIRI` — recorded here beside the page digest (ADR-2128).
     let ontology_digest = turtle::ontology_digest(profile, &graph);
 
-    let gen = generation::generation(
+    let mut gen = generation::generation(
         commit,
         dirty,
         content_digest,
@@ -731,6 +894,7 @@ pub fn run_with(
         options.stale_after.clone(),
         staged.artifacts(),
     );
+    gen.scope = options.scope;
     // Loom serves `data/` and reads its marker from there, verifying each
     // artefact relative to that directory; the root marker keeps the whole
     // bundle's view. Both carry the same identity. A marker cannot list its
@@ -764,7 +928,12 @@ pub fn run_with(
         restrictions_kept: reasoning.restrictions_kept,
         defined_classes: reasoning.defined_classes,
         unsatisfiable: reasoning.unsatisfiable,
-        published: staging.per_vault,
+        // The machine bundle stages no Markdown, so it publishes nothing.
+        published: if machine {
+            std::collections::BTreeMap::new()
+        } else {
+            staging.per_vault
+        },
         // Both destinations count: with `--publish-out` the markdown is
         // promoted separately, and it is still something that was written.
         written: staged.files.len()
@@ -778,9 +947,14 @@ pub fn run_with(
             .redaction
             .clone()
             .map(|publish| redact::RedactionReport {
-                publish,
+                publish: if machine {
+                    std::collections::BTreeMap::new()
+                } else {
+                    publish
+                },
                 mirror: mirror_redaction,
             }),
+        machine: machine_summary,
     })
 }
 
@@ -863,6 +1037,7 @@ scalars:
             generated_at: None,
             source: None,
             stale_after: None,
+            scope: Scope::Public,
         };
         let report = run(&options, &vocab()).unwrap();
         (dir, report)
@@ -1047,6 +1222,7 @@ scalars:
             generated_at: None,
             source: None,
             stale_after: None,
+            scope: Scope::Public,
         };
         let result = run(&options, &vocab());
         (dir, result)
@@ -1223,6 +1399,7 @@ scalars:
             generated_at: None,
             source: None,
             stale_after: None,
+            scope: Scope::Public,
         };
         let result = run(&options, &vocab);
         (dir, result)
@@ -1335,6 +1512,7 @@ scalars:
             generated_at: None,
             source: None,
             stale_after: None,
+            scope: Scope::Public,
         };
         let report = run(&options, &vocab).expect("a defined class builds");
         assert_eq!(report.reasoner_mode, "relevant");
@@ -1398,6 +1576,7 @@ scalars:
             generated_at: None,
             source: None,
             stale_after: None,
+            scope: Scope::Public,
         };
         run(&options, &vocab()).unwrap();
         assert!(!out.join("api/pages/stale.json").exists());
@@ -1425,6 +1604,7 @@ scalars:
             generated_at: None,
             source: None,
             stale_after: None,
+            scope: Scope::Public,
         };
         assert!(run(&options, &vocab()).is_err());
         assert!(!out.exists());

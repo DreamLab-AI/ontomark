@@ -44,6 +44,45 @@ impl Artifact {
     }
 }
 
+/// Which consumer a bundle is built for (`ontomark build --scope`).
+///
+/// [`Scope::Public`] is the publication build: the knowledge projection and
+/// the Quartz `publish/` tree. [`Scope::Machine`] is the bundle `VisionClaw`
+/// consumes: the same knowledge projection **plus** `working/`'s public pages as
+/// plain records, and never `publish/`. The marker spells it in lower case, and
+/// a marker that does not name a scope is a public one.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Scope {
+    /// The publication build (the default).
+    #[default]
+    Public,
+    /// The machine bundle: knowledge plus `working/`'s public pages as plain
+    /// records.
+    Machine,
+}
+
+impl Scope {
+    /// `true` for [`Scope::Public`]. The marker omits the field for a public
+    /// build, so public markers stay byte-identical to those written before the
+    /// field existed.
+    // `skip_serializing_if` hands the field by reference.
+    #[allow(clippy::trivially_copy_pass_by_ref)]
+    #[must_use]
+    pub fn is_public(&self) -> bool {
+        matches!(self, Self::Public)
+    }
+
+    /// The marker and command-line spelling.
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Public => "public",
+            Self::Machine => "machine",
+        }
+    }
+}
+
 /// The `.generation.json` document (contract C3).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Generation {
@@ -65,13 +104,18 @@ pub struct Generation {
     pub generated_at: String,
     /// Public OWL classes in this build.
     pub class_count: usize,
-    /// Public pages in this build.
+    /// Public pages in this build; in a [`Scope::Machine`] build this includes
+    /// the plain `working/` records.
     pub page_count: usize,
     /// `vocabulary.yaml`'s `version`.
     pub vocabulary_version: u32,
     /// The bundle's own expiry, or `null` when none is configured.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stale_after: Option<String>,
+    /// The scope this bundle was built for. Absent from a public marker, and
+    /// absence means public.
+    #[serde(default, skip_serializing_if = "Scope::is_public")]
+    pub scope: Scope,
     /// Every emitted artefact.
     pub artifacts: Vec<Artifact>,
 }
@@ -222,6 +266,7 @@ pub fn generation(
         page_count,
         vocabulary_version,
         stale_after,
+        scope: Scope::Public,
         artifacts,
     }
 }

@@ -143,7 +143,8 @@ struct VaultIndex {
 /// The outcome of resolving a link target.
 #[derive(Debug, Clone, Copy)]
 enum Resolution<'a> {
-    Public,
+    /// A public page: its vault and its position in [`Vault::pages`].
+    Public(VaultKind, usize),
     Private(&'a Entry),
     Unresolved,
 }
@@ -197,7 +198,7 @@ impl PrivateLinks {
                 return if e.private {
                     Resolution::Private(e)
                 } else {
-                    Resolution::Public
+                    Resolution::Public(v.kind, i)
                 };
             }
         }
@@ -225,6 +226,25 @@ impl PrivateLinks {
         }
         base.strip_suffix(".md")
             .map_or(Resolution::Unresolved, |b| self.lookup(home, b.trim()))
+    }
+
+    /// The public page `target` names, as written in a page of the `home`
+    /// vault: its vault and its position in that vault's [`Vault::pages`].
+    ///
+    /// This is the one resolver. Redaction decides on it whether a link is
+    /// private, and the machine scope's plain records use it to point their
+    /// links at the pages' published slugs, so the two can never disagree about
+    /// which page a link means. `None` for a private or unresolved target.
+    #[must_use]
+    pub(crate) fn resolve_public(
+        &self,
+        home: VaultKind,
+        target: &str,
+    ) -> Option<(VaultKind, usize)> {
+        match self.resolve(home, target) {
+            Resolution::Public(kind, index) => Some((kind, index)),
+            Resolution::Private(_) | Resolution::Unresolved => None,
+        }
     }
 
     /// `true` when `target` resolves to a page that is not public.

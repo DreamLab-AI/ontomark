@@ -46,7 +46,8 @@ pub enum ManifestError {
 }
 
 impl Generation {
-    /// Read and validate the current C3 marker without field coercion/defaults.
+    /// Read and validate the current C3 marker without field coercion/defaults
+    /// (bar `scope`, which is absent from a public marker and defaults to public).
     ///
     /// Unknown extension fields are permitted. This does not read or hash any
     /// artefact, consult a clock, fetch a resource or activate a generation.

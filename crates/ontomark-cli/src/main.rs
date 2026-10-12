@@ -6,8 +6,15 @@
 //! `vault`: `0` success, `1` a failed check or execution error, `2` a refused
 //! operation (a credential on a page selected for publication, two artefacts
 //! claiming one path, a definition the reasoner would not finish on, an
-//! unsatisfiable class — the corpus does not permit this build) or an invalid
-//! argument (an unknown `--vault`, `--tier` or `--severity` value included).
+//! unsatisfiable class — the corpus does not permit this build; or a
+//! `build --scope machine` asked for alongside `--publish-out`, `--vault
+//! working|all` or `--no-redact-private-links`, or on a repository without
+//! `working/pages`) or an invalid argument (an unknown `--vault`, `--scope`,
+//! `--tier` or `--severity` value included).
+//!
+//! `build --scope machine` is the bundle `VisionClaw` consumes: the public
+//! knowledge projection plus `working/`'s public pages as plain records, with
+//! no `publish/` tree. `--scope public` (the default) is the publication build.
 //!
 //! `--vault all` means **both** vaults for every verb that takes it.
 //!
@@ -22,7 +29,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use anyhow::Context as _;
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use ontomark_compile::check::{bodies, conflicts, gate, repair, validate};
 use ontomark_compile::input::page::{load_vault, Vault, VaultKind};
 use ontomark_compile::input::vocabulary::Vocabulary;
@@ -130,6 +137,26 @@ impl VaultSelector {
     }
 }
 
+/// `build --scope`. A command-line twin of [`build::Scope`], which lives in a
+/// crate that must not depend on clap (it compiles to `wasm32`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum ScopeArg {
+    /// The publication build (default): knowledge plus the `publish/` tree.
+    Public,
+    /// The machine bundle: knowledge plus `working/`'s public pages as plain
+    /// records, and no `publish/` tree.
+    Machine,
+}
+
+impl From<ScopeArg> for build::Scope {
+    fn from(scope: ScopeArg) -> Self {
+        match scope {
+            ScopeArg::Public => Self::Public,
+            ScopeArg::Machine => Self::Machine,
+        }
+    }
+}
+
 /// The legal `--tier` values, rejected by the parser otherwise (S2.4).
 const TIER_VALUES: [&str; 2] = ["quick", "full"];
 /// The legal `--severity` values, rejected by the parser otherwise (S2.4).
@@ -176,6 +203,14 @@ struct BuildArgs {
     /// `working/`'s `public: true` pages.
     #[arg(long, default_value = "knowledge", value_parser = VAULT_VALUES)]
     vault: String,
+    /// Which consumer the bundle is for: `public` or `machine`.
+    ///
+    /// `machine` adds `working/`'s `public: true` pages as plain records (no
+    /// OWL) to the knowledge projection and writes no `publish/` tree. It fixes
+    /// its inputs and always redacts private links, so it refuses (exit 2)
+    /// `--publish-out`, `--vault working|all` and `--no-redact-private-links`.
+    #[arg(long, value_enum, default_value_t = ScopeArg::Public)]
+    scope: ScopeArg,
     /// Print the counts after the build.
     #[arg(long)]
     stats: bool,
@@ -442,7 +477,11 @@ fn run() -> anyhow::Result<ExitCode> {
             // `public: true` pages, which is the only thing "both vaults" can
             // mean for a build.
             let kinds = vault_kinds(&args.vault);
-            let kind = if kinds == [VaultKind::Working] {
+            // A machine bundle always reads both vaults from the knowledge
+            // root, so `--vault working|all` is left for the build to refuse
+            // by name rather than quietly moving the root.
+            let machine = args.scope == ScopeArg::Machine;
+            let kind = if kinds == [VaultKind::Working] && !machine {
                 VaultKind::Working
             } else {
                 VaultKind::Knowledge
@@ -462,6 +501,7 @@ fn run() -> anyhow::Result<ExitCode> {
                     .map(|commit| (commit, args.source_dirty)),
                 stale_after: args.stale_after.clone(),
                 redact_private_links: args.no_redact_private_links.then_some(false),
+                scope: args.scope.into(),
             };
             // `--with-rvdb` is the only network the build ever touches, and the
             // transport lives here, not in the compile crate.
@@ -495,6 +535,12 @@ fn run() -> anyhow::Result<ExitCode> {
                     // refused before reasoning, same refusal class.
                     if let Some(cap) = e.downcast_ref::<reason::ReasoningError>() {
                         eprintln!("ontomark: {cap}; no bundle written");
+                        return Ok(ExitCode::from(2));
+                    }
+                    // A machine bundle asked for with something it cannot honour:
+                    // the same refusal class, naming every conflict.
+                    if let Some(conflict) = e.downcast_ref::<build::ScopeConflict>() {
+                        eprintln!("ontomark: {conflict}");
                         return Ok(ExitCode::from(2));
                     }
                     // An unsatisfiable class is a broken corpus: the corpus does

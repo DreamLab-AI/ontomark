@@ -41,7 +41,12 @@ tree. `--scope public` (default) is today's build, byte for byte.
    a private knowledge `X` is a `PublicationBlocked::Collision` (fail closed);
    a public working page whose un-prefixed identity equals a public knowledge
    page's **yields** (is dropped from the machine bundle, with a count in the
-   report), matching VisionClaw's §V1 merge where knowledge wins.
+   report), matching VisionClaw's §V1 merge where knowledge wins. **Amended
+   after the first real-corpus build:** the rule is directional. A *private*
+   working page whose identity a *public* knowledge page holds (the corpus's
+   `Web3`) is harmless, is never published, adds no marker, and yields
+   silently without a count; only a public working page beside a private page
+   of either vault is refused.
 5. `project_vault_with_links` generalised to take `&[(&Vault, VaultKind)]` and
    use each page's home kind for `links.is_private(home, …)`.
 6. Plain override, applied after the rebuild and before `by_class_slug`:
@@ -51,7 +56,8 @@ tree. `--scope public` (default) is today's build, byte for byte.
 7. Identity of a working record (D2): `page_id = "working/<vault-relative id>"`,
    `slug = "working/" + id slugified per path segment` (subdirectories kept, so
    two `Foo.md` in different folders do not collide), `page_iri = profile
-   page_namespace + "working/<id>"`. Machine scope only; a test asserts no
+   page_namespace + slug` (**amended:** the slug path, not the raw id, so the
+   IRI carries no spaces). Machine scope only; a test asserts no
    `urn:…:page:working/` IRI appears in a public bundle.
 8. Links (D3): one resolver, extracted from `redact::PrivateLinks` (home vault
    first, then whole target, then strip `#fragment`, then strip `.md`, over the

@@ -1,7 +1,7 @@
 [package]
 name = "ontomark-model"
 description = "Typed ontology model derived from Markdown pages: explicit entity kinds, full predicate IRIs, reference resolution states and injectable profiles"
-version.workspace = true
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
