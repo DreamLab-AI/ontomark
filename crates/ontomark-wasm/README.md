@@ -16,9 +16,19 @@ querying their relation and refusing a stale request. Generic is the default
 profile; estate vocabulary is an explicit choice. Unsupported reasoner input
 and budget fallbacks are reported as incomplete classification.
 
-The engine's document-profile adapters remain in place. Compiler 0.1.3 has a
-separate typed `model-projection` API; adopting it here needs explicit profile
-mapping and native/WASM wire parity.
+Assisted ingest (ADR-OM-003) is two further requests, `ingest_plan` and
+`ingest_accept`. The engine never calls a model: `ingest_plan` returns the
+request a host sends to a model it controls, and `ingest_accept` turns the
+replies into evidence-bearing candidates, a withheld list and a proven patch
+preview in the `propose_patch` shape. The transcript fixture exercises both,
+so native and WASM answers are byte-equal here too.
+
+The engine's document-profile adapters remain in place for its own axioms.
+Each engine profile also implements `ontomark_model::Profile`, the explicit
+mapping EXP-10 asks for; ingest reads the vault through it, and
+`tests/profile_parity.rs` proves both sides index the same entities. Adopting
+the typed projection for the engine's axioms still needs whole-transcript
+native/WASM wire parity.
 
 ## Build and use
 

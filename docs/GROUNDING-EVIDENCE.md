@@ -1,6 +1,6 @@
 # Grounding evidence: the figures the READMEs cite
 
-Verified 12 October 2026 against the primary sources listed. **V** = figure read in the source (abstract or full text); **R** = reported by a secondary source only. Estate-internal figures (corpus counts, the Loom benchmark) are in the [README](../README.md) and come from generation `visionGraph@ae913f93`.
+Verified 12 October 2026 against the primary sources listed. **Verification policy:** this file is frozen at its date. A row is re-verified only when a README changes the claim it supports or a reader reports a discrepancy; it is not re-checked on a cadence. Figures cited in ADRs point at rows here by number. **V** = figure read in the source (abstract or full text); **R** = reported by a secondary source only. Estate-internal figures (corpus counts, the Loom benchmark) are in the [README](../README.md) and come from generation `visionGraph@ae913f93`.
 
 | # | Claim | Figure | Source | Status |
 | --- | --- | --- | --- | --- |

@@ -149,3 +149,20 @@ A second pass from the same review, lower severity, was applied in the following
 - Which section labels, if any, are worth keeping for long notes.
 - Where the host-supplied embedding similarity enters the API, or whether the first slice omits it.
 - Whether ingest candidates target frontmatter only, or also body text.
+
+## Engine boundary (12 October 2026)
+
+The portable engine (`ontomark-wasm`) exposes the contract as two generation-guarded requests, so the native API, the WASM binding and the plugin worker share one schema and the transcript proves them byte-equal:
+
+- `ingest_plan { generation, path, options? }` → `{ path, digest, request }`. Pure; the host sends `request` to a model it controls.
+- `ingest_accept { generation, path, request, responses, options? }` → `{ path, candidates, preview }`. `preview` is the `propose_patch` shape (`new_text`, `new_digest`, `diff`, `edits`) when a patch exists, so the plugin's existing diff review is reused without a second round trip.
+
+Wire codes for the crate's errors: `not_an_entity`, `no_assertion_keys`, `stale_base`, `contract_mismatch`, `request_mismatch`, `unknown_chunk`, `patch_refused`. Everything the model got wrong is in `candidates.withheld`, never an error.
+
+**The two generic grammars.** Wiring this exposed that the engine's released profile (`type: class` case-insensitively, `subclass-of`/`is-a`, page IRIs minted as `urn:ontomark:page:<path>`) and `ontomark-model`'s `generic/1` (exact OWL kind names, CURIE keys only, no implicit identity) are different languages. A `Model` built from the engine's documents with `generic/1` indexes nothing in an ordinary vault. The fix is the explicit mapping EXP-10 always required: each engine `Profile` now also implements `ontomark_model::Profile`, reading a vault by exactly the engine's grammar, and ingest builds its `Model` through that bridge. `crates/ontomark-wasm/tests/profile_parity.rs` asserts the engine projection and the typed model index the same `(IRI, label)` set over the fixture vault under both profiles. The engine's own axioms still come from its projection; replacing that remains gated on whole-transcript parity.
+
+To let a profile derive identity from the note's path without breaking the published model crate, `ontomark_model::Profile` gained one additive method, `identity_for(id, doc)`, defaulting to `identity(doc)`. The declarative profiles do not override it, so `generic/1` and the estate still never mint implicitly.
+
+**Keys are offered by kind.** `plan` now filters the profile's predicates by the note's kind using the model's own subject rules (`contract::applies_to`): a class is never offered `instance-of`, an individual never `subclass-of`, a property only its hierarchy. `accept` recomputes the same list, so a hand-built request cannot widen it. The engine bridge declares `domain` and `range` as annotations (the typed model has no property-axiom form), so a class note is still offered them; the engine's projection reads them itself, and a future property-axiom form in the model removes the looseness.
+
+Deviations between the bridge and the engine projection, recorded rather than hidden: the engine reads a `subclass-of` key on an individual as a type assertion; the bridge declares the key as `SubClassOf`, so on an individual the model rejects it with a diagnostic (the fixture vault's individuals use `instance-of`, so parity holds). A `type` value that names no kind is an ordinary note on both sides.

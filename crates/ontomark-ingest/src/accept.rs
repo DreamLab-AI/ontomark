@@ -238,7 +238,7 @@ pub(crate) fn accept(
     {
         return Err(IngestError::RequestMismatch { field: "note" });
     }
-    if key_specs(profile, doc) != request.keys {
+    if key_specs(profile, doc, entity.kind) != request.keys {
         return Err(IngestError::RequestMismatch { field: "keys" });
     }
     if chunk_document(doc, options.min_chunk_chars, options.max_chunk_chars) != request.chunks {

@@ -66,6 +66,15 @@ fn replay() -> Vec<String> {
             let path = step["path"].as_str().unwrap();
             step["base_digest"] = json!(SourceDigest::of(&files[path]).to_string());
         }
+        // `@plan:N` feeds step N's `ingest_plan` result back as the request.
+        if let Some(n) = step["request"]
+            .as_str()
+            .and_then(|s| s.strip_prefix("@plan:"))
+            .and_then(|n| n.parse::<usize>().ok())
+        {
+            let planned: Value = serde_json::from_str(&lines[n]).unwrap();
+            step["request"] = planned["result"]["request"].clone();
+        }
         let line = engine.handle_json(&step.to_string());
         let ok = serde_json::from_str::<Value>(&line).unwrap()["ok"] == true;
         if ok {

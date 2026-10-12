@@ -1,9 +1,12 @@
 //! Documents → entities, asserted triples and EL axioms.
 //!
 //! This is the engine's document adapter (see [`crate::profile`]). Compiler
-//! 0.1.3 provides a separate typed in-memory projection. Adopting it here
-//! requires explicit profile mapping and native/WASM wire parity (EXP-10);
-//! the released engine's identity defaults remain unchanged.
+//! 0.1.3 provides a separate typed in-memory projection. The profile mapping
+//! EXP-10 requires now exists ([`crate::profile`] implements
+//! `ontomark_model::Profile`) and assisted ingest reads the vault through it;
+//! adopting the typed projection for the engine's own axioms still needs
+//! native/WASM wire parity over the whole transcript. The released engine's
+//! identity defaults remain unchanged.
 //!
 //! Rules that hold whatever replaces this module:
 //!

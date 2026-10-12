@@ -479,7 +479,7 @@ impl Model {
             }
             KindDecision::Entity(k) => k,
         };
-        match profile.identity(doc) {
+        match profile.identity_for(id, doc) {
             IdentityDecision::Missing => {
                 self.diag(
                     Severity::Warning,

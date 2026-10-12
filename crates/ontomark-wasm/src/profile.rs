@@ -2,9 +2,18 @@
 //!
 //! The normative typed model belongs to `ontomark-model`; compiler 0.1.3
 //! provides an opt-in `model-projection` API. This module retains the engine's
-//! released document-profile semantics. Replacing it requires explicit
-//! generic/estate profile mapping and native/WASM wire parity (EXP-10);
-//! availability of the compiler API alone does not complete that migration.
+//! released document-profile semantics for the engine's own projection.
+//!
+//! The explicit mapping EXP-10 asks for exists here for one consumer: each
+//! engine [`Profile`] also implements [`ontomark_model::Profile`], reading a
+//! vault by exactly the engine's grammar (case-insensitive kinds, `owl:`
+//! prefix stripping, page IRIs minted from the path when the profile allows a
+//! page without one). Assisted ingest ([`ontomark_ingest`]) builds its
+//! [`ontomark_model::Model`] through that bridge, so the vocabulary a model is
+//! offered is the set of entities the engine itself indexes
+//! (`tests/profile_parity.rs` proves the identity sets equal over the fixture
+//! vault). The engine's own axioms still come from [`crate::projection`];
+//! replacing that needs native/WASM wire parity over the whole transcript.
 //!
 //! Two profiles exist. [`ProfileId::Generic`] is the default and works on any
 //! vault: a page is an ontology entity only when its `type` says so, and only
@@ -12,7 +21,17 @@
 //! estate corpus grammar (`resource` IRIs, `public` gate, `is-a` relations)
 //! and is selected explicitly (EXP-05).
 
+use std::sync::OnceLock;
+
+use ontomark_model::{
+    DocId, IdentityDecision, Iri, KindDecision, Lifecycle, LifecycleDef, PredicateDef,
+    PredicateForm, PrefixMap, PropertyKind,
+};
+use ontomark_parse::{Document, Value};
 use serde::{Deserialize, Serialize};
+
+use crate::projection::PAGE_IRI_PREFIX;
+use crate::text::pct_encode_path;
 
 /// A profile identifier as it appears on the wire and in plugin settings.
 #[derive(
@@ -154,6 +173,181 @@ static ESTATE: Profile = Profile {
     range_keys: &["range"],
     subproperty_keys: &["subproperty-of"],
 };
+
+const RDFS: &str = "http://www.w3.org/2000/01/rdf-schema#";
+const RDF_TYPE: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+const OWL: &str = "http://www.w3.org/2002/07/owl#";
+
+static PREFIXES: OnceLock<PrefixMap> = OnceLock::new();
+
+fn def(key: &str, iri: String, form: PredicateForm) -> PredicateDef {
+    PredicateDef {
+        key: key.to_owned(),
+        iri: Iri::parse(iri).expect("constant predicate IRI"),
+        form,
+        datatype: None,
+        domain: None,
+        range: None,
+        transitive: false,
+    }
+}
+
+impl Profile {
+    /// The relation keys this profile reads, each with the predicate it
+    /// asserts, in a fixed order. `domain` and `range` are declared as
+    /// annotations: the typed model has no property-axiom form for them, and
+    /// the engine's projection reads them itself.
+    fn relation_keys(&self) -> impl Iterator<Item = (&'static str, String, PredicateForm)> + '_ {
+        let groups: [(&'static [&'static str], String, PredicateForm); 7] = [
+            (
+                self.subclass_keys,
+                format!("{RDFS}subClassOf"),
+                PredicateForm::SubClassOf,
+            ),
+            (
+                self.equivalent_keys,
+                format!("{OWL}equivalentClass"),
+                PredicateForm::EquivalentClass,
+            ),
+            (
+                self.disjoint_keys,
+                format!("{OWL}disjointWith"),
+                PredicateForm::DisjointWith,
+            ),
+            (
+                self.instance_keys,
+                RDF_TYPE.to_owned(),
+                PredicateForm::ClassAssertion,
+            ),
+            (
+                self.subproperty_keys,
+                format!("{RDFS}subPropertyOf"),
+                PredicateForm::SubPropertyOf,
+            ),
+            (
+                self.domain_keys,
+                format!("{RDFS}domain"),
+                PredicateForm::Annotation,
+            ),
+            (
+                self.range_keys,
+                format!("{RDFS}range"),
+                PredicateForm::Annotation,
+            ),
+        ];
+        groups
+            .into_iter()
+            .flat_map(|(keys, iri, form)| keys.iter().map(move |k| (*k, iri.clone(), form)))
+    }
+
+    /// The engine's minted page IRI for a note without an authored one.
+    fn minted(id: &DocId) -> IdentityDecision {
+        let text = format!("{PAGE_IRI_PREFIX}{}", pct_encode_path(id.as_str()));
+        match Iri::parse(text) {
+            Ok(iri) => IdentityDecision::Iri(iri),
+            Err(e) => IdentityDecision::Invalid(e.to_string()),
+        }
+    }
+}
+
+/// The engine grammar as a typed-model profile (EXP-10 mapping). See the
+/// module documentation.
+impl ontomark_model::Profile for Profile {
+    fn id(&self) -> &str {
+        match self.id {
+            ProfileId::Generic => "engine-generic/1",
+            ProfileId::Estate => "engine-estate/1",
+        }
+    }
+
+    fn prefixes(&self) -> &PrefixMap {
+        PREFIXES.get_or_init(PrefixMap::standard)
+    }
+
+    /// A page is an entity only when its type names a kind; any other type
+    /// value is an ordinary note, as the engine treats it (never refused).
+    fn kind(&self, doc: &Document) -> KindDecision {
+        let Some(value) = doc.value(self.type_key) else {
+            return KindDecision::NotOntology;
+        };
+        match value.scalar_text().and_then(|t| self.kind_of(&t)) {
+            Some(Kind::Class) => KindDecision::Entity(ontomark_model::Kind::Class),
+            Some(Kind::Individual) => KindDecision::Entity(ontomark_model::Kind::Individual),
+            Some(Kind::Property) => {
+                KindDecision::Entity(ontomark_model::Kind::Property(PropertyKind::Object))
+            }
+            None => KindDecision::NotOntology,
+        }
+    }
+
+    fn identity(&self, doc: &Document) -> IdentityDecision {
+        match doc.value(self.iri_key) {
+            None | Some(Value::Null) => IdentityDecision::Missing,
+            Some(Value::String(s)) => match Iri::parse(s.trim()) {
+                Ok(iri) => IdentityDecision::Iri(iri),
+                Err(e) => IdentityDecision::Invalid(e.to_string()),
+            },
+            Some(v) => IdentityDecision::Invalid(format!("identity is a {}", v.type_name())),
+        }
+    }
+
+    /// Authored IRIs verbatim; otherwise the engine's `urn:ontomark:page:`
+    /// IRI, unless the profile requires an authored one (estate).
+    fn identity_for(&self, id: &DocId, doc: &Document) -> IdentityDecision {
+        match self.identity(doc) {
+            IdentityDecision::Missing if !self.require_iri => Self::minted(id),
+            other => other,
+        }
+    }
+
+    fn label(&self, id: &DocId, doc: &Document) -> String {
+        doc.value(self.label_key)
+            .and_then(Value::scalar_text)
+            .filter(|t| !t.trim().is_empty())
+            .unwrap_or_else(|| id.name().to_owned())
+    }
+
+    fn aliases(&self, doc: &Document) -> Vec<String> {
+        doc.value(self.alias_key)
+            .map(Value::texts)
+            .unwrap_or_default()
+    }
+
+    fn is_public(&self, doc: &Document) -> bool {
+        match self.gate_key {
+            None => true,
+            Some(key) => matches!(doc.value(key), Some(Value::Bool(true))),
+        }
+    }
+
+    fn lifecycle(&self, _doc: &Document) -> Lifecycle {
+        Lifecycle::Absent
+    }
+
+    fn lifecycle_def(&self, _status: &str) -> Option<&LifecycleDef> {
+        None
+    }
+
+    fn predicate(&self, key: &str) -> Option<PredicateDef> {
+        self.relation_keys()
+            .find(|(k, _, _)| *k == key)
+            .map(|(k, iri, form)| def(k, iri, form))
+    }
+
+    fn predicates(&self) -> Vec<PredicateDef> {
+        self.relation_keys()
+            .map(|(k, iri, form)| def(k, iri, form))
+            .collect()
+    }
+
+    fn is_reserved(&self, key: &str) -> bool {
+        key == self.type_key
+            || key == self.iri_key
+            || key == self.label_key
+            || key == self.alias_key
+            || self.gate_key == Some(key)
+    }
+}
 
 #[cfg(test)]
 mod tests {

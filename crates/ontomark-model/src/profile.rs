@@ -158,6 +158,13 @@ pub trait Profile {
     fn kind(&self, doc: &Document) -> KindDecision;
     /// The page's stored identity.
     fn identity(&self, doc: &Document) -> IdentityDecision;
+    /// The page's identity given its note id as well. The model calls this;
+    /// the default ignores `id` and defers to [`Self::identity`]. A profile
+    /// that derives identity from the note's path (an engine that mints page
+    /// IRIs, EXP-10) overrides it. The declarative profiles never do.
+    fn identity_for(&self, _id: &DocId, doc: &Document) -> IdentityDecision {
+        self.identity(doc)
+    }
     /// The page's display label.
     fn label(&self, id: &DocId, doc: &Document) -> String;
     /// The page's aliases.

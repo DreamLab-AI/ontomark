@@ -101,11 +101,28 @@ fn xsd_string() -> Iri {
     Iri::parse("http://www.w3.org/2001/XMLSchema#string").expect("constant IRI")
 }
 
-pub(crate) fn key_specs(profile: &dyn Profile, doc: &Document) -> Vec<KeySpec> {
+/// Whether a predicate form can be asserted on a page of `kind`, mirroring
+/// `ontomark-model`'s own subject rules: subsumption, equivalence and
+/// disjointness need a class; class assertion, `sameAs` and object assertion
+/// need an individual; an existential is a restriction on a class and an
+/// object assertion on an individual; sub-property needs a property; data
+/// assertions and annotations apply anywhere.
+pub(crate) fn applies_to(form: PredicateForm, kind: Kind) -> bool {
+    use PredicateForm as F;
+    match form {
+        F::SubClassOf | F::EquivalentClass | F::DisjointWith => kind == Kind::Class,
+        F::ClassAssertion | F::SameAs | F::ObjectAssertion => kind == Kind::Individual,
+        F::Existential => matches!(kind, Kind::Class | Kind::Individual),
+        F::SubPropertyOf => matches!(kind, Kind::Property(_)),
+        F::DataAssertion | F::Annotation | F::Skos(_) => true,
+    }
+}
+
+pub(crate) fn key_specs(profile: &dyn Profile, doc: &Document, kind: Kind) -> Vec<KeySpec> {
     profile
         .predicates()
         .into_iter()
-        .filter(|p| !profile.is_reserved(&p.key))
+        .filter(|p| !profile.is_reserved(&p.key) && applies_to(p.form, kind))
         .map(|p| {
             let value = match p.form {
                 PredicateForm::DataAssertion => ValueKind::Literal {
@@ -168,7 +185,7 @@ pub(crate) fn plan(
         .ok_or_else(|| IngestError::NotAnEntity {
             document: id.clone(),
         })?;
-    let keys = key_specs(profile, doc);
+    let keys = key_specs(profile, doc, entity.kind);
     if keys.is_empty() {
         return Err(IngestError::NoAssertionKeys {
             profile: profile.id().to_owned(),
@@ -190,4 +207,35 @@ pub(crate) fn plan(
         chunks,
         response_schema,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ontomark_model::PropertyKind;
+
+    #[test]
+    fn forms_are_offered_only_where_they_can_be_asserted() {
+        use PredicateForm as F;
+        assert!(applies_to(F::SubClassOf, Kind::Class));
+        assert!(!applies_to(F::ClassAssertion, Kind::Class));
+        assert!(applies_to(F::ClassAssertion, Kind::Individual));
+        assert!(!applies_to(F::SubClassOf, Kind::Individual));
+        assert!(applies_to(
+            F::SubPropertyOf,
+            Kind::Property(PropertyKind::Object)
+        ));
+        assert!(!applies_to(
+            F::SubClassOf,
+            Kind::Property(PropertyKind::Object)
+        ));
+        for k in [
+            Kind::Class,
+            Kind::Individual,
+            Kind::Property(PropertyKind::Data),
+        ] {
+            assert!(applies_to(F::Annotation, k));
+            assert!(applies_to(F::DataAssertion, k));
+        }
+    }
 }

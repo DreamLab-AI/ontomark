@@ -1,6 +1,6 @@
 [package]
 name = "ontomark-wasm"
-description = "Portable ontomark engine for hosts such as the Obsidian plugin: vault index, generation-guarded classification, local read-only SPARQL and guarded Markdown patch proposals, with a wasm-bindgen surface"
+description = "Portable ontomark engine for hosts such as the Obsidian plugin: vault index, generation-guarded classification, local read-only SPARQL, guarded Markdown patch proposals and assisted-ingest plan/accept, with a wasm-bindgen surface"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -16,6 +16,8 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 ontomark-parse = { workspace = true, features = ["serde"] }
 ontomark-reason = { path = "../ontomark-reason", version = "0.1.1" }
+ontomark-model = { workspace = true }
+ontomark-ingest = { workspace = true }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

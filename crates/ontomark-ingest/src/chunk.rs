@@ -7,8 +7,10 @@
 //! sections are joined until the chunk reaches the minimum size, so one
 //! chunk may cover several sections but a section is never split across
 //! chunks unless it alone exceeds the maximum, when it splits at paragraph,
-//! then line, boundaries. `#` lines inside fenced code are not headings; an
-//! oversize split may fall inside a fence.
+//! then line, boundaries. `#` lines inside fenced code are not headings, and
+//! fenced code is never cut: a split that would fall inside a fence moves to
+//! the fence's edge, and a fence that alone exceeds the maximum is emitted
+//! whole as one oversize chunk.
 //!
 //! Every chunk's `text` is the exact byte slice of the document named by its
 //! `span`, so evidence found in a chunk maps back to the source without
@@ -192,12 +194,46 @@ fn merge(
     out
 }
 
+/// Byte ranges of the fenced blocks in `text`, each from the opening fence
+/// line through its closing line. An unterminated fence runs to the end.
+fn fence_ranges(text: &str) -> Vec<(usize, usize)> {
+    let mut out = Vec::new();
+    let mut open: Option<(char, usize, usize)> = None;
+    let mut offset = 0usize;
+    for line in text.split_inclusive('\n') {
+        let raw = line.trim_end_matches(['\n', '\r']);
+        match open {
+            Some((mark, n, from)) => {
+                let t = raw.trim();
+                if t.chars().count() >= n && t.chars().all(|c| c == mark) {
+                    out.push((from, offset + line.len()));
+                    open = None;
+                }
+            }
+            None => {
+                if let Some((mark, n)) = fence(raw) {
+                    open = Some((mark, n, offset));
+                }
+            }
+        }
+        offset += line.len();
+    }
+    if let Some((_, _, from)) = open {
+        out.push((from, text.len()));
+    }
+    out
+}
+
 /// Split one unit over `max` characters at blank lines, then line ends, then
-/// a character boundary. Offsets are relative to `text`.
+/// a character boundary, never inside a fenced block. A cut that would land
+/// in a fence moves back to the fence's start, or, when the piece already
+/// begins at the fence, forward to its end, so a fence longer than `max`
+/// stands whole. Offsets are relative to `text`.
 fn split_oversize(text: &str, max: usize) -> Vec<(usize, usize)> {
     if text.chars().count() <= max {
         return vec![(0, text.len())];
     }
+    let fences = fence_ranges(text);
     let mut pieces = Vec::new();
     let mut start = 0usize;
     let mut remaining = text.chars().count();
@@ -214,9 +250,15 @@ fn split_oversize(text: &str, max: usize) -> Vec<(usize, usize)> {
             .map(|i| i + 2)
             .or_else(|| window.rfind('\n').map(|i| i + 1))
             .unwrap_or(limit);
-        pieces.push((start, start + cut));
-        remaining -= window[..cut].chars().count();
-        start += cut;
+        let at = start + cut;
+        let end = match fences.iter().find(|(f, e)| *f < at && at < *e) {
+            Some(&(f, _)) if f > start => f,
+            Some(&(_, e)) => e,
+            None => at,
+        };
+        pieces.push((start, end));
+        remaining -= text[start..end].chars().count();
+        start = end;
     }
     // A piece that is only whitespace joins its neighbour rather than
     // standing as a chunk with nothing to quote.
@@ -361,6 +403,77 @@ mod tests {
         check_invariants(&d, &c);
         assert_eq!(c.len(), 3);
         assert_eq!(c.iter().map(|c| c.text.chars().count()).sum::<usize>(), 25);
+    }
+
+    fn assert_no_cut_fence(_d: &Document, c: &[Chunk]) {
+        for ch in c {
+            let ticks = ch
+                .text
+                .lines()
+                .filter(|l| l.trim_start().starts_with("```"))
+                .count();
+            assert_eq!(ticks % 2, 0, "fence cut in {:?}", ch.text);
+        }
+    }
+
+    #[test]
+    fn short_fence_straddling_a_cut_is_kept_whole() {
+        let code = "```\nlet a = 1;\n\nlet b = 2;\n```\n"; // 31 chars
+        let d = doc(&format!("{}\n\n{code}tail\n", "p".repeat(30)));
+        let c = chunk_document(&d, 1, 40);
+        check_invariants(&d, &c);
+        assert_no_cut_fence(&d, &c);
+        assert!(c.iter().any(|ch| ch.text.contains(code)), "{c:#?}");
+        assert!(c.len() >= 2);
+    }
+
+    #[test]
+    fn fence_longer_than_limit_is_one_oversize_chunk() {
+        let code = format!("```\n{}\n\n{}\n```\n", "x".repeat(40), "y".repeat(40));
+        let d = doc(&format!("before\n\n{code}after\n"));
+        let c = chunk_document(&d, 1, 30);
+        check_invariants(&d, &c);
+        assert_no_cut_fence(&d, &c);
+        let big: Vec<_> = c.iter().filter(|ch| ch.text.contains("```")).collect();
+        assert_eq!(big.len(), 1);
+        assert!(big[0].text.contains(&code));
+        assert!(big[0].text.chars().count() > 30);
+        assert_eq!(c.first().unwrap().text, "before\n\n");
+        assert_eq!(
+            c.iter().map(|ch| ch.text.len()).sum::<usize>(),
+            d.body().len()
+        );
+    }
+
+    #[test]
+    fn tilde_lines_inside_a_backtick_fence_do_not_close_it() {
+        let code = "```\n~~~\nnot closed\n\n~~~\n```\n";
+        let d = doc(&format!("{code}{}\n", "z".repeat(20)));
+        let c = chunk_document(&d, 1, 20);
+        check_invariants(&d, &c);
+        assert_eq!(c[0].text, code);
+        assert_eq!(c.len(), 2);
+    }
+
+    #[test]
+    fn unterminated_fence_runs_to_end_of_text() {
+        let code = format!("```\n{}\n\n{}\n", "a".repeat(30), "b".repeat(30));
+        let d = doc(&format!("intro\n\n{code}"));
+        let c = chunk_document(&d, 1, 25);
+        check_invariants(&d, &c);
+        assert_eq!(c.len(), 2);
+        assert_eq!(c[0].text, "intro\n\n");
+        assert_eq!(c[1].text, code);
+    }
+
+    #[test]
+    fn fence_aware_split_is_deterministic_and_counts_characters() {
+        let code = "```\né é é\n\né é é\n```\n";
+        let d = doc(&format!("{}\n\n{code}", "é".repeat(20)));
+        assert_eq!(chunk_document(&d, 1, 25), chunk_document(&d, 1, 25));
+        let c = chunk_document(&d, 1, 25);
+        check_invariants(&d, &c);
+        assert!(c.iter().any(|ch| ch.text == code));
     }
 
     #[test]

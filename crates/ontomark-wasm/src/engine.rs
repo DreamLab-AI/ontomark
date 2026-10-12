@@ -16,6 +16,8 @@
 
 use std::collections::BTreeMap;
 
+use ontomark_ingest::{Ingest, IngestError, ModelRequest, ModelResponse, Options as IngestOptions};
+use ontomark_model::{DocId, Model};
 use ontomark_parse::{Document, Patch, PatchOp};
 use oxrdf::vocab::{rdf, rdfs};
 use oxrdf::{NamedNode, NamedOrBlankNode, Term, Triple};
@@ -152,6 +154,32 @@ pub enum Request {
         /// Operations (the `ontomark-parse` wire form).
         ops: Vec<PatchOp>,
     },
+    /// Plan an assisted-ingest request for one note (ADR-OM-003). Pure: the
+    /// host sends the result to a model it controls; the engine never does.
+    IngestPlan {
+        /// Current generation.
+        generation: u64,
+        /// Path.
+        path: String,
+        /// Ingest options; the crate defaults when absent.
+        #[serde(default)]
+        options: Option<IngestOptions>,
+    },
+    /// Turn a model's responses to an `ingest_plan` request into guarded
+    /// candidates and, when anything was accepted, a proven patch preview.
+    IngestAccept {
+        /// Current generation.
+        generation: u64,
+        /// Path.
+        path: String,
+        /// The request `ingest_plan` returned, unchanged.
+        request: Box<ModelRequest>,
+        /// The model's responses, one per chunk answered.
+        responses: Vec<ModelResponse>,
+        /// The options `ingest_plan` was given.
+        #[serde(default)]
+        options: Option<IngestOptions>,
+    },
     /// Engine and reasoner identity.
     Version,
 }
@@ -196,6 +224,8 @@ pub struct Engine {
     classified: Option<Classified>,
     /// Query stores built for this generation, keyed by (selection, named graphs).
     datasets: Vec<(DatasetSelection, bool, Store)>,
+    /// The typed model for this generation (ingest vocabulary), built on demand.
+    model: Option<Model>,
 }
 
 impl Default for Engine {
@@ -223,6 +253,7 @@ impl Engine {
             run: None,
             classified: None,
             datasets: Vec::new(),
+            model: None,
         }
     }
 
@@ -304,6 +335,7 @@ impl Engine {
                 "version": env!("CARGO_PKG_VERSION"),
                 "reasoner": self.reasoner.info(),
                 "profiles": [ProfileId::Generic, ProfileId::Estate],
+                "ingest": { "contract": ontomark_ingest::CONTRACT, "requests": ["ingest_plan", "ingest_accept"] },
             })),
             Request::Index { generation } => self.read(generation, Self::index),
             Request::Describe { generation, iri } => self.read(generation, |e| e.describe(&iri)),
@@ -337,6 +369,20 @@ impl Engine {
                 base_digest,
                 ops,
             } => self.read(generation, |e| e.propose(&path, &base_digest, ops)),
+            Request::IngestPlan {
+                generation,
+                path,
+                options,
+            } => self.read(generation, |e| e.ingest_plan(&path, options)),
+            Request::IngestAccept {
+                generation,
+                path,
+                request,
+                responses,
+                options,
+            } => self.read(generation, |e| {
+                e.ingest_accept(&path, &request, &responses, options)
+            }),
         }
     }
 
@@ -366,6 +412,18 @@ impl Engine {
         self.run = None;
         self.classified = None;
         self.datasets.clear();
+        self.model = None;
+    }
+
+    /// The typed model of this generation, read through the engine profile's
+    /// [`ontomark_model::Profile`] bridge so it indexes exactly the engine's
+    /// entities (EXP-10).
+    fn ensure_model(&mut self) {
+        if self.model.is_none() {
+            let profile: &'static crate::profile::Profile = self.profile.profile();
+            let docs = self.docs.iter().map(|(p, d)| (DocId::new(p), d));
+            self.model = Some(Model::build(profile, docs));
+        }
     }
 
     fn mutate(&mut self, generation: u64, f: impl FnOnce(&mut Self)) -> Response {
@@ -669,6 +727,86 @@ impl Engine {
             "no_op": applied.receipt.edits.is_empty(),
         }))
     }
+}
+
+impl Engine {
+    fn ingest_plan(
+        &mut self,
+        path: &str,
+        options: Option<IngestOptions>,
+    ) -> Result<Json, WireError> {
+        self.ensure_model();
+        let doc = self
+            .docs
+            .get(path)
+            .ok_or_else(|| wire("not_found", format!("no document {path}")))?;
+        let model = self
+            .model
+            .as_ref()
+            .unwrap_or_else(|| unreachable!("ensured just above"));
+        let profile: &'static crate::profile::Profile = self.profile.profile();
+        let ingest = Ingest::new(profile, model, options.unwrap_or_default());
+        let request = ingest.plan(&DocId::new(path), doc).map_err(ingest_wire)?;
+        Ok(json!({ "path": path, "digest": doc.digest().to_string(), "request": request }))
+    }
+
+    fn ingest_accept(
+        &mut self,
+        path: &str,
+        request: &ModelRequest,
+        responses: &[ModelResponse],
+        options: Option<IngestOptions>,
+    ) -> Result<Json, WireError> {
+        self.ensure_model();
+        let doc = self
+            .docs
+            .get(path)
+            .ok_or_else(|| wire("not_found", format!("no document {path}")))?;
+        let model = self
+            .model
+            .as_ref()
+            .unwrap_or_else(|| unreachable!("ensured just above"));
+        let profile: &'static crate::profile::Profile = self.profile.profile();
+        let ingest = Ingest::new(profile, model, options.unwrap_or_default());
+        let candidates = ingest
+            .accept(doc, request, responses)
+            .map_err(ingest_wire)?;
+        // The crate already applied the patch once in memory to prove it;
+        // applying it again here gives the host the same preview shape as
+        // `propose_patch` without a second round trip.
+        let preview = match &candidates.patch {
+            None => Json::Null,
+            Some(patch) => {
+                let applied = doc
+                    .apply(patch)
+                    .map_err(|e| wire("patch_refused", e.to_string()))?;
+                let new_text = applied.document.source();
+                json!({
+                    "base_text": doc.source(),
+                    "new_text": new_text,
+                    "new_digest": applied.receipt.after.to_string(),
+                    "diff": unified_diff(path, doc.source(), new_text),
+                    "edits": applied.receipt.edits,
+                })
+            }
+        };
+        Ok(json!({ "path": path, "candidates": candidates, "preview": preview }))
+    }
+}
+
+/// Stable wire codes for the ingest crate's errors. Anything the model got
+/// wrong is inside `candidates.withheld`, not here.
+fn ingest_wire(e: IngestError) -> WireError {
+    let code = match &e {
+        IngestError::NotAnEntity { .. } => "not_an_entity",
+        IngestError::NoAssertionKeys { .. } => "no_assertion_keys",
+        IngestError::StaleRevision { .. } => "stale_base",
+        IngestError::ContractMismatch { .. } => "contract_mismatch",
+        IngestError::RequestMismatch { .. } => "request_mismatch",
+        IngestError::UnknownChunk { .. } => "unknown_chunk",
+        IngestError::Patch(_) => "patch_refused",
+    };
+    wire(code, e.to_string())
 }
 
 fn wire(code: &str, message: impl Into<String>) -> WireError {
