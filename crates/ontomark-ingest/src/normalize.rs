@@ -5,11 +5,16 @@
 //! two sides of every comparison must agree on what counts as "the same
 //! string", so this module is the single source for that rule.
 
-use unicode_normalization::char::is_combining_mark;
+use unicode_general_category::{get_general_category, GeneralCategory};
 use unicode_normalization::UnicodeNormalization;
 
-/// Normalise free text for matching: NFD, combining marks dropped, `_` and
-/// `-` read as spaces, lower-cased, whitespace collapsed and trimmed.
+/// Normalise free text for matching: NFD, non-spacing marks (category `Mn`)
+/// dropped, `_` and `-` read as spaces, lower-cased, whitespace collapsed
+/// and trimmed.
+///
+/// Only `Mn` is dropped, as upstream does: spacing marks (`Mc`) such as
+/// Indic vowel signs carry meaning and stay, so `किताब` and `कताब` remain
+/// distinct.
 ///
 /// ```
 /// # use ontomark_ingest::normalize::normalize_text;
@@ -19,7 +24,7 @@ use unicode_normalization::UnicodeNormalization;
 pub fn normalize_text(text: &str) -> String {
     let folded: String = text
         .nfd()
-        .filter(|c| !is_combining_mark(*c))
+        .filter(|c| get_general_category(*c) != GeneralCategory::NonspacingMark)
         .map(|c| if c == '_' || c == '-' { ' ' } else { c })
         .collect();
     let lower = folded.to_lowercase();
@@ -89,6 +94,17 @@ pub fn label_tokens(label: &str) -> Vec<&str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_nonspacing_marks_are_dropped() {
+        // Mn: the acute on é goes.
+        assert_eq!(normalize_text("Café"), "cafe");
+        // Mc: the Devanagari vowel sign i (U+093F) is a spacing mark and
+        // stays, so these two words do not collapse into one.
+        assert_ne!(normalize_text("किताब"), normalize_text("कताब"));
+        // Mn: the virama (U+094D) goes, as upstream.
+        assert_eq!(normalize_text("क्"), "क");
+    }
 
     #[test]
     fn diacritics_case_and_separators_fold() {

@@ -22,6 +22,7 @@ indexmap = { workspace = true }
 strsim = "0.11"
 # NFD decomposition for diacritic folding in label normalisation (MIT OR Apache-2.0).
 unicode-normalization = { version = "0.1", default-features = false }
+unicode-general-category = "1.1"
 
 [lints]
 workspace = true

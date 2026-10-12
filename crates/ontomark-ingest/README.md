@@ -78,6 +78,10 @@ A `ModelRequest` is plain, serialisable data:
 
 - **Stale revisions are refused.** If the note changed since `plan`, the
   result is `IngestError::StaleRevision`, not a patch against the wrong bytes.
+- **Only `plan`'s own request is accepted.** Keys, chunks and the note
+  reference are recomputed from the note and must equal the request
+  (`IngestError::RequestMismatch`), so a request altered by the host cannot
+  name a key the profile does not grant or a span outside the note.
 - **Names are grounded, never trusted.** Following SPIRES, the model gives
   names; the core resolves them against the vault's labels, aliases and note
   names, then the lexical tiers adapted from OntoCast's merge guards (exact,
@@ -88,12 +92,23 @@ A `ModelRequest` is plain, serialisable data:
   suggestions for the host to re-prompt with.
 - **Every accepted value has evidence.** The model's quote is located in the
   chunk (exactly, then whitespace-collapsed, then ASCII case-insensitively)
-  and reported as a byte span and a UTF-16 span. No quote, no value.
+  and reported as a byte span and a UTF-16 span, and it has to mention the
+  value: the proposed name or a name of the grounded entity, or the literal
+  as proposed or as written (`EvidenceDoesNotMention` otherwise). No quote,
+  no value; a one-letter quote licenses nothing.
+- **The link written resolves back to the entity.** The bare note name is
+  used when it resolves to the grounded entity alone, else the vault path
+  (`[[a/Twin]]`); if neither does, the value is `Unlinkable`. Candidates are
+  keyed by IRI, so two entities sharing a note name never merge and a re-run
+  finds the link already present.
 - **Deterministic checks guard the write.** Literals are checked against
   their XSD datatype after trimming, unquoting and removing thousands
-  separators (each repair is a diagnostic). A grounded entity must have the
-  kind the predicate form needs. Self-references, values already present and
-  a differing single value on a data key are withheld with the reason.
+  separators, only where every comma groups three digits so `3,5` is refused
+  rather than read as `35` (each repair is a diagnostic). A grounded entity
+  must have the kind the predicate form needs. Self-references, values
+  already present, a differing single value on a data key, and several
+  differing values proposed for one single-valued key (`CompetingValues`)
+  are withheld with the reason. A key present with no value counts as absent.
 - **One patch, already proven.** Accepted values become one
   `ontomark_parse::Patch` bound to the digest, keys in profile order,
   existing lists extended rather than replaced. The patch is applied once in

@@ -37,6 +37,14 @@ pub enum IngestError {
         /// The request's contract.
         found: String,
     },
+    /// A field of the request does not match what `plan` produces for this
+    /// note with this profile and options, so the request was altered or
+    /// built by hand. Only `plan`'s output is accepted.
+    #[error("request {field} do not match what plan produces for this note")]
+    RequestMismatch {
+        /// Which part disagreed: `note`, `keys` or `chunks`.
+        field: &'static str,
+    },
     /// A response names a chunk the request does not have.
     #[error("response names chunk {chunk} but the request has {count}")]
     UnknownChunk {

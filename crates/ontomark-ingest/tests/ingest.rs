@@ -1,11 +1,11 @@
 //! The plan/accept contract end to end, over a small synthetic vault.
 
 use ontomark_ingest::{
-    AliasTier, Candidates, Grounding, Ingest, IngestError, ModelRequest, ModelResponse, Options,
-    ProposedAssertion, ValueKind, WithholdReason, CONFIDENCE, CONTRACT, METHOD,
+    AliasTier, Candidates, Grounding, Ingest, IngestError, KeySpec, ModelRequest, ModelResponse,
+    Options, ProposedAssertion, ValueKind, WithholdReason, CONFIDENCE, CONTRACT, METHOD,
 };
-use ontomark_model::{DeclarativeProfile, DocId, Iri, Kind, Model, ProfileSpec};
-use ontomark_parse::{Document, Value};
+use ontomark_model::{DeclarativeProfile, DocId, Iri, Kind, Model, PredicateForm, ProfileSpec};
+use ontomark_parse::{Document, Span, Value};
 
 const XSD: &str = "http://www.w3.org/2001/XMLSchema#";
 
@@ -20,6 +20,7 @@ fn profile() -> DeclarativeProfile {
             "part-of": {{ "iri": "urn:x:partOf", "form": "existential" }},
             "founded": {{ "iri": "urn:x:founded", "form": "data_assertion", "datatype": "{XSD}date" }},
             "population": {{ "iri": "urn:x:population", "form": "data_assertion", "datatype": "{XSD}integer" }},
+            "weight": {{ "iri": "urn:x:weight", "form": "data_assertion", "datatype": "{XSD}decimal" }},
             "note": {{ "iri": "urn:x:note", "form": "annotation" }}
         }},
         "reserved": ["tags", "colour"]
@@ -43,7 +44,11 @@ impl Vault {
         };
         Self {
             docs: vec![
-                page("Graph", "type: Class\niri: urn:x:Graph", ""),
+                page(
+                    "Graph",
+                    "type: Class\niri: urn:x:Graph\nfounded: 2001-01-01",
+                    "Founded on 2002-02-02.\n",
+                ),
                 page("Thing", "type: Class\niri: urn:x:Thing", ""),
                 page(
                     "Knowledge graph",
@@ -62,7 +67,16 @@ impl Vault {
                 page(
                     "Lab",
                     "type: NamedIndividual\niri: urn:x:Lab",
-                    "# People\nRun by Baranov D. since 2020.\n\n# Place\nThe lab is part of Company U.\n",
+                    "# People\nRun by Baranov D. since 2020.\n\n# Place\nThe lab is part of Company U. Baranov D. founded it.\n",
+                ),
+                // Two notes sharing a name: a bare [[Twin]] is ambiguous.
+                page("a/Twin", "type: NamedIndividual\niri: urn:x:A\naliases:\n- Alpha", ""),
+                page("b/Twin", "type: NamedIndividual\niri: urn:x:B\naliases:\n- Beta", ""),
+                // Keys present with no value.
+                page(
+                    "Site",
+                    "type: NamedIndividual\niri: urn:x:Site\npart-of:\nfounded:",
+                    "Opened 2021-05-05. Hosted by Alpha and Beta. Weighs 3.5 or 4.5 tonnes.\n",
                 ),
                 page("Plain note", "tags: [x]", "Nothing ontological here.\n"),
             ],
@@ -117,7 +131,10 @@ fn plan_describes_keys_chunks_and_revision() {
     assert_eq!(req.note.kind, Kind::Class);
     assert_eq!(req.note.digest, kg.digest().hex());
     let keys: Vec<&str> = req.keys.iter().map(|k| k.key.as_str()).collect();
-    assert_eq!(keys, ["is-a", "part-of", "founded", "population", "note"]);
+    assert_eq!(
+        keys,
+        ["is-a", "part-of", "founded", "population", "weight", "note"]
+    );
     assert!(matches!(req.keys[0].value, ValueKind::Name));
     assert!(
         matches!(req.keys[2].value, ValueKind::Literal { ref datatype } if datatype.as_str().ends_with("#date"))
@@ -335,7 +352,7 @@ fn values_from_two_chunks_merge_their_evidence() {
     let responses = vec![
         ModelResponse {
             chunk: 1,
-            assertions: vec![respond("part-of", "Baranov D", "The lab")],
+            assertions: vec![respond("part-of", "Baranov D", "Baranov D. founded it")],
         },
         ModelResponse {
             chunk: 0,
@@ -364,6 +381,80 @@ fn conflicting_single_values_are_refused_not_overwritten() {
     let v = Vault::new();
     let m = v.model(&p);
     let ingest = Ingest::new(&p, &m, Options::default());
+    let g = v.doc("Graph");
+    let req = ingest.plan(&DocId::new("Graph.md"), g).unwrap();
+    let out = ingest
+        .accept(
+            g,
+            &req,
+            &[ModelResponse {
+                chunk: 0,
+                assertions: vec![respond("founded", "2002-02-02", "Founded on 2002-02-02")],
+            }],
+        )
+        .unwrap();
+    assert!(out.patch.is_none());
+    assert_eq!(
+        reason(&out, "2002-02-02"),
+        &WithholdReason::ConflictingValue {
+            existing: "2001-01-01".into()
+        }
+    );
+}
+
+#[test]
+fn tampered_requests_are_refused() {
+    let p = profile();
+    let v = Vault::new();
+    let m = v.model(&p);
+    let ingest = Ingest::new(&p, &m, Options::default());
+    let kg = v.doc("Knowledge graph");
+    let req = ingest.plan(&DocId::new("Knowledge graph.md"), kg).unwrap();
+    let ok = vec![ModelResponse {
+        chunk: 0,
+        assertions: vec![respond("is-a", "graph", "is a directed graph")],
+    }];
+
+    // A key the profile does not grant: here the note's identity key.
+    let mut keys = req.clone();
+    keys.keys.push(KeySpec {
+        key: "iri".into(),
+        predicate: iri("urn:x:iri"),
+        form: PredicateForm::Annotation,
+        value: ValueKind::Literal {
+            datatype: iri(&format!("{XSD}string")),
+        },
+        range: None,
+        present: vec![],
+    });
+    assert_eq!(
+        ingest.accept(kg, &keys, &ok),
+        Err(IngestError::RequestMismatch { field: "keys" })
+    );
+    // A span outside the note: refused, not a panic.
+    let mut chunks = req.clone();
+    chunks.chunks[0].span = Span::new(10_000, 10_010);
+    assert_eq!(
+        ingest.accept(kg, &chunks, &ok),
+        Err(IngestError::RequestMismatch { field: "chunks" })
+    );
+    // Another entity's identity.
+    let mut note = req.clone();
+    note.note.iri = iri("urn:x:Graph");
+    assert_eq!(
+        ingest.accept(kg, &note, &ok),
+        Err(IngestError::RequestMismatch { field: "note" })
+    );
+    // The untouched request still works.
+    assert_eq!(ingest.accept(kg, &req, &ok).unwrap().accepted.len(), 1);
+}
+
+#[test]
+fn evidence_must_mention_the_value() {
+    let p = profile();
+    let v = Vault::new();
+    let m = v.model(&p);
+    let ingest = Ingest::new(&p, &m, Options::default());
     let kg = v.doc("Knowledge graph");
     let req = ingest.plan(&DocId::new("Knowledge graph.md"), kg).unwrap();
     let out = ingest
@@ -372,17 +463,122 @@ fn conflicting_single_values_are_refused_not_overwritten() {
             &req,
             &[ModelResponse {
                 chunk: 0,
-                assertions: vec![respond("founded", "2019-03-02", "first built on")],
+                assertions: vec![
+                    // A one-letter quote is in the chunk but says nothing.
+                    respond("population", "999", "a"),
+                    // A real quote that does not name the entity.
+                    respond("is-a", "Graph", "It holds"),
+                    // The entity named by its label though the quote has
+                    // only its note name: fine.
+                    respond("is-a", "graph", "a directed graph"),
+                ],
             }],
         )
         .unwrap();
-    assert!(out.patch.is_none());
+    assert_eq!(reason(&out, "999"), &WithholdReason::EvidenceDoesNotMention);
     assert_eq!(
-        reason(&out, "2019-03-02"),
-        &WithholdReason::ConflictingValue {
-            existing: "2019-03-01".into()
+        reason(&out, "Graph"),
+        &WithholdReason::EvidenceDoesNotMention
+    );
+    assert_eq!(out.accepted.len(), 1);
+    assert_eq!(out.accepted[0].written, "[[Graph]]");
+}
+
+#[test]
+fn ambiguous_note_names_get_path_links_and_a_rerun_adds_nothing() {
+    let p = profile();
+    let v = Vault::new();
+    let m = v.model(&p);
+    let ingest = Ingest::new(&p, &m, Options::default());
+    let id = DocId::new("Site.md");
+    let site = v.doc("Site");
+    let req = ingest.plan(&id, site).unwrap();
+    let responses = vec![ModelResponse {
+        chunk: 0,
+        assertions: vec![
+            respond("part-of", "Alpha", "Hosted by Alpha"),
+            respond("part-of", "Beta", "and Beta"),
+        ],
+    }];
+    let out = ingest.accept(site, &req, &responses).unwrap();
+
+    // Two entities, two candidates, neither written as the ambiguous
+    // bare [[Twin]].
+    let written: Vec<(&str, Option<&str>)> = out
+        .accepted
+        .iter()
+        .map(|a| (a.written.as_str(), a.grounded.as_ref().map(Iri::as_str)))
+        .collect();
+    assert_eq!(
+        written,
+        [
+            ("[[a/Twin]]", Some("urn:x:A")),
+            ("[[b/Twin]]", Some("urn:x:B"))
+        ]
+    );
+    // The null `part-of:` is treated as absent: no empty item is kept.
+    let after = site.apply(out.patch.as_ref().unwrap()).unwrap().document;
+    assert_eq!(
+        after.value("part-of"),
+        Some(&Value::strings(["[[a/Twin]]", "[[b/Twin]]"]))
+    );
+    // Re-planning on the patched note and accepting the same responses
+    // writes nothing more.
+    let req2 = ingest.plan(&id, &after).unwrap();
+    let again = ingest.accept(&after, &req2, &responses).unwrap();
+    assert!(again.patch.is_none());
+    assert_eq!(reason(&again, "Alpha"), &WithholdReason::AlreadyPresent);
+    assert_eq!(reason(&again, "Beta"), &WithholdReason::AlreadyPresent);
+}
+
+#[test]
+fn null_keys_extend_and_competing_single_values_are_withheld() {
+    let p = profile();
+    let v = Vault::new();
+    let m = v.model(&p);
+    let ingest = Ingest::new(&p, &m, Options::default());
+    let site = v.doc("Site");
+    let req = ingest.plan(&DocId::new("Site.md"), site).unwrap();
+    let out = ingest
+        .accept(
+            site,
+            &req,
+            &[ModelResponse {
+                chunk: 0,
+                assertions: vec![
+                    respond("founded", "2021-05-05", "Opened 2021-05-05"),
+                    respond("weight", "3.5", "Weighs 3.5"),
+                    respond("weight", "4.5", "or 4.5"),
+                    respond("weight", "3,5", "Weighs 3.5"),
+                ],
+            }],
+        )
+        .unwrap();
+    // `founded:` held nothing, so the date is written, not refused as a
+    // conflict with an empty value.
+    assert_eq!(out.accepted.len(), 1);
+    assert_eq!(out.accepted[0].written, "2021-05-05");
+    let after = site.apply(out.patch.as_ref().unwrap()).unwrap().document;
+    assert_eq!(after.value("founded"), Some(&Value::string("2021-05-05")));
+    assert_eq!(after.value("weight"), None);
+    // Two values for one single-valued key: both withheld, naming each other.
+    assert_eq!(
+        reason(&out, "3.5"),
+        &WithholdReason::CompetingValues {
+            others: vec!["4.5".into()]
         }
     );
+    assert_eq!(
+        reason(&out, "4.5"),
+        &WithholdReason::CompetingValues {
+            others: vec!["3.5".into()]
+        }
+    );
+    // A decimal comma is not a thousands separator.
+    assert!(matches!(
+        reason(&out, "3,5"),
+        WithholdReason::BadLiteral { .. }
+    ));
 }
 
 #[test]

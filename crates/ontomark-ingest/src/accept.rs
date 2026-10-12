@@ -1,14 +1,18 @@
 //! Turning model responses into guarded candidates.
 
+use std::collections::BTreeSet;
+
 use indexmap::IndexMap;
 use ontomark_model::{DocId, Iri, Kind, Model, PredicateForm, Profile, Resolution, Severity};
 use ontomark_parse::{Document, Patch, Span, Value, Wikilink};
 use serde::{Deserialize, Serialize};
 
-use crate::contract::{KeySpec, ModelRequest, ModelResponse, ValueKind, CONTRACT};
+use crate::chunk::chunk_document;
+use crate::contract::{key_specs, KeySpec, ModelRequest, ModelResponse, ValueKind, CONTRACT};
 use crate::error::IngestError;
+use crate::normalize::normalize_text;
 use crate::similarity::AliasTier;
-use crate::vocabulary::{Grounding, Suggestion, Vocabulary};
+use crate::vocabulary::{Grounding, Suggestion, Term, Vocabulary};
 use crate::Options;
 
 /// Starting confidence of every candidate, from the retired RDF-to-Logseq
@@ -62,6 +66,10 @@ pub enum WithholdReason {
     UnknownKey,
     /// The quote was not found in the chunk.
     EvidenceNotFound,
+    /// The quote was found but does not mention the value: neither the
+    /// proposed text nor any name of the grounded entity (for a name), nor
+    /// the literal as proposed or as written (for a literal).
+    EvidenceDoesNotMention,
     /// The name matched no entity.
     Ungrounded {
         /// Near misses, best first.
@@ -86,6 +94,18 @@ pub enum WithholdReason {
     },
     /// The value names the note's own entity.
     SelfReference,
+    /// Neither the bare note name nor the vault path resolves back to the
+    /// grounded entity alone, so no link can be written for it.
+    Unlinkable {
+        /// The link targets tried, in order.
+        tried: Vec<String>,
+    },
+    /// Several differing values were proposed for a single-valued key in
+    /// one acceptance; none is written.
+    CompetingValues {
+        /// The other values proposed, as they would have been written.
+        others: Vec<String>,
+    },
     /// The literal is not in the lexical space of its datatype.
     BadLiteral {
         /// The datatype.
@@ -193,6 +213,28 @@ pub(crate) fn accept(
             found: digest.hex(),
         });
     }
+    // The request is the host's copy of what `plan` produced. Everything in
+    // it that drives a write is recomputed here and must agree, so a request
+    // altered in transit or built by hand can neither name keys the profile
+    // does not grant nor carry spans outside the note.
+    let entity =
+        model
+            .entity_of(&request.note.document)
+            .ok_or_else(|| IngestError::NotAnEntity {
+                document: request.note.document.clone(),
+            })?;
+    if entity.iri != request.note.iri
+        || entity.kind != request.note.kind
+        || entity.label != request.note.label
+    {
+        return Err(IngestError::RequestMismatch { field: "note" });
+    }
+    if key_specs(profile, doc) != request.keys {
+        return Err(IngestError::RequestMismatch { field: "keys" });
+    }
+    if chunk_document(doc, options.min_chunk_chars, options.max_chunk_chars) != request.chunks {
+        return Err(IngestError::RequestMismatch { field: "chunks" });
+    }
     for r in responses {
         if r.chunk >= request.chunks.len() {
             return Err(IngestError::UnknownChunk {
@@ -205,7 +247,9 @@ pub(crate) fn accept(
     let subject = &request.note;
     let mut diagnostics = Vec::new();
     let mut withheld = Vec::new();
-    // key -> written value -> candidate, in first-seen order.
+    // key -> identity -> candidate, in first-seen order. A name's identity
+    // is its grounded IRI, so two spellings of one entity merge and two
+    // entities never do; a literal's identity is its written form.
     let mut accepted: IndexMap<String, IndexMap<String, CandidateAssertion>> = IndexMap::new();
 
     let mut ordered: Vec<&ModelResponse> = responses.iter().collect();
@@ -239,7 +283,11 @@ pub(crate) fn accept(
                 EvidenceSpan {
                     chunk: response.chunk,
                     span,
-                    utf16: utf16.span(span).unwrap_or((0, 0)),
+                    // Chunk spans were just verified against the note and
+                    // `locate` returns char boundaries, so this holds.
+                    utf16: utf16
+                        .span(span)
+                        .expect("evidence spans lie on char boundaries of the source"),
                     quote: span.slice(doc.source()).to_owned(),
                 }
             });
@@ -282,10 +330,17 @@ pub(crate) fn accept(
                                     continue;
                                 }
                             }
+                            let target = match link_target(profile, model, term, &iri) {
+                                Ok(t) => t,
+                                Err(tried) => {
+                                    refuse(WithholdReason::Unlinkable { tried }, Some(evidence));
+                                    continue;
+                                }
+                            };
                             Resolved::Name {
                                 iri,
                                 tier,
-                                written: format!("[[{}]]", term.note_name()),
+                                written: format!("[[{target}]]"),
                             }
                         }
                         Grounding::Ambiguous { candidates } => {
@@ -331,6 +386,11 @@ pub(crate) fn accept(
                     }
                 },
             };
+            // Located is not enough: the quote has to mention the value.
+            if !mentions(&evidence.quote, &a.value, &resolved, vocabulary) {
+                refuse(WithholdReason::EvidenceDoesNotMention, Some(evidence));
+                continue;
+            }
             // Against what the note already holds.
             let existing = doc.value(&spec.key);
             match existing_state(profile, model, spec, existing, &resolved) {
@@ -351,14 +411,22 @@ pub(crate) fn accept(
                 }
                 Existing::Extendable => {}
             }
-            let (written, grounded, tier, datatype) = match resolved {
-                Resolved::Name { iri, tier, written } => (written, Some(iri), Some(tier), None),
-                Resolved::Literal { lexical, datatype } => (lexical, None, None, Some(datatype)),
+            let (identity, written, grounded, tier, datatype) = match resolved {
+                Resolved::Name { iri, tier, written } => (
+                    iri.as_str().to_owned(),
+                    written,
+                    Some(iri),
+                    Some(tier),
+                    None,
+                ),
+                Resolved::Literal { lexical, datatype } => {
+                    (lexical.clone(), lexical, None, None, Some(datatype))
+                }
             };
             accepted
                 .entry(spec.key.clone())
                 .or_default()
-                .entry(written.clone())
+                .entry(identity)
                 .and_modify(|c| c.evidence.push(evidence.clone()))
                 .or_insert_with(|| CandidateAssertion {
                     key: spec.key.clone(),
@@ -382,8 +450,36 @@ pub(crate) fn accept(
         let Some(values) = accepted.get(&spec.key) else {
             continue;
         };
-        let new: Vec<String> = values.keys().cloned().collect();
-        let value = match (doc.value(&spec.key), &spec.value) {
+        let existing = doc.value(&spec.key).filter(|v| !matches!(v, Value::Null));
+        // A single-valued key with several differing proposals: none can be
+        // trusted over the others, so all are withheld.
+        if spec.form == PredicateForm::DataAssertion
+            && values.len() > 1
+            && !matches!(existing, Some(Value::Seq(_)))
+        {
+            let all: Vec<&str> = values.values().map(|c| c.written.as_str()).collect();
+            for c in values.values() {
+                let others: Vec<String> = all
+                    .iter()
+                    .filter(|w| **w != c.written)
+                    .map(|w| (*w).to_owned())
+                    .collect();
+                for e in &c.evidence {
+                    withheld.push(Withheld {
+                        chunk: e.chunk,
+                        key: c.key.clone(),
+                        value: c.written.clone(),
+                        reason: WithholdReason::CompetingValues {
+                            others: others.clone(),
+                        },
+                        evidence: Some(e.clone()),
+                    });
+                }
+            }
+            continue;
+        }
+        let new: Vec<String> = values.values().map(|c| c.written.clone()).collect();
+        let value = match (existing, &spec.value) {
             (None, ValueKind::Literal { .. }) if new.len() == 1 => Value::string(&new[0]),
             (None, _) => Value::strings(new),
             (Some(Value::Seq(items)), _) => {
@@ -432,7 +528,8 @@ fn existing_state(
     existing: Option<&Value>,
     resolved: &Resolved,
 ) -> Existing {
-    let Some(existing) = existing else {
+    // A key present with no value holds nothing to conflict with.
+    let Some(existing) = existing.filter(|v| !matches!(v, Value::Null)) else {
         return Existing::Extendable;
     };
     let items: Vec<String> = match existing {
@@ -465,6 +562,67 @@ fn existing_state(
         return Existing::Conflict(items.into_iter().next().unwrap_or_default());
     }
     Existing::Extendable
+}
+
+/// The link target to write for a grounded entity: the bare note name when
+/// the model resolves it back to that entity alone, else the vault path.
+/// When neither does, no link is safe to write, and the targets tried are
+/// returned.
+fn link_target(
+    profile: &dyn Profile,
+    model: &Model,
+    term: &Term,
+    iri: &Iri,
+) -> Result<String, Vec<String>> {
+    let tried = [
+        term.note_name().to_owned(),
+        term.document.as_str().to_owned(),
+    ];
+    for t in &tried {
+        if matches!(
+            model.resolve_with(profile, t).state,
+            Resolution::Resolved(ref r) if r == iri
+        ) {
+            return Ok(t.clone());
+        }
+    }
+    Err(tried.to_vec())
+}
+
+/// Whether a located quote actually mentions the value it is offered for.
+///
+/// A name counts as mentioned when the quote contains the proposed text, or
+/// any name of the grounded entity (label, aliases, note name), as a phrase
+/// or as a whole word of at least two characters. A literal counts only as
+/// a phrase, as proposed or as written. Everything is compared after
+/// [`normalize_text`].
+fn mentions(quote: &str, proposed: &str, resolved: &Resolved, vocabulary: &Vocabulary) -> bool {
+    let q = normalize_text(quote);
+    let words: BTreeSet<&str> = q
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .collect();
+    let phrase = |s: &str| {
+        let n = normalize_text(s);
+        !n.is_empty() && q.contains(&n)
+    };
+    let word = |s: &str| {
+        normalize_text(s)
+            .split(|c: char| !c.is_alphanumeric())
+            .any(|w| w.chars().count() >= 2 && words.contains(w))
+    };
+    match resolved {
+        Resolved::Name { iri, .. } => {
+            let mut names = vec![proposed.to_owned()];
+            if let Some(t) = vocabulary.term(iri) {
+                names.push(t.label.clone());
+                names.push(t.note_name().to_owned());
+                names.extend(t.aliases.iter().cloned());
+            }
+            names.iter().any(|n| phrase(n) || word(n))
+        }
+        Resolved::Literal { lexical, .. } => phrase(proposed) || phrase(lexical),
+    }
 }
 
 /// The kind a name must have for `form` when the subject has `subject`.
@@ -517,11 +675,15 @@ fn locate(hay: &str, needle: &str) -> Option<(usize, usize)> {
 }
 
 /// Whitespace runs become one space. `map[i]` is the byte offset in the
-/// original of collapsed byte `i`; one extra entry maps the end.
+/// original of collapsed byte `i`; one extra entry maps the collapsed end to
+/// the end of the last non-whitespace char, so a match reaching the end
+/// never swallows trailing whitespace. A space maps to the start of its
+/// run; an end never lands on one because needles are trimmed.
 fn collapse(s: &str) -> (String, Vec<usize>) {
     let mut out = String::with_capacity(s.len());
     let mut map = Vec::with_capacity(s.len() + 1);
     let mut in_ws = false;
+    let mut last_end = 0;
     for (i, c) in s.char_indices() {
         if c.is_whitespace() {
             if !in_ws && !out.is_empty() {
@@ -530,16 +692,12 @@ fn collapse(s: &str) -> (String, Vec<usize>) {
             }
             in_ws = true;
         } else {
-            if in_ws && out.ends_with(' ') {
-                // The space maps to the start of the run; fine for a start,
-                // and an end never lands on it because needles are trimmed.
-            }
             in_ws = false;
-            let mut buf = [0u8; 4];
-            let enc = c.encode_utf8(&mut buf);
-            for _ in 0..enc.len() {
+            let len = c.len_utf8();
+            for _ in 0..len {
                 map.push(i);
             }
+            last_end = i + len;
             out.push(c);
         }
     }
@@ -547,7 +705,7 @@ fn collapse(s: &str) -> (String, Vec<usize>) {
         out.pop();
         map.pop();
     }
-    map.push(s.len());
+    map.push(last_end);
     (out, map)
 }
 
@@ -559,6 +717,33 @@ fn find_ignore_ascii_case(hay: &str, needle: &str) -> Option<usize> {
     (0..=h.len() - n.len())
         .filter(|&i| hay.is_char_boundary(i))
         .find(|&i| h[i..i + n.len()].eq_ignore_ascii_case(n))
+}
+
+/// Drop thousands separators, but only when every comma groups digits by
+/// three (`1,200`, `-12,345,678.5`). Any other comma is not a separator and
+/// is left in place for the number parser to refuse, so `3,5` never becomes
+/// `35`.
+fn strip_thousands(v: &str) -> String {
+    let (sign, rest) = v.strip_prefix('-').map_or(("", v), |r| ("-", r));
+    let (int, frac) = rest
+        .split_once('.')
+        .map_or((rest, None), |(i, f)| (i, Some(f)));
+    let digits = |g: &str| g.bytes().all(|b| b.is_ascii_digit());
+    let mut groups = int.split(',');
+    let grouped = int.contains(',')
+        && groups
+            .next()
+            .is_some_and(|g| (1..=3).contains(&g.len()) && digits(g))
+        && groups.all(|g| g.len() == 3 && digits(g));
+    if !grouped {
+        return v.to_owned();
+    }
+    let mut out = format!("{sign}{}", int.replace(',', ""));
+    if let Some(f) = frac {
+        out.push('.');
+        out.push_str(f);
+    }
+    out
 }
 
 /// Check a literal against its datatype's lexical space, repairing what a
@@ -582,7 +767,7 @@ fn check_literal(datatype: &Iri, raw: &str) -> Result<String, String> {
     match local {
         "integer" | "int" | "long" | "short" | "byte" | "nonNegativeInteger"
         | "positiveInteger" | "negativeInteger" | "nonPositiveInteger" => {
-            let digits = v.replace(',', "");
+            let digits = strip_thousands(v);
             let n: i64 = digits
                 .parse()
                 .map_err(|_| format!("{v:?} is not an integer"))?;
@@ -599,7 +784,7 @@ fn check_literal(datatype: &Iri, raw: &str) -> Result<String, String> {
             Ok(n.to_string())
         }
         "decimal" | "float" | "double" => {
-            let digits = v.replace(',', "");
+            let digits = strip_thousands(v);
             digits
                 .parse::<f64>()
                 .map_err(|_| format!("{v:?} is not a number"))
@@ -689,6 +874,32 @@ mod tests {
         let hay = "Dvořák wrote  the quartet";
         let (s, e) = locate(hay, "Dvořák wrote the").unwrap();
         assert_eq!(&hay[s..e], "Dvořák wrote  the");
+    }
+
+    #[test]
+    fn locate_never_swallows_trailing_whitespace() {
+        let hay = "Alpha  beta \n\t";
+        let (s, e) = locate(hay, "alpha beta").unwrap();
+        assert_eq!(&hay[s..e], "Alpha  beta");
+        let (s, e) = locate("x  ", "X").unwrap();
+        assert_eq!((s, e), (0, 1));
+    }
+
+    #[test]
+    fn thousands_are_stripped_only_when_grouped() {
+        assert_eq!(strip_thousands("1,200"), "1200");
+        assert_eq!(strip_thousands("-12,345,678.50"), "-12345678.50");
+        assert_eq!(strip_thousands("3,5"), "3,5");
+        assert_eq!(strip_thousands("12,34"), "12,34");
+        assert_eq!(strip_thousands("1,2000"), "1,2000");
+        assert_eq!(strip_thousands(",200"), ",200");
+        assert_eq!(strip_thousands("200"), "200");
+        assert!(check_literal(&xsd("decimal"), "3,5").is_err());
+        assert!(check_literal(&xsd("integer"), "12,34").is_err());
+        assert_eq!(
+            check_literal(&xsd("decimal"), "1,200.5"),
+            Ok("1200.5".into())
+        );
     }
 
     #[test]

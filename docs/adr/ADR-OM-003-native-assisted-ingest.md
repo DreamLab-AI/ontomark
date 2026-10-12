@@ -108,6 +108,21 @@ Any model call is made by the **host**, never by the core. For the Obsidian plug
 - **Lower-casing, not case-folding**, as in Python `str.lower()`: `ß` stays `ß`. The sequence ratio omits `difflib`'s junk heuristics, which only engage at 200 or more characters.
 - **Suggestion scores are rounded to four decimal places** so they round-trip through any host's JSON float parser; `serde_json` without `float_roundtrip` returned a 17-digit score one ulp off.
 - **Jaccard is implemented in the crate** (three lines) rather than taken from `textdistance`, to keep the WASM dependency inventory small.
+- **Only `Mn` marks are dropped** in normalisation, as upstream's `unicodedata.category(c) == "Mn"` does, via `unicode-general-category`. The first cut dropped every mark (`Mn`, `Mc`, `Me`), which collapsed Indic words that differ by a vowel sign.
+
+## Hardening after independent review
+
+An Opus review of the first slice found seven defects, all fixed and pinned by tests before the slice was pushed:
+
+1. **`accept` recomputes the request.** Keys, chunks and the note reference are rebuilt from the note, profile and options and must equal the request (`IngestError::RequestMismatch`). A request altered in transit or built by hand can neither name a key the profile does not grant (such as `iri`) nor carry a span outside the note, which previously panicked.
+2. **Evidence must mention the value.** A located quote is not enough: for a name it has to contain the proposed text or a name of the grounded entity (as a phrase, or a whole word of two or more characters); for a literal, the value as proposed or as written. Otherwise `EvidenceDoesNotMention`. A one-letter quote no longer licenses anything.
+3. **The written link must resolve back to the grounded IRI alone.** The bare note name is tried first, then the vault path (`[[a/Twin]]`); if neither resolves to exactly that entity, the value is `Unlinkable`. Candidates are keyed by IRI, not by written text, so two entities sharing a note name never merge and a re-run finds the link already present.
+4. **A decimal comma is not a thousands separator.** Commas are stripped only when every group is three digits (`1,200`, `12,345,678.5`); `3,5` is refused rather than written as `35`.
+5. **A key present with no value is absent.** `founded:` with nothing after it neither conflicts with a proposal nor leaves an empty list item behind.
+6. **Several values for a single-valued key are all withheld** as `CompetingValues`, naming each other, rather than written as a list that a later run would have refused as a conflict.
+7. **Matches never swallow trailing whitespace** when the whitespace-collapsed search reaches the end of a chunk.
+
+The review confirmed `sequence_ratio` equals CPython `difflib.SequenceMatcher.ratio()` without autojunk, including tie-breaking, and found the offset handling otherwise correct.
 
 ## Verification required before activation
 
