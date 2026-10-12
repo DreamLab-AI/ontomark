@@ -86,3 +86,7 @@ Design brief: `docs/design/machine-bundle-brief.md` (advisor-reviewed; the first
 - **D4 Loom's `data/` is scope-invariant.** Scaffold gets a knowledge-only backlink map, so every `data/` artefact but the markers is byte-identical across scopes; `api/pages` backlinks may include working sources.
 
 Implementation status: in progress on `main` after this record; the C3 contract is amended when the field list ships.
+
+### First real-corpus machine build (12 October 2026, evening)
+
+`ontomark build --scope machine` on visionGraph `d9fc5bec4` succeeds: 120 s, 9,244 classes plus 83 plain `working/` records, 88 public working pages yielded to their public knowledge twins (the promotion staging ground beside its promoted page, as expected), `ontology_digest` equal to the public build's, every `data/` artefact content-identical to the public bundle, no `publish/` written. Two corpus faults the gate surfaced were fixed at source rather than in the build: 12 `working/pages/misc/` converter duplicates from the 2026-09-22 conversion (visionGraph `f21dab90e`), and one true public-working/private-knowledge slug collision, resolved by renaming the working note to the canonical `ComfyUI` form and marking it private (visionGraph `d9fc5bec4`). Eight agent-residue files remain under `working/pages/misc/` (manifests and analysis reports); held back by path, harmless, left for the owner.
