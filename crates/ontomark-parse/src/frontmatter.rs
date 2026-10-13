@@ -68,11 +68,21 @@ impl Entry {
     /// YAML, not a string; it is recovered from the item's source text and
     /// marked [`FrontmatterLink::recovered`], so it is neither dropped nor
     /// silently treated as well-formed.
+    ///
+    /// The same recovery covers the inline form `key: [[A|B]]`: YAML reads
+    /// it as a flow sequence holding one nested sequence, and no item spans
+    /// are recorded for flow sequences, so the link is recovered from the
+    /// value's own source text (as item `None`, like a scalar). Several
+    /// unquoted links in one flow sequence are not recovered; quote them.
     #[must_use]
     pub fn wikilinks(&self, source: &str) -> Vec<FrontmatterLink> {
         let mut out = Vec::new();
         match &self.value {
             Value::Seq(items) => {
+                if let Some(link) = self.inline_unquoted_wikilink(source, items) {
+                    out.push(link);
+                    return out;
+                }
                 for (i, item) in items.iter().enumerate() {
                     let span = self.items.get(i).copied();
                     if let Some(link) = item.as_str().and_then(Wikilink::parse) {
@@ -107,6 +117,28 @@ impl Entry {
             _ => {}
         }
         out
+    }
+
+    /// The link of an inline `key: [[…]]` value, which YAML reads as a flow
+    /// sequence of one nested sequence, recovered from the value's source
+    /// text. `None` for anything else, including a block sequence (those
+    /// carry item spans) and a value with a trailing comment.
+    fn inline_unquoted_wikilink(&self, source: &str, items: &[Value]) -> Option<FrontmatterLink> {
+        if !self.items.is_empty() || items.len() != 1 || !matches!(items[0], Value::Seq(_)) {
+            return None;
+        }
+        let tail = Span::new(self.key_span.end, self.span.end).slice(source);
+        let colon = tail.find(':')?;
+        let value = &tail[colon + 1..];
+        let text = value.trim();
+        let link = Wikilink::parse(text)?;
+        let start = self.key_span.end + colon + 1 + (value.len() - value.trim_start().len());
+        Some(FrontmatterLink {
+            link,
+            item: None,
+            span: Some(Span::new(start, start + text.len())),
+            recovered: true,
+        })
     }
 }
 
@@ -815,5 +847,39 @@ mod tests {
         let f = fm("---\na:\n  - x\nm:\n    k: v\n---\n");
         assert_eq!(f.style.seq_indent, 2);
         assert_eq!(f.style.map_indent, 4);
+    }
+
+    #[test]
+    fn inline_unquoted_wikilink_is_recovered_with_its_span() {
+        let src = "---\ntype: class\nsubclass-of:   [[Animal|beast]]  \nnext: ok\n---\n";
+        let f = fm(src);
+        let links = f.get("subclass-of").unwrap().wikilinks(src);
+        assert_eq!(links.len(), 1, "{links:?}");
+        assert!(links[0].recovered);
+        assert_eq!(links[0].item, None);
+        assert_eq!(links[0].link.target, "Animal");
+        assert_eq!(links[0].span.unwrap().slice(src), "[[Animal|beast]]");
+    }
+
+    #[test]
+    fn quoted_scalar_and_list_forms_are_not_marked_recovered() {
+        let src = "---\na: \"[[A]]\"\nb: [\"[[A]]\"]\nc:\n  - \"[[A]]\"\n---\n";
+        let f = fm(src);
+        for key in ["a", "b", "c"] {
+            let links = f.get(key).unwrap().wikilinks(src);
+            assert_eq!(links.len(), 1, "{key}: {links:?}");
+            assert!(!links[0].recovered, "{key}");
+        }
+    }
+
+    #[test]
+    fn inline_recovery_is_conservative() {
+        // Several unquoted links, a bare word and a trailing comment are not
+        // guessed at; the caller diagnoses them.
+        for value in ["[[[A]], [[B]]]", "A", "[[A]] # note", "[]"] {
+            let src = format!("---\nk: {value}\n---\n");
+            let f = fm(&src);
+            assert!(f.get("k").unwrap().wikilinks(&src).is_empty(), "{value}");
+        }
     }
 }
