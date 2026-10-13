@@ -68,5 +68,17 @@ name = "whelk_scaling"
 required-features = ["whelk-el"]
 
 [[test]]
+name = "machine_scope"
+required-features = ["whelk-el"]
+
+[[test]]
+name = "register_sev1"
+required-features = ["whelk-el"]
+
+[[test]]
+name = "register_sev2"
+required-features = ["whelk-el"]
+
+[[test]]
 name = "model_projection"
 required-features = ["model-projection"]
