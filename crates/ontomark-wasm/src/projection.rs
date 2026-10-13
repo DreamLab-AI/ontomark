@@ -515,7 +515,14 @@ fn resolve_key<'h>(
             head.doc,
             "relation_not_wikilink",
             Severity::Warning,
-            format!("`{key}` values must be [[wikilinks]]; nothing was asserted"),
+            if entry.raw(source).contains("[[") {
+                format!(
+                    "`{key}` holds an unquoted or multiple [[wikilink]]s that YAML reads as nested lists; \
+                     quote each one, e.g. [\"[[A]]\", \"[[B]]\"]; nothing was asserted"
+                )
+            } else {
+                format!("`{key}` values must be [[wikilinks]]; nothing was asserted")
+            },
             Some((entry.span.start, entry.span.end)),
         ));
     }
@@ -525,6 +532,20 @@ fn resolve_key<'h>(
             |s| (s.start, s.end),
         );
         let at = Some(at);
+        if link.recovered {
+            out.diagnostics.push(diag(
+                head.path,
+                head.doc,
+                "unquoted_wikilink",
+                Severity::Warning,
+                format!(
+                    "`{key}`: [[{}]] is unquoted, which YAML reads as a nested list; \
+                     quote it as \"[[{}]]\"",
+                    link.link.target, link.link.target
+                ),
+                at,
+            ));
+        }
         match lookup(&link.link.target, names) {
             Lookup::None => out.diagnostics.push(diag(
                 head.path,
@@ -732,6 +753,51 @@ mod tests {
             "[[Missing]]"
         );
         assert_eq!(c.individual_types["urn:ontomark:page:Rex"].len(), 1);
+    }
+
+    #[test]
+    fn inline_unquoted_wikilink_asserts_and_warns() {
+        let docs = vault(&[
+            ("Animal.md", "---\ntype: class\n---\n"),
+            ("Dog.md", "---\ntype: class\nsubclass-of: [[Animal]]\n---\n"),
+        ]);
+        let c = compile(&docs, ProfileId::Generic.profile());
+        assert_eq!(c.axioms.len(), 1, "the edge survives: {:?}", c.axioms);
+        let codes: Vec<_> = c.diagnostics.iter().map(|d| d.code.as_str()).collect();
+        assert_eq!(codes, ["unquoted_wikilink"]);
+        let span = c.diagnostics[0].span.unwrap();
+        assert_eq!(
+            &docs["Dog.md"].source()[span.byte_start..span.byte_end],
+            "[[Animal]]"
+        );
+    }
+
+    #[test]
+    fn unrecoverable_unquoted_links_hint_at_quoting() {
+        let docs = vault(&[
+            ("A.md", "---\ntype: class\n---\n"),
+            ("B.md", "---\ntype: class\n---\n"),
+            (
+                "C.md",
+                "---\ntype: class\nsubclass-of: [[[A]], [[B]]]\n---\n",
+            ),
+            ("D.md", "---\ntype: class\nsubclass-of: A\n---\n"),
+        ]);
+        let c = compile(&docs, ProfileId::Generic.profile());
+        assert!(c.axioms.is_empty());
+        let by_path = |p: &str| {
+            c.diagnostics
+                .iter()
+                .find(|d| d.path == p)
+                .map(|d| (d.code.as_str(), d.message.as_str()))
+                .unwrap()
+        };
+        let (code, msg) = by_path("C.md");
+        assert_eq!(code, "relation_not_wikilink");
+        assert!(msg.contains("quote each one"), "{msg}");
+        let (code, msg) = by_path("D.md");
+        assert_eq!(code, "relation_not_wikilink");
+        assert!(msg.contains("must be [[wikilinks]]"), "{msg}");
     }
 
     #[test]
