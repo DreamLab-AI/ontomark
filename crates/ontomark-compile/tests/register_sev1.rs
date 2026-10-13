@@ -239,7 +239,10 @@ fn s1_4_c3_records_jsonl_has_an_emitter() {
     // The contract lives in the VisionFlow checkout beside this one. A lone
     // checkout (CI) has no sibling, and that is not a defect in this crate.
     let Ok(text) = std::fs::read_to_string(&contract) else {
-        eprintln!("skipping: no sibling VisionFlow checkout at {}", contract.display());
+        eprintln!(
+            "skipping: no sibling VisionFlow checkout at {}",
+            contract.display()
+        );
         return;
     };
     let name = text
