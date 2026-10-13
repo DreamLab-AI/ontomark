@@ -8,6 +8,10 @@ This file covers the portable rc1 engine source `21cd9ffd7b08317248afb4e06b74b65
 
 `crates/ontomark-ingest` re-implements methods from OntoCast (GrowGraph, Apache-2.0, https://github.com/growgraph/ontocast, reviewed at `abb8d7b8d6db1a765d4f091a7423937c2cbc5d78`) and follows the SPIRES extraction contract (Caufield et al., 2024; OntoGPT, BSD-3-Clause). No source from either project is included, so no licence text is reproduced here; the crate’s `NOTICE` and `docs/UPSTREAMS.md` carry the credit. The crate adds `strsim` (MIT) and `unicode-normalization` (MIT OR Apache-2.0) to the dependency graph. It is not part of the rc1 engine archive this file inventories; a distribution that includes it must extend this file with those licence texts and bind the inventory to its own source digest.
 
+## Method attribution: Dot Triples (no source included)
+
+The in-note SPARQL block in the Obsidian plugin and the `bridges/dot-triples/` mapping follow ideas from Cristian Vasquez's dot-triples (https://github.com/cristianvasquez/dot-triples) and Dot Triples plugin (https://github.com/cristianvasquez/dot-triples-plugin), both MIT. No source from either project is included, so no licence text is reproduced here; `docs/UPSTREAMS.md` and ADR-OM-006 carry the credit. `bridges/dot-triples/fixtures/zoo.nt` is output of the MIT-licensed `triplifier-md` 0.3.0 over notes written in this repository.
+
 ## MPL source availability
 
 The embedded engine uses these unchanged libraries under the Mozilla Public License 2.0. Their complete source packages, with the original notices, are available at:

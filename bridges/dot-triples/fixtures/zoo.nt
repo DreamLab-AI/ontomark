@@ -1,0 +1,38 @@
+# Dot Triples (triplifier-md 0.3.0) output for the five notes in ./zoo-vault, one file per note,
+# produced with: node packages/triplifier-md/src/cli.js /vault/<Note>.md < <Note>.md
+# dot-triples at 99d74c8 (2026-09-22). Regenerate rather than edit.
+<urn:name:Animal.md> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/document#File> .
+<urn:name:Animal.md> <urn:token:type> "class" .
+<urn:name:Animal> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/resource#Resource> .
+<urn:name:Animal.md> <https://schema.org/about> <urn:name:Animal> .
+<urn:name:Animal> <http://www.w3.org/2000/01/rdf-schema#label> "Animal" .
+<urn:name:Dog.md> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/document#File> .
+<urn:name:Dog.md> <urn:token:type> "class" .
+<urn:name:Dog.md> <urn:token:subclass-of> <urn:name:Animal> .
+<urn:name:Dog> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/resource#Resource> .
+<urn:name:Dog.md> <https://schema.org/about> <urn:name:Dog> .
+<urn:name:Dog> <http://www.w3.org/2000/01/rdf-schema#label> "Dog" .
+<urn:name:Rex.md> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/document#File> .
+<urn:name:Rex.md> <urn:token:type> "individual" .
+<urn:name:Rex.md> <urn:token:instance-of> <urn:name:Dog> .
+<urn:name:Rex> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/resource#Resource> .
+<urn:name:Rex.md> <https://schema.org/about> <urn:name:Rex> .
+<urn:name:Rex> <http://www.w3.org/2000/01/rdf-schema#label> "Rex" .
+<urn:name:Rex> <http://purl.org/dc/terms/references> <urn:name:Animal> .
+<urn:name:Cat.md> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/document#File> .
+<urn:name:Cat.md> <urn:token:type> "class" .
+<urn:name:Cat.md> <urn:token:iri> <https://example.org/zoo#Cat> .
+<urn:name:Cat.md> <http://www.w3.org/2000/01/rdf-schema#label> "Domestic cat" .
+<urn:name:Cat.md> <urn:token:aliases> "Felis catus" .
+<urn:name:Cat.md> <urn:token:aliases> "moggy" .
+<urn:name:Cat.md> <urn:token:subclass-of> <urn:name:Animal> .
+<urn:name:Cat> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/resource#Resource> .
+<urn:name:Cat.md> <https://schema.org/about> <urn:name:Cat> .
+<urn:name:Cat> <http://www.w3.org/2000/01/rdf-schema#label> "Cat" .
+<urn:name:eats.md> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/document#File> .
+<urn:name:eats.md> <urn:token:type> "property" .
+<urn:name:eats.md> <urn:token:domain> <urn:name:Animal> .
+<urn:name:eats.md> <urn:token:range> <urn:name:Animal> .
+<urn:name:eats> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <osg://vocab/resource#Resource> .
+<urn:name:eats.md> <https://schema.org/about> <urn:name:eats> .
+<urn:name:eats> <http://www.w3.org/2000/01/rdf-schema#label> "eats" .

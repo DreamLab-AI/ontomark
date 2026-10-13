@@ -169,8 +169,9 @@ Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surfac
 
 - [Current hand-off](docs/HANDOFF.md): verified results, outstanding work and integration boundaries.
 - [API documentation](docs/api/): crate contracts and capabilities.
-- Decisions: [ADR-OM-001](docs/adr/ADR-OM-001-sprint-decisions.md) (profiles, licensing, reasoner), [ADR-OM-002](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md) (shared graph and plugin boundary), [ADR-OM-003](docs/adr/ADR-OM-003-native-assisted-ingest.md) (assisted ingest), [ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) (OWL 2 EL), [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, the generation loop), and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
+- Decisions: [ADR-OM-001](docs/adr/ADR-OM-001-sprint-decisions.md) (profiles, licensing, reasoner), [ADR-OM-002](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md) (shared graph and plugin boundary), [ADR-OM-003](docs/adr/ADR-OM-003-native-assisted-ingest.md) (assisted ingest), [ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) (OWL 2 EL), [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, the generation loop), [ADR-OM-006](docs/adr/ADR-OM-006-dot-triples-interop.md) (Dot Triples interop), and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
 - [OntoCast triage](docs/ONTOCAST-TRIAGE.md): what the ingest design adapted from OntoCast and what it did not.
+- [Dot Triples bridge](bridges/dot-triples/README.md): one SPARQL CONSTRUCT that lifts Cristian Vasquez's [dot-triples](https://github.com/cristianvasquez/dot-triples) output into Ontomark's vocabulary, tested for parity with the engine.
 - [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md).
 - [Estate migration plan](docs/DEPRECATION.md) and [branch recovery](docs/BRANCH-RECOVERY.md).
 - [Run log](docs/RUNLOG.md) and [evidence](docs/evidence/resume/).

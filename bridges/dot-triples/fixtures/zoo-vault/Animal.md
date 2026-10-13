@@ -1,0 +1,4 @@
+---
+type: class
+---
+# Animal

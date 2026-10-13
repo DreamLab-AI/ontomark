@@ -1032,6 +1032,7 @@ dependencies = [
  "ontomark-reason",
  "oxrdf",
  "oxsdatatypes",
+ "oxttl",
  "serde",
  "serde_json",
  "similar",

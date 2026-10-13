@@ -36,5 +36,9 @@ oxsdatatypes = { version = "0.2", features = ["js"] }
 # rand (pulled by oxrdf/spareval for BNODE/RAND/UUID) needs a browser entropy backend.
 getrandom = { version = "0.3", features = ["wasm_js"] }
 
+[dev-dependencies]
+# N-Triples reader for the Dot Triples bridge test (bridges/dot-triples); already in the lockfile via ontomark-compile.
+oxttl = "0.2.4"
+
 [lints]
 workspace = true

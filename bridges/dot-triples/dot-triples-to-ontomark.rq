@@ -1,0 +1,95 @@
+# Dot Triples -> Ontomark bridge.
+#
+# Lifts the output of Cristian Vasquez's dot-triples readers (triplifier-md,
+# https://github.com/cristianvasquez/dot-triples, MIT) into the vocabulary the
+# Ontomark engine asserts, so a vault read by both tools yields one graph.
+#
+# Dot Triples keeps frontmatter on the FILE node (<urn:name:Note.md>), names
+# notes <urn:name:Note>, and leaves field keys as deferred <urn:token:key>
+# predicates: "a mapping step then resolves what it can". This CONSTRUCT is
+# that step for the ontology keys Ontomark reads (its generic and estate
+# profiles). Everything else Dot Triples emits is left untouched.
+#
+# Identity. A note with an authored `iri` (generic profile) or `resource`
+# (estate profile) keeps it. Otherwise the subject is Ontomark's derived page
+# IRI, urn:ontomark:page:<path without .md, percent-encoded>. Dot Triples knows
+# only the note NAME, so the derived IRIs coincide exactly for notes at the
+# vault root; a nested note (Zoo/Dog.md) is urn:ontomark:page:Zoo/Dog in
+# Ontomark and urn:ontomark:page:Dog here. Give nested notes an `iri` when the
+# two graphs must join, or reconcile on rdfs:label.
+#
+# Run with any SPARQL 1.1 engine over the N-Triples the dot-triples CLI
+# prints, e.g. Oxigraph:  oxigraph query --query dot-triples-to-ontomark.rq ...
+# The test crates/ontomark-wasm/tests/bridge_dot_triples.rs runs it over
+# fixtures/zoo.nt and checks the result against the engine's own reading of
+# the same notes.
+
+PREFIX rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:    <http://www.w3.org/2002/07/owl#>
+PREFIX skos:   <http://www.w3.org/2004/02/skos/core#>
+PREFIX schema: <https://schema.org/>
+PREFIX doc:    <osg://vocab/document#>
+PREFIX res:    <osg://vocab/resource#>
+PREFIX tok:    <urn:token:>
+
+CONSTRUCT {
+  ?s rdf:type ?class .
+  ?s rdfs:label ?label .
+  ?s skos:altLabel ?alias .
+  ?s ?pred ?o .
+}
+WHERE {
+  # The entity head: a file whose `type` is one Ontomark accepts.
+  ?file rdf:type doc:File ;
+        schema:about ?note ;
+        tok:type ?kind .
+  ?note rdf:type res:Resource .
+  BIND(LCASE(STR(?kind)) AS ?k)
+  FILTER(?k IN ("class", "individual", "namedindividual", "instance", "property"))
+  BIND(IF(?k = "class", owl:Class,
+       IF(?k = "property", owl:ObjectProperty, owl:NamedIndividual)) AS ?class)
+
+  # Subject identity: authored IRI first, derived page IRI otherwise.
+  OPTIONAL { ?file tok:iri ?authoredIri }
+  OPTIONAL { ?file tok:resource ?authoredResource }
+  BIND(COALESCE(?authoredIri, ?authoredResource) AS ?authored)
+  BIND(IF(BOUND(?authored), IRI(STR(?authored)),
+       IRI(CONCAT("urn:ontomark:page:",
+                  ENCODE_FOR_URI(STRAFTER(STR(?note), "urn:name:"))))) AS ?s)
+
+  # Label: `title` (Dot Triples maps it to rdfs:label on the file), else the note's own label.
+  OPTIONAL { ?file rdfs:label ?title }
+  OPTIONAL { ?note rdfs:label ?name }
+  BIND(COALESCE(?title, ?name) AS ?label)
+
+  OPTIONAL { ?file tok:aliases ?alias }
+
+  # Relations: each Ontomark key becomes its OWL/RDFS predicate.
+  OPTIONAL {
+    {
+      { ?file tok:subclass-of ?obj .   BIND(rdfs:subClassOf AS ?pred) }
+      UNION { ?file tok:is-a ?obj .          BIND(rdfs:subClassOf AS ?pred) }
+      UNION { ?file tok:instance-of ?obj .   BIND(rdf:type AS ?pred) }
+      UNION { ?file tok:equivalent-to ?obj . BIND(owl:equivalentClass AS ?pred) }
+      UNION { ?file tok:same-as ?obj .       BIND(owl:equivalentClass AS ?pred) }
+      UNION { ?file tok:disjoint-with ?obj . BIND(owl:disjointWith AS ?pred) }
+      UNION { ?file tok:domain ?obj .        BIND(rdfs:domain AS ?pred) }
+      UNION { ?file tok:range ?obj .         BIND(rdfs:range AS ?pred) }
+      UNION { ?file tok:subproperty-of ?obj . BIND(rdfs:subPropertyOf AS ?pred) }
+    }
+    # The object is a note name: resolve it the same way as the subject. A
+    # CURIE Dot Triples already expanded (schema:Person) is kept as is.
+    OPTIONAL {
+      ?objFile schema:about ?obj .
+      OPTIONAL { ?objFile tok:iri ?objIri }
+      OPTIONAL { ?objFile tok:resource ?objResource }
+    }
+    BIND(COALESCE(?objIri, ?objResource) AS ?objAuthored)
+    BIND(IF(BOUND(?objAuthored), IRI(STR(?objAuthored)),
+         IF(STRSTARTS(STR(?obj), "urn:name:"),
+            IRI(CONCAT("urn:ontomark:page:",
+                       ENCODE_FOR_URI(STRAFTER(STR(?obj), "urn:name:")))),
+            ?obj)) AS ?o)
+  }
+}
