@@ -58,10 +58,12 @@ pub const SOURCE_PATH: &str = "urn:ontomark:sourcePath";
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
-    /// The page or reference was refused.
-    Error,
+    /// Nothing was lost; the author may want to know.
+    Info,
     /// Something was ignored.
     Warning,
+    /// The page or reference was refused.
+    Error,
 }
 
 /// A problem found while projecting a page.
@@ -526,6 +528,23 @@ fn resolve_key<'h>(
             Some((entry.span.start, entry.span.end)),
         ));
     }
+    // A lone quoted link is a text property to Obsidian, so list functions such
+    // as Bases' `.contains(link)` skip it. The edge is still asserted; this only
+    // tells the author how to make the note answer both tools alike.
+    if !links.is_empty() && matches!(entry.value, Value::String(_)) {
+        out.diagnostics.push(diag(
+            head.path,
+            head.doc,
+            "scalar_relation",
+            Severity::Info,
+            format!(
+                "`{key}` is a single value; Obsidian reads it as text, so Bases list filters \
+                 such as `.contains()` will not match it. Write it as a list: \
+                 {key}: [\"[[…]]\"]"
+            ),
+            Some((entry.span.start, entry.span.end)),
+        ));
+    }
     for link in links {
         let at = link.span.map_or_else(
             || locate_link(source, entry.span, &link.link.target),
@@ -770,6 +789,34 @@ mod tests {
             &docs["Dog.md"].source()[span.byte_start..span.byte_end],
             "[[Animal]]"
         );
+    }
+
+    #[test]
+    fn scalar_relation_is_asserted_and_noted_but_a_list_is_silent() {
+        let docs = vault(&[
+            ("Animal.md", "---\ntype: class\n---\n"),
+            (
+                "Dog.md",
+                "---\ntype: class\nsubclass-of: \"[[Animal]]\"\n---\n",
+            ),
+            (
+                "Cat.md",
+                "---\ntype: class\nsubclass-of:\n  - \"[[Animal]]\"\n---\n",
+            ),
+            (
+                "Fox.md",
+                "---\ntype: class\nsubclass-of: [\"[[Animal]]\"]\n---\n",
+            ),
+        ]);
+        let c = compile(&docs, ProfileId::Generic.profile());
+        assert_eq!(c.axioms.len(), 3, "all three edges survive: {:?}", c.axioms);
+        let notes: Vec<_> = c
+            .diagnostics
+            .iter()
+            .map(|d| (d.path.as_str(), d.code.as_str(), d.severity))
+            .collect();
+        assert_eq!(notes, [("Dog.md", "scalar_relation", Severity::Info)]);
+        assert!(c.diagnostics[0].message.contains("subclass-of"));
     }
 
     #[test]
