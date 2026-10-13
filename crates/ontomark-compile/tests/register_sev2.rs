@@ -7,6 +7,8 @@
 //! behaviour and fails for the register's stated reason. No product code is
 //! changed by this file.
 
+#![cfg(feature = "whelk-el")]
+
 use std::path::{Path, PathBuf};
 
 use ontomark_compile::build;

@@ -4,6 +4,8 @@
 //! fixed; the failure message names the register item. The CLI-side S1.5 lives
 //! in `ontomark-cli/tests/register_sev1_cli.rs`.
 
+#![cfg(feature = "whelk-el")]
+
 use std::path::{Path, PathBuf};
 
 use ontomark_compile::build;

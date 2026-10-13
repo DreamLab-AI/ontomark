@@ -6,6 +6,8 @@
 //! The invariants come from `docs/design/machine-bundle-brief.md`. Each test
 //! builds from a scratch copy of the `estate-small` fixture.
 
+#![cfg(feature = "whelk-el")]
+
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
