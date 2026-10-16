@@ -507,4 +507,55 @@ mod tests {
             "urn:ontomark:class:a"
         );
     }
+
+    #[test]
+    fn projection_breaks_prefix_ties_in_the_documented_order() {
+        // Overlapping claims: the individual namespace is a strict prefix of
+        // the class namespace, and a legacy projection claims the same prefix
+        // as the page namespace. First match in the documented order - class,
+        // individual, legacy, page - must win.
+        let r = IriRules {
+            class_namespace: "urn:x:class:".to_owned(),
+            individual_namespace: "urn:x:".to_owned(),
+            public_class_base: "https://example.org/c/".to_owned(),
+            public_individual_base: "https://example.org/i/".to_owned(),
+            page_namespace: "urn:p:".to_owned(),
+            public_page_base: "https://example.org/p/".to_owned(),
+            legacy_projections: vec![IriMapping {
+                prefix: "urn:p:".to_owned(),
+                base: "https://example.org/legacy/".to_owned(),
+            }],
+            ..IriRules::default()
+        };
+        // Class beats individual although the individual prefix also matches.
+        assert_eq!(
+            r.project("urn:x:class:a").unwrap(),
+            "https://example.org/c/a"
+        );
+        // The individual namespace claims what the class namespace does not.
+        assert_eq!(
+            r.project("urn:x:other").unwrap(),
+            "https://example.org/i/other"
+        );
+        // Legacy beats the page namespace on an identical prefix.
+        assert_eq!(
+            r.project("urn:p:q").unwrap(),
+            "https://example.org/legacy/q"
+        );
+        // An IRI no namespace claims is never rewritten.
+        assert_eq!(r.project("urn:unrelated:z"), None);
+    }
+
+    #[test]
+    fn page_identities_project_only_when_a_public_page_base_exists() {
+        // The generic profile publishes class and individual identities as
+        // themselves, but its empty `public_page_base` means the page
+        // namespace claims nothing at all.
+        let generic = IriRules::default();
+        assert_eq!(
+            generic.project("urn:ontomark:individual:i").unwrap(),
+            "urn:ontomark:individual:i"
+        );
+        assert_eq!(generic.project("urn:ontomark:page:p"), None);
+    }
 }
