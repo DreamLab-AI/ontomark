@@ -37,7 +37,7 @@ fn repo() -> (tempfile::TempDir, std::path::PathBuf) {
         &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance/fixtures/estate-small"),
         &root,
     );
-    let page = root.join("knowledge/pages/5G.md");
+    let page = root.join("knowledge/5G.md");
     let mut text = fs::read_to_string(&page).unwrap();
     text.push_str("\n- ## Overview\n\t- A point\n");
     fs::write(page, text).unwrap();
@@ -60,7 +60,7 @@ fn run(root: &Path, args: &[&str]) -> ExitCode {
 #[test]
 fn plan_apply_status_rollback_through_the_command_layer() {
     let (_d, root) = repo();
-    let before = fs::read(root.join("knowledge/pages/5G.md")).unwrap();
+    let before = fs::read(root.join("knowledge/5G.md")).unwrap();
     let plan = root.join("plan.json");
     let plan_arg = plan.to_str().unwrap();
 
@@ -69,19 +69,13 @@ fn plan_apply_status_rollback_through_the_command_layer() {
         run(&root, &["plan", "m0001-obsidian-bodies", "--out", plan_arg]),
         ExitCode::SUCCESS
     );
-    assert_eq!(
-        fs::read(root.join("knowledge/pages/5G.md")).unwrap(),
-        before
-    );
+    assert_eq!(fs::read(root.join("knowledge/5G.md")).unwrap(), before);
 
     assert_eq!(
         run(&root, &["apply", "--plan", plan_arg]),
         ExitCode::SUCCESS
     );
-    assert_ne!(
-        fs::read(root.join("knowledge/pages/5G.md")).unwrap(),
-        before
-    );
+    assert_ne!(fs::read(root.join("knowledge/5G.md")).unwrap(), before);
     assert_eq!(run(&root, &["status"]), ExitCode::SUCCESS);
 
     // Second plan is empty.
@@ -103,10 +97,7 @@ fn plan_apply_status_rollback_through_the_command_layer() {
         run(&root, &["rollback", "m0001-obsidian-bodies", &digest]),
         ExitCode::SUCCESS
     );
-    assert_eq!(
-        fs::read(root.join("knowledge/pages/5G.md")).unwrap(),
-        before
-    );
+    assert_eq!(fs::read(root.join("knowledge/5G.md")).unwrap(), before);
 }
 
 #[test]
@@ -115,7 +106,7 @@ fn a_stale_plan_exits_one_and_leaves_the_edited_page() {
     let plan = root.join("plan.json");
     let plan_arg = plan.to_str().unwrap();
     run(&root, &["plan", "m0001-obsidian-bodies", "--out", plan_arg]);
-    let page = root.join("knowledge/pages/5G.md");
+    let page = root.join("knowledge/5G.md");
     let mut text = fs::read_to_string(&page).unwrap();
     text.push_str("- late edit\n");
     fs::write(&page, &text).unwrap();

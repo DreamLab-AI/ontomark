@@ -102,7 +102,7 @@ relations:
             "---\ntype: Class\npublic: true\nstatus: stable\nresource: urn:ngm:class:{id}\n{extra}---\nA page.\n"
         )
     };
-    let pages = repo.join("knowledge/pages");
+    let pages = repo.join("knowledge");
     write(&pages.join("Parent.md"), &class("parent", ""));
     write(
         &pages.join("A.md"),
@@ -147,7 +147,7 @@ fn s2_2a_content_digest_covers_published_working_pages() {
     let digest_with_working_page = |body: &str| {
         let (scratch, repo) = fixture_repo();
         write(
-            &repo.join("working/pages/podcast-evidence/Episode One.md"),
+            &repo.join("working/podcast-evidence/Episode One.md"),
             &format!("---\ntype: Note\nstatus: draft\npublic: true\n---\n{body}\n"),
         );
         let mut opts = options(&repo, &scratch.path().join("out"));

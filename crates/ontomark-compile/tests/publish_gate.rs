@@ -70,17 +70,20 @@ fn options(repo: &Path, out: &Path) -> build::Options {
 
 /// The first `public: true` page in the knowledge vault.
 fn a_public_page(repo: &Path) -> PathBuf {
-    let pages = repo.join("knowledge/pages");
-    let mut candidates: Vec<PathBuf> = ontomark_compile::input::page::walk_pages(&pages)
-        .expect("walk the pages")
-        .files
-        .into_iter()
-        .filter(|p| {
-            std::fs::read_to_string(p)
-                .map(|t| t.contains("public: true"))
-                .unwrap_or(false)
-        })
-        .collect();
+    let pages = repo.join("knowledge");
+    let mut candidates: Vec<PathBuf> = ontomark_compile::input::page::walk_pages(
+        &pages,
+        ontomark_compile::input::page::EXCLUDED_DIRS,
+    )
+    .expect("walk the pages")
+    .files
+    .into_iter()
+    .filter(|p| {
+        std::fs::read_to_string(p)
+            .map(|t| t.contains("public: true"))
+            .unwrap_or(false)
+    })
+    .collect();
     candidates.sort();
     candidates.pop().expect("the fixture has a public page")
 }
@@ -230,7 +233,7 @@ fn publish_out_matches_the_site_url_contract() {
         .to_owned();
     let note = "---\ntype: Note\nstatus: draft\npublic: true\n---\nA public working note.\n";
     for rel in ["podcast-evidence/Episode One.md", "misc/Scratch Note.md"] {
-        let path = repo.join("working/pages").join(rel);
+        let path = repo.join("working").join(rel);
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(&path, note).unwrap();
     }

@@ -119,7 +119,7 @@ pub trait Migration {
     /// Whether the migration claims to preserve meaning.
     fn kind(&self) -> Kind;
     /// Rewrite one page. `page_rel_path` is repository-relative with `/`
-    /// separators, for example `knowledge/pages/ETSI/Domain.md`.
+    /// separators, for example `knowledge/ETSI/Domain.md`.
     fn transform(&self, page_rel_path: &str, source: &str) -> Transform;
 }
 

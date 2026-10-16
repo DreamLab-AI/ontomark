@@ -44,7 +44,7 @@ fn seeded() -> (tempfile::TempDir, PathBuf) {
         &root,
     );
     for name in ["5G", "3D Model", "ACL"] {
-        let p = root.join(format!("knowledge/pages/{name}.md"));
+        let p = root.join(format!("knowledge/{name}.md"));
         let mut text = fs::read_to_string(&p).unwrap();
         text.push_str(OUTLINE);
         fs::write(p, text).unwrap();
@@ -52,19 +52,19 @@ fn seeded() -> (tempfile::TempDir, PathBuf) {
     // A working page with a YAML comment, an HTML comment outside the converted
     // region, and Unicode.
     fs::write(
-        root.join("working/pages/Comment Note.md"),
+        root.join("working/Comment Note.md"),
         "---\ntype: Note\ntitle: Comment Note\n# keep this comment \u{1f600}\npublic: false\n---\n<!-- keep this too -->\nA definition paragraph with caf\u{e9}.\n\n- ## Heading\n\t- Child\n",
     )
     .unwrap();
     // A CRLF page.
     fs::write(
-        root.join("working/pages/Crlf Note.md"),
+        root.join("working/Crlf Note.md"),
         "---\r\ntype: Note\r\ntitle: Crlf Note\r\npublic: false\r\n---\r\n- ## Heading\r\n\t- Child \u{e9}\r\n",
     )
     .unwrap();
     // A page that mixes line endings.
     fs::write(
-        root.join("working/pages/Mixed Note.md"),
+        root.join("working/Mixed Note.md"),
         "---\ntype: Note\ntitle: Mixed Note\npublic: false\n---\r\n- ## Heading\n\t- Child\r\n",
     )
     .unwrap();
@@ -116,11 +116,11 @@ fn plan_finds_the_logseq_pages_and_is_ready() {
     assert_eq!(p.status, PlanStatus::Ready, "{:?}", p.reasons);
     let changed = changed_paths(&p);
     for want in [
-        "knowledge/pages/5G.md",
-        "knowledge/pages/3D Model.md",
-        "knowledge/pages/ACL.md",
-        "working/pages/Comment Note.md",
-        "working/pages/Crlf Note.md",
+        "knowledge/5G.md",
+        "knowledge/3D Model.md",
+        "knowledge/ACL.md",
+        "working/Comment Note.md",
+        "working/Crlf Note.md",
         "working/journals/2026-10-12.md",
     ] {
         assert!(changed.contains(&want), "{want} missing from {changed:?}");
@@ -244,7 +244,7 @@ fn a_torn_journal_tail_does_not_stop_a_restart() {
 fn a_page_edited_after_planning_conflicts_and_the_rest_apply() {
     let (_d, root) = seeded();
     let p = plan_m1(&root);
-    let edited = root.join("knowledge/pages/5G.md");
+    let edited = root.join("knowledge/5G.md");
     let mut text = fs::read_to_string(&edited).unwrap();
     text.push_str("- an edit made after the plan\n");
     fs::write(&edited, &text).unwrap();
@@ -252,7 +252,7 @@ fn a_page_edited_after_planning_conflicts_and_the_rest_apply() {
     let r = apply(&root, &p).unwrap();
     assert!(!r.complete);
     assert_eq!(r.conflicts.len(), 1);
-    assert_eq!(r.conflicts[0].path, "knowledge/pages/5G.md");
+    assert_eq!(r.conflicts[0].path, "knowledge/5G.md");
     assert_eq!(
         fs::read_to_string(&edited).unwrap(),
         text,
@@ -261,7 +261,7 @@ fn a_page_edited_after_planning_conflicts_and_the_rest_apply() {
     assert_eq!(r.applied, p.changes - 1);
     // Re-planning picks the edited page up afresh.
     let fresh = plan_m1(&root);
-    assert_eq!(changed_paths(&fresh), ["knowledge/pages/5G.md"]);
+    assert_eq!(changed_paths(&fresh), ["knowledge/5G.md"]);
 }
 
 #[test]
@@ -316,7 +316,7 @@ fn a_stale_run_is_reported_as_complete_with_conflicts() {
     let (_d, root) = seeded();
     let p = plan_m1(&root);
     fs::write(
-        root.join("knowledge/pages/5G.md"),
+        root.join("knowledge/5G.md"),
         "---\ntype: Note\n---\nedited\n",
     )
     .unwrap();
@@ -370,7 +370,7 @@ fn rollback_refuses_a_page_edited_after_apply() {
     let pristine = tree(&root);
     let p = plan_m1(&root);
     apply(&root, &p).unwrap();
-    let edited = root.join("knowledge/pages/ACL.md");
+    let edited = root.join("knowledge/ACL.md");
     let mut text = fs::read_to_string(&edited).unwrap();
     text.push_str("\nA later human edit.\n");
     fs::write(&edited, &text).unwrap();
@@ -378,13 +378,13 @@ fn rollback_refuses_a_page_edited_after_apply() {
     let j = &status(&root).unwrap()[0];
     let r = rollback(&root, &j.dir).unwrap();
     assert_eq!(r.conflicts.len(), 1);
-    assert_eq!(r.conflicts[0].path, "knowledge/pages/ACL.md");
+    assert_eq!(r.conflicts[0].path, "knowledge/ACL.md");
     assert_eq!(r.restored, p.changes - 1);
     assert_eq!(fs::read_to_string(&edited).unwrap(), text);
     let mut now = tree(&root);
     let mut want = pristine;
-    now.remove("knowledge/pages/ACL.md");
-    want.remove("knowledge/pages/ACL.md");
+    now.remove("knowledge/ACL.md");
+    want.remove("knowledge/ACL.md");
     assert_eq!(now, want);
     assert_eq!(status(&root).unwrap()[0].state, "rollback-partial");
 }
@@ -396,13 +396,13 @@ fn unicode_crlf_and_comments_outside_the_region_survive_byte_for_byte() {
     apply(&root, &plan_m1(&root)).unwrap();
     let after = tree(&root);
 
-    let c = String::from_utf8(after["working/pages/Comment Note.md"].clone()).unwrap();
+    let c = String::from_utf8(after["working/Comment Note.md"].clone()).unwrap();
     assert!(c.starts_with(
         "---\ntype: Note\ntitle: Comment Note\n# keep this comment \u{1f600}\npublic: false\n---\n<!-- keep this too -->\nA definition paragraph with caf\u{e9}.\n"
     ), "{c:?}");
     assert!(c.contains("## Heading") && !c.contains("- ## Heading"));
 
-    let k = String::from_utf8(after["knowledge/pages/5G.md"].clone()).unwrap();
+    let k = String::from_utf8(after["knowledge/5G.md"].clone()).unwrap();
     assert!(k.contains("Point one \u{2014} caf\u{e9} \u{65e5}\u{672c}\u{8a9e}"));
     assert!(k.contains("![img.png|20](assets/img.png)"));
     // Frontmatter bytes are identical.
@@ -411,11 +411,11 @@ fn unicode_crlf_and_comments_outside_the_region_survive_byte_for_byte() {
         s[..s.find("\n---\n").unwrap()].to_owned()
     };
     assert_eq!(
-        head(&before["knowledge/pages/5G.md"]),
-        head(&after["knowledge/pages/5G.md"])
+        head(&before["knowledge/5G.md"]),
+        head(&after["knowledge/5G.md"])
     );
 
-    let crlf = &after["working/pages/Crlf Note.md"];
+    let crlf = &after["working/Crlf Note.md"];
     let text = String::from_utf8(crlf.clone()).unwrap();
     assert!(text.starts_with("---\r\ntype: Note\r\ntitle: Crlf Note\r\npublic: false\r\n---\r\n"));
     assert!(text.contains("Child \u{e9}"));
@@ -427,13 +427,13 @@ fn unicode_crlf_and_comments_outside_the_region_survive_byte_for_byte() {
 
     // The mixed-ending page is refused and so left alone.
     assert_eq!(
-        before["working/pages/Mixed Note.md"],
-        after["working/pages/Mixed Note.md"]
+        before["working/Mixed Note.md"],
+        after["working/Mixed Note.md"]
     );
     // Pages with no outline are untouched.
     assert_eq!(
-        before["knowledge/pages/3D Asset.md"],
-        after["knowledge/pages/3D Asset.md"]
+        before["knowledge/3D Asset.md"],
+        after["knowledge/3D Asset.md"]
     );
 }
 
@@ -457,7 +457,7 @@ impl Migration for Edit {
         self.kind
     }
     fn transform(&self, rel: &str, source: &str) -> Transform {
-        if !rel.starts_with("knowledge/pages/") {
+        if !rel.starts_with("knowledge/") {
             return Transform::Unchanged;
         }
         match (self.f)(source) {

@@ -27,7 +27,7 @@ fn repo() -> (tempfile::TempDir, std::path::PathBuf) {
     let repo = dir.path().join("repo");
     write(&repo.join("ontology/vocabulary.yaml"), VOCABULARY);
     write(
-        &repo.join("knowledge/pages/Solo.md"),
+        &repo.join("knowledge/Solo.md"),
         "---\ntype: Class\npublic: true\nstatus: stable\nresource: urn:ngm:class:solo\n---\nA page.\n",
     );
     (dir, repo)

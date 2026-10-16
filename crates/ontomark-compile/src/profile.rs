@@ -55,6 +55,8 @@ pub struct Profile {
     pub governance: Governance,
     /// What the raw-Markdown export surfaces do with private links.
     pub publication: Publication,
+    /// Which top-level vault folders are not pages.
+    pub layout: Layout,
 }
 
 impl Default for Profile {
@@ -80,6 +82,7 @@ impl Profile {
             attribution: AttributionRules::default(),
             governance: Governance::default(),
             publication: Publication::default(),
+            layout: Layout::default(),
         }
     }
 
@@ -416,6 +419,53 @@ impl Default for Publication {
         Self {
             redact_private_links: true,
         }
+    }
+}
+
+/// The vault's on-disk layout: which top-level folders hold furniture rather
+/// than pages.
+///
+/// A vault is an ordinary Obsidian vault whose pages sit at the vault root
+/// (2026-10-16; the Logseq-era `pages/` folder is gone and is not detected).
+/// Everything under a folder named here is skipped by the page walk and
+/// reported as an `excluded_directory` in the census, never silently dropped.
+/// `journals/` must stay in the list: it is loaded as its own tree.
+///
+/// ```
+/// use ontomark_compile::profile::Profile;
+///
+/// let p = Profile::from_yaml("layout:\n  excluded: [templates, journals, scratch]\n").unwrap();
+/// assert_eq!(p.layout.excluded, ["templates", "journals", "scratch"]);
+/// assert_eq!(
+///     Profile::generic().layout.excluded,
+///     ontomark_compile::input::page::EXCLUDED_DIRS
+/// );
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct Layout {
+    /// Top-level folder names (first path component under the vault root)
+    /// whose `.md` files are not pages. Defaults to
+    /// [`crate::input::page::EXCLUDED_DIRS`].
+    pub excluded: Vec<String>,
+}
+
+impl Default for Layout {
+    fn default() -> Self {
+        Self {
+            excluded: crate::input::page::EXCLUDED_DIRS
+                .iter()
+                .map(|s| (*s).to_owned())
+                .collect(),
+        }
+    }
+}
+
+impl Layout {
+    /// The excluded folders as the borrowed slice the page walk takes.
+    #[must_use]
+    pub fn excluded_dirs(&self) -> Vec<&str> {
+        self.excluded.iter().map(String::as_str).collect()
     }
 }
 

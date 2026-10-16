@@ -1,8 +1,8 @@
 {
-  "id": "visionGraph@116accb45051ae3fe43402c7a31fc6cc90801b73",
-  "commit": "116accb45051ae3fe43402c7a31fc6cc90801b73",
+  "id": "visionGraph@9c5b6e5852d05eb6c616c2495f366f251ed5d7eb",
+  "commit": "9c5b6e5852d05eb6c616c2495f366f251ed5d7eb",
   "dirty": false,
-  "content_digest": "cbe3eaffe819352339dccb176d0214710f22ce549e833f4098f5350c48a5bca6",
+  "content_digest": "468266ac9f7b7b93e37895543ff204f0bfe9c9d120f4a86419d2efca5830e8cf",
   "ontology_digest": "sha256-12-b4ff9705d14d",
   "generated_at": "2026-10-11T19:05:13.504876+00:00",
   "class_count": 53,
@@ -671,7 +671,7 @@
     },
     {
       "name": "okf/index.md",
-      "sha256": "e5d9d76fa517654533393e1c4d79633b1e80b1b316af00dfacc44ddf58cfc176",
+      "sha256": "fb554e47608d9fe1a1658ae3e69c69011fe942e63a65f76b2a6d770f9f350f02",
       "bytes": 4631
     },
     {
@@ -938,6 +938,286 @@
       "name": "okf/concepts/fixture-unattributed.md",
       "sha256": "6a14d5c4a13b7bddcd2a65da9585174670fa343a6dcf163a6985a6080f5e023b",
       "bytes": 381
+    },
+    {
+      "name": "publish/pages/1Hive.md",
+      "sha256": "3616c0371ef1ae76f8f7868daca0d1c71aa0103ffb5e72234c15841cda81ac0f",
+      "bytes": 1565
+    },
+    {
+      "name": "publish/pages/1inch.md",
+      "sha256": "438ed238f8ba91397a66dbd6a824260b4fd0dcfb167f4554c19e7170a5c994dd",
+      "bytes": 1574
+    },
+    {
+      "name": "publish/pages/2D LiDAR.md",
+      "sha256": "ccf3b1aa9111194f8fc3d05ae54bdeeef7a9a03d90d650745f49fed6688b1a08",
+      "bytes": 1416
+    },
+    {
+      "name": "publish/pages/360 Video.md",
+      "sha256": "96ef0ff5d654c056cb2febbaaaf85982d3512a56bc3107fadc254ed54d36d639",
+      "bytes": 5129
+    },
+    {
+      "name": "publish/pages/3D Animation.md",
+      "sha256": "e803efa9b10fba2bba8249c0ca6b1bf164dc5a8234193d13cb3ef34e05df81a8",
+      "bytes": 3856
+    },
+    {
+      "name": "publish/pages/3D Asset Creation.md",
+      "sha256": "10bc475e230542b5efa6b112847c6ae84a854f0591b978438d3b937fd7278cf7",
+      "bytes": 5139
+    },
+    {
+      "name": "publish/pages/3D Asset Standard.md",
+      "sha256": "42b3e86c3c4cca3d55bc30c086005aeca2914d69f7ba26db593b88686c8192c9",
+      "bytes": 15776
+    },
+    {
+      "name": "publish/pages/3D Asset.md",
+      "sha256": "4ef78425e552076301c3f689dd99dd2d32dedec3aee3b132b2d3ead7f93c7671",
+      "bytes": 14659
+    },
+    {
+      "name": "publish/pages/3D Content Creation.md",
+      "sha256": "98bf804860c2025c115a8ed55759ae50341a143827ffdfc09387fa46cb0c3ec8",
+      "bytes": 3535
+    },
+    {
+      "name": "publish/pages/3D Content Generation.md",
+      "sha256": "2a52d7241b71b6358459cd1faa498642e4e0e5b20521708e4cae1a9433c5412f",
+      "bytes": 3696
+    },
+    {
+      "name": "publish/pages/3D Content Pipeline.md",
+      "sha256": "46a4ecedd4c6117e7c523820dcbd43842940129a79b8dab852d980da36da02aa",
+      "bytes": 3894
+    },
+    {
+      "name": "publish/pages/3D Design.md",
+      "sha256": "f3de445ccc09dbe19f320d664e2b05cd8b59990055bfd93ec373f752e22fdf3f",
+      "bytes": 2982
+    },
+    {
+      "name": "publish/pages/3D Development.md",
+      "sha256": "0dae2443695055cfad20b950b8619d45e888591d7d4125c1b788aab6b4eb9177",
+      "bytes": 2188
+    },
+    {
+      "name": "publish/pages/3D Engine.md",
+      "sha256": "c890586acff3c0174e073738ac2ab934fbcffb90870ea72967b326f04fe6b137",
+      "bytes": 2451
+    },
+    {
+      "name": "publish/pages/3D File Format.md",
+      "sha256": "9961955c804d4e784336406b62a214457dfc46b9ae5e5a3e74a892aae2f3d7f3",
+      "bytes": 2944
+    },
+    {
+      "name": "publish/pages/3D Gaussian Splatting.md",
+      "sha256": "20c5ece879241f2ecce8a17c88b7fb2c849681850267a2fcad8a12601a8b35ae",
+      "bytes": 11210
+    },
+    {
+      "name": "publish/pages/3D Generation.md",
+      "sha256": "ea75ccd4b5d279e2214a77934bf5913d08ef501f27bc5fb661cf0d66ee60a1ca",
+      "bytes": 60259
+    },
+    {
+      "name": "publish/pages/3D Geometry.md",
+      "sha256": "7cb13305c5d3c24c1623fef6c3c2ee7537033942a1e0cea0a408bfcad671baf4",
+      "bytes": 973
+    },
+    {
+      "name": "publish/pages/3D Graphics Standard.md",
+      "sha256": "ae8e44285e2bb0ae2fb761740e3f47d5753774e5439c2e34cbd2f13048fb97ef",
+      "bytes": 2451
+    },
+    {
+      "name": "publish/pages/3D LiDAR.md",
+      "sha256": "871b00ef34b130d9edbf73ffc27603460b47dc499e3b9d7a0f2bb5bdb67d51dc",
+      "bytes": 1453
+    },
+    {
+      "name": "publish/pages/3D Mapping.md",
+      "sha256": "99980833a1f06ce48dfa2ca86aee67be5c7fca4e72f80b838efd51a6a4d6aa94",
+      "bytes": 918
+    },
+    {
+      "name": "publish/pages/3D Model.md",
+      "sha256": "1ee1a50250b775b502c5548bf90ee554fd52e4ab9ce09ed0e42a835b2063c685",
+      "bytes": 3138
+    },
+    {
+      "name": "publish/pages/3D Modeling Software.md",
+      "sha256": "993b878c7f818d571a0b6d8c3167b7523a09cc70842d6723581768acc1c8a394",
+      "bytes": 3513
+    },
+    {
+      "name": "publish/pages/3D Modelling.md",
+      "sha256": "5a7a7ffd3f9d666c04a4580d133a886fabc648aafb4a07f770fc50d20b1a5828",
+      "bytes": 7798
+    },
+    {
+      "name": "publish/pages/3D Parallelism.md",
+      "sha256": "c6244b93ace4defe79643db02e4bf164c66ead908b2e8179707811cdb4effdde",
+      "bytes": 946
+    },
+    {
+      "name": "publish/pages/3D Perception.md",
+      "sha256": "e6fa6db676017ca6f482b32098930684f84f92ac0b63b7f6271f2397d9b19824",
+      "bytes": 3625
+    },
+    {
+      "name": "publish/pages/3D Reconstruction.md",
+      "sha256": "0614c940f2bc86dfd3882d4c11c39618b80ce406705a7ec9e4ec94283a21d767",
+      "bytes": 3797
+    },
+    {
+      "name": "publish/pages/3D Rendering Engine.md",
+      "sha256": "404ddd892db1775732e04582cefa3be6bfcf803dcd8eb3efd1ca0081fc257638",
+      "bytes": 7372
+    },
+    {
+      "name": "publish/pages/3D Rendering.md",
+      "sha256": "59319e2fd9dff78a4e6b3dbb29a5ca065475215f6cfc13826e23fad26f3959ce",
+      "bytes": 13806
+    },
+    {
+      "name": "publish/pages/3D Scanning.md",
+      "sha256": "a57d551b94b6d6f93f7e831867021963a3cee55bd3fc9fe349a5db940744032a",
+      "bytes": 4349
+    },
+    {
+      "name": "publish/pages/3D Scene Exchange Protocol (SXP).md",
+      "sha256": "e253f97e6bac7a60552874f9f81d4292e7cdb33d138b1faf36881715775fb8b9",
+      "bytes": 52081
+    },
+    {
+      "name": "publish/pages/3D Scene Reconstruction.md",
+      "sha256": "b75f6b400a1d9ca6f9ec8c243e741964a35d79b4ed613c174bfd316f43ef7c00",
+      "bytes": 3769
+    },
+    {
+      "name": "publish/pages/3D Scene Representation.md",
+      "sha256": "fabdecdff970694e551fda95d57e024250c702d63720bc04f48458e587658203",
+      "bytes": 992
+    },
+    {
+      "name": "publish/pages/3D User Interface.md",
+      "sha256": "8ac17e26bd2096b8964d9503d2ad4c3e69e6a70907b78f40f6543ad8b2df0ea6",
+      "bytes": 7274
+    },
+    {
+      "name": "publish/pages/3D and 4D.md",
+      "sha256": "ff9ce2ab6ad3153004c23810fdacb06dbc82e601a48547933caac24a05533f31",
+      "bytes": 59896
+    },
+    {
+      "name": "publish/pages/3GPP.md",
+      "sha256": "c078f21afbb1db3abe1ffd99a7430b814854c1bee91dabf9ce86e9ff2a6c7311",
+      "bytes": 4204
+    },
+    {
+      "name": "publish/pages/51% Attack.md",
+      "sha256": "3e19c0c6012bdca2125ea0cc6f3f6cb9aee40ecd1f81ce7f206753bdc0f2e78b",
+      "bytes": 17113
+    },
+    {
+      "name": "publish/pages/5G Connectivity.md",
+      "sha256": "4885389719540b798a483aaa01c2d99227b92c1ef634b5eb86572c98386e92b5",
+      "bytes": 3698
+    },
+    {
+      "name": "publish/pages/5G Network.md",
+      "sha256": "6985e16f7703d952af7111571c3dc75472211572ae20ff157b635d5fec13757b",
+      "bytes": 10769
+    },
+    {
+      "name": "publish/pages/5G.md",
+      "sha256": "d23c3b380406bdbbcbc9a65e99c0e8f4e01850450e1aa993eae9d9f4d50b734b",
+      "bytes": 4286
+    },
+    {
+      "name": "publish/pages/6DoF Tracking.md",
+      "sha256": "57e8f82ed1dbaf8b0c514df8ec9de73486b09abf39ed017033c8469ffc4e9955",
+      "bytes": 4159
+    },
+    {
+      "name": "publish/pages/6G Network Slice.md",
+      "sha256": "0f8e1428f80aebdcadf9a575dd3ae6773e868c61301313ff85445443275260da",
+      "bytes": 1745
+    },
+    {
+      "name": "publish/pages/A Star Algorithm.md",
+      "sha256": "138ced0efdcf15f7f60128ec9477019ba038130c3048bd2fa93398ea4922696c",
+      "bytes": 56044
+    },
+    {
+      "name": "publish/pages/A2A Protocol.md",
+      "sha256": "ab0cfae0b8174594fc547796c5eb23b8ec9c2530f6ddc990b034f3948c0fdc57",
+      "bytes": 28076
+    },
+    {
+      "name": "publish/pages/AAAI.md",
+      "sha256": "a7fb5cfed7b9199c163719418045a65b4245159fb2c279db8a52e30240493af9",
+      "bytes": 28916
+    },
+    {
+      "name": "publish/pages/ABI Encoding.md",
+      "sha256": "15d8b6d691c8a516e1f1d16ee2c32233764e5cd1c73b164131225b3cc84edf65",
+      "bytes": 957
+    },
+    {
+      "name": "publish/pages/ACID Properties.md",
+      "sha256": "c684e9ebb663db5bcd020972c9a44d63a0bfb42c9058ea01aaa2632b18d3cbf1",
+      "bytes": 2795
+    },
+    {
+      "name": "publish/pages/ACINQ.md",
+      "sha256": "08883662d105731f0c886edb3544bcfbdc8259d9fb5a7fa3480e46dfacffbc9f",
+      "bytes": 8907
+    },
+    {
+      "name": "publish/pages/ACL.md",
+      "sha256": "f81257ffbc0be2e8d3bd9a02be10bcb28cb23693783a175ef77cc54e472e5259",
+      "bytes": 3136
+    },
+    {
+      "name": "publish/pages/B Testing.md",
+      "sha256": "8ce62628c7d76167275310ecdbb1770ea7f4b686aaa166b845ebbd144a055cfc",
+      "bytes": 2379
+    },
+    {
+      "name": "publish/pages/Fixture Link Probe.md",
+      "sha256": "52c72232c17d08c9efbf76213c7c25b148101550338057676b9554e55fff537b",
+      "bytes": 909
+    },
+    {
+      "name": "publish/pages/Fixture Public Child.md",
+      "sha256": "6feaef8bf5f781f5cefd6f15f1b474f8cc8f06c5da3b15a9ea50875f17981743",
+      "bytes": 636
+    },
+    {
+      "name": "publish/pages/Fixture Unattributed.md",
+      "sha256": "0d7f1e2e83b10d02f1dcabded79ad753e4de42a9084221c21ea0636410b25a49",
+      "bytes": 318
+    },
+    {
+      "name": "publish/working/Fixture Public Note.md",
+      "sha256": "d3bf34a0567c2adeeb03d69deac4befec75b31387b907285f438d42d0c86c2e5",
+      "bytes": 560
+    },
+    {
+      "name": "publish/index.md",
+      "sha256": "d9a9b062b4500e55bfc6066e8c8a08004a8a0f1a878029fcd784ff0fef69943a",
+      "bytes": 378
+    },
+    {
+      "name": "data/.generation.json",
+      "sha256": "cbe09ad828dc4b3e508f34f4f2179cc29414bbe1ba4154c0fbf6d66ce669101e",
+      "bytes": 3155
     }
   ]
 }

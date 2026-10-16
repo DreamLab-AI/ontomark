@@ -19,11 +19,11 @@
 //!
 //! let m = ObsidianBodies;
 //! let page = "---\ntype: Note\n---\n- # Title\n\t- Point\n";
-//! match m.transform("working/pages/X.md", page) {
+//! match m.transform("working/X.md", page) {
 //!     Transform::Changed { source, .. } => {
 //!         assert_eq!(source, "---\ntype: Note\n---\n# Title\n\n- Point\n");
 //!         // Idempotent: the result needs no further change.
-//!         assert_eq!(m.transform("working/pages/X.md", &source), Transform::Unchanged);
+//!         assert_eq!(m.transform("working/X.md", &source), Transform::Unchanged);
 //!     }
 //!     other => panic!("{other:?}"),
 //! }

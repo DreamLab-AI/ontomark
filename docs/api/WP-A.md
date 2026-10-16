@@ -60,7 +60,7 @@ round-trip, match an independent yaml-rust2 load, and pass five guarded
 patches each. Every one of the 163,645 real entries (maps, sequences of maps,
 flat lists) re-emits and reads back equal; 163,643 re-emit byte-identically,
 so a no-semantic-change rewrite produces an essentially empty diff.
-Run: `just exp03 ../visionGraph/knowledge/pages`.
+Run: `just exp03 ../visionGraph/knowledge` (the vault root; pages/ was flattened 2026-10-16).
 
 ## ontomark-model — STABLE
 

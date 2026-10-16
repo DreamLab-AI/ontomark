@@ -40,11 +40,11 @@
 //!
 //! | node or property | meaning |
 //! |---|---|
-//! | `ns:page/<id>` | one node per page under `pages/` (the id percent-encoded) |
+//! | `ns:page/<id>` | one node per page of the vault root (the id percent-encoded) |
 //! | `ns:journal/<id>` | one node per page under `journals/` |
 //! | `ns:fm-<key>` | the frontmatter key `<key>`, one triple per value, nulls omitted |
 //! | `ns:meta-key` | each top-level frontmatter key as a string, null-valued keys included |
-//! | `ns:meta-id` | the page id (the path under `pages/` without `.md`) |
+//! | `ns:meta-id` | the page id (the vault-root-relative path without `.md`) |
 //! | `ns:meta-identity` | the effective identity IRI, `resource` or its minted fallback |
 //! | `ns:meta-parent` | each `is-a` parent as the build resolves it, an IRI |
 //! | `ns:meta-idlink` | a link whose target is exactly another page's id |
@@ -1269,7 +1269,7 @@ impl DataBuilder<'_> {
 ///
 /// `role` names the vault's role in `profile.frontmatter.roles` (for example
 /// `"knowledge"`); it types every page `ns:page-in-<role>` so the role's shapes
-/// select it. The graph covers `pages/` and `journals/`; see the [module
+/// select it. The graph covers the vault root and `journals/`; see the [module
 /// documentation](self) for the names and for what is read how.
 #[must_use]
 #[allow(clippy::too_many_lines)] // One pass over a page's keys; splitting it hides the order.

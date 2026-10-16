@@ -1,8 +1,8 @@
 {
-  "id": "visionGraph@116accb45051ae3fe43402c7a31fc6cc90801b73",
-  "commit": "116accb45051ae3fe43402c7a31fc6cc90801b73",
+  "id": "visionGraph@9c5b6e5852d05eb6c616c2495f366f251ed5d7eb",
+  "commit": "9c5b6e5852d05eb6c616c2495f366f251ed5d7eb",
   "dirty": false,
-  "content_digest": "cbe3eaffe819352339dccb176d0214710f22ce549e833f4098f5350c48a5bca6",
+  "content_digest": "468266ac9f7b7b93e37895543ff204f0bfe9c9d120f4a86419d2efca5830e8cf",
   "ontology_digest": "sha256-12-b4ff9705d14d",
   "generated_at": "2026-10-11T19:05:13.504876+00:00",
   "class_count": 53,

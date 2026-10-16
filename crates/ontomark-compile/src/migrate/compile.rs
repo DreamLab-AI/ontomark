@@ -59,14 +59,17 @@ pub(crate) fn vault_from(
             .strip_prefix(&format!("{}/", kind.dir_name()))
             .ok_or_else(|| format!("{} is not under {}", p.rel, kind.dir_name()))?;
         let abs: PathBuf = repo_root.join(&p.rel);
-        if let Some(r) = under_vault.strip_prefix("pages/") {
-            let id = r.trim_end_matches(".md").to_owned();
-            let page = Page::parse(&abs, under_vault, id, &p.text).map_err(|e| e.to_string())?;
-            out.pages.push(page);
-        } else if let Some(r) = under_vault.strip_prefix("journals/") {
+        // Pages sit at the vault root; `journals/` is the one sibling tree.
+        // The snapshot was read by `read_considered`, which already applied
+        // the excluded-folder rule, so nothing else needs filtering here.
+        if let Some(r) = under_vault.strip_prefix("journals/") {
             let id = r.trim_end_matches(".md").to_owned();
             let page = Page::parse(&abs, under_vault, id, &p.text).map_err(|e| e.to_string())?;
             out.journals.push(page);
+        } else {
+            let id = under_vault.trim_end_matches(".md").to_owned();
+            let page = Page::parse(&abs, under_vault, id, &p.text).map_err(|e| e.to_string())?;
+            out.pages.push(page);
         }
     }
     Ok(out)

@@ -452,11 +452,11 @@ fn ensure_machine_scope(options: &Options, profile: &Profile) -> Result<(), Scop
             options.vault_root.display()
         ));
     }
-    let working_pages = machine_working_root(&options.vault_root).join("pages");
-    if !working_pages.is_dir() {
+    let working_root = machine_working_root(&options.vault_root);
+    if !working_root.is_dir() {
         conflicts.push(format!(
-            "working/pages is absent ({} is not a directory)",
-            working_pages.display()
+            "working/ is absent ({} is not a directory)",
+            working_root.display()
         ));
     }
     if conflicts.is_empty() {
@@ -505,12 +505,18 @@ pub fn run_with(
         ensure_machine_scope(options, profile)?;
     }
 
-    // One walk of `pages/` feeds the census, the load and the held-page
+    // One walk of the vault root feeds the census, the load and the held-page
     // identities (OM-00 step 1): three filters over one listing rather than
-    // three listings with three filters that drifted apart.
-    let pages_dir = options.vault_root.join("pages");
-    let walk = walk_pages(&pages_dir)?;
-    let census = projection::inspect_walk(&pages_dir, &walk)?;
+    // three listings with three filters that drifted apart. The profile's
+    // `layout.excluded` names the root folders that are not pages.
+    let excluded = profile.layout.excluded_dirs();
+    anyhow::ensure!(
+        options.vault_root.is_dir(),
+        "{} is not a directory",
+        options.vault_root.display()
+    );
+    let walk = walk_pages(&options.vault_root, &excluded)?;
+    let census = projection::inspect_walk(&options.vault_root, &walk)?;
     let vault = Vault::load_with_walk(
         &options.vault_root,
         vault_kind_of(&options.vault_root),
@@ -538,9 +544,8 @@ pub fn run_with(
     // lists each of its pages once.
     let working = if machine {
         let root = machine_working_root(&options.vault_root);
-        let pages = root.join("pages");
-        let walk = walk_pages(&pages)?;
-        projection::inspect_walk(&pages, &walk)?;
+        let walk = walk_pages(&root, &excluded)?;
+        projection::inspect_walk(&root, &walk)?;
         Some(Vault::load_with_walk(&root, VaultKind::Working, walk)?)
     } else if options.with_working_publish {
         publish::sibling_vault(&options.vault_root, VaultKind::Working)?
@@ -982,7 +987,7 @@ mod tests {
 
     #[cfg(feature = "whelk-el")]
     fn fixture_vault(dir: &Path) {
-        let pages = dir.join("knowledge/pages");
+        let pages = dir.join("knowledge");
         std::fs::create_dir_all(&pages).unwrap();
         std::fs::write(
             pages.join("Root Concept.md"),
@@ -1206,7 +1211,7 @@ scalars:
     #[cfg(feature = "whelk-el")]
     fn build_pages(pages: &[(&str, &str)]) -> (tempfile::TempDir, anyhow::Result<Report>) {
         let dir = tempfile::tempdir().unwrap();
-        let root = dir.path().join("knowledge/pages");
+        let root = dir.path().join("knowledge");
         std::fs::create_dir_all(&root).unwrap();
         for (id, text) in pages {
             std::fs::write(root.join(format!("{id}.md")), text).unwrap();
@@ -1383,7 +1388,7 @@ scalars:
         )
         .unwrap();
         let dir = tempfile::tempdir().unwrap();
-        let root = dir.path().join("knowledge/pages");
+        let root = dir.path().join("knowledge");
         std::fs::create_dir_all(&root).unwrap();
         for (id, text) in pages {
             std::fs::write(root.join(format!("{id}.md")), text).unwrap();
@@ -1496,7 +1501,7 @@ scalars:
             ),
         ];
         let dir = tempfile::tempdir().unwrap();
-        let root = dir.path().join("knowledge/pages");
+        let root = dir.path().join("knowledge");
         std::fs::create_dir_all(&root).unwrap();
         for (id, text) in &pages {
             std::fs::write(root.join(format!("{id}.md")), text).unwrap();
@@ -1588,7 +1593,7 @@ scalars:
         let dir = tempfile::tempdir().unwrap();
         fixture_vault(dir.path());
         std::fs::write(
-            dir.path().join("knowledge/pages/Duplicate.md"),
+            dir.path().join("knowledge/Duplicate.md"),
             "---\ntype: Class\npublic: true\nresource: urn:ngm:class:root-concept\nstatus: draft\n---\n",
         )
         .unwrap();
