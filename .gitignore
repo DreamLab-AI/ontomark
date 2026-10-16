@@ -9,3 +9,6 @@
 
 # agent tooling state
 .claude-flow/
+
+# agent worktrees
+.claude/
