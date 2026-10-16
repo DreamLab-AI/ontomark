@@ -311,11 +311,11 @@ fn two_public_working_pages_with_one_file_name_do_not_collide() {
     // Distinct `resource`s: `validate` already refuses two pages that derive
     // one IRI from one title (`DUPLICATE_IRI`), in `working/` as anywhere.
     write(
-        &repo.join("working/pages/a/Foo.md"),
+        &repo.join("working/a/Foo.md"),
         &note("Foo", true, "resource: urn:ngm:class:foo-a\n", "First."),
     );
     write(
-        &repo.join("working/pages/b/Foo.md"),
+        &repo.join("working/b/Foo.md"),
         &note("Foo", true, "resource: urn:ngm:class:foo-b\n", "Second."),
     );
     let (out, report) = built(&scratch, &repo, Scope::Machine);
@@ -332,7 +332,7 @@ fn two_public_working_pages_with_one_file_name_do_not_collide() {
 fn links_resolve_to_the_final_record_slugs() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/Linker.md"),
+        &repo.join("working/Linker.md"),
         &note(
             "Linker",
             true,
@@ -385,11 +385,11 @@ fn links_resolve_to_the_final_record_slugs() {
 fn a_public_working_twin_of_a_private_knowledge_page_is_refused() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("knowledge/pages/Twin.md"),
+        &repo.join("knowledge/Twin.md"),
         &class("Twin", false, "twin"),
     );
     write(
-        &repo.join("working/pages/Twin.md"),
+        &repo.join("working/Twin.md"),
         &note("Twin", true, "", "Mine."),
     );
     let (_, public) = build_scope(&scratch, &repo, Scope::Public);
@@ -408,11 +408,11 @@ fn a_private_working_twin_of_a_public_working_page_is_refused() {
     // D1 compares un-prefixed identities, so folders do not separate them.
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/a/Foo.md"),
+        &repo.join("working/a/Foo.md"),
         &note("Foo", true, "resource: urn:ngm:class:foo-a\n", "Out."),
     );
     write(
-        &repo.join("working/pages/c/Foo.md"),
+        &repo.join("working/c/Foo.md"),
         &note("Foo", false, "resource: urn:ngm:class:foo-c\n", "In."),
     );
     let (_, machine) = build_scope(&scratch, &repo, Scope::Machine);
@@ -427,11 +427,11 @@ fn a_private_working_twin_of_a_public_working_page_is_refused() {
 fn a_public_working_twin_of_a_public_knowledge_page_yields() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("knowledge/pages/Twin.md"),
+        &repo.join("knowledge/Twin.md"),
         &class("Twin", true, "twin"),
     );
     write(
-        &repo.join("working/pages/Twin.md"),
+        &repo.join("working/Twin.md"),
         &note("Twin", true, "", "Mine."),
     );
     let (out, report) = built(&scratch, &repo, Scope::Machine);
@@ -449,15 +449,15 @@ fn a_public_working_twin_of_a_public_knowledge_page_yields() {
 fn a_link_to_a_yielded_twin_points_at_the_knowledge_winner() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("knowledge/pages/Twin.md"),
+        &repo.join("knowledge/Twin.md"),
         &class("Twin", true, "twin"),
     );
     write(
-        &repo.join("working/pages/Twin.md"),
+        &repo.join("working/Twin.md"),
         &note("Twin", true, "", "Mine."),
     );
     write(
-        &repo.join("working/pages/Linker.md"),
+        &repo.join("working/Linker.md"),
         &note("Linker", true, "", "See [[Twin]]."),
     );
     let (out, _) = built(&scratch, &repo, Scope::Machine);
@@ -475,7 +475,7 @@ fn a_link_to_a_yielded_twin_points_at_the_knowledge_winner() {
 fn public_working_text_naming_a_private_working_page_is_masked() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/Reading.md"),
+        &repo.join("working/Reading.md"),
         &note("Reading Fixture Private Note", true, "", "Prose."),
     );
     let (out, _) = built(&scratch, &repo, Scope::Machine);
@@ -487,7 +487,7 @@ fn public_working_text_naming_a_private_working_page_is_masked() {
 fn a_held_back_working_page_is_neither_published_nor_a_collision() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/misc/Scratch.md"),
+        &repo.join("working/misc/Scratch.md"),
         &note("Scratch", true, "", "Held back by folder."),
     );
     let (out, report) = built(&scratch, &repo, Scope::Machine);
@@ -515,7 +515,7 @@ fn a_dirty_working_tree_is_dirty_in_machine_scope() {
     git(&["add", "."]);
     git(&["commit", "-q", "-m", "fixture"]);
     write(
-        &repo.join("working/pages/Fixture Public Note.md"),
+        &repo.join("working/Fixture Public Note.md"),
         &note("Fixture Public Note", true, "", "Edited after the commit."),
     );
 
@@ -537,7 +537,7 @@ fn a_dirty_working_tree_is_dirty_in_machine_scope() {
 fn a_string_public_flag_in_working_refuses_the_machine_build() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/Quoted.md"),
+        &repo.join("working/Quoted.md"),
         "---\ntype: Note\ntitle: Quoted\npublic: \"true\"\n---\n\nBody.\n",
     );
     let (out, machine) = build_scope(&scratch, &repo, Scope::Machine);
@@ -553,7 +553,7 @@ fn a_string_public_flag_in_working_refuses_the_machine_build() {
 fn a_credential_in_a_public_working_page_refuses_the_machine_build() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/Leaky.md"),
+        &repo.join("working/Leaky.md"),
         &note(
             "Leaky",
             true,
@@ -576,7 +576,7 @@ fn a_credential_in_a_public_working_page_refuses_the_machine_build() {
 fn a_validation_error_in_working_refuses_the_machine_build() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/Untyped.md"),
+        &repo.join("working/Untyped.md"),
         "---\ntype: NotAWorkingType\ntitle: Untyped\npublic: true\n---\n\nBody.\n",
     );
     let (out, machine) = build_scope(&scratch, &repo, Scope::Machine);
@@ -650,12 +650,12 @@ fn machine_scope_refuses_a_non_knowledge_root_and_a_missing_working_vault() {
         .iter()
         .any(|c| c.contains("knowledge")));
 
-    std::fs::remove_dir_all(repo.join("working/pages")).unwrap();
-    let error = run(&repo, &options(&repo, &out, Scope::Machine)).expect_err("no working/pages");
+    std::fs::remove_dir_all(repo.join("working")).unwrap();
+    let error = run(&repo, &options(&repo, &out, Scope::Machine)).expect_err("no working/ vault");
     assert!(conflict_of(&error)
         .conflicts
         .iter()
-        .any(|c| c.contains("working/pages")));
+        .any(|c| c.contains("working/ is absent")));
     assert!(!out.exists());
 }
 
@@ -666,11 +666,11 @@ fn a_private_working_twin_of_a_public_knowledge_page_yields_silently() {
     // published, so it is harmless and must not refuse the build.
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("knowledge/pages/Twin.md"),
+        &repo.join("knowledge/Twin.md"),
         &class("Twin", true, "twin"),
     );
     write(
-        &repo.join("working/pages/Twin.md"),
+        &repo.join("working/Twin.md"),
         &note("Twin", false, "", "Private draft."),
     );
     let (out, report) = built(&scratch, &repo, Scope::Machine);
@@ -693,7 +693,7 @@ fn a_private_working_twin_of_a_public_knowledge_page_yields_silently() {
 fn machine_scope_page_iris_carry_no_spaces_and_equal_the_slug_path() {
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/Sub Dir/Two Words.md"),
+        &repo.join("working/Sub Dir/Two Words.md"),
         &note("Two Words", true, "", "Body."),
     );
     let (out, _) = built(&scratch, &repo, Scope::Machine);
@@ -710,11 +710,11 @@ fn a_non_ascii_working_folder_keeps_its_own_slug_segment() {
     // `a/東京/Foo` onto `a//foo` and let two records claim one output file.
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/a/Foo.md"),
+        &repo.join("working/a/Foo.md"),
         &note("Foo", true, "resource: urn:ngm:class:foo-a\n", "First."),
     );
     write(
-        &repo.join("working/pages/a/東京/Foo.md"),
+        &repo.join("working/a/東京/Foo.md"),
         &note(
             "Foo Tokyo",
             true,
@@ -750,7 +750,7 @@ fn two_working_pages_with_one_slug_are_refused_before_staging() {
     // output clash.
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("working/pages/A B/Foo.md"),
+        &repo.join("working/A B/Foo.md"),
         &note(
             "Foo One",
             true,
@@ -759,7 +759,7 @@ fn two_working_pages_with_one_slug_are_refused_before_staging() {
         ),
     );
     write(
-        &repo.join("working/pages/A-B/Foo.md"),
+        &repo.join("working/A-B/Foo.md"),
         &note(
             "Foo Two",
             true,
@@ -787,11 +787,11 @@ fn a_private_working_twins_title_is_still_masked_in_public_working_prose() {
     // record let that title ship unmasked in another working page's prose.
     let (scratch, repo) = fixture_repo();
     write(
-        &repo.join("knowledge/pages/Nightjar.md"),
+        &repo.join("knowledge/Nightjar.md"),
         &class("Nightjar", true, "nightjar"),
     );
     write(
-        &repo.join("working/pages/Nightjar.md"),
+        &repo.join("working/Nightjar.md"),
         &note(
             "Project Nightjar Alpha",
             false,
@@ -800,7 +800,7 @@ fn a_private_working_twins_title_is_still_masked_in_public_working_prose() {
         ),
     );
     write(
-        &repo.join("working/pages/Diary.md"),
+        &repo.join("working/Diary.md"),
         // A plain record publishes only its title, so the title is the prose
         // surface a private name could escape through.
         &note(

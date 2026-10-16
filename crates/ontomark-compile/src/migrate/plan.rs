@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use super::compile::{compile_knowledge, SnapshotPage};
 use super::{sha256_hex, Kind, MigrateError, Migration, Transform};
 use crate::build::attribution::Roster;
-use crate::input::page::{walk_pages, Page, VaultKind};
+use crate::input::page::{walk_pages, Page, VaultKind, EXCLUDED_DIRS};
 use crate::input::vocabulary::Vocabulary;
 use crate::profile::Profile;
 
@@ -306,12 +306,18 @@ fn read_considered(repo_root: &Path, kinds: &[VaultKind]) -> Result<Vec<Consider
     kinds.dedup();
     for kind in kinds {
         let vault_dir = repo_root.join(kind.dir_name());
-        for tree in ["pages", "journals"] {
-            let dir = vault_dir.join(tree);
+        // The vault root (its furniture folders excluded) and then `journals/`:
+        // the same two trees `Vault::load` reads.
+        let trees: [(std::path::PathBuf, &[&str]); 2] = [
+            (vault_dir.clone(), EXCLUDED_DIRS),
+            (vault_dir.join("journals"), &[]),
+        ];
+        for (dir, excluded) in trees {
             if !dir.is_dir() {
                 continue;
             }
-            let walk = walk_pages(&dir).map_err(|e| MigrateError::Input(e.to_string()))?;
+            let walk =
+                walk_pages(&dir, excluded).map_err(|e| MigrateError::Input(e.to_string()))?;
             for path in walk.files {
                 let rel = path
                     .strip_prefix(repo_root)
@@ -328,11 +334,14 @@ fn read_considered(repo_root: &Path, kinds: &[VaultKind]) -> Result<Vec<Consider
 }
 
 /// A page's identity-bearing fields and `public` flag, from its source.
+///
+/// `rel` is repository-relative (`knowledge/ETSI/Domain.md`); the id is the
+/// vault-relative path without `.md`, a journal's its date stem.
 fn identity_of(vocab: &Vocabulary, rel: &str, text: &str) -> Option<(bool, [(String, String); 4])> {
     let under = rel.split_once('/').map_or(rel, |(_, r)| r);
     let id = under
-        .split_once('/')
-        .map_or(under, |(_, r)| r)
+        .strip_prefix("journals/")
+        .unwrap_or(under)
         .trim_end_matches(".md");
     let page = Page::parse(rel, under, id, text).ok()?;
     Some((

@@ -490,7 +490,7 @@ mod tests {
             ]
             .into_iter()
             .map(|(id, text)| {
-                Page::parse(format!("/v/pages/{id}.md"), format!("pages/{id}.md"), id, text)
+                Page::parse(format!("/v/{id}.md"), format!("{id}.md"), id, text)
                     .unwrap()
             })
             .collect(),
@@ -534,8 +534,8 @@ tail_iris:
 
     fn page(id: &str, fm: &str, body: &str) -> Page {
         Page::parse(
-            format!("/v/pages/{id}.md"),
-            format!("pages/{id}.md"),
+            format!("/v/{id}.md"),
+            format!("{id}.md"),
             id,
             &format!("---\n{fm}---\n{body}"),
         )

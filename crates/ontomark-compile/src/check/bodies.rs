@@ -808,7 +808,7 @@ pub fn run(options: &Options) -> anyhow::Result<Report> {
         if !scope.dir.is_dir() {
             continue;
         }
-        for path in crate::input::page::walk_pages(&scope.dir)?.files {
+        for path in crate::input::page::walk_pages(&scope.dir, &scope.excluded_dirs())?.files {
             report.pages_examined += 1;
             let before = std::fs::read_to_string(&path)?;
             let after = convert(&before);

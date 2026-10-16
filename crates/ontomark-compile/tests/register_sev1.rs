@@ -48,7 +48,7 @@ fn class(public: &str, resource: &str, extra: &str, body: &str) -> String {
     )
 }
 
-/// A scratch repo (`<tmp>/repo/knowledge/pages`) and its output directory.
+/// A scratch repo (`<tmp>/repo/knowledge`) and its output directory.
 fn repo() -> (tempfile::TempDir, PathBuf, PathBuf) {
     let scratch = tempfile::tempdir().expect("scratch dir");
     let repo = scratch.path().join("repo");
@@ -89,7 +89,7 @@ fn run_validate(repo: &Path) -> validate::Report {
 #[test]
 fn control_clean_vault_builds_and_validates() {
     let (_scratch, repo, out) = repo();
-    let pages = repo.join("knowledge/pages");
+    let pages = repo.join("knowledge");
     write(
         &pages.join("Alpha.md"),
         &class("true", "alpha", "", "Alpha."),
@@ -142,7 +142,7 @@ fn s1_1_redactor_refuses_rather_than_fails_open() {
 #[test]
 fn s1_2_build_refuses_a_credential_in_published_frontmatter() {
     let (_scratch, repo, out) = repo();
-    let pages = repo.join("knowledge/pages");
+    let pages = repo.join("knowledge");
     write(
         &pages.join("Leaky.md"),
         &class(
@@ -173,7 +173,7 @@ fn s1_2_build_refuses_a_credential_in_published_frontmatter() {
 #[test]
 fn s1_2_validate_reports_a_credential_in_frontmatter() {
     let (_scratch, repo, _out) = repo();
-    let pages = repo.join("knowledge/pages");
+    let pages = repo.join("knowledge");
     write(
         &pages.join("Leaky.md"),
         &class(
@@ -205,7 +205,7 @@ fn s1_2_validate_reports_a_credential_in_frontmatter() {
 #[test]
 fn s1_3_validate_and_build_agree_on_a_string_public_flag() {
     let (_scratch, repo, out) = repo();
-    let pages = repo.join("knowledge/pages");
+    let pages = repo.join("knowledge");
     write(
         &pages.join("Quoted.md"),
         &class("\"true\"", "quoted", "", "Quoted."),

@@ -76,7 +76,7 @@ impl fmt::Display for Issue {
 /// The whole report.
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct Report {
-    /// Pages examined under `pages/`.
+    /// Pages examined in the vault root tree (journals excluded).
     pub total_pages: usize,
     /// Pages examined under `journals/`.
     ///
@@ -97,7 +97,7 @@ pub struct Report {
 /// The machine-readable summary written to `api/validation-report.json`.
 #[derive(Debug, Clone, Serialize)]
 pub struct Summary {
-    /// Pages examined under `pages/`.
+    /// Pages examined in the vault root tree (journals excluded).
     pub total_pages: usize,
     /// Pages examined under `journals/`.
     pub total_journals: usize,
@@ -892,13 +892,7 @@ scalars:
             pages: pages
                 .into_iter()
                 .map(|(id, text)| {
-                    Page::parse(
-                        format!("/v/pages/{id}.md"),
-                        format!("pages/{id}.md"),
-                        id,
-                        text,
-                    )
-                    .unwrap()
+                    Page::parse(format!("/v/{id}.md"), format!("{id}.md"), id, text).unwrap()
                 })
                 .collect(),
         }

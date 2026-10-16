@@ -8,8 +8,8 @@
 //! claiming one path, a definition the reasoner would not finish on, an
 //! unsatisfiable class — the corpus does not permit this build; or a
 //! `build --scope machine` asked for alongside `--publish-out`, `--vault
-//! working|all` or `--no-redact-private-links`, or on a repository without
-//! `working/pages`) or an invalid argument (an unknown `--vault`, `--scope`,
+//! working|all` or `--no-redact-private-links`, or on a repository without a
+//! `working/` vault) or an invalid argument (an unknown `--vault`, `--scope`,
 //! `--tier` or `--severity` value included).
 //!
 //! `build --scope machine` is the bundle `VisionClaw` consumes: the public

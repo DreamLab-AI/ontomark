@@ -33,11 +33,11 @@ fn repo(working: &[(&str, String)]) -> tempfile::TempDir {
     let dir = tempfile::tempdir().unwrap();
     write(&dir.path().join("ontology/vocabulary.yaml"), VOCABULARY);
     write(
-        &dir.path().join("knowledge/pages/Clean.md"),
+        &dir.path().join("knowledge/Clean.md"),
         &class("Clean", "clean", "A clean page."),
     );
     for (name, text) in working {
-        write(&dir.path().join("working/pages").join(name), text);
+        write(&dir.path().join("working").join(name), text);
     }
     dir
 }

@@ -67,7 +67,7 @@ fn main() -> anyhow::Result<()> {
         ("working", VaultKind::Working),
     ] {
         let root = repo.join(name);
-        if !root.join("pages").is_dir() {
+        if !root.is_dir() {
             continue;
         }
         let vault = Vault::load(&root, kind)?;

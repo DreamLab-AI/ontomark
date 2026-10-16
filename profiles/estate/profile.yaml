@@ -190,6 +190,10 @@ governance:
   kinds:
     panel: 31400
     proposal: 31402
+# layout: the vaults are ordinary Obsidian vaults with pages at the vault root
+# (2026-10-16; the Logseq-era pages/ folder is gone). The built-in excluded
+# folders — templates, bases, assets, journals — are what the estate needs, so
+# no `layout:` block is set here; add `layout: {excluded: [...]}` to change it.
 publication:
   # EXP-04: a link that resolves to a page that is not public is removed from the
   # staged publish/ Markdown and the api/markdown mirror, never emitted with the

@@ -3,8 +3,8 @@
 //! This is the security-relevant half of the build. Three things happen here
 //! and all three must keep happening:
 //!
-//! 1. **Input census** ([`inspect_inputs`]). Every markdown file under
-//!    `pages/` is accounted for before the parser gets a chance to silently
+//! 1. **Input census** ([`inspect_inputs`]). Every markdown file under the
+//!    vault root is accounted for before the parser gets a chance to silently
 //!    drop it. A `public` value that is not a real boolean is refusal, not
 //!    coercion — "true" the string never becomes publication permission.
 //! 2. **Identity collision check.** If one identity (page id, slug or IRI) is
@@ -70,30 +70,31 @@ pub struct Census {
     pub balanced: bool,
 }
 
-/// Walk `pages_dir` and account for every markdown file.
+/// Walk the vault at `root` (skipping
+/// [`crate::input::page::EXCLUDED_DIRS`]) and account for every markdown file.
 ///
 /// # Errors
 /// [`PublicationBlocked::Census`] when any file has an invalid or conflicting
 /// publication flag, an unclosed frontmatter fence, or cannot be read.
-pub fn inspect_inputs(pages_dir: impl AsRef<Path>) -> Result<Census, PublicationBlocked> {
-    let pages_dir = pages_dir.as_ref();
-    let walk = crate::input::page::walk_pages(pages_dir).map_err(|e| {
-        PublicationBlocked::Census(format!("cannot walk {}: {e}", pages_dir.display()))
-    })?;
-    inspect_walk(pages_dir, &walk)
+pub fn inspect_inputs(root: impl AsRef<Path>) -> Result<Census, PublicationBlocked> {
+    let root = root.as_ref();
+    let walk = crate::input::page::walk_pages(root, crate::input::page::EXCLUDED_DIRS)
+        .map_err(|e| PublicationBlocked::Census(format!("cannot walk {}: {e}", root.display())))?;
+    inspect_walk(root, &walk)
 }
 
 /// [`inspect_inputs`] over a walk the caller already made, so a build walks
-/// `pages/` once for the census and the load (OM-00 step 1).
+/// the vault root once for the census and the load (OM-00 step 1).
 ///
-/// The census and the vault load now share one listing and one skip rule: a
-/// hidden-directory skip counts as `excluded_directory`, a non-regular `.md`
-/// entry as `excluded_not_regular_file`, and both are visible in the counts.
+/// The census and the vault load share one listing and one skip rule: a
+/// hidden-directory or excluded-folder skip counts as `excluded_directory`, a
+/// non-regular `.md` entry as `excluded_not_regular_file`, and both are
+/// visible in the counts.
 ///
 /// # Errors
 /// As [`inspect_inputs`].
 pub fn inspect_walk(
-    pages_dir: &Path,
+    root: &Path,
     walk: &crate::input::page::PageWalk,
 ) -> Result<Census, PublicationBlocked> {
     use crate::input::page::SkipReason;
@@ -103,13 +104,13 @@ pub fn inspect_walk(
     for skip in &walk.skipped {
         bump("input_files");
         bump(match skip.reason {
-            SkipReason::HiddenDirectory => "excluded_directory",
+            SkipReason::HiddenDirectory | SkipReason::ExcludedDirectory => "excluded_directory",
             SkipReason::NotARegularFile => "excluded_not_regular_file",
         });
     }
     for path in &walk.files {
         bump("input_files");
-        let rel = path.strip_prefix(pages_dir).unwrap_or(path);
+        let rel = path.strip_prefix(root).unwrap_or(path);
         if is_unpublished(rel) {
             bump("excluded_directory");
             continue;
@@ -198,13 +199,13 @@ pub fn inspect_walk(
 /// # Errors
 /// `std::io::Error` when the tree cannot be walked. (A page that fails to
 /// parse is skipped: the vault load has already refused it by then.)
-pub fn excluded_identities(pages_dir: impl AsRef<Path>) -> Result<HashSet<String>, std::io::Error> {
-    let pages_dir = pages_dir.as_ref();
-    let walk = crate::input::page::walk_pages(pages_dir)
+pub fn excluded_identities(root: impl AsRef<Path>) -> Result<HashSet<String>, std::io::Error> {
+    let root = root.as_ref();
+    let walk = crate::input::page::walk_pages(root, crate::input::page::EXCLUDED_DIRS)
         .map_err(|e| std::io::Error::other(e.to_string()))?;
     let mut out = HashSet::new();
     for path in &walk.files {
-        let rel = path.strip_prefix(pages_dir).unwrap_or(path);
+        let rel = path.strip_prefix(root).unwrap_or(path);
         if !is_unpublished(rel) {
             continue;
         }
@@ -227,11 +228,7 @@ pub fn excluded_identities(pages_dir: impl AsRef<Path>) -> Result<HashSet<String
 pub fn excluded_identities_of(vault: &Vault) -> HashSet<String> {
     let mut out = HashSet::new();
     for page in &vault.pages {
-        let rel = page
-            .rel_path
-            .strip_prefix("pages")
-            .unwrap_or(&page.rel_path);
-        if is_unpublished(rel) {
+        if is_unpublished(&page.rel_path) {
             held_identities(page, &page.id, &mut out);
         }
     }
@@ -616,11 +613,7 @@ pub fn project_vault_with_links(
 fn clean_vault(vault: &Vault, links: &crate::build::redact::PrivateLinks) -> Vault {
     let mut cleaned = vault.clone();
     for page in &mut cleaned.pages {
-        let rel = page
-            .rel_path
-            .strip_prefix("pages")
-            .unwrap_or(&page.rel_path);
-        if crate::build::publish::held_back(rel) {
+        if crate::build::publish::held_back(&page.rel_path) {
             page.frontmatter.map.insert("public".into(), false.into());
         }
         if !page.is_public() {
@@ -661,11 +654,7 @@ fn clean_vault(vault: &Vault, links: &crate::build::redact::PrivateLinks) -> Vau
 fn hold_back(vault: &Vault) -> Vault {
     let mut held = vault.clone();
     for page in &mut held.pages {
-        let rel = page
-            .rel_path
-            .strip_prefix("pages")
-            .unwrap_or(&page.rel_path);
-        if crate::build::publish::held_back(rel) {
+        if crate::build::publish::held_back(&page.rel_path) {
             page.frontmatter.map.insert("public".into(), false.into());
         }
     }
@@ -1116,13 +1105,7 @@ mod tests {
             pages: pages
                 .iter()
                 .map(|(id, text)| {
-                    Page::parse(
-                        format!("/v/pages/{id}.md"),
-                        format!("pages/{id}.md"),
-                        *id,
-                        text,
-                    )
-                    .unwrap()
+                    Page::parse(format!("/v/{id}.md"), format!("{id}.md"), *id, text).unwrap()
                 })
                 .collect(),
         };
@@ -1161,27 +1144,32 @@ mod tests {
     #[test]
     fn census_counts_and_balances() {
         let dir = tempfile::tempdir().unwrap();
-        let pages = dir.path().join("pages");
-        std::fs::create_dir_all(pages.join("_misc")).unwrap();
-        std::fs::write(pages.join("A.md"), "---\npublic: true\n---\n").unwrap();
-        std::fs::write(pages.join("B.md"), "---\npublic: false\n---\n").unwrap();
-        std::fs::write(pages.join("C.md"), "no frontmatter\n").unwrap();
-        std::fs::write(pages.join("_misc/D.md"), "---\npublic: true\n---\n").unwrap();
-        let census = inspect_inputs(&pages).unwrap();
+        let root = dir.path();
+        std::fs::create_dir_all(root.join("_misc")).unwrap();
+        std::fs::create_dir_all(root.join("templates")).unwrap();
+        std::fs::write(root.join("A.md"), "---\npublic: true\n---\n").unwrap();
+        std::fs::write(root.join("B.md"), "---\npublic: false\n---\n").unwrap();
+        std::fs::write(root.join("C.md"), "no frontmatter\n").unwrap();
+        std::fs::write(root.join("_misc/D.md"), "---\npublic: true\n---\n").unwrap();
+        // Obsidian furniture: counted as `excluded_directory`, never parsed, so
+        // even a non-boolean `public` in a template cannot refuse the build.
+        std::fs::write(root.join("templates/T.md"), "---\npublic: \"true\"\n---\n").unwrap();
+        let census = inspect_inputs(root).unwrap();
         assert_eq!(census.public_pages, 1);
         assert_eq!(census.non_public_pages, 1);
-        assert_eq!(census.excluded, 2);
+        assert_eq!(census.excluded, 3);
+        assert_eq!(census.counts["excluded_directory"], 2);
+        assert_eq!(census.counts["input_files"], 5);
         assert!(census.balanced);
     }
 
     #[test]
     fn a_string_public_flag_refuses_the_build() {
         let dir = tempfile::tempdir().unwrap();
-        let pages = dir.path().join("pages");
-        std::fs::create_dir_all(&pages).unwrap();
-        std::fs::write(pages.join("A.md"), "---\npublic: \"true\"\n---\n").unwrap();
+        let root = dir.path();
+        std::fs::write(root.join("A.md"), "---\npublic: \"true\"\n---\n").unwrap();
         assert!(matches!(
-            inspect_inputs(&pages),
+            inspect_inputs(root),
             Err(PublicationBlocked::Census(_))
         ));
     }

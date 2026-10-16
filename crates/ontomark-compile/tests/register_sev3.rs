@@ -2,7 +2,7 @@
 //! without a `Skip` record) and S3.3 (an unclosed opening `---` is read as "no
 //! frontmatter"). Written red against ffe06e4; green since 8d654d1.
 
-use ontomark_compile::input::page::walk_pages;
+use ontomark_compile::input::page::{walk_pages, EXCLUDED_DIRS};
 use ontomark_compile::ir::projection::{inspect_inputs, PublicationBlocked};
 
 /// S3.2: `walk_pages` must report a symlinked `.md` instead of dropping it
@@ -11,12 +11,12 @@ use ontomark_compile::ir::projection::{inspect_inputs, PublicationBlocked};
 #[test]
 fn s3_2_symlinked_page_is_reported_not_dropped() {
     let scratch = tempfile::tempdir().expect("scratch dir");
-    let pages = scratch.path().join("pages");
-    std::fs::create_dir_all(&pages).expect("pages dir");
+    let pages = scratch.path().join("knowledge");
+    std::fs::create_dir_all(&pages).expect("vault dir");
     std::fs::write(pages.join("a.md"), "---\npublic: true\n---\n# A\n").expect("write a.md");
     std::os::unix::fs::symlink(pages.join("a.md"), pages.join("b.md")).expect("symlink b.md");
 
-    let walk = walk_pages(&pages).expect("walk");
+    let walk = walk_pages(&pages, EXCLUDED_DIRS).expect("walk");
 
     assert!(
         walk.skipped
@@ -63,8 +63,8 @@ fn s3_2_symlinked_page_is_reported_not_dropped() {
 #[test]
 fn s3_3_unclosed_frontmatter_is_invalid_input_not_private() {
     let scratch = tempfile::tempdir().expect("scratch dir");
-    let pages = scratch.path().join("pages");
-    std::fs::create_dir_all(&pages).expect("pages dir");
+    let pages = scratch.path().join("knowledge");
+    std::fs::create_dir_all(&pages).expect("vault dir");
     std::fs::write(
         pages.join("broken.md"),
         "---\ntitle: X\npublic: true\n\n# Body, but the fence never closed\n",

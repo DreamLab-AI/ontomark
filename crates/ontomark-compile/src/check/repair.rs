@@ -68,13 +68,25 @@ use std::path::{Path, PathBuf};
 use crate::input::code::CodeMap;
 use serde::Serialize;
 
-/// One tree to repair: a vault's `pages/` or `journals/`.
+/// One tree to repair: a vault's root (pages) or its `journals/`.
 #[derive(Debug, Clone)]
 pub struct Scope {
     /// The vault name — `knowledge` or `working`.
     pub vault: String,
     /// The directory walked.
     pub dir: PathBuf,
+    /// Top-level folders under `dir` that are not pages and are never
+    /// touched: [`crate::input::page::EXCLUDED_DIRS`] for a vault root
+    /// (`templates/`, `bases/`, `assets/`, `journals/`), empty for `journals/`.
+    pub excluded: Vec<String>,
+}
+
+impl Scope {
+    /// The excluded folders as the borrowed slice the page walk takes.
+    #[must_use]
+    pub fn excluded_dirs(&self) -> Vec<&str> {
+        self.excluded.iter().map(String::as_str).collect()
+    }
 }
 
 /// What to repair and how.
@@ -372,7 +384,7 @@ pub fn run(options: &Options) -> anyhow::Result<Report> {
         if !scope.dir.is_dir() {
             continue;
         }
-        for path in crate::input::page::walk_pages(&scope.dir)?.files {
+        for path in crate::input::page::walk_pages(&scope.dir, &scope.excluded_dirs())?.files {
             report.pages_examined += 1;
             let before = std::fs::read_to_string(&path)?;
             let rel = path.strip_prefix(&scope.dir).unwrap_or(&path);
@@ -419,17 +431,26 @@ pub fn run(options: &Options) -> anyhow::Result<Report> {
     Ok(report)
 }
 
-/// The scopes a `--vault` value names: both trees of every selected vault.
+/// The scopes a `--vault` value names: both trees of every selected vault —
+/// the vault root with [`crate::input::page::EXCLUDED_DIRS`] applied (so
+/// `templates/`, `bases/` and `assets/` are never rewritten), then `journals/`.
 #[must_use]
 pub fn scopes_for(root: &Path, vaults: &[&str]) -> Vec<Scope> {
     let mut out = Vec::new();
     for vault in vaults {
-        for tree in ["pages", "journals"] {
-            out.push(Scope {
-                vault: (*vault).to_owned(),
-                dir: root.join(vault).join(tree),
-            });
-        }
+        out.push(Scope {
+            vault: (*vault).to_owned(),
+            dir: root.join(vault),
+            excluded: crate::input::page::EXCLUDED_DIRS
+                .iter()
+                .map(|s| (*s).to_owned())
+                .collect(),
+        });
+        out.push(Scope {
+            vault: (*vault).to_owned(),
+            dir: root.join(vault).join("journals"),
+            excluded: Vec::new(),
+        });
     }
     out
 }
@@ -603,7 +624,7 @@ mod tests {
     #[test]
     fn an_ambiguous_page_is_reported_and_left_byte_identical() {
         let dir = tempfile::tempdir().unwrap();
-        let pages = dir.path().join("knowledge/pages");
+        let pages = dir.path().join("knowledge");
         std::fs::create_dir_all(&pages).unwrap();
         let text =
             "```mermaid\nA --> B\n```\n\nprose\n\ngraph TD\n  X -->|to| Y\n```\n\n- ### After\n";
@@ -660,7 +681,7 @@ mod tests {
     #[test]
     fn a_run_reports_every_change_and_writes_only_when_asked() {
         let dir = tempfile::tempdir().unwrap();
-        let pages = dir.path().join("knowledge/pages");
+        let pages = dir.path().join("knowledge");
         std::fs::create_dir_all(&pages).unwrap();
         std::fs::write(pages.join("Stray.md"), "- A bullet.\n```\n- More.\n").unwrap();
         std::fs::write(

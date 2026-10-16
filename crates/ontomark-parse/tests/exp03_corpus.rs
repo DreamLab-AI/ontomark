@@ -2,7 +2,7 @@
 //! round-trips byte-for-byte, matches an independent YAML load, and survives
 //! representative guarded patches with every unnamed byte unchanged.
 //!
-//! Set `ONTOMARK_CORPUS` to a `pages/` directory to run it (`just exp03`).
+//! Set `ONTOMARK_CORPUS` to a vault root (pages sit at the root since 2026-10-16) to run it (`just exp03`).
 //! Without it the test reports that it was skipped. Output is counts only:
 //! no titles, paths or page text.
 

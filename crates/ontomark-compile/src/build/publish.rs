@@ -122,14 +122,14 @@ pub struct Staging {
 ///
 /// `_misc` is the projection's own rule ([`is_unpublished`], top level only).
 /// `misc` is the owner's 2026-09-02 scratch-tray decision, which the migration
-/// moved to `working/pages/misc/`; the published site holds it back with the
+/// moved to `working/misc/`; the published site holds it back with the
 /// `**/misc/**` Quartz ignore pattern and the site's `stage-content.sh` with the
 /// same list. Staging a page Quartz then ignores would make the site's
 /// completeness check (`check-urls.sh` [0/7]: staged == built) fail, so the
 /// staging applies the same rule rather than relying on the renderer alone.
 const HELD_BACK_DIRS: &[&str] = &["_misc", "misc"];
 
-/// `true` when a page path (relative to its vault's `pages/`) is outside the
+/// `true` when a page path (relative to its vault root) is outside the
 /// publish scope.
 pub(crate) fn held_back(rel: &Path) -> bool {
     if is_unpublished(rel) {
@@ -209,11 +209,7 @@ pub fn stage_redacted(
         // `vault validate`.
         let tree = tree_dir(vault.kind);
         for page in &vault.pages {
-            let rel = page
-                .rel_path
-                .strip_prefix("pages")
-                .unwrap_or(&page.rel_path);
-            if held_back(rel) {
+            if held_back(&page.rel_path) {
                 continue;
             }
             counts.considered += 1;
@@ -247,8 +243,10 @@ pub fn stage_redacted(
                 report.entry(name.clone()).or_default().record(&tally);
             }
             staging.files.push(StagedPage {
-                // `id` is the path under `pages/` without `.md`, so a
-                // working subdirectory survives into the slug.
+                // `id` is the vault-root-relative path without `.md`, so a
+                // working subdirectory survives into the slug. `tree` is the
+                // published URL contract (`pages/` for knowledge), not the
+                // input layout.
                 path: format!("publish/{tree}/{}.md", page.id),
                 content,
             });
@@ -299,16 +297,17 @@ fn index_page(staging: &Staging) -> String {
     );
     let _ = writeln!(out);
     for (vault, counts) in &staging.per_vault {
+        // The `/pages/` label for knowledge is the published URL contract
+        // (see `tree_dir`), not a statement about the input layout.
+        let tree = match vault.as_str() {
+            "knowledge" => tree_dir(crate::input::page::VaultKind::Knowledge),
+            "working" => tree_dir(crate::input::page::VaultKind::Working),
+            other => other,
+        };
         let _ = writeln!(
             out,
-            "- `{vault}/`: {} of {} page(s), under `/{}/`",
-            counts.published,
-            counts.considered,
-            if vault == "knowledge" {
-                "pages"
-            } else {
-                vault.as_str()
-            }
+            "- `{vault}/`: {} of {} page(s), under `/{tree}/`",
+            counts.published, counts.considered,
         );
     }
     out
@@ -349,7 +348,7 @@ pub fn write_to(staging: &Staging, dir: &Path) -> std::io::Result<()> {
     crate::build::swap_in(&stage, dir)
 }
 
-/// Load the vault of `kind` beside `vault_root`, when it has a `pages/` tree.
+/// Load the vault of `kind` beside `vault_root`, when its directory exists.
 ///
 /// # Errors
 /// Any read or parse failure in that vault.
@@ -361,7 +360,7 @@ pub fn sibling_vault(
         return Ok(None);
     };
     let root = repo.join(kind.dir_name());
-    if !root.join("pages").is_dir() {
+    if !root.is_dir() {
         return Ok(None);
     }
     Vault::load(&root, kind).map(Some)
@@ -379,13 +378,7 @@ mod tests {
             pages: pages
                 .into_iter()
                 .map(|(id, text)| {
-                    Page::parse(
-                        format!("/v/pages/{id}.md"),
-                        format!("pages/{id}.md"),
-                        id,
-                        text,
-                    )
-                    .unwrap()
+                    Page::parse(format!("/v/{id}.md"), format!("{id}.md"), id, text).unwrap()
                 })
                 .collect(),
             journals: Vec::new(),
@@ -457,7 +450,7 @@ mod tests {
             VaultKind::Knowledge,
             vec![("Held", "---\ntype: Class\npublic: true\n---\nProse.\n")],
         );
-        knowledge.pages[0].rel_path = std::path::PathBuf::from("pages/_misc/Held.md");
+        knowledge.pages[0].rel_path = std::path::PathBuf::from("_misc/Held.md");
         let staging = stage(&[&knowledge]).unwrap();
         assert!(
             staging.files.iter().all(|f| !f.path.contains("Held")),

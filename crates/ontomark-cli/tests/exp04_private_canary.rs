@@ -179,11 +179,8 @@ fn private_pages(vault: &Path) -> Vec<Private> {
             }
             let mut needles = canaries;
             if !journal {
-                let id = rel
-                    .strip_prefix("pages/")
-                    .and_then(|r| r.strip_suffix(".md"))
-                    .expect("a page path")
-                    .to_owned();
+                // Pages sit at the vault root: the id is the path without `.md`.
+                let id = rel.strip_suffix(".md").expect("a page path").to_owned();
                 needles.push(id);
                 // The hyphenated form is how a name appears inside a slug.
                 needles.extend(title.iter().chain(&aliases).map(|n| n.replace(' ', "-")));
@@ -227,8 +224,8 @@ fn the_fixture_has_the_private_pages_the_canary_relies_on() {
     let private = private_pages(vault.path());
     let files: Vec<&str> = private.iter().map(|p| p.file.as_str()).collect();
     for expected in [
-        "knowledge/pages/Fixture Private Ancestor.md",
-        "working/pages/Fixture Private Note.md",
+        "knowledge/Fixture Private Ancestor.md",
+        "working/Fixture Private Note.md",
         "working/journals/2026-10-11.md",
     ] {
         assert!(files.contains(&expected), "{files:?}");
@@ -340,7 +337,7 @@ fn staged_pages_are_rewritten_by_the_rules() {
 #[test]
 fn machine_records_use_the_same_public_link_boundary_as_markdown() {
     let vault = fixture_copy();
-    let page = vault.path().join("knowledge/pages/Fixture Link Probe.md");
+    let page = vault.path().join("knowledge/Fixture Link Probe.md");
     let text = read(&page).replace(
         "Synthetic public class whose prose links to non-public pages, for the EXP-04 redaction tests.",
         "Synthetic definition points to [[Fixture Hidden Ancestor#Detail]].",
@@ -418,7 +415,7 @@ fn the_report_counts_what_was_changed() {
 #[test]
 fn machine_wikilinks_do_not_name_private_aliases_and_headings() {
     let vault = fixture_copy();
-    let page = vault.path().join("knowledge/pages/Fixture Link Probe.md");
+    let page = vault.path().join("knowledge/Fixture Link Probe.md");
     let mut text = read(&page);
     text.push_str("\nBy heading: [[Fixture Private Ancestor#Detail]]; by alias: [[Fixture Hidden Ancestor]].\nLabel: [[Fixture Private Ancestor|the Fixture Hidden Ancestor documentation]].\n");
     std::fs::write(&page, text).expect("write probe");
@@ -432,7 +429,7 @@ fn machine_wikilinks_do_not_name_private_aliases_and_headings() {
 #[test]
 fn relations_to_private_working_pages_do_not_reach_machine_artefacts() {
     let vault = fixture_copy();
-    let page = vault.path().join("knowledge/pages/Fixture Link Probe.md");
+    let page = vault.path().join("knowledge/Fixture Link Probe.md");
     let text = read(&page).replace(
         "- '[[Fixture Hidden Ancestor]]'\n",
         "- '[[Fixture Hidden Ancestor]]'\n- '[[Fixture Private Note]]'\n",
@@ -447,13 +444,13 @@ fn relations_to_private_working_pages_do_not_reach_machine_artefacts() {
 #[test]
 fn private_curated_targets_and_definition_conjuncts_are_withheld() {
     let vault = fixture_copy();
-    let note = vault.path().join("working/pages/Fixture Private Note.md");
+    let note = vault.path().join("working/Fixture Private Note.md");
     let text = read(&note).replace(
         "type: Note\n",
         "type: Note\naliases: [Hidden Working Alias]\n",
     );
     std::fs::write(&note, text).expect("write private alias");
-    let page = vault.path().join("knowledge/pages/Fixture Link Probe.md");
+    let page = vault.path().join("knowledge/Fixture Link Probe.md");
     let text = read(&page).replacen("\n---\n", "\nlinks:\n- '[[Hidden Working Alias.md#Detail|neutral label]]'\n- '[[3D Model]]'\ndefines-as:\n- '[[3D Asset]]'\n- '[[Fixture Private Ancestor]]'\n---\n", 1);
     let text = text.replace(
         "- '[[Fixture Hidden Ancestor]]'\n",
@@ -476,7 +473,7 @@ fn private_curated_targets_and_definition_conjuncts_are_withheld() {
 #[test]
 fn an_explicit_private_curated_set_stays_empty_after_projection() {
     let vault = fixture_copy();
-    let page = vault.path().join("knowledge/pages/Fixture Link Probe.md");
+    let page = vault.path().join("knowledge/Fixture Link Probe.md");
     let text = read(&page).replacen(
         "\n---\n",
         "\nlinks:\n- '[[Fixture Hidden Ancestor#Detail|neutral label]]'\n---\n",

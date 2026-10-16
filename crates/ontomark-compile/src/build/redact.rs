@@ -162,10 +162,10 @@ impl PrivateLinks {
         let vaults = vaults
             .iter()
             .map(|vault| {
-                let regular = vault.pages.iter().map(|p| {
-                    let rel = p.rel_path.strip_prefix("pages").unwrap_or(&p.rel_path);
-                    (p, !p.is_public() || held_back(rel))
-                });
+                let regular = vault
+                    .pages
+                    .iter()
+                    .map(|p| (p, !p.is_public() || held_back(&p.rel_path)));
                 // Journals are never published: a link to one is a link to a
                 // non-public page. Regular pages come first so they win a clash.
                 let journals = vault.journals.iter().map(|p| (p, true));
@@ -655,13 +655,7 @@ mod tests {
             pages: pages
                 .iter()
                 .map(|(id, text)| {
-                    Page::parse(
-                        format!("/v/pages/{id}.md"),
-                        format!("pages/{id}.md"),
-                        *id,
-                        text,
-                    )
-                    .unwrap()
+                    Page::parse(format!("/v/{id}.md"), format!("{id}.md"), *id, text).unwrap()
                 })
                 .collect(),
             journals: Vec::new(),
@@ -831,7 +825,7 @@ mod tests {
             VaultKind::Knowledge,
             &[("Misc Page", "---\ntype: Class\npublic: true\n---\nx\n")],
         );
-        k.pages[0].rel_path = std::path::PathBuf::from("pages/misc/Misc Page.md");
+        k.pages[0].rel_path = std::path::PathBuf::from("misc/Misc Page.md");
         k.journals.push(
             Page::parse(
                 "/v/journals/2026-10-01.md",
