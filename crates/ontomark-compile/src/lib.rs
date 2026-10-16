@@ -30,3 +30,4 @@ pub mod reason;
 pub mod shacl;
 #[cfg(feature = "whelk-el")]
 pub mod whelk;
+pub mod write;

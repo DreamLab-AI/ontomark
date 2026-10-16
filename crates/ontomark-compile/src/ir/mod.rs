@@ -8,5 +8,6 @@
 //! `ontomark-model` and are recorded as divergences when adopted.
 
 pub mod closure;
+pub mod graph;
 pub mod model;
 pub mod projection;

@@ -92,6 +92,12 @@ cannot switch to `ontomark` until every row in its group exists with the same fl
 | `propose <iri> --level L --hypothesis H [--diff D] [--title T] [--dry-run] --json` (posts to the forum: AGPL, D4) | `ontology-propose.js:239-245`; `submit-proposals.mjs:162`; `ontology-augment.sh:498` |
 | `panel publish` (AGPL, D4) | VisionClaw `main.rs:63` (no estate caller found) |
 
+**Status 2026-10-16:** every row above except `propose` and `panel publish` (AGPL, D4) exists in `ontomark`. `find`, `retrieve` and
+`tree` are ports of `vault-core/src/graph.rs` into `ontomark-compile::ir::graph` (same scoring table, ordering, truncation and JSON field
+names); `edit`, `create` and `apply` are ports of `vault/src/{edit,create,apply,diff}.rs` into `ontomark-compile::write` (same guards,
+refusal codes and exit codes). Corpus parity (`vault --repo visionGraph` vs `ontomark --repo visionGraph-flat`, 23 query shapes over
+`find`/`retrieve`/`tree`) is recorded in the porting commit.
+
 Dispositions used below: **DELETE** (superseded; removed in Phase 2), **REPIN** (consumer stays; dependency or invocation changes),
 **ADAPT** (code stays in its repo but calls ontomark instead of its own logic), **RETAIN** (not a duplicate: a serving, physics,
 presentation or transport concern, recorded so nobody deletes it by mistake), **DECIDE** (needs a queen decision, §8).
@@ -147,8 +153,8 @@ Dependency closure: whelk git `79a1ee2`, horned-owl 1.2.0, oxttl/oxrdf (tests on
 | VC-26 | `crates/vault/src/conflicts.rs:312` `analyse` | 556 | V | conflict analysis | 10 | ontomark-compile | DELETE |
 | VC-27 | `crates/vault/src/gate.rs:122` `run` | 326 | V | tiered quality gate | 8 + `publish_gate.rs` 6 | ontomark-cli `gate` | DELETE |
 | VC-28 | `crates/vault/src/projection.rs:69,:166,:375`; IRI map `:347-362` | 624 | V I | public projection, exclusion before inference | 10 | ontomark-compile (EXP-04) | DELETE |
-| VC-29 | `crates/vault/src/{edit.rs:193,create.rs:138,apply.rs:215,diff.rs:270}` | 1992 | W V | guarded edit, create, apply and patch | 40 + `apply_cli`/`create_cli` | ontomark-parse guarded patch | DELETE |
-| VC-30 | `crates/vault/src/propose.rs:466` `build` | 1434 | W V P | proposal builder | 30 + `propose_cli` | ontomark-model proposal + parse patch; posting stays (VC-36) | ADAPT |
+| VC-29 | `crates/vault/src/{edit.rs:193,create.rs:138,apply.rs:215,diff.rs:270}` | 1992 | W V | guarded edit, create, apply and patch | 40 + `apply_cli`/`create_cli` | **satisfied 2026-10-16:** `ontomark-compile::write::{edit,create,apply,diff}` and `ontomark edit\|create\|apply` (same flags, JSON, exit codes; `apply_cli`/`create_cli` ported to `crates/ontomark-cli/tests`); ported under the NOTICE grant, provenance in `write/mod.rs` | DELETE |
+| VC-30 | `crates/vault/src/propose.rs:466` `build` | 1434 | W V P | proposal builder | 30 + `propose_cli` | `PatchProposal`, `ProposalKind`, `Level` and the digest functions now live in `ontomark-compile::write::proposal` (bit-identical digest, vault-core test vector pinned); the builder and posting stay in VisionClaw (VC-36) and consume them | ADAPT |
 | VC-31 | `crates/vault/src/{repair.rs:334,bodies.rs:395}` | 1763 | W V | `repair fences` and `repair bodies` (Obsidian body hygiene) | 41 | ontomark-parse body module | DELETE |
 | VC-32 | `crates/vault/src/main.rs` (subcommand enum `:44-106`) | 1223 | H | CLI | 8 | ontomark-cli for build/validate/gate/conflicts/repair; see D4 for governance verbs | ADAPT |
 | VC-36 | `crates/vault/src/nostr.rs:60,:100,:181,:272`; call sites `main.rs:703,:749-752` | 659 | G | **AGPL** forum ActionRequest, NIP-42 auth, relay publish | 16 | stays in VisionClaw; re-wired to ontomark types | **RETAIN (AGPL)** |

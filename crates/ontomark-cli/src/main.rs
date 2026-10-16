@@ -1,16 +1,19 @@
 //! The `ontomark` binary: a drop-in for `VisionClaw`'s `vault` on the verbs the
-//! publication workflow and the corpus gates use (`build`, `validate`, `gate`,
-//! `conflicts`, `repair bodies|fences`), plus `migrate`.
+//! publication workflow, the corpus gates and the estate's agent tooling use
+//! (`build`, `validate`, `gate`, `conflicts`, `repair bodies|fences`; the graph
+//! queries `find`, `retrieve`, `tree`; the guarded writes `edit`, `create`,
+//! `apply`), plus `migrate`.
 //!
 //! Every subcommand accepts `--json`. Exit codes are contractual and match
 //! `vault`: `0` success, `1` a failed check or execution error, `2` a refused
 //! operation (a credential on a page selected for publication, two artefacts
 //! claiming one path, a definition the reasoner would not finish on, an
-//! unsatisfiable class — the corpus does not permit this build; or a
+//! unsatisfiable class — the corpus does not permit this build; a
 //! `build --scope machine` asked for alongside `--publish-out`, `--vault
 //! working|all` or `--no-redact-private-links`, or on a repository without a
-//! `working/` vault) or an invalid argument (an unknown `--vault`, `--scope`,
-//! `--tier` or `--severity` value included).
+//! `working/` vault; a `create` or `apply` whose guards refuse the write) or an
+//! invalid argument (an unknown `--vault`, `--scope`, `--tier` or `--severity`
+//! value included).
 //!
 //! `build --scope machine` is the bundle `VisionClaw` consumes: the public
 //! knowledge projection plus `working/`'s public pages as plain records, with
@@ -18,13 +21,14 @@
 //!
 //! `--vault all` means **both** vaults for every verb that takes it.
 //!
-//! Relocated from `VisionClaw` `crates/vault/src/main.rs` at `1044b0722`; the
-//! governance verbs (`propose`, `apply`, `panel`, `edit`, `create`) and the
-//! graph queries (`find`, `retrieve`, `tree`) stay in `VisionClaw`.
+//! Relocated from `VisionClaw` `crates/vault/src/main.rs` at `1044b0722`
+//! (DEPRECATION §2.1 is the flag, JSON and exit-code contract); only the forum
+//! transport (`propose`, `panel`) stays in `VisionClaw`.
 
 #![deny(unsafe_code)]
 #![warn(clippy::pedantic)]
 
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -32,9 +36,13 @@ use anyhow::Context as _;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use ontomark_compile::check::{bodies, conflicts, gate, repair, validate};
 use ontomark_compile::input::page::{load_vault, Vault, VaultKind};
+use ontomark_compile::input::promotion::Blocker;
 use ontomark_compile::input::vocabulary::Vocabulary;
+use ontomark_compile::ir::graph::{self, VaultGraph};
 use ontomark_compile::ir::model::Corpus;
 use ontomark_compile::profile::Profile;
+use ontomark_compile::write::{apply, create, edit};
+use serde_json::json;
 
 mod embed;
 mod migrate_cmd;
@@ -74,6 +82,18 @@ enum Command {
     Conflicts(ConflictsArgs),
     /// Pages to one generation.
     Build(BuildArgs),
+    /// Search titles and aliases.
+    Find(FindArgs),
+    /// Expand from seed pages along declared edge types.
+    Retrieve(RetrieveArgs),
+    /// The taxonomy tree beneath a page.
+    Tree(TreeArgs),
+    /// Guarded mutation; refused without `--expect`.
+    Edit(EditArgs),
+    /// Write a new knowledge page from a staged file; never overwrites.
+    Create(CreateArgs),
+    /// Apply a human-approved `kind: amend` proposal to its page.
+    Apply(ApplyArgs),
     /// Fix corpus defects in place.
     #[command(subcommand)]
     Repair(RepairCommand),
@@ -169,6 +189,126 @@ struct ValidateArgs {
     /// Treat warnings as failures.
     #[arg(long)]
     strict: bool,
+}
+
+#[derive(Debug, Args)]
+struct FindArgs {
+    #[command(flatten)]
+    selector: VaultSelector,
+    /// The search text.
+    #[arg(long)]
+    query: String,
+    /// Restrict to one OKF `type`.
+    #[arg(long, value_name = "T")]
+    r#type: Option<String>,
+    /// Maximum hits.
+    #[arg(long, default_value_t = 20)]
+    limit: usize,
+    /// Also match on token overlap.
+    #[arg(long)]
+    fuzzy: bool,
+}
+
+#[derive(Debug, Args)]
+struct RetrieveArgs {
+    #[command(flatten)]
+    selector: VaultSelector,
+    /// Seed page ids, titles or aliases.
+    #[arg(required = true)]
+    ids: Vec<String>,
+    /// Per-edge-type depths, e.g. `is-a=2,requires=1`. An edge type absent
+    /// from this list is never traversed.
+    #[arg(long, default_value = "is-a=1")]
+    expand: String,
+    /// Cap on expanded documents.
+    #[arg(long, default_value_t = 50)]
+    max_documents: usize,
+}
+
+#[derive(Debug, Args)]
+struct TreeArgs {
+    #[command(flatten)]
+    selector: VaultSelector,
+    /// The root page.
+    id: String,
+    /// How many levels to descend.
+    #[arg(long, default_value_t = 3)]
+    depth: usize,
+    /// The edge type to follow, inverted.
+    #[arg(long, default_value = "is-a")]
+    predicate: String,
+}
+
+#[derive(Debug, Args)]
+struct EditArgs {
+    #[command(flatten)]
+    selector: VaultSelector,
+    /// The page id.
+    id: String,
+    /// `key=value`, or `key+=value` to append to a list.
+    #[arg(long = "set", value_name = "K=V")]
+    sets: Vec<String>,
+    /// Remove a key.
+    #[arg(long = "unset", value_name = "K")]
+    unsets: Vec<String>,
+    /// The declared blast radius, e.g. `docs=1,blocks=1`. Required.
+    #[arg(long)]
+    expect: Option<String>,
+    /// Show the result without writing it.
+    #[arg(long)]
+    dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+struct CreateArgs {
+    /// The staged page in full. Its `title` names the file:
+    /// `knowledge/<title>.md`.
+    file: PathBuf,
+    /// `key=value`, or `key+=value` to append to a list, applied in the same
+    /// write (e.g. `status=stable`, `verified+={by: …, at: …}`).
+    #[arg(long = "set", value_name = "K=V")]
+    sets: Vec<String>,
+    /// Remove a key from the staged page before writing.
+    #[arg(long = "unset", value_name = "K")]
+    unsets: Vec<String>,
+    /// The declared blast radius: `docs=1`, optionally `,blocks=N` for the
+    /// keys `--set`/`--unset` change. Required.
+    #[arg(long)]
+    expect: Option<String>,
+    /// Check everything and report, without writing.
+    #[arg(long)]
+    dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+struct ApplyArgs {
+    /// The approved proposal: the `PatchProposal` JSON (the 31402's content),
+    /// or the whole signed 31402 event.
+    ///
+    /// Only `kind: amend` is applied; a creation goes through `ontomark
+    /// create`. The proposal's `digest` must be the one `vault propose`
+    /// computes over its fields, its page must exist with the proposal's
+    /// `iri`, and its unified diff must apply EXACTLY to the page as it is now
+    /// — every context and removed line at the line its hunk states, with no
+    /// fuzz and no offset search. That exact context is the staleness guard;
+    /// the proposal's `generation` is deliberately not compared, because
+    /// generations are routinely `+dirty`. Refusals write nothing and exit 2
+    /// with a code: `MALFORMED`, `NOT_AMEND`, `DIGEST_MISMATCH`, `EXPECT`,
+    /// `NO_PAGE`, `IRI_MISMATCH`, `STALE`, `INVALID` or `ARGUMENT` (a bad
+    /// `--set`).
+    file: PathBuf,
+    /// `key=value`, or `key+=value` to append to a list, applied to the
+    /// patched page in the same write (`edit`'s grammar), e.g.
+    /// `verified+={by: human:npub1…, at: 2026-10-05T19:00:00Z}`.
+    #[arg(long = "set", value_name = "K=V")]
+    sets: Vec<String>,
+    /// Remove a key from the patched page in the same write.
+    #[arg(long = "unset", value_name = "K")]
+    unsets: Vec<String>,
+    /// The declared blast radius: `docs=1`, optionally `,blocks=N` for the
+    /// keys `--set`/`--unset` change. Required.
+    #[arg(long)]
+    expect: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -320,6 +460,56 @@ fn emit(json: bool, value: &serde_json::Value, prose: impl FnOnce()) -> anyhow::
         prose();
     }
     Ok(())
+}
+
+/// Parse `is-a=2,requires=1` into per-edge-type depths.
+fn parse_expansion(raw: &str) -> anyhow::Result<BTreeMap<String, usize>> {
+    let mut out = BTreeMap::new();
+    for part in raw.split(',').map(str::trim).filter(|p| !p.is_empty()) {
+        let (key, depth) = part
+            .split_once('=')
+            .with_context(|| format!("`{part}` is not `edge-type=depth`"))?;
+        out.insert(
+            key.trim().to_owned(),
+            depth
+                .trim()
+                .parse()
+                .with_context(|| format!("`{depth}` is not a depth"))?,
+        );
+    }
+    Ok(out)
+}
+
+fn print_tree(node: &graph::TreeNode, indent: usize) {
+    println!("{:indent$}{}", "", node.id, indent = indent * 2);
+    for child in &node.children {
+        print_tree(child, indent + 1);
+    }
+}
+
+/// `--set K=V…` and `--unset K…` as one ordered change list.
+fn changes_of(sets: &[String], unsets: &[String]) -> Result<Vec<edit::Change>, String> {
+    let mut changes: Vec<edit::Change> = sets
+        .iter()
+        .map(|s| edit::Change::parse_set(s))
+        .collect::<Result<_, _>>()?;
+    changes.extend(
+        unsets
+            .iter()
+            .map(|k| edit::Change::Unset { key: k.clone() }),
+    );
+    Ok(changes)
+}
+
+/// The `key: before -> after` lines `edit`, `create` and `apply` print.
+fn print_changes(changes: &BTreeMap<String, [Option<String>; 2]>) {
+    for (key, [before, after]) in changes {
+        println!(
+            "  {key}: {} -> {}",
+            before.as_deref().unwrap_or("(absent)"),
+            after.as_deref().unwrap_or("(removed)")
+        );
+    }
 }
 
 // One arm per subcommand. Splitting it would scatter the CLI's dispatch table
@@ -574,6 +764,221 @@ fn run() -> anyhow::Result<ExitCode> {
                 "the build wrote no artefacts to {}; refusing to report success",
                 report.out.display()
             );
+            Ok(ExitCode::SUCCESS)
+        }
+
+        Command::Find(args) => {
+            let mut hits = Vec::new();
+            for vault in load(&root, &args.selector.kinds())? {
+                let graph = VaultGraph::build(&vault, &vocab);
+                hits.extend(graph.find(
+                    &args.query,
+                    args.r#type.as_deref(),
+                    args.limit,
+                    args.fuzzy,
+                ));
+            }
+            graph::sort_hits(&mut hits);
+            hits.truncate(args.limit);
+            let value = serde_json::to_value(&hits)?;
+            emit(cli.json, &value, || {
+                for hit in &hits {
+                    println!("{:.2}  {}", hit.score, hit.id);
+                }
+            })?;
+            Ok(ExitCode::SUCCESS)
+        }
+
+        Command::Retrieve(args) => {
+            let expand = parse_expansion(&args.expand)?;
+            let vault = load(&root, &args.selector.kinds())?
+                .into_iter()
+                .next()
+                .context("no vault selected")?;
+            let graph = VaultGraph::build(&vault, &vocab);
+            let result = graph.retrieve(&args.ids, &expand, args.max_documents);
+            let value = serde_json::to_value(&result)?;
+            emit(cli.json, &value, || {
+                for seed in &result.seeds {
+                    println!("seed  {}", seed.id);
+                }
+                for node in &result.expanded {
+                    println!(
+                        "  +{}  {}  (via {} from {})",
+                        node.depth, node.id, node.via, node.from
+                    );
+                }
+                if result.truncated {
+                    println!("(truncated at --max-documents)");
+                }
+            })?;
+            Ok(ExitCode::SUCCESS)
+        }
+
+        Command::Tree(args) => {
+            let vault = load(&root, &args.selector.kinds())?
+                .into_iter()
+                .next()
+                .context("no vault selected")?;
+            let graph = VaultGraph::build(&vault, &vocab);
+            let tree = graph
+                .tree(&args.id, &args.predicate, args.depth)
+                .with_context(|| format!("no page matching `{}`", args.id))?;
+            let value = serde_json::to_value(&tree)?;
+            emit(cli.json, &value, || print_tree(&tree, 0))?;
+            Ok(ExitCode::SUCCESS)
+        }
+
+        Command::Edit(args) => {
+            let Some(expect_raw) = &args.expect else {
+                anyhow::bail!(
+                    "refused: --expect must declare docs and blocks; \
+                     e.g. --expect docs=1,blocks=1"
+                );
+            };
+            let expect = edit::Expectation::parse(expect_raw).map_err(anyhow::Error::msg)?;
+            let changes = changes_of(&args.sets, &args.unsets).map_err(anyhow::Error::msg)?;
+
+            let vault = load(&root, &args.selector.kinds())?
+                .into_iter()
+                .next()
+                .context("no vault selected")?;
+            let page = vault
+                .get(&args.id)
+                .with_context(|| format!("no page with id `{}`", args.id))?;
+            let outcome = edit::apply(page, &changes, expect).map_err(anyhow::Error::msg)?;
+            if !args.dry_run {
+                std::fs::write(&page.path, &outcome.rendered)
+                    .with_context(|| format!("writing {}", page.path.display()))?;
+            }
+            let value = serde_json::to_value(&outcome)?;
+            emit(cli.json, &value, || {
+                println!(
+                    "{}: {} document(s), {} key(s){}",
+                    outcome.page,
+                    outcome.docs,
+                    outcome.blocks,
+                    if args.dry_run { " (dry run)" } else { "" }
+                );
+                print_changes(&outcome.changes);
+            })?;
+            Ok(ExitCode::SUCCESS)
+        }
+
+        Command::Create(args) => {
+            let expect = edit::Expectation::parse(args.expect.as_deref().unwrap_or(""))
+                .map_err(anyhow::Error::msg)?;
+            let changes = changes_of(&args.sets, &args.unsets).map_err(anyhow::Error::msg)?;
+            let staged = std::fs::read_to_string(&args.file)
+                .with_context(|| format!("reading {}", args.file.display()))?;
+            let vault = load(&root, &[VaultKind::Knowledge])?
+                .into_iter()
+                .next()
+                .context("no knowledge vault")?;
+
+            // Every refusal is exit 2 with nothing written, and under `--json`
+            // stdout is still one JSON document naming why.
+            let refuse = |error: &create::CreateError| -> anyhow::Result<ExitCode> {
+                let value = json!({
+                    "created": false,
+                    "file": args.file.display().to_string(),
+                    "code": error.code(),
+                    "message": error.to_string(),
+                    "blockers": error.blockers(),
+                });
+                emit(cli.json, &value, || {})?;
+                eprintln!("ontomark: {error}");
+                Ok(ExitCode::from(2))
+            };
+            let outcome = match create::prepare(&profile, &vault, &vocab, &staged, &changes, expect)
+            {
+                Ok(outcome) => outcome,
+                Err(error) => return refuse(&error),
+            };
+            if !args.dry_run {
+                if let Err(e) = create::write(&outcome) {
+                    return match e.downcast_ref::<create::CreateError>() {
+                        Some(error) => refuse(error),
+                        None => Err(e),
+                    };
+                }
+            }
+            let mut value = serde_json::to_value(&outcome)?;
+            value["dry_run"] = json!(args.dry_run);
+            emit(cli.json, &value, || {
+                println!(
+                    "{} {}{}",
+                    if args.dry_run {
+                        "would create"
+                    } else {
+                        "created"
+                    },
+                    outcome.path,
+                    if args.dry_run { " (dry run)" } else { "" }
+                );
+                print_changes(&outcome.changes);
+            })?;
+            Ok(ExitCode::SUCCESS)
+        }
+
+        Command::Apply(args) => {
+            // Every refusal is exit 2 with nothing written, and under `--json`
+            // stdout is still one JSON document naming why — as `create` does.
+            let refuse =
+                |code: &str, message: &str, blockers: &[Blocker]| -> anyhow::Result<ExitCode> {
+                    let value = json!({
+                        "applied": false,
+                        "code": code,
+                        "message": message,
+                        "blockers": blockers,
+                    });
+                    emit(cli.json, &value, || {})?;
+                    eprintln!("ontomark: {message}");
+                    Ok(ExitCode::from(2))
+                };
+            let refuse_with = |error: &apply::ApplyError| {
+                refuse(error.code(), &error.to_string(), error.blockers())
+            };
+
+            let Some(expect_raw) = &args.expect else {
+                return refuse_with(&apply::ApplyError::Expect(
+                    "--expect must declare docs=1 for an apply".into(),
+                ));
+            };
+            let expect = match edit::Expectation::parse(expect_raw) {
+                Ok(expect) => expect,
+                Err(e) => return refuse_with(&apply::ApplyError::Expect(e)),
+            };
+            let changes = match changes_of(&args.sets, &args.unsets) {
+                Ok(changes) => changes,
+                Err(e) => return refuse("ARGUMENT", &format!("refused: {e}"), &[]),
+            };
+            let text = std::fs::read_to_string(&args.file)
+                .with_context(|| format!("reading {}", args.file.display()))?;
+            let proposal = match apply::read_proposal(&text) {
+                Ok(proposal) => proposal,
+                Err(error) => return refuse_with(&error),
+            };
+            let vault = load(&root, &[VaultKind::Knowledge])?
+                .into_iter()
+                .next()
+                .context("no knowledge vault")?;
+            let outcome =
+                match apply::prepare(&profile, &vault, &vocab, &proposal, &changes, expect) {
+                    Ok(outcome) => outcome,
+                    Err(error) => return refuse_with(&error),
+                };
+            if let Err(e) = apply::write(&outcome) {
+                return match e.downcast_ref::<apply::ApplyError>() {
+                    Some(error) => refuse_with(error),
+                    None => Err(e),
+                };
+            }
+            let value = serde_json::to_value(&outcome)?;
+            emit(cli.json, &value, || {
+                println!("applied {} to {}", outcome.digest, outcome.path);
+                print_changes(&outcome.changes);
+            })?;
             Ok(ExitCode::SUCCESS)
         }
 
