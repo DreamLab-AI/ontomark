@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 use ontomark_compile::build;
 use ontomark_compile::check::validate;
-use ontomark_compile::input::page::load_vault;
+use ontomark_compile::input::page::{Vault, VaultKind};
 use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::ir::model::Corpus;
 use ontomark_compile::profile::Profile;
@@ -79,7 +79,7 @@ fn run_build(repo: &Path, out: &Path) -> anyhow::Result<build::Report> {
 
 /// Validate the knowledge vault of `repo` exactly as `ontomark validate` does.
 fn run_validate(repo: &Path) -> validate::Report {
-    let vault = load_vault(repo.join("knowledge")).expect("load the vault");
+    let vault = Vault::load(repo.join("knowledge"), VaultKind::Knowledge).expect("load the vault");
     let corpus = Corpus::build(&vault, &vocab());
     validate::validate(&profile(), &vault, &corpus, &vocab())
 }

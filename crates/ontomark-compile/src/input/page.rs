@@ -10,7 +10,10 @@
 //! is no `pages/` detection and git is the rollback). The root also holds
 //! furniture that is not corpus — `templates/`, `bases/`, `assets/` and the
 //! sibling `journals/` tree — which the walk skips by top-level folder name
-//! ([`EXCLUDED_DIRS`]) and reports, never silently drops.
+//! ([`EXCLUDED_DIRS`]) and reports, never silently drops. Where a vault root
+//! sits under the repository (`knowledge/`, `working/`, or the repository root
+//! itself) is the profile's [`crate::profile::Layout`]; nothing here assumes a
+//! folder name.
 //!
 //! Three fields are *data*, not derivations, and the reader never invents them:
 //!
@@ -124,20 +127,31 @@ pub struct PageWalk {
     pub skipped: Vec<Skip>,
 }
 
-/// Which of the two vaults a page belongs to.
+/// Which of the two vault **roles** a page belongs to.
+///
+/// A role is not a folder. Where each role's vault sits on disk is the
+/// profile's [`crate::profile::Layout`] (`knowledge/` and `working/` by
+/// default; `"."` for a plain Obsidian vault opened directly); the role's
+/// name, [`VaultKind::role_name`], is the key every published artefact and
+/// report uses for it and never moves with the folder.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VaultKind {
-    /// `knowledge/` — the governed, public-gated OKF bundle. Unknown
-    /// frontmatter keys are a validation error.
+    /// The governed, public-gated OKF bundle. Unknown frontmatter keys are a
+    /// validation error under the estate grammar.
     Knowledge,
-    /// `working/` — the curator's space. Unknown keys are tolerated (OKF §4.1).
+    /// The curator's space. Unknown keys are tolerated (OKF §4.1).
     Working,
 }
 
 impl VaultKind {
-    /// The directory name.
+    /// The role's name, `knowledge` or `working`: the **output key** under
+    /// which this vault appears in the staging counts (`per_vault`), the
+    /// validation, gate and conflicts reports, the content-digest paths and
+    /// the migration plans. It is part of the published contract and is the
+    /// same whatever folder the vault was read from. To find the folder, ask
+    /// the layout: [`crate::profile::Layout::dir_of`].
     #[must_use]
-    pub fn dir_name(self) -> &'static str {
+    pub fn role_name(self) -> &'static str {
         match self {
             Self::Knowledge => "knowledge",
             Self::Working => "working",
@@ -649,26 +663,6 @@ pub fn parse_page(
     let rel = path.strip_prefix(content_root).unwrap_or(path);
     let id = rel.with_extension("").to_string_lossy().replace('\\', "/");
     Page::parse(path, rel, id, text)
-}
-
-/// Load a vault, inferring its kind from the directory name.
-///
-/// # Errors
-/// As [`Vault::load`].
-pub fn load_vault(root: impl AsRef<Path>) -> Result<Vault> {
-    let root = root.as_ref();
-    Vault::load(root, vault_kind_of(root))
-}
-
-/// The [`VaultKind`] a vault root's directory name declares: `working/` is the
-/// curator's space, anything else is governed knowledge.
-#[must_use]
-pub fn vault_kind_of(root: &Path) -> VaultKind {
-    if root.file_name().and_then(|n| n.to_str()) == Some("working") {
-        VaultKind::Working
-    } else {
-        VaultKind::Knowledge
-    }
 }
 
 #[cfg(test)]

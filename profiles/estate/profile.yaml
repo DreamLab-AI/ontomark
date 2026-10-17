@@ -191,9 +191,16 @@ governance:
     panel: 31400
     proposal: 31402
 # layout: the vaults are ordinary Obsidian vaults with pages at the vault root
-# (2026-10-16; the Logseq-era pages/ folder is gone). The built-in excluded
-# folders — templates, bases, assets, journals — are what the estate needs, so
-# no `layout:` block is set here; add `layout: {excluded: [...]}` to change it.
+# (2026-10-16; the Logseq-era pages/ folder is gone). The defaults — the
+# knowledge vault at knowledge/, the working vault at working/, and the built-in
+# excluded folders templates, bases, assets, journals — are what the estate
+# needs, so no `layout:` block is set here; add `layout: {knowledge: …,
+# working: …, excluded: [...]}` to change it (ADR-OM-008).
+# generation: every estate bundle is `visionGraph@<sha>`; the consumers (Loom,
+# VisionClaw, agentbox) promote against that spelling, so the prefix is pinned
+# rather than taken from the checkout's directory name (ADR-OM-008).
+generation:
+  prefix: visionGraph
 publication:
   # EXP-04: a link that resolves to a page that is not public is removed from the
   # staged publish/ Markdown and the api/markdown mirror, never emitted with the

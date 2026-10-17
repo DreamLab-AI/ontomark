@@ -449,6 +449,27 @@ fn default_reserved() -> IndexSet<String> {
 }
 
 impl Vocabulary {
+    /// The vocabulary a repository without `ontology/vocabulary.yaml` compiles
+    /// under (a plain Obsidian vault, ADR-OM-008): schema version 1, the
+    /// built-in prefixes (`owl`, `rdf`, `rdfs`, `xsd`, `skos`, `dc`,
+    /// `dcterms`, `prov`), the `urn:ontomark:` namespaces, and no types,
+    /// relations, scalars or validation rules. Every key is therefore
+    /// undeclared, which the generic profile's role grammar permits.
+    ///
+    /// ```
+    /// use ontomark_compile::input::vocabulary::Vocabulary;
+    ///
+    /// let v = Vocabulary::generic();
+    /// assert_eq!(v.version, 1);
+    /// assert_eq!(v.namespace, "urn:ontomark:class:");
+    /// assert!(v.types.is_empty() && v.relations.is_empty());
+    /// assert_eq!(v.expand("owl:Class"), "http://www.w3.org/2002/07/owl#Class");
+    /// ```
+    #[must_use]
+    pub fn generic() -> Self {
+        Self::from_yaml_str("version: 1\n").expect("the built-in generic vocabulary is valid")
+    }
+
     /// Load from a path.
     ///
     /// # Errors

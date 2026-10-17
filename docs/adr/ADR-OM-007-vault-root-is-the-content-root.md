@@ -2,7 +2,7 @@
 
 - Status: Accepted (owner decisions of 16 October 2026)
 - Implementation: active from v0.3.0. Layout: `crates/ontomark-compile/src/input/page.rs` (`Vault::load`, `EXCLUDED_DIRS`, `SkipReason::ExcludedDirectory`), `profile.rs` (`Layout`). Verbs: `crates/ontomark-compile/src/ir/graph.rs`, `src/write/`, `crates/ontomark-cli`.
-- Related: ADR-OM-005 (one producer), `docs/DEPRECATION.md` §2.1 and rows VC-29/VC-30, visionGraph commit `e98034e06` (the flatten), VisionClaw's matching change.
+- Related: ADR-OM-005 (one producer), ADR-OM-008 (any Obsidian vault is a repository: layout folders and generation prefixes from the profile), `docs/DEPRECATION.md` §2.1 and rows VC-29/VC-30, visionGraph commit `e98034e06` (the flatten), VisionClaw's matching change.
 
 ## Context
 

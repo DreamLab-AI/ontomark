@@ -1,15 +1,17 @@
 //! `.generation.json` — the identity stamp Loom promotes against (decision Q8).
 //!
-//! A generation is `visionGraph@<local sha>` plus a **content digest**, and the
+//! A generation is `<prefix>@<local sha>` plus a **content digest**, and the
 //! two are not redundant: the sha says which commit the build came from, the
 //! digest says what the build actually read. A dirty working tree produces a
 //! new digest under an unchanged sha, which is precisely the case a bare commit
-//! hash would hide.
+//! hash would hide. The prefix is the profile's
+//! [`crate::profile::GenerationNaming`]: the repository root's directory name
+//! unless pinned (the estate pins `visionGraph`).
 //!
 //! Two further rules keep the identity honest:
 //!
 //! * A build from a working tree with uncommitted changes under the vault
-//!   paths is `visionGraph@<sha>+dirty` with `dirty: true`, so an
+//!   paths is `<prefix>@<sha>+dirty` with `dirty: true`, so an
 //!   uncommitted build can never masquerade as the commit.
 //! * The bundle carries the stamp twice: `<out>/.generation.json` lists every
 //!   artefact relative to `<out>`, and `<out>/data/.generation.json` — the
@@ -86,7 +88,8 @@ impl Scope {
 /// The `.generation.json` document (contract C3).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Generation {
-    /// `visionGraph@<sha>`, suffixed `+dirty` for an uncommitted build.
+    /// `<prefix>@<sha>`, suffixed `+dirty` for an uncommitted build; see
+    /// [`generation_id`].
     pub id: String,
     /// The source commit, or `unknown` outside a git checkout. Always the bare
     /// sha, dirty or not.
@@ -144,14 +147,24 @@ impl Generation {
     }
 }
 
-/// The generation id for `commit`: `visionGraph@<sha>`, plus `+dirty` when
-/// the build read uncommitted changes.
+/// The generation id for `commit` under `prefix`: `<prefix>@<sha>`, plus
+/// `+dirty` when the build read uncommitted changes.
+///
+/// `prefix` is [`crate::profile::GenerationNaming::prefix_for`] the repository
+/// root — `visionGraph` for the estate, the root's directory name otherwise.
+///
+/// ```
+/// use ontomark_compile::build::generation::generation_id;
+///
+/// assert_eq!(generation_id("visionGraph", "ae913f93", false), "visionGraph@ae913f93");
+/// assert_eq!(generation_id("notes", "ae913f93", true), "notes@ae913f93+dirty");
+/// ```
 #[must_use]
-pub fn generation_id(commit: &str, dirty: bool) -> String {
+pub fn generation_id(prefix: &str, commit: &str, dirty: bool) -> String {
     if dirty {
-        format!("visionGraph@{commit}+dirty")
+        format!("{prefix}@{commit}+dirty")
     } else {
-        format!("visionGraph@{commit}")
+        format!("{prefix}@{commit}")
     }
 }
 
@@ -240,10 +253,12 @@ pub fn sha256_12(bytes: &[u8]) -> String {
     format!("sha256-12-{}", &full[..12])
 }
 
-/// Assemble the generation stamp.
+/// Assemble the generation stamp; `prefix` is the id's text before `@` (see
+/// [`generation_id`]).
 #[must_use]
 #[allow(clippy::too_many_arguments)] // The fields of contract C3.
 pub fn generation(
+    prefix: &str,
     commit: String,
     dirty: bool,
     content_digest: String,
@@ -256,7 +271,7 @@ pub fn generation(
     artifacts: Vec<Artifact>,
 ) -> Generation {
     Generation {
-        id: generation_id(&commit, dirty),
+        id: generation_id(prefix, &commit, dirty),
         commit,
         dirty,
         content_digest,
@@ -278,6 +293,7 @@ mod tests {
     #[test]
     fn the_id_carries_the_sha() {
         let g = generation(
+            "visionGraph",
             "abc1234".into(),
             false,
             "d".into(),
@@ -342,6 +358,7 @@ mod tests {
     #[test]
     fn a_dirty_build_says_so_in_its_id() {
         let g = generation(
+            "visionGraph",
             "abc1234".into(),
             true,
             "d".into(),
@@ -362,6 +379,7 @@ mod tests {
     #[test]
     fn scoping_keeps_identity_and_rebases_the_artefacts() {
         let g = generation(
+            "visionGraph",
             "abc".into(),
             false,
             "d".into(),
@@ -473,6 +491,7 @@ mod tests {
     #[test]
     fn the_ontology_digest_sits_beside_the_content_digest() {
         let g = generation(
+            "visionGraph",
             "abc".into(),
             false,
             "pages".into(),
@@ -493,6 +512,7 @@ mod tests {
     #[test]
     fn stale_after_is_omitted_when_absent() {
         let g = generation(
+            "visionGraph",
             "abc".into(),
             false,
             "d".into(),

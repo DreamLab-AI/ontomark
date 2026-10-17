@@ -202,7 +202,9 @@ pub fn stage_redacted(
     let mut findings: Vec<SecretFinding> = Vec::new();
 
     for vault in vaults {
-        let name = vault.kind.dir_name().to_owned();
+        // The role name is the `per_vault` key: an output contract, not the
+        // folder the vault was read from.
+        let name = vault.kind.role_name().to_owned();
         let counts = staging.per_vault.entry(name.clone()).or_default();
         // `journals/` is not published: a daily note is working material, and
         // nothing in the estate consumes it. It is still scanned by
@@ -348,22 +350,24 @@ pub fn write_to(staging: &Staging, dir: &Path) -> std::io::Result<()> {
     crate::build::swap_in(&stage, dir)
 }
 
-/// Load the vault of `kind` beside `vault_root`, when its directory exists.
+/// Load the vault of `kind` where `layout` places it under `repo_root`, when
+/// the layout declares one and its directory exists; `None` otherwise. The
+/// layout's excluded folders apply, as in every other load.
 ///
 /// # Errors
 /// Any read or parse failure in that vault.
 pub fn sibling_vault(
-    vault_root: &Path,
+    repo_root: &Path,
+    layout: &crate::profile::Layout,
     kind: crate::input::page::VaultKind,
 ) -> Result<Option<Vault>, crate::input::error::VaultError> {
-    let Some(repo) = vault_root.parent() else {
+    let Some(root) = layout.path_of(repo_root, kind) else {
         return Ok(None);
     };
-    let root = repo.join(kind.dir_name());
     if !root.is_dir() {
         return Ok(None);
     }
-    Vault::load(&root, kind).map(Some)
+    Vault::load_excluding(&root, kind, &layout.excluded_dirs()).map(Some)
 }
 
 #[cfg(test)]

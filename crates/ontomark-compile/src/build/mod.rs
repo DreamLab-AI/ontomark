@@ -33,7 +33,7 @@ pub use generation::Scope;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::input::page::{vault_kind_of, walk_pages, Page, Vault, VaultKind};
+use crate::input::page::{walk_pages, Page, Vault, VaultKind};
 use crate::input::vocabulary::Vocabulary;
 use crate::json::{to_compact, to_default_ascii, to_default_utf8, to_indented};
 use anyhow::Context as _;
@@ -413,12 +413,12 @@ fn alias_map(vault: &Vault) -> HashMap<String, Vec<String>> {
         .collect()
 }
 
-/// The `working/` vault root beside a knowledge vault root.
-fn machine_working_root(vault_root: &Path) -> PathBuf {
-    vault_root
-        .parent()
-        .unwrap_or(Path::new("."))
-        .join(VaultKind::Working.dir_name())
+/// The working vault root the layout places under the repository, when it
+/// declares one. Nothing is checked on disk here.
+fn working_root(options: &Options, profile: &Profile) -> Option<PathBuf> {
+    profile
+        .layout
+        .path_of(&options.repo_root, VaultKind::Working)
 }
 
 /// Refuse the options and repository `--scope machine` cannot build from,
@@ -446,17 +446,18 @@ fn ensure_machine_scope(options: &Options, profile: &Profile) -> Result<(), Scop
                 .to_owned(),
         );
     }
-    if vault_kind_of(&options.vault_root) != VaultKind::Knowledge {
+    if profile.layout.kind_of(&options.vault_root) != VaultKind::Knowledge {
         conflicts.push(format!(
             "the vault root {} is not a knowledge vault",
             options.vault_root.display()
         ));
     }
-    let working_root = machine_working_root(&options.vault_root);
-    if !working_root.is_dir() {
+    if let Err(missing) = profile
+        .layout
+        .root_of(&options.repo_root, VaultKind::Working)
+    {
         conflicts.push(format!(
-            "working/ is absent ({} is not a directory)",
-            working_root.display()
+            "a machine bundle reads both vaults, but there is {missing}"
         ));
     }
     if conflicts.is_empty() {
@@ -519,7 +520,7 @@ pub fn run_with(
     let census = projection::inspect_walk(&options.vault_root, &walk)?;
     let vault = Vault::load_with_walk(
         &options.vault_root,
-        vault_kind_of(&options.vault_root),
+        profile.layout.kind_of(&options.vault_root),
         walk,
     )?;
     let aliases = alias_map(&vault);
@@ -543,12 +544,15 @@ pub fn run_with(
     // result is dropped once it has passed. Loaded once, here, so the digest
     // lists each of its pages once.
     let working = if machine {
-        let root = machine_working_root(&options.vault_root);
+        // `ensure_machine_scope` has already refused a layout without one.
+        let root = profile
+            .layout
+            .root_of(&options.repo_root, VaultKind::Working)?;
         let walk = walk_pages(&root, &excluded)?;
         projection::inspect_walk(&root, &walk)?;
         Some(Vault::load_with_walk(&root, VaultKind::Working, walk)?)
     } else if options.with_working_publish {
-        publish::sibling_vault(&options.vault_root, VaultKind::Working)?
+        publish::sibling_vault(&options.repo_root, &profile.layout, VaultKind::Working)?
     } else {
         None
     };
@@ -566,7 +570,7 @@ pub fn run_with(
             VaultKind::Knowledge => VaultKind::Working,
             VaultKind::Working => VaultKind::Knowledge,
         };
-        publish::sibling_vault(&options.vault_root, other)?
+        publish::sibling_vault(&options.repo_root, &profile.layout, other)?
     } else {
         None
     };
@@ -835,7 +839,7 @@ pub fn run_with(
         // scope, or for link redaction), so a dirty sibling never stamps a
         // clean generation while `content_digest` covers its bytes.
         let vocabulary_dir = options.repo_root.join("ontology");
-        let working_root = options.vault_root.parent().map(|repo| repo.join("working"));
+        let working_root = working_root(options, profile);
         let mut read_paths: Vec<&Path> =
             vec![options.vault_root.as_path(), vocabulary_dir.as_path()];
         if working.is_some() || other_vault.is_some() {
@@ -844,7 +848,8 @@ pub fn run_with(
         let dirty = generation::git_dirty(&options.repo_root, &read_paths);
         (commit, dirty)
     };
-    let generation_id = generation::generation_id(&commit, dirty);
+    let prefix = profile.generation.prefix_for(&options.repo_root);
+    let generation_id = generation::generation_id(&prefix, &commit, dirty);
     for file in okf::bundle(profile, &corpus, vocab, &generation_id) {
         staged.add(format!("okf/{}", file.path), file.content);
     }
@@ -870,7 +875,9 @@ pub fn run_with(
     {
         for page in v.all_pages() {
             sources.push((
-                format!("{}/{}", v.kind.dir_name(), page.rel_path.to_string_lossy()),
+                // The role name, not the folder: the digest's paths are an
+                // output contract and stay put when the layout moves.
+                format!("{}/{}", v.kind.role_name(), page.rel_path.to_string_lossy()),
                 page.source_sha256.clone(),
             ));
         }
@@ -888,6 +895,7 @@ pub fn run_with(
     let ontology_digest = turtle::ontology_digest(profile, &graph);
 
     let mut gen = generation::generation(
+        &prefix,
         commit,
         dirty,
         content_digest,

@@ -11,7 +11,7 @@
 use std::path::{Path, PathBuf};
 
 use ontomark_compile::build::turtle::{build_graph, Graph, Term};
-use ontomark_compile::input::page::load_vault;
+use ontomark_compile::input::page::{Vault, VaultKind};
 use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::ir::model::Corpus;
 use ontomark_compile::profile::Profile;
@@ -59,7 +59,7 @@ fn non_el_triples(g: &Graph) -> Vec<String> {
 
 fn graph_of(root: &Path, public_only: bool) -> Graph {
     let vocab = Vocabulary::load(root.join("ontology/vocabulary.yaml")).expect("vocabulary");
-    let vault = load_vault(root.join("knowledge")).expect("vault");
+    let vault = Vault::load(root.join("knowledge"), VaultKind::Knowledge).expect("vault");
     let corpus = Corpus::build(&vault, &vocab);
     build_graph(&profile(), &corpus, &vocab, public_only)
 }

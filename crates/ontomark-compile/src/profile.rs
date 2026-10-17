@@ -25,8 +25,12 @@
 //! assert_eq!(custom.taxonomy.domain_class_id("botany"), 1);
 //! ```
 
+use std::path::{Path, PathBuf};
+
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+
+use crate::input::page::VaultKind;
 
 /// A corpus profile. Every field has a generic default, so a profile file
 /// states only what it changes.
@@ -55,8 +59,11 @@ pub struct Profile {
     pub governance: Governance,
     /// What the raw-Markdown export surfaces do with private links.
     pub publication: Publication,
-    /// Which top-level vault folders are not pages.
+    /// Where the vaults sit under the repository root and which of their
+    /// top-level folders are not pages.
     pub layout: Layout,
+    /// How the generation id is spelled.
+    pub generation: GenerationNaming,
 }
 
 impl Default for Profile {
@@ -83,6 +90,7 @@ impl Profile {
             governance: Governance::default(),
             publication: Publication::default(),
             layout: Layout::default(),
+            generation: GenerationNaming::default(),
         }
     }
 
@@ -422,29 +430,63 @@ impl Default for Publication {
     }
 }
 
-/// The vault's on-disk layout: which top-level folders hold furniture rather
+/// The repository's on-disk layout: where each vault role lives under the
+/// repository root, and which top-level vault folders hold furniture rather
 /// than pages.
 ///
 /// A vault is an ordinary Obsidian vault whose pages sit at the vault root
 /// (2026-10-16; the Logseq-era `pages/` folder is gone and is not detected).
-/// Everything under a folder named here is skipped by the page walk and
-/// reported as an `excluded_directory` in the census, never silently dropped.
-/// `journals/` must stay in the list: it is loaded as its own tree.
+/// Everything under a folder named in [`Layout::excluded`] is skipped by the
+/// page walk and reported as an `excluded_directory` in the census, never
+/// silently dropped. `journals/` must stay in the list: it is loaded as its
+/// own tree.
+///
+/// The two vault **roles** — governed knowledge and the curator's working
+/// space — are placed by [`Layout::knowledge`] and [`Layout::working`]. The
+/// defaults are the estate shape, `knowledge/` and `working/` beside
+/// `ontology/`. `knowledge: "."` means the repository root *is* the vault: a
+/// plain Obsidian vault opened directly (ADR-OM-008). A layout with no working
+/// vault sets `working` to `null`, and anything that needs one — `--vault
+/// working|all`, `--scope machine` — is refused by name through
+/// [`MissingVault`]. The role names themselves, `knowledge` and `working`, are
+/// output keys ([`VaultKind::role_name`]) and never move with the folders.
 ///
 /// ```
-/// use ontomark_compile::profile::Profile;
+/// use std::path::Path;
+/// use ontomark_compile::input::page::VaultKind;
+/// use ontomark_compile::profile::{Layout, Profile};
 ///
 /// let p = Profile::from_yaml("layout:\n  excluded: [templates, journals, scratch]\n").unwrap();
 /// assert_eq!(p.layout.excluded, ["templates", "journals", "scratch"]);
+/// assert_eq!(p.layout.dir_of(VaultKind::Knowledge), Some("knowledge"));
+/// assert_eq!(p.layout.dir_of(VaultKind::Working), Some("working"));
 /// assert_eq!(
 ///     Profile::generic().layout.excluded,
 ///     ontomark_compile::input::page::EXCLUDED_DIRS
 /// );
+///
+/// // A plain Obsidian vault: the root is the knowledge vault, nothing else.
+/// let flat = Layout::flat();
+/// assert_eq!(flat.dir_of(VaultKind::Knowledge), Some("."));
+/// assert_eq!(flat.dir_of(VaultKind::Working), None);
+/// assert_eq!(
+///     flat.path_of(Path::new("/vaults/notes"), VaultKind::Knowledge),
+///     Some(Path::new("/vaults/notes").to_path_buf())
+/// );
+/// assert_eq!(flat.kind_of(Path::new("/vaults/notes")), VaultKind::Knowledge);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Layout {
-    /// Top-level folder names (first path component under the vault root)
+    /// The knowledge vault's folder, relative to the repository root.
+    /// `"."` names the root itself. Defaults to `knowledge`.
+    pub knowledge: String,
+    /// The working vault's folder, relative to the repository root, or `None`
+    /// for a layout with no working vault. Defaults to `Some("working")`. It
+    /// may not be `"."` or equal to [`Layout::knowledge`]: a folder holds one
+    /// role.
+    pub working: Option<String>,
+    /// Top-level folder names (first path component under a vault root)
     /// whose `.md` files are not pages. Defaults to
     /// [`crate::input::page::EXCLUDED_DIRS`].
     pub excluded: Vec<String>,
@@ -453,6 +495,8 @@ pub struct Layout {
 impl Default for Layout {
     fn default() -> Self {
         Self {
+            knowledge: "knowledge".to_owned(),
+            working: Some("working".to_owned()),
             excluded: crate::input::page::EXCLUDED_DIRS
                 .iter()
                 .map(|s| (*s).to_owned())
@@ -462,10 +506,189 @@ impl Default for Layout {
 }
 
 impl Layout {
+    /// The layout of a plain Obsidian vault: the repository root is the
+    /// knowledge vault (`"."`), there is no working vault, and the built-in
+    /// furniture folders are excluded. The command line selects this when it
+    /// finds no `ontology/vocabulary.yaml` (ADR-OM-008).
+    #[must_use]
+    pub fn flat() -> Self {
+        Self {
+            knowledge: ".".to_owned(),
+            working: None,
+            ..Self::default()
+        }
+    }
+
     /// The excluded folders as the borrowed slice the page walk takes.
     #[must_use]
     pub fn excluded_dirs(&self) -> Vec<&str> {
         self.excluded.iter().map(String::as_str).collect()
+    }
+
+    /// The repository-relative folder of a vault role, as declared: `"."` for
+    /// a root vault, `None` when the layout has no vault of that role. A
+    /// working folder that is `"."` or the knowledge folder is treated as
+    /// absent, because a folder holds one role.
+    #[must_use]
+    pub fn dir_of(&self, kind: VaultKind) -> Option<&str> {
+        match kind {
+            VaultKind::Knowledge => Some(self.knowledge.as_str()),
+            VaultKind::Working => self
+                .working
+                .as_deref()
+                .filter(|w| !w.is_empty() && *w != "." && *w != self.knowledge),
+        }
+    }
+
+    /// Where a vault role sits on disk: `repo_root` joined with
+    /// [`Layout::dir_of`], or `repo_root` itself for `"."`. `None` when the
+    /// layout has no vault of that role. Pure: nothing is checked on disk.
+    #[must_use]
+    pub fn path_of(&self, repo_root: &Path, kind: VaultKind) -> Option<PathBuf> {
+        let dir = self.dir_of(kind)?;
+        Some(if dir == "." {
+            repo_root.to_path_buf()
+        } else {
+            repo_root.join(dir)
+        })
+    }
+
+    /// [`Layout::path_of`], refusing with a [`MissingVault`] that names the
+    /// layout when the role is undeclared or its folder is not a directory.
+    ///
+    /// # Errors
+    /// [`MissingVault`], whose message is fit to print to a user.
+    pub fn root_of(&self, repo_root: &Path, kind: VaultKind) -> Result<PathBuf, MissingVault> {
+        let path = self.path_of(repo_root, kind).ok_or_else(|| MissingVault {
+            kind,
+            declared: None,
+            layout: self.describe(),
+        })?;
+        if path.is_dir() {
+            Ok(path)
+        } else {
+            Err(MissingVault {
+                kind,
+                declared: Some(path),
+                layout: self.describe(),
+            })
+        }
+    }
+
+    /// The role a vault root plays under this layout: working when its path
+    /// ends with the declared working folder, knowledge otherwise. The
+    /// knowledge folder can be `"."`, so knowledge is the default, not a
+    /// match.
+    #[must_use]
+    pub fn kind_of(&self, root: &Path) -> VaultKind {
+        match self.dir_of(VaultKind::Working) {
+            Some(working) if root.ends_with(working) => VaultKind::Working,
+            _ => VaultKind::Knowledge,
+        }
+    }
+
+    /// The layout in one line, as the refusals quote it:
+    /// `` layout: knowledge = "knowledge", working = "working" ``.
+    #[must_use]
+    pub fn describe(&self) -> String {
+        match self.dir_of(VaultKind::Working) {
+            Some(w) => format!(
+                "layout: knowledge = {:?}, working = {:?}",
+                self.knowledge, w
+            ),
+            None => format!("layout: knowledge = {:?}, working = none", self.knowledge),
+        }
+    }
+}
+
+/// A vault role the [`Layout`] cannot place on disk: undeclared (`working:
+/// null`, or a plain vault), or declared at a path that is not a directory.
+/// The command line prints it and exits 2 (a refused request), never 1.
+///
+/// ```
+/// use std::path::Path;
+/// use ontomark_compile::input::page::VaultKind;
+/// use ontomark_compile::profile::Layout;
+///
+/// let err = Layout::flat()
+///     .root_of(Path::new("/vaults/notes"), VaultKind::Working)
+///     .unwrap_err();
+/// assert_eq!(
+///     err.to_string(),
+///     "no working vault: this layout declares none (layout: knowledge = \".\", working = none)"
+/// );
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub struct MissingVault {
+    /// The role that was asked for.
+    pub kind: VaultKind,
+    /// The path the layout declared for it, when it declared one.
+    pub declared: Option<PathBuf>,
+    /// [`Layout::describe`] of the layout that refused.
+    pub layout: String,
+}
+
+impl std::fmt::Display for MissingVault {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let role = self.kind.role_name();
+        match &self.declared {
+            None => write!(
+                f,
+                "no {role} vault: this layout declares none ({})",
+                self.layout
+            ),
+            Some(path) => write!(
+                f,
+                "no {role} vault: {} is not a directory ({})",
+                path.display(),
+                self.layout
+            ),
+        }
+    }
+}
+
+/// How a build's generation id is spelled: `<prefix>@<commit>`, with `+dirty`
+/// for an uncommitted build (see [`crate::build::generation::generation_id`]).
+///
+/// With no `prefix` the repository root's directory name is used, so a vault
+/// at `/vaults/notes` stamps `notes@<sha>`. The estate profile pins
+/// `visionGraph`, which is what its consumers promote against.
+///
+/// ```
+/// use std::path::Path;
+/// use ontomark_compile::profile::{GenerationNaming, Profile};
+///
+/// let p = Profile::from_yaml("generation:\n  prefix: visionGraph\n").unwrap();
+/// assert_eq!(p.generation.prefix_for(Path::new("/srv/anything")), "visionGraph");
+/// assert_eq!(
+///     GenerationNaming::default().prefix_for(Path::new("/vaults/notes")),
+///     "notes"
+/// );
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct GenerationNaming {
+    /// The text before `@` in every generation id. `None` uses the repository
+    /// root's directory name.
+    pub prefix: Option<String>,
+}
+
+impl GenerationNaming {
+    /// The prefix generation ids under this profile carry for the repository
+    /// at `repo_root`: [`GenerationNaming::prefix`] when set, else the root's
+    /// directory name (after resolving `.` and symlinks), else `ontomark` for
+    /// a root with no name at all (`/`).
+    #[must_use]
+    pub fn prefix_for(&self, repo_root: &Path) -> String {
+        if let Some(prefix) = self.prefix.as_deref().filter(|p| !p.is_empty()) {
+            return prefix.to_owned();
+        }
+        let resolved = std::fs::canonicalize(repo_root).unwrap_or_else(|_| repo_root.to_path_buf());
+        resolved
+            .file_name()
+            .and_then(|n| n.to_str())
+            .filter(|n| !n.is_empty())
+            .map_or_else(|| "ontomark".to_owned(), str::to_owned)
     }
 }
 
@@ -594,6 +817,135 @@ mod tests {
         );
         // An IRI no namespace claims is never rewritten.
         assert_eq!(r.project("urn:unrelated:z"), None);
+    }
+
+    #[test]
+    fn the_default_layout_is_the_estate_shape() {
+        let l = Layout::default();
+        assert_eq!(l.dir_of(VaultKind::Knowledge), Some("knowledge"));
+        assert_eq!(l.dir_of(VaultKind::Working), Some("working"));
+        assert_eq!(
+            l.path_of(Path::new("/r"), VaultKind::Knowledge),
+            Some(PathBuf::from("/r/knowledge"))
+        );
+        assert_eq!(
+            l.path_of(Path::new("/r"), VaultKind::Working),
+            Some(PathBuf::from("/r/working"))
+        );
+        assert_eq!(l.kind_of(Path::new("/r/working")), VaultKind::Working);
+        assert_eq!(l.kind_of(Path::new("/r/knowledge")), VaultKind::Knowledge);
+        assert_eq!(l.kind_of(Path::new("/r")), VaultKind::Knowledge);
+        // The estate profile omits `layout:` and gets exactly this.
+        assert_eq!(test_estate().layout, l);
+        assert_eq!(
+            l.describe(),
+            "layout: knowledge = \"knowledge\", working = \"working\""
+        );
+    }
+
+    #[test]
+    fn a_dot_knowledge_folder_is_the_repository_root() {
+        let l = Layout::flat();
+        assert_eq!(l.dir_of(VaultKind::Knowledge), Some("."));
+        assert_eq!(l.dir_of(VaultKind::Working), None);
+        assert_eq!(
+            l.path_of(Path::new("/vaults/notes"), VaultKind::Knowledge),
+            Some(PathBuf::from("/vaults/notes"))
+        );
+        assert_eq!(
+            l.path_of(Path::new("/vaults/notes"), VaultKind::Working),
+            None
+        );
+        assert_eq!(l.kind_of(Path::new("/vaults/notes")), VaultKind::Knowledge);
+        // Even a root called `working` is knowledge when no working vault exists.
+        assert_eq!(
+            l.kind_of(Path::new("/vaults/working")),
+            VaultKind::Knowledge
+        );
+        assert_eq!(l.describe(), "layout: knowledge = \".\", working = none");
+        let parsed = Profile::from_yaml("layout:\n  knowledge: .\n  working: null\n").unwrap();
+        assert_eq!(parsed.layout, l);
+    }
+
+    #[test]
+    fn custom_folders_are_looked_up_not_assumed() {
+        let p = Profile::from_yaml("layout:\n  knowledge: notes\n  working: drafts/wip\n").unwrap();
+        let l = &p.layout;
+        assert_eq!(l.dir_of(VaultKind::Knowledge), Some("notes"));
+        assert_eq!(l.dir_of(VaultKind::Working), Some("drafts/wip"));
+        assert_eq!(
+            l.path_of(Path::new("/r"), VaultKind::Working),
+            Some(PathBuf::from("/r/drafts/wip"))
+        );
+        assert_eq!(l.kind_of(Path::new("/r/drafts/wip")), VaultKind::Working);
+        assert_eq!(l.kind_of(Path::new("/r/working")), VaultKind::Knowledge);
+        assert_eq!(l.kind_of(Path::new("/r/notes")), VaultKind::Knowledge);
+    }
+
+    #[test]
+    fn a_working_folder_that_is_the_knowledge_folder_is_absent() {
+        for yaml in [
+            "layout:\n  knowledge: .\n  working: .\n",
+            "layout:\n  knowledge: v\n  working: v\n",
+            "layout:\n  working: ''\n",
+        ] {
+            let p = Profile::from_yaml(yaml).unwrap();
+            assert_eq!(p.layout.dir_of(VaultKind::Working), None, "{yaml}");
+        }
+    }
+
+    #[test]
+    fn root_of_refuses_by_name() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join("knowledge")).unwrap();
+        let l = Layout::default();
+        assert_eq!(
+            l.root_of(dir.path(), VaultKind::Knowledge).unwrap(),
+            dir.path().join("knowledge")
+        );
+        let err = l.root_of(dir.path(), VaultKind::Working).unwrap_err();
+        assert_eq!(err.kind, VaultKind::Working);
+        assert_eq!(err.declared, Some(dir.path().join("working")));
+        assert_eq!(
+            err.to_string(),
+            format!(
+                "no working vault: {} is not a directory (layout: knowledge = \"knowledge\", \
+                 working = \"working\")",
+                dir.path().join("working").display()
+            )
+        );
+        let err = Layout::flat()
+            .root_of(dir.path(), VaultKind::Working)
+            .unwrap_err();
+        assert_eq!(err.declared, None);
+        assert!(err
+            .to_string()
+            .starts_with("no working vault: this layout declares none ("));
+        assert_eq!(
+            Layout::flat()
+                .root_of(dir.path(), VaultKind::Knowledge)
+                .unwrap(),
+            dir.path()
+        );
+    }
+
+    #[test]
+    fn the_generation_prefix_is_pinned_or_the_root_name() {
+        assert_eq!(
+            test_estate().generation.prefix_for(Path::new("/anywhere")),
+            "visionGraph"
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let name = dir.path().file_name().unwrap().to_str().unwrap().to_owned();
+        let naming = GenerationNaming::default();
+        assert_eq!(naming.prefix_for(dir.path()), name);
+        // `.` resolves to the directory it names, not to `.`.
+        assert_eq!(naming.prefix_for(&dir.path().join(".")), name);
+        assert_eq!(naming.prefix_for(Path::new("/")), "ontomark");
+        let empty = GenerationNaming {
+            prefix: Some(String::new()),
+        };
+        assert_eq!(empty.prefix_for(dir.path()), name, "an empty pin is no pin");
     }
 
     #[test]

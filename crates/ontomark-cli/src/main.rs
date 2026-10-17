@@ -1,8 +1,31 @@
-//! The `ontomark` binary: a drop-in for `VisionClaw`'s `vault` on the verbs the
-//! publication workflow, the corpus gates and the estate's agent tooling use
-//! (`build`, `validate`, `gate`, `conflicts`, `repair bodies|fences`; the graph
-//! queries `find`, `retrieve`, `tree`; the guarded writes `edit`, `create`,
-//! `apply`), plus `migrate`.
+//! The `ontomark` binary: Markdown ontology vaults to standard artefacts, and
+//! the verbs a corpus workflow needs around that (`build`, `validate`, `gate`,
+//! `conflicts`, `repair bodies|fences`; the graph queries `find`, `retrieve`,
+//! `tree`; the guarded writes `edit`, `create`, `apply`; and `migrate`). It is
+//! a drop-in for `VisionClaw`'s `vault` on the verbs both have.
+//!
+//! # Vault layout
+//!
+//! A vault is an ordinary Obsidian vault: notes at the vault root, ids are the
+//! root-relative path without `.md`, and the furniture folders (`templates/`,
+//! `bases/`, `assets/`, `journals/`, plus the profile's `layout.excluded`) are
+//! skipped and reported, never silently dropped. `--repo` names either
+//!
+//! * an **estate-shaped repository** — `ontology/vocabulary.yaml` beside the
+//!   vaults the profile's `layout` places (`knowledge/` and `working/` by
+//!   default); the estate profile is the default there — or
+//! * a **plain Obsidian vault** — no `ontology/` anywhere above it. The
+//!   directory itself is the knowledge vault (`layout.knowledge = "."`), there
+//!   is no working vault, the generic profile and the built-in vocabulary
+//!   apply, and `--vault working|all` or `--scope machine` are refused with
+//!   exit 2 naming the layout (ADR-OM-008).
+//!
+//! The output contract is the same for both: knowledge pages stage under
+//! `publish/pages/`, working pages under `publish/working/`, and the generation
+//! id is `<prefix>@<commit>` where the prefix is the profile's pin
+//! (`visionGraph` for the estate) or the repository's directory name.
+//!
+//! # Exit codes
 //!
 //! Every subcommand accepts `--json`. Exit codes are contractual and match
 //! `vault`: `0` success, `1` a failed check or execution error, `2` a refused
@@ -10,10 +33,10 @@
 //! claiming one path, a definition the reasoner would not finish on, an
 //! unsatisfiable class — the corpus does not permit this build; a
 //! `build --scope machine` asked for alongside `--publish-out`, `--vault
-//! working|all` or `--no-redact-private-links`, or on a repository without a
-//! `working/` vault; a `create` or `apply` whose guards refuse the write) or an
-//! invalid argument (an unknown `--vault`, `--scope`, `--tier` or `--severity`
-//! value included).
+//! working|all` or `--no-redact-private-links`, or on a layout without a
+//! working vault; any `--vault working|all` on such a layout; a `create` or
+//! `apply` whose guards refuse the write) or an invalid argument (an unknown
+//! `--vault`, `--scope`, `--tier` or `--severity` value included).
 //!
 //! `build --scope machine` is the bundle `VisionClaw` consumes: the public
 //! knowledge projection plus `working/`'s public pages as plain records, with
@@ -35,12 +58,13 @@ use std::process::ExitCode;
 use anyhow::Context as _;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use ontomark_compile::check::{bodies, conflicts, gate, repair, validate};
-use ontomark_compile::input::page::{load_vault, Vault, VaultKind};
+use ontomark_compile::input::error::VaultError;
+use ontomark_compile::input::page::{Vault, VaultKind};
 use ontomark_compile::input::promotion::Blocker;
 use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::ir::graph::{self, VaultGraph};
 use ontomark_compile::ir::model::Corpus;
-use ontomark_compile::profile::Profile;
+use ontomark_compile::profile::{Layout, MissingVault, Profile};
 use ontomark_compile::write::{apply, create, edit};
 use serde_json::json;
 
@@ -53,8 +77,12 @@ use ontomark_compile::{build, reason};
 #[derive(Debug, Parser)]
 #[command(name = "ontomark", version, about, long_about = None)]
 struct Cli {
-    /// The repository root holding `ontology/vocabulary.yaml`, `knowledge/`
-    /// and `working/`. Defaults to the nearest ancestor that has one.
+    /// The repository root: either an estate-shaped repository holding
+    /// `ontology/vocabulary.yaml` beside the vaults the profile's `layout`
+    /// names (`knowledge/` and `working/` by default), or a plain Obsidian
+    /// vault with its notes at the root and no `ontology/` folder. Defaults to
+    /// the nearest ancestor holding `ontology/vocabulary.yaml`, else the
+    /// current directory as a plain vault.
     #[arg(long, global = true)]
     repo: Option<PathBuf>,
 
@@ -64,7 +92,9 @@ struct Cli {
 
     /// The corpus profile: `estate`, `generic` or the path of a profile YAML.
     /// Defaults to `estate` when the repository has `ontology/vocabulary.yaml`,
-    /// else `generic`.
+    /// else `generic`. On a plain vault (no vocabulary file) a built-in profile
+    /// takes the flat layout — the root is the knowledge vault and there is no
+    /// working vault; a profile YAML keeps the `layout` it declares.
     #[arg(long, global = true, value_name = "estate|generic|PATH")]
     profile: Option<String>,
 
@@ -401,56 +431,132 @@ fn main() -> ExitCode {
         Ok(code) => code,
         Err(e) => {
             eprintln!("ontomark: {e:#}");
+            // A vault role the layout does not place (`--vault working` on a
+            // plain vault) is a refused request, not a failure: exit 2.
+            if e.downcast_ref::<MissingVault>().is_some() {
+                return ExitCode::from(2);
+            }
             ExitCode::from(1)
         }
     }
 }
 
-/// Find the repository root: the nearest ancestor with `ontology/vocabulary.yaml`.
-fn resolve_repo(explicit: Option<&Path>) -> anyhow::Result<(PathBuf, Vocabulary)> {
+/// What `--repo` (or the current directory) turned out to be.
+struct Repo {
+    /// The repository root: the directory holding `ontology/` for an estate
+    /// repository, or the vault itself for a plain one.
+    root: PathBuf,
+    /// The vocabulary found there, or the built-in one for a plain vault.
+    vocab: Vocabulary,
+    /// `true` when `ontology/vocabulary.yaml` was found: the estate shape.
+    estate_shape: bool,
+}
+
+/// Find the repository root: the nearest ancestor with
+/// `ontology/vocabulary.yaml`. Without one, the start directory is a plain
+/// Obsidian vault and is the root itself (ADR-OM-008). A vocabulary file that
+/// exists but does not parse is still an error.
+fn resolve_repo(explicit: Option<&Path>) -> anyhow::Result<Repo> {
     let start = match explicit {
         Some(p) => p.to_path_buf(),
         None => std::env::current_dir()?,
     };
-    let (path, vocab) = Vocabulary::discover(&start).with_context(|| {
-        format!(
-            "looking for ontology/vocabulary.yaml from {}",
-            start.display()
-        )
-    })?;
-    let root = path
-        .parent()
-        .and_then(Path::parent)
-        .map(Path::to_path_buf)
-        .unwrap_or(start);
-    Ok((root, vocab))
-}
-
-/// Resolve `--profile`: a built-in name or a YAML path.
-fn resolve_profile(spec: Option<&str>, root: &Path) -> anyhow::Result<Profile> {
-    match spec {
-        Some("estate") => Ok(ontomark_profile_estate::profile()),
-        Some("generic") => Ok(Profile::generic()),
-        Some(path) => {
-            let text =
-                std::fs::read_to_string(path).with_context(|| format!("reading profile {path}"))?;
-            Profile::from_yaml(&text).with_context(|| format!("parsing profile {path}"))
+    match Vocabulary::discover(&start) {
+        Ok((path, vocab)) => {
+            let root = path
+                .parent()
+                .and_then(Path::parent)
+                .map(Path::to_path_buf)
+                .unwrap_or(start);
+            Ok(Repo {
+                root,
+                vocab,
+                estate_shape: true,
+            })
         }
-        None if root.join("ontology/vocabulary.yaml").is_file() => {
-            Ok(ontomark_profile_estate::profile())
+        Err(VaultError::NotAVault { .. }) => {
+            anyhow::ensure!(
+                start.is_dir(),
+                "{} is not a directory (no ontology/vocabulary.yaml above it either)",
+                start.display()
+            );
+            Ok(Repo {
+                root: start,
+                vocab: Vocabulary::generic(),
+                estate_shape: false,
+            })
         }
-        None => Ok(Profile::generic()),
+        Err(e) => Err(e).with_context(|| {
+            format!(
+                "looking for ontology/vocabulary.yaml from {}",
+                start.display()
+            )
+        }),
     }
 }
 
-fn load(root: &Path, kinds: &[VaultKind]) -> anyhow::Result<Vec<Vault>> {
+/// Resolve `--profile`: a built-in name or a YAML path.
+///
+/// On a plain vault a built-in profile takes [`Layout::flat`]: the root is the
+/// knowledge vault and there is no working vault. A profile YAML is taken as
+/// written, `layout` included.
+fn resolve_profile(spec: Option<&str>, repo: &Repo) -> anyhow::Result<Profile> {
+    let mut profile = match spec {
+        Some("estate") => ontomark_profile_estate::profile(),
+        Some("generic") => Profile::generic(),
+        Some(path) => {
+            let text =
+                std::fs::read_to_string(path).with_context(|| format!("reading profile {path}"))?;
+            return Profile::from_yaml(&text).with_context(|| format!("parsing profile {path}"));
+        }
+        None if repo.estate_shape => ontomark_profile_estate::profile(),
+        None => Profile::generic(),
+    };
+    if !repo.estate_shape {
+        profile.layout = Layout {
+            excluded: profile.layout.excluded,
+            ..Layout::flat()
+        };
+    }
+    Ok(profile)
+}
+
+/// Where the vault of `kind` sits, by the profile's layout.
+///
+/// # Errors
+/// [`MissingVault`] (exit 2) when the layout declares no such vault or its
+/// folder is absent.
+fn vault_root(root: &Path, profile: &Profile, kind: VaultKind) -> anyhow::Result<PathBuf> {
+    Ok(profile.layout.root_of(root, kind)?)
+}
+
+fn load(root: &Path, profile: &Profile, kinds: &[VaultKind]) -> anyhow::Result<Vec<Vault>> {
+    let excluded = profile.layout.excluded_dirs();
     kinds
         .iter()
         .map(|kind| {
-            let dir = root.join(kind.dir_name());
-            load_vault(&dir).with_context(|| format!("loading {}", dir.display()))
+            let dir = vault_root(root, profile, *kind)?;
+            Vault::load_excluding(&dir, *kind, &excluded)
+                .with_context(|| format!("loading {}", dir.display()))
         })
         .collect()
+}
+
+/// The repair scopes for the selected vault roles, each placed by the layout.
+fn repair_scopes(
+    root: &Path,
+    profile: &Profile,
+    kinds: &[VaultKind],
+) -> anyhow::Result<Vec<repair::Scope>> {
+    let roots: Vec<(VaultKind, PathBuf)> = kinds
+        .iter()
+        .map(|kind| Ok((*kind, vault_root(root, profile, *kind)?)))
+        .collect::<anyhow::Result<_>>()?;
+    let borrowed: Vec<(VaultKind, &Path)> = roots.iter().map(|(k, p)| (*k, p.as_path())).collect();
+    Ok(repair::scopes_for(
+        &borrowed,
+        &profile.layout.excluded_dirs(),
+    ))
 }
 
 fn emit(json: bool, value: &serde_json::Value, prose: impl FnOnce()) -> anyhow::Result<()> {
@@ -517,15 +623,16 @@ fn print_changes(changes: &BTreeMap<String, [Option<String>; 2]>) {
 #[allow(clippy::too_many_lines)]
 fn run() -> anyhow::Result<ExitCode> {
     let cli = Cli::parse();
-    let (root, vocab) = resolve_repo(cli.repo.as_deref())?;
-    let profile = resolve_profile(cli.profile.as_deref(), &root)?;
+    let repo = resolve_repo(cli.repo.as_deref())?;
+    let profile = resolve_profile(cli.profile.as_deref(), &repo)?;
+    let Repo { root, vocab, .. } = repo;
 
     match &cli.command {
         Command::Migrate { command } => migrate_cmd::run(command, &root, &profile, cli.json),
         Command::Validate(args) => {
             let mut failed = false;
             let mut reports = serde_json::Map::new();
-            for vault in load(&root, &args.selector.kinds())? {
+            for vault in load(&root, &profile, &args.selector.kinds())? {
                 let corpus = Corpus::build(&vault, &vocab);
                 let report = validate::validate(&profile, &vault, &corpus, &vocab);
                 failed |=
@@ -533,7 +640,7 @@ fn run() -> anyhow::Result<ExitCode> {
                 if !cli.json {
                     println!(
                         "[{}] {} pages, {} with ontology, {} public — {} errors, {} warnings",
-                        vault.kind.dir_name(),
+                        vault.kind.role_name(),
                         report.total_pages,
                         report.pages_with_ontology,
                         report.public_pages,
@@ -545,7 +652,7 @@ fn run() -> anyhow::Result<ExitCode> {
                     }
                 }
                 reports.insert(
-                    vault.kind.dir_name().to_owned(),
+                    vault.kind.role_name().to_owned(),
                     serde_json::to_value(report.detailed())?,
                 );
             }
@@ -561,7 +668,7 @@ fn run() -> anyhow::Result<ExitCode> {
             let tier = gate::Tier::parse(&args.tier);
             let classifier = ontomark_compile::whelk::WhelkEl;
             let mut verdicts: Vec<(&'static str, gate::Verdict)> = Vec::new();
-            for vault in load(&root, &args.selector.kinds())? {
+            for vault in load(&root, &profile, &args.selector.kinds())? {
                 let corpus = Corpus::build(&vault, &vocab);
                 let report = validate::validate(&profile, &vault, &corpus, &vocab);
                 let graph = (tier == gate::Tier::Full && report.errors().is_empty())
@@ -574,7 +681,7 @@ fn run() -> anyhow::Result<ExitCode> {
                         .map(|g| (g, &classifier as &dyn reason::Classifier)),
                     tier,
                 );
-                verdicts.push((vault.kind.dir_name(), verdict));
+                verdicts.push((vault.kind.role_name(), verdict));
             }
             let worst = verdicts
                 .iter()
@@ -620,10 +727,10 @@ fn run() -> anyhow::Result<ExitCode> {
             // Every selected vault is analysed; `all` is both (S1.5). The same
             // one-vault legacy shape / several-vault keyed shape as `gate`.
             let mut reports: Vec<(&'static str, conflicts::Report)> = Vec::new();
-            for vault in load(&root, &args.selector.kinds())? {
+            for vault in load(&root, &profile, &args.selector.kinds())? {
                 let corpus = Corpus::build(&vault, &vocab);
                 reports.push((
-                    vault.kind.dir_name(),
+                    vault.kind.role_name(),
                     conflicts::analyse(&corpus, &args.severity),
                 ));
             }
@@ -680,7 +787,7 @@ fn run() -> anyhow::Result<ExitCode> {
                 with_working_publish: kinds.contains(&VaultKind::Working)
                     && kind == VaultKind::Knowledge,
                 publish_out: args.publish_out.clone(),
-                vault_root: root.join(kind.dir_name()),
+                vault_root: vault_root(&root, &profile, kind)?,
                 out: args.out.clone(),
                 repo_root: root.clone(),
                 with_markdown_mirror: args.with_markdown_mirror,
@@ -769,7 +876,7 @@ fn run() -> anyhow::Result<ExitCode> {
 
         Command::Find(args) => {
             let mut hits = Vec::new();
-            for vault in load(&root, &args.selector.kinds())? {
+            for vault in load(&root, &profile, &args.selector.kinds())? {
                 let graph = VaultGraph::build(&vault, &vocab);
                 hits.extend(graph.find(
                     &args.query,
@@ -791,7 +898,7 @@ fn run() -> anyhow::Result<ExitCode> {
 
         Command::Retrieve(args) => {
             let expand = parse_expansion(&args.expand)?;
-            let vault = load(&root, &args.selector.kinds())?
+            let vault = load(&root, &profile, &args.selector.kinds())?
                 .into_iter()
                 .next()
                 .context("no vault selected")?;
@@ -816,7 +923,7 @@ fn run() -> anyhow::Result<ExitCode> {
         }
 
         Command::Tree(args) => {
-            let vault = load(&root, &args.selector.kinds())?
+            let vault = load(&root, &profile, &args.selector.kinds())?
                 .into_iter()
                 .next()
                 .context("no vault selected")?;
@@ -839,7 +946,7 @@ fn run() -> anyhow::Result<ExitCode> {
             let expect = edit::Expectation::parse(expect_raw).map_err(anyhow::Error::msg)?;
             let changes = changes_of(&args.sets, &args.unsets).map_err(anyhow::Error::msg)?;
 
-            let vault = load(&root, &args.selector.kinds())?
+            let vault = load(&root, &profile, &args.selector.kinds())?
                 .into_iter()
                 .next()
                 .context("no vault selected")?;
@@ -871,7 +978,7 @@ fn run() -> anyhow::Result<ExitCode> {
             let changes = changes_of(&args.sets, &args.unsets).map_err(anyhow::Error::msg)?;
             let staged = std::fs::read_to_string(&args.file)
                 .with_context(|| format!("reading {}", args.file.display()))?;
-            let vault = load(&root, &[VaultKind::Knowledge])?
+            let vault = load(&root, &profile, &[VaultKind::Knowledge])?
                 .into_iter()
                 .next()
                 .context("no knowledge vault")?;
@@ -959,7 +1066,7 @@ fn run() -> anyhow::Result<ExitCode> {
                 Ok(proposal) => proposal,
                 Err(error) => return refuse_with(&error),
             };
-            let vault = load(&root, &[VaultKind::Knowledge])?
+            let vault = load(&root, &profile, &[VaultKind::Knowledge])?
                 .into_iter()
                 .next()
                 .context("no knowledge vault")?;
@@ -983,12 +1090,9 @@ fn run() -> anyhow::Result<ExitCode> {
         }
 
         Command::Repair(RepairCommand::Bodies(args)) => {
-            let vaults: Vec<&str> = vault_kinds(&args.vault)
-                .into_iter()
-                .map(VaultKind::dir_name)
-                .collect();
+            let scopes = repair_scopes(&root, &profile, &vault_kinds(&args.vault))?;
             let report = bodies::run(&bodies::Options {
-                scopes: repair::scopes_for(&root, &vaults),
+                scopes,
                 dry_run: args.dry_run || args.check,
             })?;
             if let Some(path) = &args.report {
@@ -1027,12 +1131,9 @@ fn run() -> anyhow::Result<ExitCode> {
         }
 
         Command::Repair(RepairCommand::Fences(args)) => {
-            let vaults: Vec<&str> = vault_kinds(&args.vault)
-                .into_iter()
-                .map(VaultKind::dir_name)
-                .collect();
+            let scopes = repair_scopes(&root, &profile, &vault_kinds(&args.vault))?;
             let report = repair::run(&repair::Options {
-                scopes: repair::scopes_for(&root, &vaults),
+                scopes,
                 dry_run: args.dry_run,
             })?;
             if let Some(path) = &args.report {
