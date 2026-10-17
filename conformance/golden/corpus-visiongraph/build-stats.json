@@ -1,11 +1,11 @@
 {
   "generation": {
-    "id": "visionGraph@cd50546cb17230c5ef5729c8ed11dd0e7491d7b8",
-    "commit": "cd50546cb17230c5ef5729c8ed11dd0e7491d7b8",
+    "id": "visionGraph@fb2e953a8eab3312ecc86f6724602f2f2c0e43f2",
+    "commit": "fb2e953a8eab3312ecc86f6724602f2f2c0e43f2",
     "dirty": false,
     "content_digest": "2ed9f748ee77e075205fa7cadda9c388393def2033b430bfa967f602b84cf63b",
     "ontology_digest": "sha256-12-0bc8c7857720",
-    "generated_at": "2026-10-16T14:12:54.335043+00:00",
+    "generated_at": "2026-10-17T09:50:51.591778+00:00",
     "class_count": 9244,
     "page_count": 9244,
     "vocabulary_version": 1,
@@ -17,17 +17,17 @@
       },
       {
         "name": "data/ontology-inferred.ttl",
-        "sha256": "c1eb4f064fd066bc3e847acd962d3535fa4541e82f2174839fa1f6987223affd",
+        "sha256": "1e0b70962071d8923cb09bb6e32528329a8670c43e9423e69b7163397f1c0f2d",
         "bytes": 3802753
       },
       {
         "name": "data/scaffold-index.json",
-        "sha256": "a566746d7f7b2648cb76999bda1781cb4f7904263733ee44250a2933f4e458f5",
+        "sha256": "999e34f98149133bd0e633c22a0a12784b71d10886ffffd6558d32546950ab41",
         "bytes": 10177753
       },
       {
         "name": "data/prose-index.json",
-        "sha256": "73b383da8d460aee45cec05a5fbc87ead2f2552501bbfdbbe177cfd94341e6d3",
+        "sha256": "e45f6a15805fe1c259c43adfe36acc6f2f0b072d68f6a02a20cc47fb824f4d22",
         "bytes": 5536435
       },
       {
@@ -46292,7 +46292,7 @@
       },
       {
         "name": "data/graph/overview.json",
-        "sha256": "4e638e15d5e1d0cc2c2ff6e180675d5011e10f682ec9dad85a579854ad49397c",
+        "sha256": "00fc79f96919763e4b4404dec3b010a8014812d888cac6b05748b961f5714867",
         "bytes": 40404
       },
       {
@@ -46342,7 +46342,7 @@
       },
       {
         "name": "data/graph/stats.json",
-        "sha256": "88924abf179793013436c004aff42b50fca05311ca1b1650995aeed39532ebd6",
+        "sha256": "623d8c3c361095d97a558a3fa81bd3d2bf7d4e886d042d1668c1304989da8f80",
         "bytes": 3127
       },
       {
@@ -94137,7 +94137,7 @@
       },
       {
         "name": "okf/index.md",
-        "sha256": "b1a679d3c610022b3b7e252288b653a54efb2433cd5108b40472b6a55c55b104",
+        "sha256": "bf0f7f541aeebbd67e4986c33e819dbae5c498fb8f0d31e0e6f8b60e2e3c573a",
         "bytes": 866404
       },
       {
@@ -187442,7 +187442,7 @@
       },
       {
         "name": "data/.generation.json",
-        "sha256": "0e9b0d2888377aa519db4c404e821075181b987634a1be14ace000d1325fb785",
+        "sha256": "7acf48e68fb35fc019aae7e491555039cf264a0edf95b18a193847b3e7afc0af",
         "bytes": 3199
       }
     ]
@@ -187469,5 +187469,5 @@
     }
   },
   "written": 37488,
-  "out": "/home/devuser/workspace/.tmp/ontomark-golden.spJug1/build/out"
+  "out": "/home/devuser/workspace/.tmp/ontomark-golden.OlHDJN/build/out"
 }
