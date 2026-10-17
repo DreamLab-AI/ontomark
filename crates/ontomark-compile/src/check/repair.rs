@@ -66,12 +66,15 @@
 use std::path::{Path, PathBuf};
 
 use crate::input::code::CodeMap;
+use crate::input::page::VaultKind;
+#[cfg(test)]
+use crate::input::page::EXCLUDED_DIRS;
 use serde::Serialize;
 
 /// One tree to repair: a vault's root (pages) or its `journals/`.
 #[derive(Debug, Clone)]
 pub struct Scope {
-    /// The vault name — `knowledge` or `working`.
+    /// The vault role name — `knowledge` or `working`.
     pub vault: String,
     /// The directory walked.
     pub dir: PathBuf,
@@ -432,23 +435,23 @@ pub fn run(options: &Options) -> anyhow::Result<Report> {
 }
 
 /// The scopes a `--vault` value names: both trees of every selected vault —
-/// the vault root with [`crate::input::page::EXCLUDED_DIRS`] applied (so
-/// `templates/`, `bases/` and `assets/` are never rewritten), then `journals/`.
+/// the vault root with `excluded` applied (the profile's `layout.excluded`,
+/// so `templates/`, `bases/` and `assets/` are never rewritten), then
+/// `journals/`. Each vault is `(role, root directory)`, the root being where
+/// the layout places it ([`crate::profile::Layout::root_of`]); the scope is
+/// labelled with the role name.
 #[must_use]
-pub fn scopes_for(root: &Path, vaults: &[&str]) -> Vec<Scope> {
+pub fn scopes_for(vaults: &[(VaultKind, &Path)], excluded: &[&str]) -> Vec<Scope> {
     let mut out = Vec::new();
-    for vault in vaults {
+    for (kind, root) in vaults {
         out.push(Scope {
-            vault: (*vault).to_owned(),
-            dir: root.join(vault),
-            excluded: crate::input::page::EXCLUDED_DIRS
-                .iter()
-                .map(|s| (*s).to_owned())
-                .collect(),
+            vault: kind.role_name().to_owned(),
+            dir: root.to_path_buf(),
+            excluded: excluded.iter().map(|s| (*s).to_owned()).collect(),
         });
         out.push(Scope {
-            vault: (*vault).to_owned(),
-            dir: root.join(vault).join("journals"),
+            vault: kind.role_name().to_owned(),
+            dir: root.join("journals"),
             excluded: Vec::new(),
         });
     }
@@ -630,7 +633,7 @@ mod tests {
             "```mermaid\nA --> B\n```\n\nprose\n\ngraph TD\n  X -->|to| Y\n```\n\n- ### After\n";
         std::fs::write(pages.join("Mermaid.md"), text).unwrap();
         let report = run(&Options {
-            scopes: scopes_for(dir.path(), &["knowledge"]),
+            scopes: scopes_for(&[(VaultKind::Knowledge, &pages)], EXCLUDED_DIRS),
             dry_run: false,
         })
         .unwrap();
@@ -691,7 +694,7 @@ mod tests {
         .unwrap();
         std::fs::write(pages.join("Fine.md"), "```\ncode\n```\n").unwrap();
 
-        let scopes = scopes_for(dir.path(), &["knowledge"]);
+        let scopes = scopes_for(&[(VaultKind::Knowledge, &pages)], EXCLUDED_DIRS);
 
         // A dry run reports and writes nothing.
         let dry = run(&Options {

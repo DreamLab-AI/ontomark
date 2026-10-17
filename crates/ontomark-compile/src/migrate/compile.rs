@@ -9,7 +9,7 @@ use crate::input::page::{Page, Vault, VaultKind};
 use crate::input::vocabulary::Vocabulary;
 use crate::ir::model::Corpus;
 use crate::ir::projection;
-use crate::profile::Profile;
+use crate::profile::{Layout, Profile};
 #[cfg(feature = "whelk-el")]
 use crate::reason;
 
@@ -39,13 +39,22 @@ fn is_unpublished_page(rel_under_pages: &str) -> bool {
     crate::input::page::is_unpublished(Path::new(rel_under_pages))
 }
 
-/// Build a [`Vault`] from in-memory page texts.
+/// Build a [`Vault`] from in-memory page texts. `pages` carry
+/// repository-relative paths; the vault of `kind` sits where `layout` puts it
+/// (`"."` for the repository root, in which case the paths are already
+/// vault-relative).
 pub(crate) fn vault_from(
     repo_root: &Path,
+    layout: &Layout,
     kind: VaultKind,
     pages: &[SnapshotPage],
 ) -> Result<Vault, String> {
-    let root = repo_root.join(kind.dir_name());
+    let dir = layout
+        .dir_of(kind)
+        .ok_or_else(|| format!("this layout has no {} vault", kind.role_name()))?;
+    let root = layout
+        .path_of(repo_root, kind)
+        .unwrap_or_else(|| repo_root.to_path_buf());
     let mut out = Vault {
         root: root.clone(),
         kind,
@@ -54,10 +63,13 @@ pub(crate) fn vault_from(
         skipped: Vec::new(),
     };
     for p in pages {
-        let under_vault = p
-            .rel
-            .strip_prefix(&format!("{}/", kind.dir_name()))
-            .ok_or_else(|| format!("{} is not under {}", p.rel, kind.dir_name()))?;
+        let under_vault = if dir == "." {
+            p.rel.as_str()
+        } else {
+            p.rel
+                .strip_prefix(&format!("{dir}/"))
+                .ok_or_else(|| format!("{} is not under {dir}", p.rel))?
+        };
         let abs: PathBuf = repo_root.join(&p.rel);
         // Pages sit at the vault root; `journals/` is the one sibling tree.
         // The snapshot was read by `read_considered`, which already applied
@@ -88,7 +100,7 @@ pub(crate) fn compile_knowledge(
     vocab: &Vocabulary,
     roster: &Roster,
 ) -> Result<Compiled, String> {
-    let vault = vault_from(repo_root, VaultKind::Knowledge, pages)?;
+    let vault = vault_from(repo_root, &profile.layout, VaultKind::Knowledge, pages)?;
     let raw = Corpus::build(&vault, vocab);
     let mut excluded: HashSet<String> = HashSet::new();
     for page in &vault.pages {

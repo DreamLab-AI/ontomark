@@ -1,20 +1,24 @@
 [package]
-name = "ontomark-cli"
-description = "ontomark: build, validate, gate, conflicts and migrate Markdown ontology vaults"
+name = "ontomark"
+description = "Markdown ontology vaults to standard artefacts: build, validate, gate, conflicts, find, retrieve, tree, guarded edits and migrations for Obsidian vaults and estate repositories"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage = "https://github.com/DreamLab-AI/ontomark"
 authors.workspace = true
+readme = "README.md"
+keywords = ["ontology", "owl", "obsidian", "rdf", "cli"]
+categories = ["command-line-utilities", "science"]
 
 [[bin]]
 name = "ontomark"
 path = "src/main.rs"
 
 [dependencies]
-ontomark-compile = { path = "../ontomark-compile", version = "0.3.0" }
-ontomark-profile-estate = { path = "../../profiles/estate" }
+ontomark-compile = { path = "../ontomark-compile", version = "0.4.0" }
+ontomark-profile-estate = { path = "../../profiles/estate", version = "0.4.0" }
 anyhow = "1"
 clap = { version = "4.5", features = ["derive", "env"] }
 serde_json = { workspace = true, features = ["preserve_order"] }

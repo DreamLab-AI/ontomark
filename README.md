@@ -73,7 +73,7 @@ flowchart LR
   CLI -->|"--scope machine"| VC
 ```
 
-Every arrow out of the CLI carries a **generation**: `visionGraph@<commit>` plus a content digest, stamped into each bundle. A consumer can always say which corpus it is reading, and a stale read is refused rather than served. One producer builds every bundle; consumers project from it rather than re-parsing the vault.
+Every arrow out of the CLI carries a **generation**: `<prefix>@<commit>` (`visionGraph@<commit>` for the estate; a vault's directory name otherwise) plus a content digest, stamped into each bundle. A consumer can always say which corpus it is reading, and a stale read is refused rather than served. One producer builds every bundle; consumers project from it rather than re-parsing the vault.
 
 | Repository | Role |
 | --- | --- |
@@ -84,12 +84,22 @@ Every arrow out of the CLI carries a **generation**: `visionGraph@<commit>` plus
 | [VisionClaw](https://github.com/DreamLab-AI/VisionClaw) | The XR/GPU knowledge-graph application. Consumes the machine-scope bundle for its force layout. |
 | [agentbox](https://github.com/DreamLab-AI/agentbox) | The agent runtime. Bakes the released CLI and routes the grounding skill through it. |
 
+### Vault layout
+
+A vault is an ordinary Obsidian vault: notes at the vault root, ids are the root-relative path without `.md`, and the furniture folders (`templates/`, `bases/`, `assets/`, `journals/`, `.obsidian/`) are skipped and reported, never silently dropped ([ADR-OM-007](docs/adr/ADR-OM-007-vault-root-is-the-content-root.md)). Where the two vault roles live is the profile's `layout` — `knowledge/` and `working/` beside `ontology/` for the estate, or `"."` when the repository root *is* the vault. Point the CLI at any Obsidian vault and it is a repository: `ontomark --repo ~/Vaults/Notes validate` runs under the generic profile with the built-in vocabulary, builds to `Notes@<sha>`, and refuses `--vault working` with exit 2 because that layout has no working vault ([ADR-OM-008](docs/adr/ADR-OM-008-any-obsidian-vault-is-a-repository.md)). The output tree (`publish/pages/`, `publish/working/`, reports keyed by role) is the same whatever the input layout.
+
 ## Command line
+
+Install from crates.io, or take the release binary:
+
+```bash
+cargo install ontomark
+```
 
 Each [release](https://github.com/DreamLab-AI/ontomark/releases) ships a static Linux x86-64 binary (runs on glibc and Nix hosts alike), a SHA-256 receipt, and the versioned WASM engine bundle the plugin pins.
 
 ```bash
-V=0.2.0
+V=0.4.0
 curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v$V/ontomark-x86_64-unknown-linux-gnu
 curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v$V/ontomark-x86_64-unknown-linux-gnu.sha256
 sha256sum --check ontomark-x86_64-unknown-linux-gnu.sha256
@@ -107,7 +117,7 @@ chmod +x ontomark-x86_64-unknown-linux-gnu && ./ontomark-x86_64-unknown-linux-gn
 
 Exit codes are a contract: `0` success, `1` failure, `2` a *refusal* (a credential in published content, an identity collision, an unsatisfiable corpus, a non-boolean `public:` flag, an unknown `--tier`, a scope conflict). Refusals name what they refused.
 
-The CLI implements the DreamLab estate's publication contract through the [estate profile](profiles/estate). For a general vault, start with the crates or the plugin; the library's generic profile and the estate compiler have different entry points.
+`--repo` names either a plain Obsidian vault (no `ontology/` folder; the generic profile applies) or an estate-shaped repository holding `ontology/vocabulary.yaml`, where the [estate profile](profiles/estate) is the default and `--profile generic|PATH` overrides it. The [CLI README](crates/ontomark-cli/README.md) has the verbs, exit codes and layout in full.
 
 ## Rust crates
 
@@ -115,15 +125,16 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 
 | Crate | Version | What it owns |
 | --- | --- | --- |
-| [ontomark-parse](crates/ontomark-parse) | 0.1.0 | The Markdown format: lossless `Document`, frontmatter and body indexes, the guarded `Patch`. |
-| [ontomark-model](crates/ontomark-model) | 0.1.1 | Meaning: typed entities, IRIs as identity, predicate forms, reference resolution, pluggable `Profile`. |
+| [ontomark-parse](crates/ontomark-parse) | 0.1.2 | The Markdown format: lossless `Document`, frontmatter and body indexes, the guarded `Patch`. |
+| [ontomark-model](crates/ontomark-model) | 0.1.2 | Meaning: typed entities, IRIs as identity, predicate forms, reference resolution, pluggable `Profile`. |
 | [whelk-el](crates/whelk-el) | 0.1.1 | The saturation engine, a Rust port of Whelk, with optional native parallelism. |
-| [ontomark-reason](crates/ontomark-reason) | 0.1.1 | The OWL 2 EL profile check and classification facade: named refusals, root causes, cancellable sessions. |
+| [ontomark-reason](crates/ontomark-reason) | 0.1.2 | The OWL 2 EL profile check and classification facade: named refusals, root causes, cancellable sessions. |
 | [ontomark-ingest](crates/ontomark-ingest) | 0.1.0 | Assisted ingest: the pure plan/accept contract, grounding, lexical guards, evidence spans. No I/O, no model. |
-| [ontomark-compile](crates/ontomark-compile) | 0.2.0 | The publication compiler: emitters, redaction, the two-scope build, generation identity. |
+| [ontomark-compile](crates/ontomark-compile) | 0.4.0 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity. |
 | [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | The shared binary graph format and its zero-copy reader. |
+| [ontomark-profile-estate](profiles/estate) | 0.4.0 | The DreamLab estate's rules as data; most users want `--profile generic` and never depend on it. |
 | [ontomark-wasm](crates/ontomark-wasm) | release asset | The worker-friendly engine protocol: index, update, classify, query, patch, ingest. |
-| [ontomark-cli](crates/ontomark-cli) | release asset | The native commands above. |
+| [ontomark](crates/ontomark-cli) | 0.4.0 | The installable CLI: `cargo install ontomark`. |
 | [ontomark-graph](packages/graph) | [0.1.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.1.0) | The shared offline graph renderer for desktop and web hosts. |
 
 Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.
@@ -169,7 +180,7 @@ Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surfac
 
 - [Current hand-off](docs/HANDOFF.md): verified results, outstanding work and integration boundaries.
 - [API documentation](docs/api/): crate contracts and capabilities.
-- Decisions: [ADR-OM-001](docs/adr/ADR-OM-001-sprint-decisions.md) (profiles, licensing, reasoner), [ADR-OM-002](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md) (shared graph and plugin boundary), [ADR-OM-003](docs/adr/ADR-OM-003-native-assisted-ingest.md) (assisted ingest), [ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) (OWL 2 EL), [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, the generation loop), [ADR-OM-006](docs/adr/ADR-OM-006-dot-triples-interop.md) (Dot Triples interop), [ADR-OM-007](docs/adr/ADR-OM-007-vault-root-is-the-content-root.md) (flat vaults, the vault verbs), and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
+- Decisions: [ADR-OM-001](docs/adr/ADR-OM-001-sprint-decisions.md) (profiles, licensing, reasoner), [ADR-OM-002](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md) (shared graph and plugin boundary), [ADR-OM-003](docs/adr/ADR-OM-003-native-assisted-ingest.md) (assisted ingest), [ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) (OWL 2 EL), [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, the generation loop), [ADR-OM-006](docs/adr/ADR-OM-006-dot-triples-interop.md) (Dot Triples interop), [ADR-OM-007](docs/adr/ADR-OM-007-vault-root-is-the-content-root.md) (flat vaults, the vault verbs), [ADR-OM-008](docs/adr/ADR-OM-008-any-obsidian-vault-is-a-repository.md) (any Obsidian vault is a repository; layout and generation prefix from the profile), and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
 - [OntoCast triage](docs/ONTOCAST-TRIAGE.md): what the ingest design adapted from OntoCast and what it did not.
 - [Dot Triples bridge](bridges/dot-triples/README.md): one SPARQL CONSTRUCT that lifts Cristian Vasquez's [dot-triples](https://github.com/cristianvasquez/dot-triples) output into Ontomark's vocabulary, tested for parity with the engine.
 - [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md).

@@ -150,7 +150,13 @@ fn plan_agrees_with_repair_bodies_page_for_page() {
         .map(str::to_owned)
         .collect();
     from_plan.sort();
-    let scopes = ontomark_compile::check::repair::scopes_for(&root, &["knowledge", "working"]);
+    let scopes = ontomark_compile::check::repair::scopes_for(
+        &[
+            (VaultKind::Knowledge, &root.join("knowledge")),
+            (VaultKind::Working, &root.join("working")),
+        ],
+        ontomark_compile::input::page::EXCLUDED_DIRS,
+    );
     let report = ontomark_compile::check::bodies::run(&ontomark_compile::check::bodies::Options {
         scopes,
         dry_run: true,

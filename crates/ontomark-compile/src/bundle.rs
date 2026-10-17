@@ -63,11 +63,23 @@ impl Generation {
     /// Check C3 identity, digest syntax, safe relative paths and unique claims.
     /// Source identity may be `unknown` outside Git, as the emitter specifies.
     ///
+    /// The id is `<prefix>@<commit>[+dirty]` and the prefix is the producer's
+    /// choice (`visionGraph` for the estate, a vault's directory name
+    /// otherwise), so a reader needs no profile to check a marker: the prefix
+    /// is read back from the id itself, everything before its last `@`, and
+    /// must be non-empty; the rest must be exactly what
+    /// [`generation_id`] spells for `commit` and `dirty`.
+    ///
     /// # Errors
     /// [`ManifestError::Invalid`] when a required invariant is broken.
     pub fn validate(&self) -> Result<(), ManifestError> {
         let invalid = |reason: &str| ManifestError::Invalid(reason.to_owned());
-        if self.commit.is_empty() || self.id != generation_id(&self.commit, self.dirty) {
+        let consistent = self
+            .id
+            .rsplit_once('@')
+            .filter(|(prefix, _)| !prefix.is_empty())
+            .is_some_and(|(prefix, _)| self.id == generation_id(prefix, &self.commit, self.dirty));
+        if self.commit.is_empty() || !consistent {
             return Err(invalid("id does not identify commit and dirty state"));
         }
         if !lower_hex(&self.content_digest, 64) {

@@ -7,6 +7,7 @@ use serde_json::{json, Value};
 
 fn marker() -> Value {
     serde_json::to_value(generation(
+        "visionGraph",
         "0123456789abcdef0123456789abcdef01234567".into(),
         false,
         "a".repeat(64),
@@ -63,6 +64,34 @@ fn incomplete_or_mixed_markers_are_refused_without_defaults() {
     let mut legacy = marker();
     legacy["artifacts"] = json!({"ontology.ttl": "a".repeat(64)});
     assert!(BundleManifest::from_json(&legacy.to_string()).is_err());
+}
+
+#[test]
+fn the_generation_prefix_is_read_from_the_id_not_assumed() {
+    // A reader needs no profile: whatever producer spelled the prefix, the id
+    // must be `<prefix>@<commit>[+dirty]` for the marker's own commit and flag.
+    let commit = "0123456789abcdef0123456789abcdef01234567";
+    for prefix in ["visionGraph", "Field Notes", "a@b"] {
+        let mut m = marker();
+        m["id"] = json!(format!("{prefix}@{commit}"));
+        BundleManifest::from_json(&m.to_string()).unwrap_or_else(|e| panic!("{prefix}: {e}"));
+        m["id"] = json!(format!("{prefix}@{commit}+dirty"));
+        m["dirty"] = json!(true);
+        BundleManifest::from_json(&m.to_string()).unwrap_or_else(|e| panic!("{prefix}: {e}"));
+    }
+    for bad_id in [
+        format!("@{commit}"),                  // an empty prefix
+        commit.to_owned(),                     // no prefix at all
+        format!("visionGraph@{commit}x"),      // a different commit
+        format!("visionGraph@{commit}+dirty"), // dirty flag disagrees
+    ] {
+        let mut m = marker();
+        m["id"] = json!(bad_id);
+        assert!(
+            BundleManifest::from_json(&m.to_string()).is_err(),
+            "{bad_id}"
+        );
+    }
 }
 
 #[test]

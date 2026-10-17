@@ -14,12 +14,12 @@ wasm:
 # Offline: ontomark against the legacy golden for the in-repo fixture
 # (artefact bytes, verb output bytes and exit codes).
 conformance:
-    cargo test -p ontomark-cli --test conformance
+    cargo test -p ontomark --test conformance
 
 # Full corpus parity against the hashes in conformance/golden/corpus-visiongraph.
 # Needs a visionGraph checkout at the golden's source commit (see its MANIFEST).
 parity-corpus vg="../visionGraph": 
-    cargo build -p ontomark-cli
+    cargo build -p ontomark
     ./conformance/parity.sh target/debug/ontomark {{vg}} conformance/golden/corpus-visiongraph
 
 doc:

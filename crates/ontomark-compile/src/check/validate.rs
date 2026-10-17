@@ -378,7 +378,27 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
         skipped: vault.skipped.clone(),
         ..Report::default()
     };
-    let strict_keys = vault.kind.rejects_unknown_keys();
+    // The role grammar comes from the profile's `frontmatter.roles` entry for
+    // this vault's role: whether an undeclared key is an error, and whether
+    // `type` and `status` are required. A profile that does not name the role
+    // falls back to the built-in estate rule (unknown keys fail in knowledge,
+    // pass in working). The generic profile's knowledge role allows unknown
+    // keys and requires nothing, which is what lets a plain Obsidian vault
+    // validate (ADR-OM-008). Required keys are enforced on the knowledge role
+    // only; the working role is tolerant by definition (OKF §4.1).
+    let role = profile.frontmatter.roles.get(vault.kind.role_name());
+    let strict_keys = role.map_or_else(
+        || vault.kind.rejects_unknown_keys(),
+        |r| r.unknown_keys == crate::profile::UnknownKeys::Fail,
+    );
+    let knowledge = vault.kind == VaultKind::Knowledge;
+    let requires =
+        |key: &str| knowledge && role.is_some_and(|r| r.required_keys.iter().any(|k| k == key));
+    let rules = RoleRules {
+        knowledge,
+        requires_type: requires("type"),
+        requires_status: requires("status"),
+    };
 
     // `domain` is free text with a documented `observed:` census and six
     // `roots:`, so the check is "did the census ever see this value?" rather
@@ -497,7 +517,7 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
 
         // --- OKF conformance -------------------------------------------------
         let okf = OkfBlock::from_frontmatter(&page.frontmatter);
-        validate_okf(&mut report, path, &okf, vault.kind, vocab, record);
+        validate_okf(&mut report, path, &okf, rules, vocab, record);
 
         if !record.has_ontology {
             continue;
@@ -762,18 +782,29 @@ fn check_disjointness(
     }
 }
 
+/// What the profile's role grammar asks of a page, resolved once per vault.
+#[derive(Debug, Clone, Copy)]
+struct RoleRules {
+    /// The vault is the knowledge role (its pages carry ontology).
+    knowledge: bool,
+    /// The role lists `type` among its required keys.
+    requires_type: bool,
+    /// The role lists `status` among its required keys.
+    requires_status: bool,
+}
+
 fn validate_okf(
     report: &mut Report,
     path: &str,
     okf: &OkfBlock,
-    kind: VaultKind,
+    rules: RoleRules,
     vocab: &Vocabulary,
     record: &ClassRecord,
 ) {
-    let knowledge = kind == VaultKind::Knowledge;
+    let knowledge = rules.knowledge;
 
     match &okf.type_name {
-        None if knowledge => report.push(
+        None if rules.requires_type => report.push(
             path,
             Severity::Error,
             "MISSING_TYPE",
@@ -821,7 +852,7 @@ fn validate_okf(
             "INVALID_STATUS",
             format!("`status: {raw}` is not draft, stable or deprecated"),
         ),
-        (None, _) if knowledge && record.has_ontology => report.push(
+        (None, _) if rules.requires_status && record.has_ontology => report.push(
             path,
             Severity::Error,
             "MISSING_STATUS",

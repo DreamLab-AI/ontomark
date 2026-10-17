@@ -1,5 +1,6 @@
 //! Corpus-scale model build, read-only and env-gated: set `ONTOMARK_CORPUS`
-//! (a `pages/` directory) and `ONTOMARK_PROFILE` (a JSON `ProfileSpec`).
+//! (a vault root: the directory whose Markdown notes are the pages) and
+//! `ONTOMARK_PROFILE` (a JSON `ProfileSpec`).
 //! Prints counts only: no titles, paths or page text.
 
 use std::collections::BTreeMap;

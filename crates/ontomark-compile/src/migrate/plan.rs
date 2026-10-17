@@ -9,9 +9,9 @@ use serde::{Deserialize, Serialize};
 use super::compile::{compile_knowledge, SnapshotPage};
 use super::{sha256_hex, Kind, MigrateError, Migration, Transform};
 use crate::build::attribution::Roster;
-use crate::input::page::{walk_pages, Page, VaultKind, EXCLUDED_DIRS};
+use crate::input::page::{walk_pages, Page, VaultKind};
 use crate::input::vocabulary::Vocabulary;
-use crate::profile::Profile;
+use crate::profile::{Layout, Profile};
 
 /// How many example lines each delta carries.
 const EXAMPLES: usize = 10;
@@ -295,21 +295,53 @@ struct Considered {
     bytes: Vec<u8>,
 }
 
-fn vault_kind_name(kind: VaultKind) -> &'static str {
-    kind.dir_name()
+/// The repository-relative prefix a page of `kind` carries in a plan path
+/// (`knowledge/` by default; empty for a root vault), from the layout.
+fn vault_prefix(layout: &Layout, kind: VaultKind) -> Option<String> {
+    layout.dir_of(kind).map(|dir| {
+        if dir == "." {
+            String::new()
+        } else {
+            format!("{}/", dir.trim_end_matches('/'))
+        }
+    })
 }
 
-fn read_considered(repo_root: &Path, kinds: &[VaultKind]) -> Result<Vec<Considered>, MigrateError> {
+/// `true` when the repository-relative `rel` lies in the vault of `kind`.
+fn in_vault(layout: &Layout, kind: VaultKind, rel: &str) -> bool {
+    vault_prefix(layout, kind).is_some_and(|prefix| rel.starts_with(&prefix))
+}
+
+/// `rel` without its vault folder: the vault-relative path.
+fn under_vault<'a>(layout: &Layout, rel: &'a str) -> &'a str {
+    [VaultKind::Knowledge, VaultKind::Working]
+        .into_iter()
+        .filter_map(|kind| vault_prefix(layout, kind))
+        .filter(|prefix| !prefix.is_empty())
+        .find_map(|prefix| rel.strip_prefix(prefix.as_str()))
+        .unwrap_or(rel)
+}
+
+fn read_considered(
+    repo_root: &Path,
+    layout: &Layout,
+    kinds: &[VaultKind],
+) -> Result<Vec<Considered>, MigrateError> {
     let mut out = Vec::new();
     let mut kinds: Vec<VaultKind> = kinds.to_vec();
-    kinds.sort_by_key(|k| vault_kind_name(*k));
+    kinds.sort_by_key(|k| k.role_name());
     kinds.dedup();
+    let excluded = layout.excluded_dirs();
     for kind in kinds {
-        let vault_dir = repo_root.join(kind.dir_name());
+        // A role the layout does not place is simply not considered: the
+        // command line has already refused `--vault working` by name.
+        let Some(vault_dir) = layout.path_of(repo_root, kind) else {
+            continue;
+        };
         // The vault root (its furniture folders excluded) and then `journals/`:
         // the same two trees `Vault::load` reads.
         let trees: [(std::path::PathBuf, &[&str]); 2] = [
-            (vault_dir.clone(), EXCLUDED_DIRS),
+            (vault_dir.clone(), &excluded),
             (vault_dir.join("journals"), &[]),
         ];
         for (dir, excluded) in trees {
@@ -335,10 +367,16 @@ fn read_considered(repo_root: &Path, kinds: &[VaultKind]) -> Result<Vec<Consider
 
 /// A page's identity-bearing fields and `public` flag, from its source.
 ///
-/// `rel` is repository-relative (`knowledge/ETSI/Domain.md`); the id is the
-/// vault-relative path without `.md`, a journal's its date stem.
-fn identity_of(vocab: &Vocabulary, rel: &str, text: &str) -> Option<(bool, [(String, String); 4])> {
-    let under = rel.split_once('/').map_or(rel, |(_, r)| r);
+/// `rel` is repository-relative (`knowledge/ETSI/Domain.md`, or `ETSI/Domain.md`
+/// under a root vault); the id is the vault-relative path without `.md`, a
+/// journal's its date stem.
+fn identity_of(
+    layout: &Layout,
+    vocab: &Vocabulary,
+    rel: &str,
+    text: &str,
+) -> Option<(bool, [(String, String); 4])> {
+    let under = under_vault(layout, rel);
     let id = under
         .strip_prefix("journals/")
         .unwrap_or(under)
@@ -419,10 +457,16 @@ pub fn plan(
     migration: &dyn Migration,
     profile: &Profile,
 ) -> Result<Plan, MigrateError> {
-    let vocab = Vocabulary::load(repo_root.join("ontology/vocabulary.yaml"))
-        .map_err(|e| MigrateError::Input(format!("ontology/vocabulary.yaml: {e}")))?;
+    // A plain vault has no vocabulary file and compiles under the generic one.
+    let vocab_path = repo_root.join("ontology/vocabulary.yaml");
+    let vocab = if vocab_path.is_file() {
+        Vocabulary::load(&vocab_path)
+            .map_err(|e| MigrateError::Input(format!("ontology/vocabulary.yaml: {e}")))?
+    } else {
+        Vocabulary::generic()
+    };
     let roster = Roster::discover(repo_root);
-    let considered = read_considered(repo_root, vaults)?;
+    let considered = read_considered(repo_root, &profile.layout, vaults)?;
 
     let mut digest_input = String::new();
     let mut pages: Vec<PagePlan> = Vec::new();
@@ -522,7 +566,8 @@ pub fn plan(
         schema: 1,
         migration: MigrationRef::of(migration),
         vaults: {
-            let mut v: Vec<String> = vaults.iter().map(|k| k.dir_name().to_owned()).collect();
+            // Role names: the plan's `vaults` is an output key, not a folder list.
+            let mut v: Vec<String> = vaults.iter().map(|k| k.role_name().to_owned()).collect();
             v.sort();
             v.dedup();
             v
@@ -571,15 +616,15 @@ fn semantic_delta(
     let mut res_after = BTreeSet::new();
     for (rel, before) in texts {
         let Some(new) = after_text.get(rel) else {
-            if let Some((_, ids)) = identity_of(vocab, rel, before) {
+            if let Some((_, ids)) = identity_of(&profile.layout, vocab, rel, before) {
                 res_before.insert(ids[0].1.clone());
                 res_after.insert(ids[0].1.clone());
             }
             continue;
         };
         let (Some((pb, ib)), Some((pa, ia))) = (
-            identity_of(vocab, rel, before),
-            identity_of(vocab, rel, new),
+            identity_of(&profile.layout, vocab, rel, before),
+            identity_of(&profile.layout, vocab, rel, new),
         ) else {
             d.notes.push(format!(
                 "after-compile failed: {rel} does not parse before or after"
@@ -612,13 +657,16 @@ fn semantic_delta(
     // Triples and inference come from compiling the knowledge vault.
     let knowledge: Vec<SnapshotPage> = texts
         .iter()
-        .filter(|(rel, _)| rel.starts_with("knowledge/"))
+        .filter(|(rel, _)| in_vault(&profile.layout, VaultKind::Knowledge, rel))
         .map(|(rel, text)| SnapshotPage {
             rel: rel.clone(),
             text: text.clone(),
         })
         .collect();
-    if !after_text.keys().any(|r| r.starts_with("knowledge/")) {
+    if !after_text
+        .keys()
+        .any(|r| in_vault(&profile.layout, VaultKind::Knowledge, r))
+    {
         d.compiled = true;
         d.inferred = zero_inferred();
         d.notes

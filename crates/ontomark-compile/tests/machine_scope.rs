@@ -652,10 +652,12 @@ fn machine_scope_refuses_a_non_knowledge_root_and_a_missing_working_vault() {
 
     std::fs::remove_dir_all(repo.join("working")).unwrap();
     let error = run(&repo, &options(&repo, &out, Scope::Machine)).expect_err("no working/ vault");
-    assert!(conflict_of(&error)
-        .conflicts
-        .iter()
-        .any(|c| c.contains("working/ is absent")));
+    // The refusal names the role and the layout that places it (ADR-OM-008).
+    assert!(conflict_of(&error).conflicts.iter().any(|c| {
+        c.contains("no working vault")
+            && c.contains("is not a directory")
+            && c.contains("layout: knowledge = \"knowledge\", working = \"working\"")
+    }));
     assert!(!out.exists());
 }
 
