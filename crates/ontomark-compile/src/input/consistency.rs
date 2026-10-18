@@ -230,7 +230,7 @@ mod tests {
             }
         }
         assert_eq!(taxonomy.domains.len(), 9);
-        assert_eq!(taxonomy.categories.len(), 67);
+        assert_eq!(taxonomy.categories.len(), 68);
     }
 
     #[test]

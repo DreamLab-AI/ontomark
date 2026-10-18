@@ -136,6 +136,7 @@ fn categories_keep_their_ids_labels_and_domains() {
             ("supply-chain-performance-and-finance", "Performance and Finance", 8),
             ("supply-chain-information-systems", "Information Systems", 8),
             ("supply-chain-organisations", "Organisations", 8),
+            ("supply-chain-management", "Management", 8),
         ]
     );
 }

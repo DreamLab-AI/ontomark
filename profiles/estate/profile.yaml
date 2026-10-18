@@ -142,6 +142,7 @@ taxonomy:
     - {slug: "supply-chain-performance-and-finance", label: "Performance and Finance", domain: 8}
     - {slug: "supply-chain-information-systems", label: "Information Systems", domain: 8}
     - {slug: "supply-chain-organisations", label: "Organisations", domain: 8}
+    - {slug: "supply-chain-management", label: "Management", domain: 8}
 lifecycle:
   default_maturity: "draft"
   maturity_levels:

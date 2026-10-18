@@ -916,7 +916,7 @@ mod tests {
             7
         );
         assert_eq!(resolve_domain(est(), "supply-chains-and-logistics"), 8);
-        assert_eq!(est().taxonomy.categories.len(), 67);
+        assert_eq!(est().taxonomy.categories.len(), 68);
         // Category ids are contiguous per domain, in domain order.
         let mut last = 0u16;
         for c in &est().taxonomy.categories {
@@ -1134,9 +1134,9 @@ mod tests {
             est().taxonomy.domains.len()
         );
         assert_eq!(nodes[est().taxonomy.domains.len()]["label"], "AI Technique");
-        assert_eq!(ov["taxonomy"].as_array().unwrap().len(), 67);
-        // 67 backbone edges, category -> domain.
-        assert_eq!(ov["edges"].as_array().unwrap().len(), 67);
+        assert_eq!(ov["taxonomy"].as_array().unwrap().len(), 68);
+        // 68 backbone edges, category -> domain.
+        assert_eq!(ov["edges"].as_array().unwrap().len(), 68);
         assert_eq!(ov["attributedTo"], est().dataset.attributed_to);
     }
 
