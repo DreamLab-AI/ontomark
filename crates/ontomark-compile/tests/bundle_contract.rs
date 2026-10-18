@@ -179,3 +179,38 @@ fn index_trust_values_are_typed_by_the_consumer_without_duplicating_the_wire_sch
     assert_eq!(index.classes["a"].verified[0].by, "human:reviewer");
     assert_eq!(index.classes["a"].map[0]["resource"], "urn:a");
 }
+
+#[test]
+fn the_emitted_marker_pair_and_prose_index_round_trip_through_the_public_readers() {
+    let expected = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../conformance/fixtures/estate-small.golden/expected");
+    let read = |rel: &str| std::fs::read_to_string(expected.join(rel)).unwrap();
+
+    // The bundle carries its stamp twice: the root marker lists every artefact
+    // and the one beside the served index is the same generation seen from
+    // inside data/ (Generation::scoped).
+    let top = BundleManifest::from_json(&read("out/.generation.json")).unwrap();
+    let data = BundleManifest::from_json(&read("out/data/.generation.json")).unwrap();
+    assert_eq!(data.id, top.id);
+    assert_eq!(data.commit, top.commit);
+    assert_eq!(data.content_digest, top.content_digest);
+    assert_eq!(data.ontology_digest, top.ontology_digest);
+    assert!(!data.artifacts.is_empty());
+    for artifact in &data.artifacts {
+        let claimed = top
+            .artifacts
+            .iter()
+            .find(|a| a.name == format!("data/{}", artifact.name))
+            .unwrap_or_else(|| panic!("{} is not claimed by the bundle marker", artifact.name));
+        assert_eq!(claimed.sha256, artifact.sha256);
+        assert_eq!(claimed.bytes, artifact.bytes);
+    }
+
+    // The prose index round-trips through its reader exactly like the scaffold
+    // index does: no wire field is dropped or invented.
+    let prose_input = read("out/data/prose-index.json");
+    let prose: ProseIndex = serde_json::from_str(&prose_input).unwrap();
+    assert!(!prose.pages.is_empty());
+    let roundtrip: Value = serde_json::to_value(&prose).unwrap();
+    assert_eq!(roundtrip, serde_json::from_str::<Value>(&prose_input).unwrap());
+}
