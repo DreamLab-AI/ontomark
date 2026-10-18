@@ -18,7 +18,7 @@ What the profile pins:
 
 - the `urn:ngm:class:` / `urn:visionflow:page:` identity namespaces and their
   `narrativegoldmine.com` projection;
-- the eight-domain, 53-category taxonomy whose positions are published NGG1
+- the nine-domain, 68-category taxonomy whose positions are published NGG1
   identities (append-only: changing a position needs consumer migration);
 - the frontmatter grammar per vault role (`knowledge` fails on unknown keys and
   requires `type`, `title`, `resource`, `public`, `status`, `generated`;
@@ -35,7 +35,7 @@ What the profile pins:
 ```rust
 let estate = ontomark_profile_estate::profile();
 assert_eq!(estate.id, "estate");
-assert_eq!(estate.taxonomy.categories.len(), 53);
+assert_eq!(estate.taxonomy.categories.len(), 68);
 assert_eq!(estate.generation.prefix.as_deref(), Some("visionGraph"));
 ```
 

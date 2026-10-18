@@ -1,10 +1,10 @@
-87ec52df64abc159cdfa2ff5dfee97623ea1eb5ef53586b431ec0cd8aaf2bb5a  40177  .generation.json
+a3adba566cdbbcaa0083fdf4e53cdc17e7e307237517ba689fe35f7d3f99ebdd  40359  .generation.json
 10a8813045bfca326e30a38cd6e482ed169ccadaee438582651de126cb6d1270  237  api/census.json
 452d5ce09759911587032b30a6a4cc5270fe130c92b7f658f37631ff9a97160f  6888  api/schema/context.jsonld
 fabfb76006caf1eb0db36003d14355cef34121ef576072c967ad60ff4afc792b  56359  api/search-index.json
 d066f36274c97b6bde173776cc931b875e0a6e8da8770ff190270e16f2e0822d  353  api/validation-report.json
 452d5ce09759911587032b30a6a4cc5270fe130c92b7f658f37631ff9a97160f  6888  context/v1.jsonld
-cbe09ad828dc4b3e508f34f4f2179cc29414bbe1ba4154c0fbf6d66ce669101e  3155  data/.generation.json
+89d41c66a34410d315fc73fc68f8aaa6aad25dd1d0e4f5219b838284826e35e9  3332  data/.generation.json
 3d69ba9df80f9907373268c86da30804a458f3484cd3b5ae8ab9910e950de9cc  633  data/graph/bridges.json
 b315a47936e40ade1a26807bf5faf0c9421ea35f5034a4ff25256ea59d14a910  647  data/graph/domain-artificial-intelligence.bin
 018f1a9b3c0204b76e828e446007fce2ae6e0ae843595b4f54ffa1e8c0bded2f  396  data/graph/domain-blockchain.bin
@@ -14,9 +14,10 @@ b315a47936e40ade1a26807bf5faf0c9421ea35f5034a4ff25256ea59d14a910  647  data/grap
 51c1a3ffc008364c3c201867d6fea9db89b196abb22ed0e3687c12c0375b5d5a  348  data/graph/domain-robotics.bin
 4824e2cdf7f9cbc6d6210759a8dc389d9123223270037240ce4803799a98e7e1  44  data/graph/domain-space-science-and-systems.bin
 4983447681e3b1f8dd3d60976aa1c7da0223bf00f382ec7eb1e8b6123e565f4a  3370  data/graph/domain-spatial-computing.bin
+4824e2cdf7f9cbc6d6210759a8dc389d9123223270037240ce4803799a98e7e1  44  data/graph/domain-supply-chains-and-logistics.bin
 a3befeeb2ab0344662402726897a5aeafe381c6b45b4b3c266e63d0aacc161e5  5668  data/graph/full.bin
-13337aee4c1c2a3aef9ade29dc3ce5b12cfe420abafa5d47e12a89db90b10567  24605  data/graph/overview.json
-302da7d90b1ad7ab172dbc513ca8a949c4cc9d067aea60d1b57ffdb22fc232bd  2954  data/graph/stats.json
+fdeb7126ea6b8aa5d5f0ff5420b5354e9a0206a8e7972db8881437cd73b77a0a  31076  data/graph/overview.json
+0145bd3fa19dac1ae21ee18c60089ccf941c5aed675a206f14a332b6e779c7c8  3159  data/graph/stats.json
 beca6a26f13f3f7e5bc4c083d0f28121a4ed06755a77e59788898b3e82970a99  1569  data/ontology-inferred.ttl
 1d8c6b3c3357844184441afdbac93b3ee57b22023b3b0e1040557ec55ef9f4c4  56651  data/ontology.json
 b4ca88c0355f97bcadb09203cd926ac6711535a192c938348b28842ce52c3d7c  115174  data/ontology.ttl

@@ -127,13 +127,21 @@ fn categories_keep_their_ids_labels_and_domains() {
             ("sourcing-and-procurement", "Sourcing and Procurement", 8),
             ("production-operations", "Production", 8),
             ("inventory-management", "Inventory", 8),
-            ("warehousing-and-distribution", "Warehousing and Distribution", 8),
+            (
+                "warehousing-and-distribution",
+                "Warehousing and Distribution",
+                8
+            ),
             ("freight-transportation", "Transportation", 8),
             ("international-trade-and-customs", "Trade and Customs", 8),
             ("supply-chain-risk-and-resilience", "Risk and Resilience", 8),
             ("sustainable-supply-chains", "Sustainability", 8),
             ("traceability-and-product-identification", "Traceability", 8),
-            ("supply-chain-performance-and-finance", "Performance and Finance", 8),
+            (
+                "supply-chain-performance-and-finance",
+                "Performance and Finance",
+                8
+            ),
             ("supply-chain-information-systems", "Information Systems", 8),
             ("supply-chain-organisations", "Organisations", 8),
             ("supply-chain-management", "Management", 8),

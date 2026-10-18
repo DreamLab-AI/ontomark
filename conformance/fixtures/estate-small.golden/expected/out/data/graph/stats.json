@@ -15,8 +15,8 @@
   "classes": 53,
   "individuals": 0,
   "nodes": 53,
-  "domains": 8,
-  "categories": 53,
+  "domains": 9,
+  "categories": 68,
   "uncategorised": 34,
   "domainless": 0,
   "bridging": {
@@ -105,6 +105,15 @@
       "nodesTruncated": 0
     },
     "domain-earth-observation-and-geospatial-sensing": {
+      "nodes": 0,
+      "backbone": 0,
+      "relations": 0,
+      "shipped": 0,
+      "relationsCapped": 0,
+      "bytes": 44,
+      "nodesTruncated": 0
+    },
+    "domain-supply-chains-and-logistics": {
       "nodes": 0,
       "backbone": 0,
       "relations": 0,

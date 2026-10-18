@@ -6,7 +6,7 @@
 //!
 //! | file | tier | contents |
 //! |---|---|---|
-//! | `overview.json` | T0 | 8 domain roots + 53 categories, member counts, baked force-layout positions |
+//! | `overview.json` | T0 | 9 domain roots + 68 categories, member counts, baked force-layout positions |
 //! | `domain-<slug>.bin` ×6 | T1 | every class of one domain; full backbone; relations capped per node at top-8 by target degree |
 //! | `full.bin` | — | the uncapped whole graph, CSR |
 //! | `stats.json` | — | pipeline-derived truth (DDD INV-5) |
