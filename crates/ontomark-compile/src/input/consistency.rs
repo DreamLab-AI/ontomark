@@ -229,8 +229,8 @@ mod tests {
                 );
             }
         }
-        assert_eq!(taxonomy.domains.len(), 8);
-        assert_eq!(taxonomy.categories.len(), 53);
+        assert_eq!(taxonomy.domains.len(), 9);
+        assert_eq!(taxonomy.categories.len(), 67);
     }
 
     #[test]

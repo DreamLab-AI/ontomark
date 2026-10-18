@@ -751,6 +751,8 @@ mod tests {
             t.domain_class_id("earth-observation-and-geospatial-sensing"),
             8
         );
+        assert_eq!(t.domain_class_id("supply-chains-and-logistics"), 9);
+        assert_eq!(t.domain_class_id("supply-chain"), 9);
         assert_eq!(t.domain_class_id(""), 0);
         assert_eq!(t.domain_class_id("space-science-typo"), 0);
     }

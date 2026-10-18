@@ -48,6 +48,7 @@ taxonomy:
     - {slug: "infrastructure", label: "Infrastructure", colour: "#9C27B0"}
     - {slug: "space-science-and-systems", label: "Space Science and Systems", colour: "#646b9f"}
     - {slug: "earth-observation-and-geospatial-sensing", label: "Earth Observation and Geospatial Sensing", colour: "#438273"}
+    - {slug: "supply-chains-and-logistics", label: "Supply Chains and Logistics", colour: "#C0793A"}
   # Historical short names that keep their domain class id.
   short_names:
     ai: "artificial-intelligence"
@@ -56,13 +57,14 @@ taxonomy:
     rb: "robotics"
     ngm: "distributed-collaboration"
     tc: "infrastructure"
+    supply-chain: "supply-chains-and-logistics"
   # Rendering aliases the graph tiers fold onto a canonical domain.
   domain_aliases:
     "ai": "artificial-intelligence"
     "machine-learning": "artificial-intelligence"
     "metaverse": "spatial-computing"
     "distributed-systems": "infrastructure"
-    "supply-chain": "infrastructure"
+    "supply-chain": "supply-chains-and-logistics"
     "data": "infrastructure"
     "governance": "infrastructure"
     "security": "infrastructure"
@@ -70,7 +72,7 @@ taxonomy:
     "finance": "blockchain"
     "economics": "blockchain"
   # Domain values accepted when the vocabulary does not enumerate `domain`.
-  accepted_domains: [artificial-intelligence, spatial-computing, blockchain, infrastructure, distributed-collaboration, robotics, ai, supply-chain, metaverse, data, governance, security, standards, finance, distributed-systems, machine-learning]
+  accepted_domains: [artificial-intelligence, spatial-computing, blockchain, infrastructure, distributed-collaboration, robotics, supply-chains-and-logistics, ai, supply-chain, metaverse, data, governance, security, standards, finance, distributed-systems, machine-learning]
   # Position is the category id; `domain` the domain position.
   categories:
     - {slug: "ai-technique", label: "AI Technique", domain: 0}
@@ -126,6 +128,20 @@ taxonomy:
     - {slug: "earth-observation-data-quality", label: "Data Quality", domain: 7}
     - {slug: "earth-observation-applications", label: "Applications", domain: 7}
     - {slug: "geodesy", label: "Geodesy", domain: 7}
+    - {slug: "supply-chain-strategy", label: "Strategy and Network Design", domain: 8}
+    - {slug: "supply-chain-planning", label: "Planning", domain: 8}
+    - {slug: "sourcing-and-procurement", label: "Sourcing and Procurement", domain: 8}
+    - {slug: "production-operations", label: "Production", domain: 8}
+    - {slug: "inventory-management", label: "Inventory", domain: 8}
+    - {slug: "warehousing-and-distribution", label: "Warehousing and Distribution", domain: 8}
+    - {slug: "freight-transportation", label: "Transportation", domain: 8}
+    - {slug: "international-trade-and-customs", label: "Trade and Customs", domain: 8}
+    - {slug: "supply-chain-risk-and-resilience", label: "Risk and Resilience", domain: 8}
+    - {slug: "sustainable-supply-chains", label: "Sustainability", domain: 8}
+    - {slug: "traceability-and-product-identification", label: "Traceability", domain: 8}
+    - {slug: "supply-chain-performance-and-finance", label: "Performance and Finance", domain: 8}
+    - {slug: "supply-chain-information-systems", label: "Information Systems", domain: 8}
+    - {slug: "supply-chain-organisations", label: "Organisations", domain: 8}
 lifecycle:
   default_maturity: "draft"
   maturity_levels:

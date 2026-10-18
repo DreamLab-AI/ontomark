@@ -895,7 +895,7 @@ mod tests {
 
     #[test]
     fn the_taxonomy_preserves_legacy_ids_and_appends_space_domains() {
-        assert_eq!(est().taxonomy.domains.len(), 8);
+        assert_eq!(est().taxonomy.domains.len(), 9);
         assert_eq!(
             &est().taxonomy.domains[..6]
                 .iter()
@@ -915,7 +915,8 @@ mod tests {
             resolve_domain(est(), "earth-observation-and-geospatial-sensing"),
             7
         );
-        assert_eq!(est().taxonomy.categories.len(), 53);
+        assert_eq!(resolve_domain(est(), "supply-chains-and-logistics"), 8);
+        assert_eq!(est().taxonomy.categories.len(), 67);
         // Category ids are contiguous per domain, in domain order.
         let mut last = 0u16;
         for c in &est().taxonomy.categories {
@@ -931,6 +932,8 @@ mod tests {
         assert_eq!(resolve_domain(est(), "metaverse"), 2);
         assert_eq!(resolve_domain(est(), "finance"), 1);
         assert_eq!(resolve_domain(est(), "blockchain"), 1);
+        assert_eq!(resolve_domain(est(), "supply-chains-and-logistics"), 8);
+        assert_eq!(resolve_domain(est(), "supply-chain"), 8);
         assert_eq!(resolve_domain(est(), "nonsense"), DOMAIN_NONE);
     }
 
@@ -1131,9 +1134,9 @@ mod tests {
             est().taxonomy.domains.len()
         );
         assert_eq!(nodes[est().taxonomy.domains.len()]["label"], "AI Technique");
-        assert_eq!(ov["taxonomy"].as_array().unwrap().len(), 53);
-        // 53 backbone edges, category -> domain.
-        assert_eq!(ov["edges"].as_array().unwrap().len(), 53);
+        assert_eq!(ov["taxonomy"].as_array().unwrap().len(), 67);
+        // 67 backbone edges, category -> domain.
+        assert_eq!(ov["edges"].as_array().unwrap().len(), 67);
         assert_eq!(ov["attributedTo"], est().dataset.attributed_to);
     }
 
