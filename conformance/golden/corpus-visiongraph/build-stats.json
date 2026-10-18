@@ -1,33 +1,33 @@
 {
   "generation": {
-    "id": "visionGraph@9e36231c13959f40bb4d5f9f080aada99bb24731",
-    "commit": "9e36231c13959f40bb4d5f9f080aada99bb24731",
+    "id": "visionGraph@f7f9622d9be50bea92ef086542c473b9a6403847",
+    "commit": "f7f9622d9be50bea92ef086542c473b9a6403847",
     "dirty": false,
-    "content_digest": "d15dc180f54070213bc10c656249e991f2791b216c57483ddffdfc7a3bd23979",
-    "ontology_digest": "sha256-12-960adf23bd28",
-    "generated_at": "2026-10-18T17:59:42.145749+00:00",
+    "content_digest": "0350088ea0fcff923d30a1646cbf429f4852262d83a211139394765aaa3deee2",
+    "ontology_digest": "sha256-12-8bcf18aee73a",
+    "generated_at": "2026-10-18T18:19:50.811838+00:00",
     "class_count": 9532,
     "page_count": 9532,
     "vocabulary_version": 1,
     "artifacts": [
       {
         "name": "data/ontology.ttl",
-        "sha256": "ae6184c92a46c4ea318988758d98fe79f5b3dd695f472abcef5cb856fb25f0be",
+        "sha256": "435cbbcd590b6ab69bf7041924287ffd13881fe3388a634708e1c3c600e5d246",
         "bytes": 18221790
       },
       {
         "name": "data/ontology-inferred.ttl",
-        "sha256": "3d55ba80a622b12dbf75f7824b3fa01728ebe964bee09c4f7516a999abb86656",
+        "sha256": "048d77f1a6728043e3c35f70eace2380e84300cd904c8ea19fba9e8fb6f814ea",
         "bytes": 3820974
       },
       {
         "name": "data/scaffold-index.json",
-        "sha256": "328e6732659e7c7b703c7487a2a9ac51b8672e2c9e63201c6c0aa482198c97ce",
-        "bytes": 10335864
+        "sha256": "d8c2b1b55c4d410cba156106575a91c23decb9d830d0af630cd57e55fb9f0939",
+        "bytes": 10335878
       },
       {
         "name": "data/prose-index.json",
-        "sha256": "d2a881adfab6e61234fb83fb34338be38765808efdbb11ba8742a214e513827d",
+        "sha256": "80b02f3edd20441b66447305c0a1a7d34279514e46b2d803d3514467ea32fe89",
         "bytes": 5518798
       },
       {
@@ -8087,7 +8087,7 @@
       },
       {
         "name": "api/pages/component-shortage.json",
-        "sha256": "74ace58ddab721b775b1988e38cf1acf1ae3ab5fc5b2bc430b4c4ce9c6e6a694",
+        "sha256": "4597f268bade68409823352d39ea482e3e6221c29b0d3ee4d69f0e96d17b2b0f",
         "bytes": 2881
       },
       {
@@ -41712,8 +41712,8 @@
       },
       {
         "name": "api/pages/taiwan-semiconductor-manufacturing-company.json",
-        "sha256": "b3800544eba019836f249c29017826f7d797d5467309592dbb9197d27b9090af",
-        "bytes": 3336
+        "sha256": "596a78313e2c8f56623e5e49f6d8a4ce70f04b8fd21e12af377068ae08c44b8a",
+        "bytes": 3340
       },
       {
         "name": "api/pages/takt-time.json",
@@ -47727,8 +47727,8 @@
       },
       {
         "name": "data/ontology.json",
-        "sha256": "72b23a2bde1a7971d721d3813401db77c21dafe459e371a914649fbbd456b993",
-        "bytes": 50654568
+        "sha256": "4dceef59e8a27d4d13b4dffbf9752c9c2ffe86c13cb3f4278a954f58cad23414",
+        "bytes": 50654560
       },
       {
         "name": "data/graph/overview.json",
@@ -47737,7 +47737,7 @@
       },
       {
         "name": "data/graph/full.bin",
-        "sha256": "55cc004179cacb76b48a1c9a509f8de2b36748f2353adff35c15c6253d9d958d",
+        "sha256": "c29445f01d37349ca391de29d4aae2805e2a6e89751c0c2dc99821eb7e26a4bd",
         "bytes": 1608200
       },
       {
@@ -47782,7 +47782,7 @@
       },
       {
         "name": "data/graph/domain-supply-chains-and-logistics.bin",
-        "sha256": "245b24d57751c9cb365166f6f7d0c96bfa48db659cbe7297dda8342b84923756",
+        "sha256": "4071d04d22ba4032c993c5a2e83721c2676bcbfcd462508fa80f8673dff0b5fd",
         "bytes": 41824
       },
       {
@@ -97022,7 +97022,7 @@
       },
       {
         "name": "okf/index.md",
-        "sha256": "ec1030d0aea5b730fedacd56f24ff3d13c32b28873d3f2e7979a04c5c77e7a74",
+        "sha256": "c3427e817899b9ce0e1dc0c2bb6cac4300a2a0a6be930062fbc937bb609001de",
         "bytes": 895787
       },
       {
@@ -105087,7 +105087,7 @@
       },
       {
         "name": "okf/concepts/component-shortage.md",
-        "sha256": "9fbc09619935d0b8a329f727ef936af7bcd3aa40a9dad290684036d8090bf525",
+        "sha256": "bc9b961fef2395645600757453f3ebc423aab81d90e5dbf5180dbcb67269ec3e",
         "bytes": 670
       },
       {
@@ -139217,8 +139217,8 @@
       },
       {
         "name": "okf/concepts/taiwan-semiconductor-manufacturing-company.md",
-        "sha256": "3479da6503bd51845eb01db18d8521bd9fee50d38855e7d2f9dbc8a0dfe2a6fb",
-        "bytes": 1112
+        "sha256": "88b1f370851f4e3de383e01fa35d4cfd70bbf48ad427a0cf53016e4f1a2babdc",
+        "bytes": 1123
       },
       {
         "name": "okf/concepts/takt-time.md",
@@ -152737,7 +152737,7 @@
       },
       {
         "name": "publish/pages/Component Shortage.md",
-        "sha256": "3eed497418ee2958c1bfd018c787e49b8427c9847622a6a3224fbaeb62cebd4b",
+        "sha256": "d5ba23da01e63604c0352d686a1142834f10df6ee4d3857bd76a095497f79fd2",
         "bytes": 4291
       },
       {
@@ -186362,8 +186362,8 @@
       },
       {
         "name": "publish/pages/Taiwan Semiconductor Manufacturing Company.md",
-        "sha256": "7080e302da76c74745dca9b0c4b484a6903dc745b4216323a01ccf5cc55403a7",
-        "bytes": 3263
+        "sha256": "286811944f5870751e7a6fac087d5df86671de9f78936fc649d6d611a13b8f2c",
+        "bytes": 3275
       },
       {
         "name": "publish/pages/Takt Time.md",
@@ -193207,7 +193207,7 @@
       },
       {
         "name": "data/.generation.json",
-        "sha256": "3417bdfb38765ea66b6f9a1e371adb6cf82158dc8937520be1eb8f562e4139a2",
+        "sha256": "0d07764edbe0447f84426e81889672759b6cd854a2e256eda3559ddd7212c428",
         "bytes": 3379
       }
     ]
@@ -193234,5 +193234,5 @@
     }
   },
   "written": 38641,
-  "out": "/home/devuser/workspace/.tmp/ontomark-golden.ybaNnn/build/out"
+  "out": "/home/devuser/workspace/.tmp/ontomark-golden.eipEos/build/out"
 }
