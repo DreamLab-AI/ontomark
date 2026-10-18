@@ -27,7 +27,7 @@ use std::fmt;
 use std::path::Path;
 
 use crate::build::redact::{PrivateLinks, SurfaceRedaction, Tally};
-use crate::input::page::{is_unpublished, Page, Vault};
+use crate::input::page::{is_unpublished, Page, Vault, UNPUBLISHED_DIRS};
 use crate::input::secrets::{self, CredentialKind};
 use serde::Serialize;
 
@@ -127,7 +127,11 @@ pub struct Staging {
 /// same list. Staging a page Quartz then ignores would make the site's
 /// completeness check (`check-urls.sh` [0/7]: staged == built) fail, so the
 /// staging applies the same rule rather than relying on the renderer alone.
-const HELD_BACK_DIRS: &[&str] = &["_misc", "misc"];
+///
+/// This list holds only the *site-only* hold-backs. The unpublished namespaces
+/// ([`UNPUBLISHED_DIRS`]) are applied through [`is_unpublished`], so the two
+/// lists never restate each other (estate register ER-18).
+const HELD_BACK_DIRS: &[&str] = &["misc"];
 
 /// `true` when a page path (relative to its vault root) is outside the
 /// publish scope.
@@ -137,8 +141,10 @@ pub(crate) fn held_back(rel: &Path) -> bool {
     }
     let mut dirs: Vec<_> = rel.iter().collect();
     dirs.pop();
-    dirs.iter()
-        .any(|d| HELD_BACK_DIRS.contains(&d.to_string_lossy().as_ref()))
+    dirs.iter().any(|d| {
+        let d = d.to_string_lossy();
+        UNPUBLISHED_DIRS.contains(&d.as_ref()) || HELD_BACK_DIRS.contains(&d.as_ref())
+    })
 }
 
 /// The publish-tree directory a vault's pages land in.
@@ -372,6 +378,26 @@ pub fn sibling_vault(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn held_back_covers_unpublished_and_site_only_dirs_at_any_depth() {
+        use std::path::Path;
+        for rel in [
+            "_misc/scratch.md",
+            "a/_misc/scratch.md",
+            "misc/scratch.md",
+            "working/misc/scratch.md",
+        ] {
+            assert!(super::held_back(Path::new(rel)), "{rel} must be held back");
+        }
+        for rel in ["a/b.md", "miscellany/b.md", "a/_miscx/b.md"] {
+            assert!(!super::held_back(Path::new(rel)), "{rel} must publish");
+        }
+        // The two lists never restate each other (ER-18).
+        for d in super::HELD_BACK_DIRS {
+            assert!(!super::UNPUBLISHED_DIRS.contains(d), "{d} is in both lists");
+        }
+    }
+
     use super::*;
     use crate::input::page::VaultKind;
 
