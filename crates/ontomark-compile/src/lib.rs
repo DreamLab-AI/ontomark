@@ -59,6 +59,7 @@
 
 pub mod build;
 pub mod bundle;
+pub mod certificate;
 pub mod check;
 pub mod input;
 pub mod ir;
