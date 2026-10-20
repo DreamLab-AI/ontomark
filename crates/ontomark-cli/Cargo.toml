@@ -17,8 +17,8 @@ name = "ontomark"
 path = "src/main.rs"
 
 [dependencies]
-ontomark-compile = { path = "../ontomark-compile", version = "0.5.0" }
-ontomark-profile-estate = { path = "../../profiles/estate", version = "0.5.0" }
+ontomark-compile = { path = "../ontomark-compile", version = "0.6.0" }
+ontomark-profile-estate = { path = "../../profiles/estate", version = "0.6.0" }
 anyhow = "1"
 clap = { version = "4.5", features = ["derive", "env"] }
 serde_json = { workspace = true, features = ["preserve_order"] }

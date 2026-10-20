@@ -384,6 +384,13 @@ struct BuildArgs {
     /// Print the counts after the build.
     #[arg(long)]
     stats: bool,
+    /// Write the RDFS derivation certificate of the published graph into this
+    /// directory (`oo-cert/1`: asserted.tsv, derivations.tsv, asserted.sha256,
+    /// scope.tsv), ADR-OM-009. An independent checker (`oo-cert`, Lean 4)
+    /// re-derives every line. The build is refused if the certified named
+    /// closure is not the classifier's.
+    #[arg(long)]
+    certificate_out: Option<PathBuf>,
     /// Write the `publish/` staging to this directory instead of `<out>/publish`.
     ///
     /// For a publication step that promotes the markdown separately from the
@@ -799,6 +806,7 @@ fn run() -> anyhow::Result<ExitCode> {
                 stale_after: args.stale_after.clone(),
                 redact_private_links: args.no_redact_private_links.then_some(false),
                 scope: args.scope.into(),
+                certificate_out: args.certificate_out.clone(),
             };
             // `--with-rvdb` is the only network the build ever touches, and the
             // transport lives here, not in the compile crate.
@@ -844,6 +852,12 @@ fn run() -> anyhow::Result<ExitCode> {
                     // not permit this build, the same refusal class (S2.1).
                     if let Some(unsat) = e.downcast_ref::<build::Unsatisfiable>() {
                         eprintln!("ontomark: {unsat}");
+                        return Ok(ExitCode::from(2));
+                    }
+                    // A closure the certificate does not cover: the corpus is
+                    // not published without its warrant (ADR-OM-009).
+                    if let Some(parity) = e.downcast_ref::<build::CertificateParity>() {
+                        eprintln!("ontomark: {parity}");
                         return Ok(ExitCode::from(2));
                     }
                     return Err(e);

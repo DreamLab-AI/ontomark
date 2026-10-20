@@ -12,6 +12,10 @@ This file covers the portable rc1 engine source `21cd9ffd7b08317248afb4e06b74b65
 
 The in-note SPARQL block in the Obsidian plugin and the `bridges/dot-triples/` mapping follow ideas from Cristian Vasquez's dot-triples (https://github.com/cristianvasquez/dot-triples) and Dot Triples plugin (https://github.com/cristianvasquez/dot-triples-plugin), both MIT. No source from either project is included, so no licence text is reproduced here; `docs/UPSTREAMS.md` and ADR-OM-006 carry the credit. `bridges/dot-triples/fixtures/zoo.nt` is output of the MIT-licensed `triplifier-md` 0.3.0 over notes written in this repository.
 
+## Open Ontologies (adapted source, MIT)
+
+`crates/rdfs-certificate` adapts the RDFS rule table, the `oo-cert/1` certificate format and the conservativity comparison from Open Ontologies v2.0.1 by Fabio Rovai, https://github.com/fabio-rovai/open-ontologies, MIT. The chaining engine is a rewrite; the format and table are preserved so that the upstream Lean 4 checker (`oo-cert`, theorem `OOCert.certificate_sound`) re-verifies what the crate writes. The checker is not included. The upstream copyright and permission notice is reproduced verbatim in `crates/rdfs-certificate/LICENSE-UPSTREAM.txt` and travels with the published crate (ADR-OM-009).
+
 ## MPL source availability
 
 The embedded engine uses these unchanged libraries under the Mozilla Public License 2.0. Their complete source packages, with the original notices, are available at:

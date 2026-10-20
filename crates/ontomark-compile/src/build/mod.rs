@@ -86,6 +86,53 @@ pub struct Options {
     /// [`Scope::Machine`] adds `working/`'s public pages as plain records and
     /// writes no `publish/` tree (see [`ScopeConflict`] for what it refuses).
     pub scope: Scope,
+    /// Write the RDFS derivation certificate of the published graph into this
+    /// directory (`asserted.tsv`, `derivations.tsv`, `asserted.sha256`,
+    /// `scope.tsv`, the `oo-cert/1` format), ADR-OM-009. The certified named
+    /// closure must equal the classifier's or the build is refused with
+    /// [`CertificateParity`]: a generation is never published with a closure
+    /// its warrant does not cover. `None` writes nothing and checks nothing.
+    pub certificate_out: Option<PathBuf>,
+}
+
+/// The certificate's named closure is not the classifier's (ADR-OM-009).
+/// Structural today, so this is the review trigger firing, not a flake.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CertificateParity {
+    /// Named subsumptions the RDFS certificate derives.
+    pub certified: usize,
+    /// Named subsumptions the classifier infers.
+    pub classifier: usize,
+}
+
+impl std::fmt::Display for CertificateParity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "the derivation certificate does not cover the classifier's closure: {} certified named subsumptions, {} inferred by the classifier; the build is refused (ADR-OM-009)",
+            self.certified, self.classifier
+        )
+    }
+}
+
+impl std::error::Error for CertificateParity {}
+
+/// What `--certificate-out` wrote (ADR-OM-009).
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct CertificateReport {
+    /// Where the certificate was written.
+    pub dir: PathBuf,
+    /// Files, counts and the `asserted.sha256` digest.
+    pub summary: crate::certificate::Summary,
+    /// Wall time of the fixpoint and the write, milliseconds.
+    pub certify_ms: u128,
+    /// Named subsumptions the certificate derives.
+    pub certified_named_subsumptions: usize,
+    /// Named subsumptions the classifier inferred; equal by construction, or
+    /// the build would have been refused.
+    pub classifier_inferred: usize,
+    /// How a reviewer re-checks it.
+    pub check_with: String,
 }
 
 /// What the build produced.
@@ -133,6 +180,9 @@ pub struct Report {
     /// What the machine scope added; `None` in a public build.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub machine: Option<MachineSummary>,
+    /// The derivation certificate, when `--certificate-out` asked for one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub certificate: Option<CertificateReport>,
 }
 
 /// What `--scope machine` added to the knowledge projection.
@@ -637,6 +687,48 @@ pub fn run_with(
     // before the reasoner runs, with the named `WHELK_RELEVANT_CAP` error —
     // never a hang. The error is returned unwrapped so the CLI can downcast it.
     let reasoning = reason::reason(&graph, classifier)?;
+    // ADR-OM-009: the warrant for the closure, from the very graph that is
+    // reasoned and published, before anything is written.
+    let certificate = match &options.certificate_out {
+        Some(dir) => {
+            let started = std::time::Instant::now();
+            let cert = crate::certificate::certify(&graph);
+            let (certified, classifier_n, same) = crate::certificate::parity(&cert, &reasoning);
+            if !same {
+                return Err(CertificateParity {
+                    certified,
+                    classifier: classifier_n,
+                }
+                .into());
+            }
+            let generation_label = generation::generation_id(
+                &profile.generation.prefix_for(&options.repo_root),
+                &options.source.as_ref().map_or_else(
+                    || generation::git_sha(&options.repo_root),
+                    |(c, _)| c.clone(),
+                ),
+                options.source.as_ref().map_or_else(
+                    || generation::git_dirty(&options.repo_root, &[&options.vault_root]),
+                    |(_, d)| *d,
+                ),
+            );
+            let summary = cert
+                .write(dir, &generation_label)
+                .with_context(|| format!("writing the certificate to {}", dir.display()))?;
+            Some(CertificateReport {
+                dir: dir.clone(),
+                summary,
+                certify_ms: started.elapsed().as_millis(),
+                certified_named_subsumptions: certified,
+                classifier_inferred: classifier_n,
+                check_with: format!(
+                    "oo-cert {d}/asserted.tsv {d}/derivations.tsv",
+                    d = dir.display()
+                ),
+            })
+        }
+        None => None,
+    };
     // ADR-2124 decision 4: the mode is decided by the graph, so say which.
     eprintln!(
         "vault build: whelk restrictions mode {} ({} kept, {} skipped, {} defined class(es))",
@@ -968,6 +1060,7 @@ pub fn run_with(
                 mirror: mirror_redaction,
             }),
         machine: machine_summary,
+        certificate,
     })
 }
 
@@ -1051,6 +1144,7 @@ scalars:
             source: None,
             stale_after: None,
             scope: Scope::Public,
+            certificate_out: None,
         };
         let report = run(&options, &vocab()).unwrap();
         (dir, report)
@@ -1236,6 +1330,7 @@ scalars:
             source: None,
             stale_after: None,
             scope: Scope::Public,
+            certificate_out: None,
         };
         let result = run(&options, &vocab());
         (dir, result)
@@ -1413,6 +1508,7 @@ scalars:
             source: None,
             stale_after: None,
             scope: Scope::Public,
+            certificate_out: None,
         };
         let result = run(&options, &vocab);
         (dir, result)
@@ -1526,6 +1622,7 @@ scalars:
             source: None,
             stale_after: None,
             scope: Scope::Public,
+            certificate_out: None,
         };
         let report = run(&options, &vocab).expect("a defined class builds");
         assert_eq!(report.reasoner_mode, "relevant");
@@ -1590,6 +1687,7 @@ scalars:
             source: None,
             stale_after: None,
             scope: Scope::Public,
+            certificate_out: None,
         };
         run(&options, &vocab()).unwrap();
         assert!(!out.join("api/pages/stale.json").exists());
@@ -1618,6 +1716,7 @@ scalars:
             source: None,
             stale_after: None,
             scope: Scope::Public,
+            certificate_out: None,
         };
         assert!(run(&options, &vocab()).is_err());
         assert!(!out.exists());

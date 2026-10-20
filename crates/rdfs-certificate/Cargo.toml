@@ -1,0 +1,22 @@
+[package]
+name = "rdfs-certificate"
+version = "0.1.0"
+description = "RDFS forward chaining that records every derivation step in the oo-cert/1 certificate format an independent Lean 4 checker re-verifies, plus a consequence delta between two graphs"
+readme = "README.md"
+keywords = ["rdf", "rdfs", "reasoning", "certificate", "ontology"]
+categories = ["science", "data-structures"]
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+include = ["src/**", "tests/**", "README.md", "LICENSE-MIT", "LICENSE-APACHE", "LICENSE-UPSTREAM.txt"]
+
+[dependencies]
+serde = { workspace = true }
+sha2 = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true

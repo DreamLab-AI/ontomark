@@ -99,7 +99,7 @@ cargo install ontomark
 Each [release](https://github.com/DreamLab-AI/ontomark/releases) ships a static Linux x86-64 binary (runs on glibc and Nix hosts alike), a SHA-256 receipt, and the versioned WASM engine bundle the plugin pins.
 
 ```bash
-V=0.4.0
+V=0.6.0
 curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v$V/ontomark-x86_64-unknown-linux-gnu
 curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v$V/ontomark-x86_64-unknown-linux-gnu.sha256
 sha256sum --check ontomark-x86_64-unknown-linux-gnu.sha256
@@ -113,9 +113,10 @@ chmod +x ontomark-x86_64-unknown-linux-gnu && ./ontomark-x86_64-unknown-linux-gn
 | `build` | The publication build: Turtle (asserted and inferred), JSON-LD, SHACL, OKF, NGG1 graph tiers, search and scaffold indexes, the page API, a redacted `publish/` tree, and the generation marker. |
 | `build --scope machine` | A second bundle for machine consumers: the same ontology artefacts byte for byte, plus the public `working/` notes as plain records. Never writes `publish/`. |
 | `build --with-rvdb` | Also emits `data/ontology-corpus.records.jsonl`, the portable vector records the Loom promotes into its store. |
+| `build --certificate-out DIR` | Also writes the RDFS derivation certificate of the published graph (`oo-cert/1`: every inferred triple with its rule and premises), which the independent Lean 4 checker `oo-cert` re-verifies with no engine. The build is refused if the certificate does not cover the classifier's closure ([ADR-OM-009](docs/adr/ADR-OM-009-every-published-closure-carries-a-derivation-certificate.md)). |
 | `repair`, `migrate` | Fence and body repairs; registry-driven corpus migrations with plan/apply/rollback. |
 
-Exit codes are a contract: `0` success, `1` failure, `2` a *refusal* (a credential in published content, an identity collision, an unsatisfiable corpus, a non-boolean `public:` flag, an unknown `--tier`, a scope conflict). Refusals name what they refused.
+Exit codes are a contract: `0` success, `1` failure, `2` a *refusal* (a credential in published content, an identity collision, an unsatisfiable corpus, a closure its certificate does not cover, a non-boolean `public:` flag, an unknown `--tier`, a scope conflict). Refusals name what they refused.
 
 `--repo` names either a plain Obsidian vault (no `ontology/` folder; the generic profile applies) or an estate-shaped repository holding `ontology/vocabulary.yaml`, where the [estate profile](profiles/estate) is the default and `--profile generic|PATH` overrides it. The [CLI README](crates/ontomark-cli/README.md) has the verbs, exit codes and layout in full.
 
@@ -130,11 +131,12 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 | [whelk-el](crates/whelk-el) | 0.1.1 | The saturation engine, a Rust port of Whelk, with optional native parallelism. |
 | [ontomark-reason](crates/ontomark-reason) | 0.1.2 | The OWL 2 EL profile check and classification facade: named refusals, root causes, cancellable sessions. |
 | [ontomark-ingest](crates/ontomark-ingest) | 0.1.0 | Assisted ingest: the pure plan/accept contract, grounding, lexical guards, evidence spans. No I/O, no model. |
-| [ontomark-compile](crates/ontomark-compile) | 0.4.0 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity. |
+| [rdfs-certificate](crates/rdfs-certificate) | 0.1.0 | RDFS forward chaining that records every step in the `oo-cert/1` certificate format an independent checker re-verifies, and the consequence delta between two graphs. No graph library; used by ontomark and by VisionClaw's `vault`. |
+| [ontomark-compile](crates/ontomark-compile) | 0.6.0 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity, the derivation certificate. |
 | [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | The shared binary graph format and its zero-copy reader. |
 | [ontomark-profile-estate](profiles/estate) | 0.4.0 | The DreamLab estate's rules as data; most users want `--profile generic` and never depend on it. |
 | [ontomark-wasm](crates/ontomark-wasm) | release asset | The worker-friendly engine protocol: index, update, classify, query, patch, ingest. |
-| [ontomark](crates/ontomark-cli) | 0.4.0 | The installable CLI: `cargo install ontomark`. |
+| [ontomark](crates/ontomark-cli) | 0.6.0 | The installable CLI: `cargo install ontomark`. |
 | [ontomark-graph](packages/graph) | [0.1.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.1.0) | The shared offline graph renderer for desktop and web hosts. |
 
 Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.

@@ -10,11 +10,12 @@ members = [
     "crates/ontomark-wasm",
     "crates/ontomark-cli",
     "crates/whelk-el",
+    "crates/rdfs-certificate",
     "profiles/estate",
 ]
 
 [workspace.package]
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 rust-version = "1.89"
 license = "MIT OR Apache-2.0"
