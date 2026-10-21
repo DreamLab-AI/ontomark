@@ -8,3 +8,4 @@
 | 2026-10-18 | bundle-and-rdf | pin golden .generation pair + prose-index round-trip via bundle readers | NONE | https://github.com/DreamLab-AI/ontomark/pull/3 | yes | ACCEPT |  | 4e635698273d |  |  |  |
 | 2026-10-19 | assisted-ingest | baseline workspace-tests red: conformance golden mismatch; fix src absent | NONE | NONE | yes | INCONCLUSIVE |  | 489f9974d64a |  |  |  |
 | 2026-10-20 | typed-identity | gate red at 00aa143b: CLI conformance golden mismatch; src absent | NONE | NONE | yes | INCONCLUSIVE |  | 4c8001c4ebda |  |  |  |
+| 2026-10-21 | public-projection | 2 gates red: clippy no-default dead TYPE in certificate.rs + conformance golden | NONE | NONE | yes | INCONCLUSIVE |  | 9ef7401d7080 |  |  |  |
