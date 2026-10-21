@@ -2,18 +2,20 @@
 
 **Ontologies written as Markdown notes, read and reasoned over by machines.**
 
-You keep writing notes the way you already do. A line or two of YAML frontmatter on a note (`type: class`, `subclass-of: [[Animal]]`) turns it into an ontology statement; everything else stays prose. Ontomark parses those notes without losing a byte, builds a typed model from them, reasons over it with an OWL 2 EL engine, compiles it to RDF and the web, and, when asked, lets a language model propose new facts for a note, grounded against the vocabulary the vault already has, with the quote that justifies each one. It is a Rust workspace, compiles to WebAssembly, and runs the same code inside Obsidian as on a server.
+[Try it](#start-with-two-notes) · [CLI](#command-line) · [Architecture](#how-the-pieces-fit) · [Crates](#rust-crates) · [Status](#current-status-and-limits) · [Docs](#project-documentation)
+
+You keep writing notes the way you already do. A line or two of YAML frontmatter on a note (`type: class`, `subclass-of: ["[[Animal]]"]`) turns it into an ontology statement; everything else stays prose. Ontomark parses those notes without losing a byte, builds a typed model from them, reasons over it with an OWL 2 EL engine, compiles it to RDF and the web, and, when asked, lets a language model propose new facts for a note, grounded against the vocabulary the vault already has, with the quote that justifies each one. It is a Rust workspace, compiles to WebAssembly, and runs the same code inside Obsidian as on a server.
 
 [![CI](https://github.com/DreamLab-AI/ontomark/actions/workflows/ci.yml/badge.svg)](https://github.com/DreamLab-AI/ontomark/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/badge/licence-MIT%20OR%20Apache--2.0-blue)](NOTICE)
 
 ## If you are new here
 
-Ontomark exists because two things usually sold as opposites are both true: people think and write best in free text, and machines are only useful with structure. Most tools pick one. Ontomark keeps the notes as the source of truth and derives the structure from them, so the author never leaves Markdown and the machine never has to guess.
+Ontomark keeps Markdown as the authoring format and derives a typed graph for software to query. Use it for a personal vault, a research taxonomy, a documentation vocabulary or a governed publication pipeline. The same parser and model support the native toolchain and the worker engine embedded in Obsidian; each host pins its own release.
 
 Three ideas carry the whole design:
 
-1. **The note is the record.** Nothing is re-rendered from a typed view. The only write path is a guarded patch that proves every byte it did not name is unchanged. Identity is an IRI the author wrote, never a title the tool slugified.
+1. **The note is the record.** Nothing is re-rendered from a typed view. The only write path is a guarded patch that proves every byte it did not name is unchanged. Explicit IRIs are supported; the generic profile can derive an identifier from the note path. Identity and display labels remain distinct.
 2. **Refusals are named, never silent.** The engine implements a profile of OWL 2 EL and reports each construct it cannot reason over. A result that dropped an axiom says so, rather than reporting a classification that is quietly incomplete.
 3. **Models propose, the vault decides.** Assisted ingest lets a language model read a note and suggest values, but the model never sees an identifier and never writes: the engine grounds each proposed name against the vault, requires a located quote as evidence, and returns candidates for a human to accept.
 
@@ -73,13 +75,13 @@ flowchart LR
   CLI -->|"--scope machine"| VC
 ```
 
-Every arrow out of the CLI carries a **generation**: `<prefix>@<commit>` (`visionGraph@<commit>` for the estate; a vault's directory name otherwise) plus a content digest, stamped into each bundle. A consumer can always say which corpus it is reading, and a stale read is refused rather than served. One producer builds every bundle; consumers project from it rather than re-parsing the vault.
+Every arrow out of the CLI carries a **generation**: `<prefix>@<commit>` (`visionGraph@<commit>` for the estate; a vault's directory name otherwise) plus a content digest, stamped into each bundle. Generation stamps let a consumer identify the bundle it read. Consumer-specific admission checks determine whether mismatched or stale artefacts are refused; a stamped bundle alone does not prove that every deployed consumer enforces freshness. The estate contract assigns compilation to one producer and makes consumer-specific projections explicit.
 
 | Repository | Role |
 | --- | --- |
 | **ontomark** (here) | The engine: crates, CLI, wasm build, estate profile. The only producer of published bundles. |
 | [ontomark-obsidian](https://github.com/DreamLab-AI/ontomark-obsidian) | The desktop plugin. Embeds the wasm engine; offline by default; one optional network call for assisted ingest. |
-| [visionGraph](https://github.com/DreamLab-AI/visionGraph) | The DreamLab corpus itself: ~9,250 typed notes. Its publish pipeline runs the pinned `ontomark` release. |
+| DreamLab authoring vault | Private source of the published corpus. Its publishing workflow pins Ontomark; public data is distributed through [knowledgeGraph](https://github.com/DreamLab-AI/knowledgeGraph). |
 | [loom](https://github.com/DreamLab-AI/loom) | The Ontology Loom: serves the reasoned closure, SPARQL and grounded answers over a published generation. |
 | [VisionClaw](https://github.com/DreamLab-AI/VisionClaw) | The XR/GPU knowledge-graph application. Consumes the machine-scope bundle for its force layout. |
 | [agentbox](https://github.com/DreamLab-AI/agentbox) | The agent runtime. Bakes the released CLI and routes the grounding skill through it. |
@@ -141,21 +143,16 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 
 Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.
 
-## Structure pays, measured on the estate
+<details>
+<summary><strong>Historical corpus scale and grounding results</strong></summary>
 
-Ontomark is the engine under the DreamLab estate's own corpus, so the argument for typed Markdown can be made with numbers rather than principle. Figures are from the corpus and the [Ontology Loom](https://github.com/DreamLab-AI/loom) at generation `visionGraph@ae913f93` (12 October 2026).
+The 12 October 2026 snapshot `visionGraph@ae913f93` recorded 9,258 typed notes, 13,638 asserted `is-a` edges and 118,872 subclass statements in the reasoned closure. These describe one corpus generation, not today's corpus size or a benchmark of arbitrary vaults.
 
-| What | Figure | What it shows |
-| --- | --- | --- |
-| Typed notes in the corpus | 9,258 | Every page is a `type: Class` note with frontmatter relations |
-| Asserted `is-a` edges | 13,638 | What authors wrote; 2,378 notes declare more than one parent |
-| Subclass statements in the reasoned closure | 118,872 | What follows from it: about nine times what was written, all derivable, none guessed |
-| Properties | 15 | A small, stable vocabulary carries a large corpus |
-| Grounded answer score (Loom benchmark) | 0.146 → 0.94 and 0.268 → 0.94 | Two models with very different unaided scores converge once given the reasoned slice as a structured scaffold, at three to six times lower latency |
+Loom's associated held-out question experiments measured answer recall after corpus facts were supplied to a model. They support faithful delivery of curated facts under those test conditions. They do not establish that graph structure improves reasoning over an equal-content control, or that the corpus's claims are externally true. The later copy-control and negative-control work belongs to [Loom's research record](https://github.com/DreamLab-AI/loom/tree/main/docs/research). Keep experiment populations, model identities and controls with any quoted score.
 
-The Loom benchmark is 37 held-out questions with gold answers derived from the graph, so it measures faithful restatement of checked facts, which is the job, not open-domain knowledge. Its lift concentrates in niche domains the models did not already know and vanishes where they were already right; prose renderings of the same facts added nothing measurable. The structure carries the value, which is why the engine's output is a typed model and an RDF closure rather than text.
+[`docs/GROUNDING-EVIDENCE.md`](docs/GROUNDING-EVIDENCE.md) tracks the external studies and their verification status. Those studies motivate the design; they are not performance results for this implementation.
 
-External figures the READMEs cite, with verification status, are in [`docs/GROUNDING-EVIDENCE.md`](docs/GROUNDING-EVIDENCE.md). The same parser, reasoner and ingest guards run unchanged in the plugin, which is deliberately light on this material: it exists for vaults of ten notes as much as ten thousand.
+</details>
 
 ## Build and check
 
@@ -172,7 +169,11 @@ cargo build --locked -p ontomark-ingest --target wasm32-unknown-unknown --releas
 
 `just check`, `just wasm-test` and `just conformance` are the repository gates. CI checks formatting, Clippy, native tests, compiler all/no-default-feature tests, WASM, strict rustdoc, plugin contracts and the complete Git history for secrets. The plugin tests include WASM/native transcript parity and an offline Obsidian API shim; that shim does not substitute for installed-Obsidian acceptance.
 
-## Current limits
+## Current status and limits
+
+**Reviewed 21 October 2026 against `6944be3`.** The CLI and compiler manifests declare **0.6.0**. The current Obsidian plugin pins engine **0.4.0**, so later compiler changes do not automatically appear inside the editor. Check each consumer’s pin and generation before treating a toolchain change as an estate-wide deployment.
+
+Version 0.6.0 adds an RDFS derivation certificate and consequence-delta support through the shared [`rdfs-certificate`](crates/rdfs-certificate) crate. The compiler checks the certified named subclass closure against its classifier output and refuses a mismatch. This is a derivation check under the implemented rules, not a proof of arbitrary OWL entailment or the truth of source assertions. [`certificate.rs`](crates/ontomark-compile/src/certificate.rs) and [ADR-OM-009](docs/adr/ADR-OM-009-every-published-closure-carries-a-derivation-certificate.md) define the boundary. An independent Lean checker is a separate tool; producing a certificate does not establish that it has been run.
 
 This is experimental software. The reasoner implements a subset of OWL 2 EL and reports unsupported constructs explicitly; dropped existential restrictions make a classification incomplete ([ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) records why EL, and how non-EL is named rather than dropped). The native publication compiler retains its legacy estate profile semantics while using the shared reasoner; typed in-memory projection is available through the compiler's `model-projection` feature.
 
@@ -182,7 +183,7 @@ Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surfac
 
 - [Current hand-off](docs/HANDOFF.md): verified results, outstanding work and integration boundaries.
 - [API documentation](docs/api/): crate contracts and capabilities.
-- Decisions: [ADR-OM-001](docs/adr/ADR-OM-001-sprint-decisions.md) (profiles, licensing, reasoner), [ADR-OM-002](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md) (shared graph and plugin boundary), [ADR-OM-003](docs/adr/ADR-OM-003-native-assisted-ingest.md) (assisted ingest), [ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) (OWL 2 EL), [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, the generation loop), [ADR-OM-006](docs/adr/ADR-OM-006-dot-triples-interop.md) (Dot Triples interop), [ADR-OM-007](docs/adr/ADR-OM-007-vault-root-is-the-content-root.md) (flat vaults, the vault verbs), [ADR-OM-008](docs/adr/ADR-OM-008-any-obsidian-vault-is-a-repository.md) (any Obsidian vault is a repository; layout and generation prefix from the profile), and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
+- Decisions: [ADR-OM-001](docs/adr/ADR-OM-001-sprint-decisions.md) (profiles, licensing, reasoner), [ADR-OM-002](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md) (shared graph and plugin boundary), [ADR-OM-003](docs/adr/ADR-OM-003-native-assisted-ingest.md) (assisted ingest), [ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) (OWL 2 EL), [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, the generation loop), [ADR-OM-006](docs/adr/ADR-OM-006-dot-triples-interop.md) (Dot Triples interop), [ADR-OM-007](docs/adr/ADR-OM-007-vault-root-is-the-content-root.md) (flat vaults, the vault verbs), [ADR-OM-008](docs/adr/ADR-OM-008-any-obsidian-vault-is-a-repository.md) (any Obsidian vault is a repository; layout and generation prefix from the profile), [ADR-OM-009](docs/adr/ADR-OM-009-every-published-closure-carries-a-derivation-certificate.md) (derivation certificates), and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
 - [OntoCast triage](docs/ONTOCAST-TRIAGE.md): what the ingest design adapted from OntoCast and what it did not.
 - [Dot Triples bridge](bridges/dot-triples/README.md): one SPARQL CONSTRUCT that lifts Cristian Vasquez's [dot-triples](https://github.com/cristianvasquez/dot-triples) output into Ontomark's vocabulary, tested for parity with the engine.
 - [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md).
