@@ -72,6 +72,7 @@ mod tests {
     use super::*;
 
     const SC: &str = "http://www.w3.org/2000/01/rdf-schema#subClassOf";
+    #[cfg(feature = "whelk-el")]
     const TYPE: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 
     fn ex(l: &str) -> String {
