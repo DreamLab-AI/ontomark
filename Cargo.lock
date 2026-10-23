@@ -920,7 +920,7 @@ checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
 name = "ontomark"
-version = "0.4.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -933,7 +933,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-compile"
-version = "0.4.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "hex",
@@ -947,6 +947,7 @@ dependencies = [
  "oxrdf",
  "oxrdfxml",
  "oxttl",
+ "rdfs-certificate",
  "regex",
  "serde",
  "serde_json",
@@ -1004,7 +1005,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-profile-estate"
-version = "0.4.0"
+version = "0.6.0"
 dependencies = [
  "ontomark-compile",
 ]
@@ -1024,7 +1025,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-wasm"
-version = "0.4.0"
+version = "0.6.0"
 dependencies = [
  "getrandom 0.3.4",
  "ontomark-ingest",
@@ -1382,6 +1383,15 @@ checksum = "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91"
 dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
+]
+
+[[package]]
+name = "rdfs-certificate"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "sha2 0.11.0",
+ "tempfile",
 ]
 
 [[package]]

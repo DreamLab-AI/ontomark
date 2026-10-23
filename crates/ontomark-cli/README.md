@@ -75,7 +75,7 @@ name, so a vault at `~/Vaults/Notes` produces `Notes@<sha>`.
 | `validate` | Frontmatter grammar, vocabulary agreement, link integrity, credential scan and the public gate for the selected vaults. |
 | `gate --tier quick\|full` | The autonomous continuation gate: validation, and with `full` conflicts plus the OWL 2 EL classifier. |
 | `conflicts` | Semantic conflict detection with a failing `--severity`. |
-| `build --out DIR` | The publication build. `--scope machine` writes the machine bundle (knowledge plus the working vault's public notes as plain records, no `publish/`); `--with-rvdb` adds embedded records; `--publish-out` stages the Markdown elsewhere. |
+| `build --out DIR` | The publication build. `--scope machine` writes the machine bundle (knowledge plus the working vault's public notes as plain records, no `publish/`); `--with-rvdb` adds embedded records; `--publish-out` stages the Markdown elsewhere; `--certificate-out DIR` also writes the RDFS derivation certificate of the published graph (`oo-cert/1`), refused with exit 2 if it does not cover the classifier's closure (ADR-OM-009). |
 | `find`, `retrieve`, `tree` | Title and alias search; expansion from seed pages along declared edge types; the taxonomy tree beneath a page. |
 | `edit`, `create`, `apply` | Guarded writes: a frontmatter edit with a declared blast radius, a new page from a staged file, a human-approved `kind: amend` proposal. |
 | `repair bodies\|fences` | Logseq outliner bodies to Obsidian Markdown; unmatched code fences. |

@@ -32,6 +32,7 @@ fn domains_keep_their_publication_order() {
                 "earth-observation-and-geospatial-sensing",
                 "Earth Observation and Geospatial Sensing"
             ),
+            ("supply-chains-and-logistics", "Supply Chains and Logistics"),
         ]
     );
 }
@@ -121,6 +122,29 @@ fn categories_keep_their_ids_labels_and_domains() {
             ("earth-observation-data-quality", "Data Quality", 7),
             ("earth-observation-applications", "Applications", 7),
             ("geodesy", "Geodesy", 7),
+            ("supply-chain-strategy", "Strategy and Network Design", 8),
+            ("supply-chain-planning", "Planning", 8),
+            ("sourcing-and-procurement", "Sourcing and Procurement", 8),
+            ("production-operations", "Production", 8),
+            ("inventory-management", "Inventory", 8),
+            (
+                "warehousing-and-distribution",
+                "Warehousing and Distribution",
+                8
+            ),
+            ("freight-transportation", "Transportation", 8),
+            ("international-trade-and-customs", "Trade and Customs", 8),
+            ("supply-chain-risk-and-resilience", "Risk and Resilience", 8),
+            ("sustainable-supply-chains", "Sustainability", 8),
+            ("traceability-and-product-identification", "Traceability", 8),
+            (
+                "supply-chain-performance-and-finance",
+                "Performance and Finance",
+                8
+            ),
+            ("supply-chain-information-systems", "Information Systems", 8),
+            ("supply-chain-organisations", "Organisations", 8),
+            ("supply-chain-management", "Management", 8),
         ]
     );
 }
@@ -143,6 +167,8 @@ fn short_names_and_aliases_resolve_to_the_published_class_ids() {
         ("infrastructure", 6),
         ("space-science-and-systems", 7),
         ("earth-observation-and-geospatial-sensing", 8),
+        ("supply-chains-and-logistics", 9),
+        ("supply-chain", 9),
         ("geodesy", 0),
         ("", 0),
     ] {

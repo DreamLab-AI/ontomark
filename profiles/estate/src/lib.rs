@@ -4,14 +4,14 @@
 //! It carries the frontmatter grammar per vault role, the maturity lifecycle,
 //! the governance event kinds, the `urn:ngm:class:` / `urn:visionflow:page:`
 //! identity namespaces and their `narrativegoldmine.com` projection, the
-//! eight-domain, 53-category taxonomy whose positions are published NGG1
+//! nine-domain, 68-category taxonomy whose positions are published NGG1
 //! identities, the domain aliases, and the attribution roster location and
 //! `generated.by` actor grammar.
 //!
 //! ```
 //! let estate = ontomark_profile_estate::profile();
 //! assert_eq!(estate.id, "estate");
-//! assert_eq!(estate.taxonomy.categories.len(), 53);
+//! assert_eq!(estate.taxonomy.categories.len(), 68);
 //! assert_eq!(estate.taxonomy.domain_class_id("ai"), 1);
 //! assert_eq!(estate.iris.class_namespace, "urn:ngm:class:");
 //! ```
@@ -37,8 +37,8 @@ mod tests {
     #[test]
     fn parses_and_declares_the_published_taxonomy() {
         let p = profile();
-        assert_eq!(p.taxonomy.domains.len(), 8);
-        assert_eq!(p.taxonomy.categories.len(), 53);
+        assert_eq!(p.taxonomy.domains.len(), 9);
+        assert_eq!(p.taxonomy.categories.len(), 68);
         assert!(p
             .taxonomy
             .categories

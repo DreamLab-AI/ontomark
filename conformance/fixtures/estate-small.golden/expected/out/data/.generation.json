@@ -36,8 +36,8 @@
     },
     {
       "name": "graph/overview.json",
-      "sha256": "13337aee4c1c2a3aef9ade29dc3ce5b12cfe420abafa5d47e12a89db90b10567",
-      "bytes": 24605
+      "sha256": "fdeb7126ea6b8aa5d5f0ff5420b5354e9a0206a8e7972db8881437cd73b77a0a",
+      "bytes": 31076
     },
     {
       "name": "graph/full.bin",
@@ -85,9 +85,14 @@
       "bytes": 44
     },
     {
+      "name": "graph/domain-supply-chains-and-logistics.bin",
+      "sha256": "4824e2cdf7f9cbc6d6210759a8dc389d9123223270037240ce4803799a98e7e1",
+      "bytes": 44
+    },
+    {
       "name": "graph/stats.json",
-      "sha256": "302da7d90b1ad7ab172dbc513ca8a949c4cc9d067aea60d1b57ffdb22fc232bd",
-      "bytes": 2954
+      "sha256": "0145bd3fa19dac1ae21ee18c60089ccf941c5aed675a206f14a332b6e779c7c8",
+      "bytes": 3159
     },
     {
       "name": "graph/bridges.json",

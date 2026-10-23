@@ -65,6 +65,7 @@ fn options(repo: &Path, out: &Path, scope: Scope) -> build::Options {
         publish_out: None,
         stale_after: None,
         scope,
+        certificate_out: None,
     }
 }
 

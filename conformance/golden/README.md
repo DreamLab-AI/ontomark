@@ -20,3 +20,25 @@ tree differ only in `.generation.json`, `data/.generation.json`,
 `ontology-inferred.ttl`, `prose-index.json` and `scaffold-index.json`, all
 through `generated_at`), so ontomark is run with the recorded clock and commit
 and compared byte for byte.
+
+## Known host sensitivity: trigonometry in the layout
+
+"Deterministic" above holds on one host. The NGG1 layout
+(`crates/ontomark-compile/src/build/ngg1.rs`) places nodes on rings with
+`f64::sin` and `f64::cos`, which call the host's libm, and the coordinates are
+rounded to three decimals before they are hashed. glibc releases differ in the
+last bit, so a coordinate that lands on a rounding boundary changes a digit.
+Measured 2026-10-19 on the dream annexe host (rustc 1.97.1, `en_GB.UTF-8`):
+`build_is_byte_identical_to_the_legacy_golden` fails with
+`out/data/graph/overview.json` differing in two values (`nodes[39].y` and
+`categories[30].y`, `-291.395` locally and `-291.394` there); the other three
+differences listed are the marker entries that carry that file's hash.
+`verbs_print_the_same_bytes_and_exit_codes` passes on both.
+
+The pure-Rust `libm` crate gives the same answer on every host, but it is not
+bit-identical to the glibc that produced these goldens: swapping it in made the
+local run fail the same test. So the options are to pin conformance to the
+reference glibc (today's state; CI and the development host agree), or to move
+the layout to `libm` and re-capture every golden, including the full-corpus
+hashes, which changes published graph tiers. Neither is done; the second is a
+deliberate change to output, not a fix.

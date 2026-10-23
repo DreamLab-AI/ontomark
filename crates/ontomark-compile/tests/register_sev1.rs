@@ -70,6 +70,7 @@ fn options(repo: &Path, out: &Path) -> build::Options {
         publish_out: None,
         stale_after: None,
         scope: build::Scope::Public,
+        certificate_out: None,
     }
 }
 
