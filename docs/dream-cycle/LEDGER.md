@@ -10,3 +10,4 @@
 | 2026-10-20 | typed-identity | gate red at 00aa143b: CLI conformance golden mismatch; src absent | NONE | NONE | yes | INCONCLUSIVE |  | 4c8001c4ebda |  |  |  |
 | 2026-10-21 | public-projection | 2 gates red: clippy no-default dead TYPE in certificate.rs + conformance golden | NONE | NONE | yes | INCONCLUSIVE |  | 9ef7401d7080 |  |  |  |
 | 2026-10-22 | reasoning-contract | 2 gates red: dead TYPE certificate.rs:75 + conformance golden; fix src absent | NONE | NONE | yes | INCONCLUSIVE |  | 31b48d433859 |  |  |  |
+| 2026-10-23 | bundle-and-rdf | TYPE fix awaits merge in PR#5; workspace red = documented host-libm mismatch | NONE | NONE | yes | INCONCLUSIVE |  | e06e2ab4b6e1 |  |  |  |
