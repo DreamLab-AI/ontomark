@@ -109,7 +109,21 @@ fn tree_diff(label: &str, want: &Path, got: &Path) -> Vec<String> {
             Some(b) if path.ends_with(".generation.json") => {
                 diffs.extend(marker_diff(&format!("{label}/{path}"), bytes, b));
             }
-            Some(b) if b != bytes => diffs.push(format!("{label}/{path}: bytes differ")),
+            Some(b) if b != bytes => {
+                let at = bytes
+                    .iter()
+                    .zip(b.iter())
+                    .position(|(x, y)| x != y)
+                    .unwrap_or(bytes.len().min(b.len()));
+                let (lo, hi) = (at.saturating_sub(60), at + 60);
+                let show = |v: &[u8]| {
+                    String::from_utf8_lossy(&v[lo.min(v.len())..hi.min(v.len())]).into_owned()
+                };
+                diffs.push(format!(
+                    "{label}/{path}: bytes differ at offset {at} (want {} bytes, got {})\n  want: {}\n  got:  {}",
+                    bytes.len(), b.len(), show(bytes), show(b)
+                ));
+            }
             Some(_) => {}
         }
     }
