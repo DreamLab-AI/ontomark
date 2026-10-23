@@ -92,6 +92,61 @@ fn ontomark() -> Command {
     Command::new(env!("CARGO_BIN_EXE_ontomark"))
 }
 
+/// Largest absolute difference tolerated between two layout coordinates.
+///
+/// The force layout places nodes with `f64::sin`, `cos` and `hypot`, which the
+/// host's libm evaluates. Different glibc releases round the last bit
+/// differently and the iterations amplify that to about 0.001 in a coordinate
+/// (seen as `-291.395` against `-291.394` when a runner image moved). Coordinates
+/// are printed to three decimals, so 0.01 admits that drift and nothing else.
+const LAYOUT_TOLERANCE: f64 = 0.01;
+
+/// True for artefacts whose floating-point coordinates come from the layout.
+fn is_layout_sensitive(name: &str) -> bool {
+    name.ends_with("graph/overview.json")
+}
+
+/// `None` when `a` and `b` are the same JSON apart from numbers within `tol`;
+/// otherwise the first structural or numeric difference.
+fn json_diff_within(a: &[u8], b: &[u8], tol: f64) -> Option<String> {
+    fn walk(path: &str, a: &serde_json::Value, b: &serde_json::Value, tol: f64) -> Option<String> {
+        use serde_json::Value::{Array, Number, Object};
+        match (a, b) {
+            (Number(x), Number(y)) if x.is_f64() || y.is_f64() => {
+                let (x, y) = (x.as_f64()?, y.as_f64()?);
+                ((x - y).abs() > tol)
+                    .then(|| format!("{path}: {x} differs from {y} by more than {tol}"))
+            }
+            (Array(x), Array(y)) => {
+                if x.len() != y.len() {
+                    return Some(format!(
+                        "{path}: array length {} against {}",
+                        x.len(),
+                        y.len()
+                    ));
+                }
+                x.iter()
+                    .zip(y)
+                    .enumerate()
+                    .find_map(|(i, (p, q))| walk(&format!("{path}[{i}]"), p, q, tol))
+            }
+            (Object(x), Object(y)) => {
+                if x.keys().ne(y.keys()) {
+                    return Some(format!("{path}: object keys differ"));
+                }
+                x.iter()
+                    .find_map(|(k, p)| walk(&format!("{path}.{k}"), p, &y[k], tol))
+            }
+            _ => (a != b).then(|| format!("{path}: {a} differs from {b}")),
+        }
+    }
+    let parse = |v: &[u8]| serde_json::from_slice::<serde_json::Value>(v).ok();
+    match (parse(a), parse(b)) {
+        (Some(x), Some(y)) => walk("$", &x, &y, tol),
+        _ => Some("not valid JSON".to_string()),
+    }
+}
+
 /// Compare two trees, returning one line per difference.
 ///
 /// Every artefact is compared byte for byte except the two generation markers,
@@ -108,6 +163,11 @@ fn tree_diff(label: &str, want: &Path, got: &Path) -> Vec<String> {
             None => diffs.push(format!("{label}/{path}: missing")),
             Some(b) if path.ends_with(".generation.json") => {
                 diffs.extend(marker_diff(&format!("{label}/{path}"), bytes, b));
+            }
+            Some(b) if b != bytes && is_layout_sensitive(path) => {
+                if let Some(why) = json_diff_within(bytes, b, LAYOUT_TOLERANCE) {
+                    diffs.push(format!("{label}/{path}: {why}"));
+                }
             }
             Some(b) if b != bytes => diffs.push(format!("{label}/{path}: bytes differ")),
             Some(_) => {}
@@ -151,6 +211,12 @@ fn marker_diff(label: &str, want: &[u8], got: &[u8]) -> Vec<String> {
         .map(|a| a.iter().map(ToString::to_string).collect())
         .unwrap_or_default();
     for artifact in want_artifacts.as_array().into_iter().flatten() {
+        // A layout-sensitive file's hash, and the data marker that lists it, move
+        // with its coordinates; the file itself is compared within `LAYOUT_TOLERANCE`.
+        let name = artifact["name"].as_str().unwrap_or_default();
+        if is_layout_sensitive(name) || name.ends_with(".generation.json") {
+            continue;
+        }
         if !got_set.contains(&artifact.to_string()) {
             diffs.push(format!(
                 "{label}: legacy artefact missing or changed in the current marker: {artifact}"
@@ -228,4 +294,15 @@ fn verbs_print_the_same_bytes_and_exit_codes() {
     }
     assert_eq!(checked, 12, "the golden records twelve verb outputs");
     assert!(diffs.is_empty(), "{}", diffs.join("\n"));
+}
+
+#[test]
+fn layout_tolerance_admits_last_digit_drift_and_nothing_else() {
+    let a = br#"{"nodes": [{"id": 1, "x": -1987.011, "y": -291.395}], "n": 1}"#;
+    let drift = br#"{"nodes": [{"id": 1, "x": -1987.011, "y": -291.394}], "n": 1}"#;
+    let moved = br#"{"nodes": [{"id": 1, "x": -1987.011, "y": -250.0}], "n": 1}"#;
+    let renumbered = br#"{"nodes": [{"id": 2, "x": -1987.011, "y": -291.395}], "n": 1}"#;
+    assert_eq!(json_diff_within(a, drift, LAYOUT_TOLERANCE), None);
+    assert!(json_diff_within(a, moved, LAYOUT_TOLERANCE).is_some());
+    assert!(json_diff_within(a, renumbered, LAYOUT_TOLERANCE).is_some());
 }
