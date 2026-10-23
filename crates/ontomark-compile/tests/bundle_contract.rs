@@ -212,5 +212,8 @@ fn the_emitted_marker_pair_and_prose_index_round_trip_through_the_public_readers
     let prose: ProseIndex = serde_json::from_str(&prose_input).unwrap();
     assert!(!prose.pages.is_empty());
     let roundtrip: Value = serde_json::to_value(&prose).unwrap();
-    assert_eq!(roundtrip, serde_json::from_str::<Value>(&prose_input).unwrap());
+    assert_eq!(
+        roundtrip,
+        serde_json::from_str::<Value>(&prose_input).unwrap()
+    );
 }
