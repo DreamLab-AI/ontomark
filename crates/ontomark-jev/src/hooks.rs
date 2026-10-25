@@ -75,7 +75,9 @@ impl<T: Transport> JevFactJudge<T> {
             let answers = self.0.ask(state, fact_questions(batch.len()))?;
             for i in 0..batch.len() {
                 let p = noul(&answers[&format!("c{i}")])?;
-                out.push(if p <= self.0.config.reject_at_or_below {
+                let reject = self.0.config.reject_at_or_below;
+                // A threshold of 0 means "never withhold", even for p = 0.
+                out.push(if reject > 0.0 && p <= reject {
                     Verdict::Unsupported
                 } else if p >= 0.5 {
                     Verdict::Supported
@@ -153,7 +155,9 @@ impl<T: Transport> JevSelector<T> {
                     (0..q.candidates.len()).map(|c| format!("c{c}")).collect();
                 offered.push("none".into());
                 let (key, conf) = choice(&answers[&format!("g{i}")], &offered)?;
-                if conf < self.0.config.select_min_confidence {
+                let min = self.0.config.select_min_confidence;
+                // A threshold of 1 means "never narrow", even for confidence 1.
+                if min >= 1.0 || conf < min {
                     return Ok(Selection::Undecided);
                 }
                 Ok(match key {

@@ -346,7 +346,7 @@ fn default_thresholds_are_inert() {
         ..enabled()
     };
     // Even a confident "no" cannot withhold anything until thresholds are fitted.
-    let (c, _) = client(cfg, Mock::new(noul_reply(&[0.01, 0.01])));
+    let (c, _) = client(cfg, Mock::new(noul_reply(&[0.0, 0.0])));
     let out = ingest
         .accept_judged(&w.note, &request, &responses(), &JevFactJudge(c))
         .unwrap();
@@ -560,7 +560,7 @@ fn default_selector_threshold_is_inert() {
         select_min_confidence: JevConfig::default().select_min_confidence,
         ..enabled()
     };
-    let (c, _) = client(cfg, Mock::new(choice_reply("none", 0.99)));
+    let (c, _) = client(cfg, Mock::new(choice_reply("none", 1.0)));
     let out = ingest
         .select_responses(&request, &host_candidates(), &JevSelector(c))
         .unwrap();
