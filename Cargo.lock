@@ -978,6 +978,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ontomark-jev"
+version = "0.6.0"
+dependencies = [
+ "ontomark-ingest",
+ "ontomark-model",
+ "ontomark-parse",
+ "serde_json",
+ "ureq",
+]
+
+[[package]]
 name = "ontomark-model"
 version = "0.1.2"
 dependencies = [

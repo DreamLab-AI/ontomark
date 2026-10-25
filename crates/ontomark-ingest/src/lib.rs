@@ -70,6 +70,7 @@
 mod accept;
 mod contract;
 mod error;
+mod judge;
 mod vocabulary;
 
 pub mod chunk;
@@ -86,6 +87,11 @@ pub use contract::{
     INSTRUCTIONS,
 };
 pub use error::IngestError;
+pub use judge::{
+    CandidateSelector, FactClaim, FactJudge, FieldSuggester, FieldSuggestion, HostCandidate,
+    JudgeOutcome, Judged, NoJudge, NoSelector, NoSuggester, RawSuggestion, Selected, Selection,
+    SelectionQuestion, SuggestionCandidate, SuggestionQuestion, Suggestions, Unavailable, Verdict,
+};
 pub use similarity::{AliasTier, LexicalThresholds};
 pub use vocabulary::{Grounding, Suggestion, Term, Vocabulary};
 

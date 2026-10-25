@@ -132,6 +132,10 @@ pub enum WithholdReason {
     UnpatchableKey,
     /// The note already holds this value.
     AlreadyPresent,
+    /// An optional host-supplied judge (see [`crate::FactJudge`]) found the
+    /// quote does not entail the fact. The judge can only add this reason;
+    /// it never lets a value through that [`crate::Ingest::accept`] refused.
+    JudgedUnsupported,
 }
 
 /// A proposed value that was not written, and why.
@@ -594,7 +598,7 @@ fn existing_state(
 /// the model resolves it back to that entity alone, else the vault path.
 /// When neither does, no link is safe to write, and the targets tried are
 /// returned.
-fn link_target(
+pub(crate) fn link_target(
     profile: &dyn Profile,
     model: &Model,
     term: &Term,
@@ -652,7 +656,7 @@ fn mentions(quote: &str, proposed: &str, resolved: &Resolved, vocabulary: &Vocab
 }
 
 /// The kind a name must have for `form` when the subject has `subject`.
-fn expected_kind(form: PredicateForm, subject: Kind) -> Option<Kind> {
+pub(crate) fn expected_kind(form: PredicateForm, subject: Kind) -> Option<Kind> {
     match form {
         PredicateForm::SubClassOf
         | PredicateForm::EquivalentClass
@@ -668,7 +672,7 @@ fn expected_kind(form: PredicateForm, subject: Kind) -> Option<Kind> {
     }
 }
 
-fn kind_fits(expected: Kind, found: Kind) -> bool {
+pub(crate) fn kind_fits(expected: Kind, found: Kind) -> bool {
     match (expected, found) {
         (Kind::Property(_), Kind::Property(_)) => true,
         (e, f) => e == f,

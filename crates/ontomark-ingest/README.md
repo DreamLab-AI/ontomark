@@ -144,3 +144,16 @@ and `unicode-normalization` (MIT OR Apache-2.0).
 ## Licence
 
 MIT OR Apache-2.0.
+
+## Jev option (hooks)
+
+`Ingest::accept_judged`, `Ingest::select_responses` and
+`Ingest::suggest_fields` take an optional host-supplied judge, selector or
+suggester ([`FactJudge`], [`CandidateSelector`], [`FieldSuggester`]). Their
+defaults ([`NoJudge`], [`NoSelector`], [`NoSuggester`]) are always
+unavailable, so a call with a default returns what the call without a hook
+returns. This crate still performs no I/O: the typed-decision client lives in
+[`ontomark-jev`](../ontomark-jev), off by default. Hooks can only withhold or
+narrow what `accept` would have produced, or propose a field for review; every
+existing check runs after them. Proposed research candidates; no measured
+uplift.

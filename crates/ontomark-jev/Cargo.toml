@@ -1,0 +1,29 @@
+[package]
+name = "ontomark-jev"
+description = "Host-side Jev option for Ontomark assisted ingest: typed Choice/Noul decisions over POST /v1/systemone behind the ontomark-ingest hooks. Off by default, falls back to the plain path on any failure."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+readme = "README.md"
+publish = false
+
+[features]
+default = []
+## A blocking `ureq` transport. Without it the crate has no network code at
+## all and a host supplies its own `Transport`.
+http = ["dep:ureq"]
+
+[dependencies]
+ontomark-ingest = { workspace = true }
+ontomark-model = { workspace = true }
+serde_json = { workspace = true }
+ureq = { version = "2", features = ["json"], optional = true }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+ontomark-parse = { workspace = true }
