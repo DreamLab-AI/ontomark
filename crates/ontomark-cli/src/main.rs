@@ -69,6 +69,8 @@ use ontomark_compile::write::{apply, create, edit};
 use serde_json::json;
 
 mod embed;
+#[cfg(feature = "jev")]
+mod jev_create;
 mod migrate_cmd;
 use migrate_cmd::{vault_kinds, VAULT_VALUES};
 use ontomark_compile::{build, reason};
@@ -308,6 +310,12 @@ struct CreateArgs {
     /// Check everything and report, without writing.
     #[arg(long)]
     dry_run: bool,
+    /// Jev option: also print advisory domain, type and parent suggestions for
+    /// the new page. Needs `ONTOMARK_JEV=1` and a local endpoint; never
+    /// writes or changes what `create` does. Off by default.
+    #[cfg(feature = "jev")]
+    #[arg(long)]
+    suggest: bool,
 }
 
 #[derive(Debug, Args)]
@@ -1026,6 +1034,16 @@ fn run() -> anyhow::Result<ExitCode> {
             }
             let mut value = serde_json::to_value(&outcome)?;
             value["dry_run"] = json!(args.dry_run);
+            #[cfg(feature = "jev")]
+            let suggestion = if args.suggest {
+                jev_create::suggest(&staged, &outcome.page, &vault, &vocab)
+            } else {
+                None
+            };
+            #[cfg(feature = "jev")]
+            if let Some(s) = &suggestion {
+                value["jev_suggestion"] = jev_create::to_json(s);
+            }
             emit(cli.json, &value, || {
                 println!(
                     "{} {}{}",
@@ -1038,6 +1056,10 @@ fn run() -> anyhow::Result<ExitCode> {
                     if args.dry_run { " (dry run)" } else { "" }
                 );
                 print_changes(&outcome.changes);
+                #[cfg(feature = "jev")]
+                if let Some(s) = &suggestion {
+                    jev_create::print(s);
+                }
             })?;
             Ok(ExitCode::SUCCESS)
         }

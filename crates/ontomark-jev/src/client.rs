@@ -133,6 +133,24 @@ impl<T: Transport> JevClient<T> {
         out
     }
 
+    /// [`Self::ask`] for a local-only caller: refuses an endpoint that is not
+    /// declared local unless `allow_cloud` is set, before any request is built.
+    pub(crate) fn ask_local(
+        &self,
+        state: Value,
+        questions: Map<String, Value>,
+    ) -> Result<Map<String, Value>, Unavailable> {
+        if self.config.enabled {
+            let declared = self.config.local
+                || self.config.allow_cloud
+                || (self.env)("AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL").is_some_and(|v| v.trim() == "1");
+            if !declared {
+                return Err(Unavailable::new("not-local"));
+            }
+        }
+        self.round_trip(state, questions)
+    }
+
     /// Ask `questions` about `state`; returns the `answers` object, or an
     /// [`Unavailable`] carrying the one-word fallback reason.
     pub(crate) fn ask(

@@ -26,8 +26,23 @@ of [`ontomark-ingest`](../ontomark-ingest). Not published (`publish = false`).
 | OM-06-S1-02 select candidate names and evidence spans without generation | `JevSelector` | `Ingest::select_responses` | One Choice per (chunk, key) group of host-generated candidates, with a `none` option. |
 | OM-01-S1-01 suggest explicit frontmatter type/relation fields | `JevSuggester` | `Ingest::suggest_fields` | One Choice per name-valued key over the vocabulary terms the note mentions, with `none`. |
 
+| VG-01-S1-02 (relocated from visionGraph) suggest domain/type/parents for a new concept | `JevCreateSuggester` | `ontomark create --suggest` (CLI feature `jev`) | A Noul per declared domain root and per retrieved candidate parent (independent, so multi-domain and multi-parent are kept), one Choice over the type vocabulary with `none`. |
+
+`create --suggest` is **advisory and local-only**. Build with `--features jev`
+(off by default; the default `ontomark` binary contains none of this code),
+set `ONTOMARK_JEV=1`, and point it at an endpoint declared local
+(`ONTOMARK_JEV_LOCAL=1`); a non-local endpoint is refused (`not-local`, no
+request built) unless `ONTOMARK_JEV_ALLOW_CLOUD=1`. Candidates come only from
+`scalars.domain.roots`, the vocabulary's `types`, and parents retrieved by
+`find` over the knowledge vault; the result is printed (`jev_suggestion` under
+`--json`) after `create` has validated the page and never alters the page
+written or any other output. Any fallback prints exactly what `create` printed
+before. A refused creation sends nothing. What leaves: the staged title, the
+first 2,000 characters of its body, the domain names, type names and the
+titles/types of candidate parents.
+
 Question-set versions: `ontomark.fact-support/1`, `ontomark.candidate-select/1`,
-`ontomark.field-suggest/1`; the version is logged with every fallback.
+`ontomark.field-suggest/1`, `ontomark.create-suggest/1`; the version is logged with every fallback.
 
 ### Authority stays in code
 

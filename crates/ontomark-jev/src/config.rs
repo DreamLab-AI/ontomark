@@ -27,6 +27,10 @@ pub struct JevConfig {
     /// Vault notes are private: refuse the agentbox proxy and the cloud
     /// endpoint unless declared local. Defaults to `true`.
     pub local_only: bool,
+    /// `ontomark create --suggest` is local-only: it refuses an endpoint not
+    /// declared local (`local`, or `AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL=1`)
+    /// unless this is `true`, because the vault is private. Default `false`.
+    pub allow_cloud: bool,
     /// Hard deadline for one request. Defaults to 4 s; there are no retries.
     pub timeout: Duration,
     /// [`crate::JevFactJudge`] withholds a fact only when the probability
@@ -41,6 +45,9 @@ pub struct JevConfig {
     pub suggest_min_confidence: f64,
     /// A suggestion below this confidence is flagged ambiguous. Default 0.75.
     pub suggest_clear_confidence: f64,
+    /// [`crate::JevCreateSuggester`] includes a domain or parent only at or
+    /// above this Noul probability. Default 0.7 (advisory output only).
+    pub suggest_min_probability: f64,
 }
 
 impl Default for JevConfig {
@@ -52,11 +59,13 @@ impl Default for JevConfig {
             key_env: None,
             local: false,
             local_only: true,
+            allow_cloud: false,
             timeout: Duration::from_secs(4),
             reject_at_or_below: 0.0,
             select_min_confidence: 1.0,
             suggest_min_confidence: 0.5,
             suggest_clear_confidence: 0.75,
+            suggest_min_probability: 0.7,
         }
     }
 }
@@ -101,6 +110,7 @@ impl JevConfig {
             model: nonempty(env("ONTOMARK_JEV_MODEL")),
             key_env: nonempty(env("ONTOMARK_JEV_KEY_ENV")),
             local: flag(env("ONTOMARK_JEV_LOCAL")),
+            allow_cloud: flag(env("ONTOMARK_JEV_ALLOW_CLOUD")),
             ..Self::default()
         }
     }

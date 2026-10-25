@@ -30,12 +30,17 @@
 
 mod client;
 mod config;
+mod create;
 mod hooks;
 
 #[cfg(feature = "http")]
 pub use client::UreqTransport;
 pub use client::{EnvReader, JevClient, LogSink, Transport, TransportError};
 pub use config::{JevConfig, Resolved, CLOUD_ENDPOINT, DEFAULT_MODEL};
+pub use create::{
+    create_questions, create_state, CreateQuestion, CreateSuggestion, JevCreateSuggester,
+    ParentCandidate, CREATE_SET,
+};
 pub use hooks::{
     fact_questions, fact_state, select_questions, select_state, suggest_questions, suggest_state,
     JevFactJudge, JevSelector, JevSuggester, FACT_SET, SELECT_SET, SUGGEST_SET,
