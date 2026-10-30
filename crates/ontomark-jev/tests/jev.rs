@@ -629,3 +629,65 @@ fn suggester_fallbacks_return_nothing_and_a_confident_choice_is_validated() {
         .unwrap();
     assert!(out.proposals.is_empty() && out.ambiguous.len() == 2);
 }
+
+fn env_vec<'a>(pairs: &'a [(&'a str, &'a str)]) -> impl Fn(&str) -> Option<String> + 'a {
+    move |k| {
+        pairs
+            .iter()
+            .find(|(n, _)| *n == k)
+            .map(|(_, v)| (*v).to_owned())
+    }
+}
+
+#[test]
+fn from_env_allow_cloud_lifts_local_only_and_absent_keeps_it() {
+    let proxy: Vec<(&str, &str)> = vec![
+        ("ONTOMARK_JEV", "1"),
+        ("AGENTBOX_SYSTEM_ONE_PROXY", "1"),
+        (
+            "AGENTBOX_SYSTEM_ONE_ENDPOINT",
+            "http://127.0.0.1:1/v1/systemone",
+        ),
+        ("AGENTBOX_SYSTEM_ONE_MODEL", "jev-latest"),
+        ("AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL", "0"),
+        ("TYPESAFE_API_KEY", "k"),
+    ];
+    // ALLOW_CLOUD absent: local-only is kept, the cloud proxy and TypeSafe are refused.
+    let cfg = JevConfig::from_env(&env_vec(&proxy));
+    assert!(cfg.local_only);
+    assert_eq!(
+        cfg.resolve(&env_vec(&proxy)).unwrap_err().reason,
+        "no-endpoint"
+    );
+    // ALLOW_CLOUD=0 and any non-"1" value behave like absent.
+    for v in ["0", "", "true"] {
+        let mut e = proxy.clone();
+        e.push(("ONTOMARK_JEV_ALLOW_CLOUD", v));
+        assert!(JevConfig::from_env(&env_vec(&e)).local_only, "{v:?}");
+    }
+    // ALLOW_CLOUD=1: not local-only; the keyless proxy is used.
+    let mut e = proxy.clone();
+    e.push(("ONTOMARK_JEV_ALLOW_CLOUD", "1"));
+    let cfg = JevConfig::from_env(&env_vec(&e));
+    assert!(!cfg.local_only && cfg.allow_cloud);
+    let r = cfg.resolve(&env_vec(&e)).unwrap();
+    assert_eq!(r.url, "http://127.0.0.1:1/v1/systemone");
+    assert_eq!(r.bearer, None);
+    // ... and without the proxy, the TypeSafe step is allowed.
+    let ts = vec![
+        ("ONTOMARK_JEV", "1"),
+        ("ONTOMARK_JEV_ALLOW_CLOUD", "1"),
+        ("TYPESAFE_API_KEY", "k"),
+    ];
+    let r = JevConfig::from_env(&env_vec(&ts))
+        .resolve(&env_vec(&ts))
+        .unwrap();
+    assert_eq!(r.url, CLOUD_ENDPOINT);
+    // An explicit endpoint still wins over the proxy.
+    let mut x = e.clone();
+    x.push(("ONTOMARK_JEV_ENDPOINT", "http://x.invalid/s"));
+    let r = JevConfig::from_env(&env_vec(&x))
+        .resolve(&env_vec(&x))
+        .unwrap();
+    assert_eq!(r.url, "http://x.invalid/s");
+}

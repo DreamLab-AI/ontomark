@@ -25,7 +25,9 @@ pub struct JevConfig {
     /// The configured endpoint is declared local to this machine/estate.
     pub local: bool,
     /// Vault notes are private: refuse the agentbox proxy and the cloud
-    /// endpoint unless declared local. Defaults to `true`.
+    /// endpoint unless declared local. [`JevConfig::default`] is `true` (a
+    /// caller constructing the option in code stays private); [`JevConfig::from_env`]
+    /// sets it to `false` when `ONTOMARK_JEV_ALLOW_CLOUD=1`.
     pub local_only: bool,
     /// `ontomark create --suggest` is local-only: it refuses an endpoint not
     /// declared local (`local`, or `AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL=1`)
@@ -103,14 +105,21 @@ impl JevConfig {
     /// Read the option from the environment: `ONTOMARK_JEV=1` enables it;
     /// `ONTOMARK_JEV_ENDPOINT`, `ONTOMARK_JEV_MODEL`, `ONTOMARK_JEV_KEY_ENV`
     /// and `ONTOMARK_JEV_LOCAL=1` fill the explicit step.
+    ///
+    /// `ONTOMARK_JEV_ALLOW_CLOUD=1` sets [`allow_cloud`](Self::allow_cloud)
+    /// and lifts [`local_only`](Self::local_only), so the agentbox proxy and
+    /// the `TYPESAFE_API_KEY` step are allowed. Absent (or any other value) the
+    /// consumer stays local-only and refuses both unless declared local.
     pub fn from_env(env: &dyn Fn(&str) -> Option<String>) -> Self {
+        let allow_cloud = flag(env("ONTOMARK_JEV_ALLOW_CLOUD"));
         Self {
             enabled: flag(env("ONTOMARK_JEV")),
             endpoint: nonempty(env("ONTOMARK_JEV_ENDPOINT")),
             model: nonempty(env("ONTOMARK_JEV_MODEL")),
             key_env: nonempty(env("ONTOMARK_JEV_KEY_ENV")),
             local: flag(env("ONTOMARK_JEV_LOCAL")),
-            allow_cloud: flag(env("ONTOMARK_JEV_ALLOW_CLOUD")),
+            allow_cloud,
+            local_only: !allow_cloud,
             ..Self::default()
         }
     }

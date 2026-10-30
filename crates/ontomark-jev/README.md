@@ -13,7 +13,7 @@ of [`ontomark-ingest`](../ontomark-ingest). Not published (`publish = false`).
 | | |
 |---|---|
 | **What leaves** | Only when enabled and only for the call you make: the note's label, the accepted fact (`key`, written value, predicate IRI) and the located evidence quote (fact check); the chunk text plus candidate values and quotes (selection); the first 2,000 characters of the note body plus the labels and kinds of vocabulary terms it mentions (field suggestion). Nothing else, and no request content is ever logged. |
-| **Destination** | The endpoint you configure. Order: explicit `ONTOMARK_JEV_ENDPOINT` (+ `ONTOMARK_JEV_MODEL`, `ONTOMARK_JEV_KEY_ENV` naming the variable that holds the bearer key); else the agentbox loopback proxy (`AGENTBOX_SYSTEM_ONE_PROXY=1`, `AGENTBOX_SYSTEM_ONE_ENDPOINT`, `AGENTBOX_SYSTEM_ONE_MODEL`, no Authorization header); else `https://api.typesafe.ai/v1/systemone` with `TYPESAFE_API_KEY`. Vault notes are **local-only**: the proxy and the cloud key are refused unless declared local (`ONTOMARK_JEV_LOCAL=1` or `AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL=1`), and the cloud endpoint is therefore reachable only as an explicit endpoint you typed. |
+| **Destination** | The endpoint you configure. Order: explicit `ONTOMARK_JEV_ENDPOINT` (+ `ONTOMARK_JEV_MODEL`, `ONTOMARK_JEV_KEY_ENV` naming the variable that holds the bearer key); else the agentbox loopback proxy (`AGENTBOX_SYSTEM_ONE_PROXY=1`, `AGENTBOX_SYSTEM_ONE_ENDPOINT`, `AGENTBOX_SYSTEM_ONE_MODEL`, no Authorization header); else `https://api.typesafe.ai/v1/systemone` with `TYPESAFE_API_KEY`. A consumer is **local-only** unless `ONTOMARK_JEV_ALLOW_CLOUD=1` is set (the agentbox default): while local-only, the proxy and the cloud key are refused unless declared local (`ONTOMARK_JEV_LOCAL=1` or `AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL=1`), and the cloud endpoint is reachable only as an explicit endpoint you typed. With `ONTOMARK_JEV_ALLOW_CLOUD=1` the proxy and the TypeSafe step are both allowed. `JevConfig::default()` stays local-only for callers that build the option in code. |
 | **Flag** | `ONTOMARK_JEV=1` / `JevConfig { enabled: true, .. }`. |
 | **Default** | **Off.** With the flag off no request is built and nothing leaves the process. The default build of every other crate is unchanged: nothing depends on this crate, and without the `http` feature it contains no network code (a host supplies a `Transport`). |
 | **Egress** | `http` feature: blocking `ureq`, hard 4 s deadline, no retries. |
@@ -28,7 +28,7 @@ of [`ontomark-ingest`](../ontomark-ingest). Not published (`publish = false`).
 
 | VG-01-S1-02 (relocated from visionGraph) suggest domain/type/parents for a new concept | `JevCreateSuggester` | `ontomark create --suggest` (CLI feature `jev`) | A Noul per declared domain root and per retrieved candidate parent (independent, so multi-domain and multi-parent are kept), one Choice over the type vocabulary with `none`. |
 
-`create --suggest` is **advisory and local-only**. Build with `--features jev`
+`create --suggest` is **advisory** and local-only unless `ONTOMARK_JEV_ALLOW_CLOUD=1`. Build with `--features jev`
 (off by default; the default `ontomark` binary contains none of this code),
 set `ONTOMARK_JEV=1`, and point it at an endpoint declared local
 (`ONTOMARK_JEV_LOCAL=1`); a non-local endpoint is refused (`not-local`, no

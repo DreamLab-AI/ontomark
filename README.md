@@ -135,11 +135,11 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 | [ontomark-ingest](crates/ontomark-ingest) | 0.1.0 | Assisted ingest: the pure plan/accept contract, grounding, lexical guards, evidence spans. No I/O, no model. |
 | [ontomark-jev](crates/ontomark-jev) | unpublished | Opt-in **Jev option** for ingest (typed Choice/Noul decisions via System One), off by default, exact fallback to the plain path. See its README. |
 | [rdfs-certificate](crates/rdfs-certificate) | 0.1.0 | RDFS forward chaining that records every step in the `oo-cert/1` certificate format an independent checker re-verifies, and the consequence delta between two graphs. No graph library; used by ontomark and by VisionClaw's `vault`. |
-| [ontomark-compile](crates/ontomark-compile) | 0.6.0 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity, the derivation certificate. |
+| [ontomark-compile](crates/ontomark-compile) | 0.6.1 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity, the derivation certificate. |
 | [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | The shared binary graph format and its zero-copy reader. |
 | [ontomark-profile-estate](profiles/estate) | 0.4.0 | The DreamLab estate's rules as data; most users want `--profile generic` and never depend on it. |
 | [ontomark-wasm](crates/ontomark-wasm) | release asset | The worker-friendly engine protocol: index, update, classify, query, patch, ingest. |
-| [ontomark](crates/ontomark-cli) | 0.6.0 | The installable CLI: `cargo install ontomark`. |
+| [ontomark](crates/ontomark-cli) | 0.6.1 | The installable CLI: `cargo install ontomark`. |
 | [ontomark-graph](packages/graph) | [0.1.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.1.0) | The shared offline graph renderer for desktop and web hosts. |
 
 Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.

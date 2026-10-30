@@ -23,9 +23,9 @@ default = []
 jev = ["dep:ontomark-jev"]
 
 [dependencies]
-ontomark-jev = { path = "../ontomark-jev", version = "0.6.0", features = ["http"], optional = true }
-ontomark-compile = { path = "../ontomark-compile", version = "0.6.0" }
-ontomark-profile-estate = { path = "../../profiles/estate", version = "0.6.0" }
+ontomark-jev = { path = "../ontomark-jev", version = "0.6.1", features = ["http"], optional = true }
+ontomark-compile = { path = "../ontomark-compile", version = "0.6.1" }
+ontomark-profile-estate = { path = "../../profiles/estate", version = "0.6.1" }
 anyhow = "1"
 clap = { version = "4.5", features = ["derive", "env"] }
 serde_json = { workspace = true, features = ["preserve_order"] }
