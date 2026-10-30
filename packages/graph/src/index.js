@@ -1,5 +1,6 @@
 /** Shared graph view. Host applications supply data and navigation; this module
- * owns validation, traversal, rendering, pan/zoom and selection, with no I/O.
+ * owns validation, traversal, rendering, pan/zoom, selection and node dragging,
+ * with no I/O.
  * Radius scaling and orthographic interaction follow Narrative Goldmine's
  * GraphCanvas/palette design; the DOM adapter avoids a site-wide React store.
  */
@@ -38,7 +39,7 @@ export function mountGraph(container,initial,options={}) {
   validateGraph(initial);
   const doc=container.ownerDocument;const win=doc.defaultView;
   const canvas=doc.createElement('canvas');canvas.className='ontomark-graph-canvas';canvas.tabIndex=0;
-  canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Ontology graph. Drag to pan, scroll to zoom. Arrow keys select nodes; Enter opens the selected note.');
+  canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Ontology graph. Drag a node to move it, drag the background to pan, scroll to zoom. Arrow keys select nodes; Enter opens the selected note.');
   canvas.style.cssText='display:block;width:100%;height:100%;min-height:260px;touch-action:none;outline-offset:-3px';
   const status=doc.createElement('div');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   status.style.cssText='position:absolute;left:8px;bottom:8px;font:12px sans-serif;pointer-events:none';
@@ -50,6 +51,10 @@ export function mountGraph(container,initial,options={}) {
   const scale=()=>Math.max(1,Math.min(win.devicePixelRatio||1,2));
   const screen=(p)=>({x:(p.x-cx)*zoom+width/2,y:(p.y-cy)*zoom+height/2});
   const radius=(n)=>Math.min(12,5+Math.log2(1+(n.degree??0)));
+  const world=(e)=>{const rect=canvas.getBoundingClientRect();return {x:(e.clientX-rect.left-width/2)/zoom+cx,y:(e.clientY-rect.top-height/2)/zoom+cy};};
+  // A node drag starts only past the click threshold, so a plain click never reaches the host's layout;
+  // every started drag ends exactly once, whether by release, cancel, a new graph or teardown.
+  function endDrag(){const d=drag;drag=null;if(d?.active){const n=lookup.get(d.node);if(n)options.onDragEnd?.(n,{...positions.get(d.node)});}}
   function request(){if(!dead&&!frame)frame=win.requestAnimationFrame(draw);}
   function draw(){
     frame=0;if(dead)return;
@@ -83,10 +88,15 @@ export function mountGraph(container,initial,options={}) {
   }
   function setSelection(id){if(id!==null&&!lookup.has(id))throw new Error('Unknown selected node');selected=id;request();}
   const pick=(e)=>{const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;let found=null,dist=Infinity;for(const n of graph.nodes){const p=screen(positions.get(n.id)),d=Math.hypot(x-p.x,y-p.y);if(d<radius(n)+7&&d<dist){found=n;dist=d;}}return found;};
-  listen('pointerdown',e=>{if(e.button!==0)return;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};moved=false;canvas.setPointerCapture(e.pointerId);});
-  listen('pointermove',e=>{if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>3)moved=true;cx-=dx/zoom;cy-=dy/zoom;drag={...drag,x:e.clientX,y:e.clientY};request();}else{const n=pick(e);if(hover!==(n?.id??null))options.onHover?.(n);hover=n?.id??null;canvas.title=n?.label??'';canvas.style.cursor=n?'pointer':'grab';request();}});
-  listen('pointerup',e=>{if(!drag)return;drag=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);if(!moved){const n=pick(e);setSelection(n?.id??null);options.onSelect?.(n);}request();});
-  listen('pointercancel',()=>{drag=null;});
+  listen('pointerdown',e=>{if(e.button!==0)return;const n=pick(e);drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,node:null,active:false};
+    if(n){const w=world(e),p=positions.get(n.id);drag.node=n.id;drag.ox=w.x-p.x;drag.oy=w.y-p.y;}moved=false;canvas.setPointerCapture(e.pointerId);});
+  listen('pointermove',e=>{if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>3)moved=true;
+    if(drag.node){if(!moved)return;const n=lookup.get(drag.node),w=world(e),p={x:w.x-drag.ox,y:w.y-drag.oy};
+      if(!drag.active){drag.active=true;canvas.style.cursor='grabbing';options.onDragStart?.(n,{...positions.get(n.id)});}
+      positions.set(n.id,p);options.onDrag?.(n,{...p});request();return;}
+    cx-=dx/zoom;cy-=dy/zoom;drag={...drag,x:e.clientX,y:e.clientY};request();}else{const n=pick(e);if(hover!==(n?.id??null))options.onHover?.(n);hover=n?.id??null;canvas.title=n?.label??'';canvas.style.cursor=n?'pointer':'grab';request();}});
+  listen('pointerup',e=>{if(!drag)return;endDrag();if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);if(!moved){const n=pick(e);setSelection(n?.id??null);options.onSelect?.(n);}request();});
+  listen('pointercancel',()=>{endDrag();});
   listen('pointerleave',()=>{if(!drag){hover=null;options.onHover?.(null);request();}});
   listen('dblclick',e=>{const n=pick(e);if(n)options.onActivate?.(n);});
   listen('wheel',e=>{e.preventDefault();const rect=canvas.getBoundingClientRect(),px=e.clientX-rect.left-width/2,py=e.clientY-rect.top-height/2;const old=zoom;zoom=Math.max(.05,Math.min(30,zoom*Math.exp(-e.deltaY*.001)));cx+=px/old-px/zoom;cy+=py/old-py/zoom;request();},{passive:false});
@@ -94,11 +104,11 @@ export function mountGraph(container,initial,options={}) {
   function zoomBy(factor){if(!Number.isFinite(factor)||factor<=0)throw new Error('Invalid zoom factor');zoom=Math.max(.05,Math.min(30,zoom*factor));request();}
   const observer=new win.ResizeObserver(resize);observer.observe(container);resize();fit();
   return {
-    setGraph(next,{preserveViewport=false}={}){validateGraph(next);graph=next;lookup=new Map(next.nodes.map(n=>[n.id,n]));positions=seedPositions(next);if(selected&&!lookup.has(selected))selected=null;hover=null;if(preserveViewport)request();else fit();},
-    setPositions(next){if(next.length!==graph.nodes.length*2||!Array.from(next).every(Number.isFinite))throw new Error('Position snapshot length/values invalid');graph.nodes.forEach((n,i)=>positions.set(n.id,{x:next[i*2],y:next[i*2+1]}));request();},
+    setGraph(next,{preserveViewport=false}={}){validateGraph(next);endDrag();graph=next;lookup=new Map(next.nodes.map(n=>[n.id,n]));positions=seedPositions(next);if(selected&&!lookup.has(selected))selected=null;hover=null;if(preserveViewport)request();else fit();},
+    setPositions(next){if(next.length!==graph.nodes.length*2||!Array.from(next).every(Number.isFinite))throw new Error('Position snapshot length/values invalid');graph.nodes.forEach((n,i)=>{if(!(drag?.active&&n.id===drag.node))positions.set(n.id,{x:next[i*2],y:next[i*2+1]});});request();},
     setOptions(next){Object.assign(options,next);request();},
     setSelection,fit,zoomBy,getState:()=>({selected,zoom,nodes:graph.nodes.length,edges:graph.edges.length}),
-    destroy(){if(dead)return;dead=true;if(frame)win.cancelAnimationFrame(frame);observer.disconnect();for(const [t,f,o] of listeners)canvas.removeEventListener(t,f,o);canvas.remove();status.remove();container.style.position=previousPosition;positions.clear();lookup.clear();},
+    destroy(){if(dead)return;endDrag();dead=true;if(frame)win.cancelAnimationFrame(frame);observer.disconnect();for(const [t,f,o] of listeners)canvas.removeEventListener(t,f,o);canvas.remove();status.remove();container.style.position=previousPosition;positions.clear();lookup.clear();},
   };
 }
 

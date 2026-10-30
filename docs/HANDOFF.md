@@ -54,7 +54,7 @@ crate's NOTICE.
 | --- | --- |
 | CLI | GitHub `v0.1.0-rc.1`, clean source `21cd9ff`; Linux x86-64 binary verified on Debian 12 without networking. |
 | Plugin engine | Same prerelease, SHA-256 `f810962b1b71e28653737f2cbbe3a06a5e1a8e6c059e452a2292b6af05b2023a`; embedded in the plugin. |
-| Shared renderer | `ontomark-graph-v0.1.0`, immutable npm-format tarball, SHA-256 `de491e2d7d947503d3c49c140193c88a9d17cfec5fbb334166002049c8d56aa5`. |
+| Shared renderer | `ontomark-graph-v0.2.0` (node dragging), immutable npm-format tarball, SHA-256 `850a8a22e27e2b0861cfd64f1b7eaeaa4b661efff58f7281b95553678ca56f45`. |
 | Obsidian | Separate `DreamLab-AI/ontomark-obsidian`; released installable Linux ZIP at tag `0.1.0`; real desktop and offline gates pass. |
 | VOWL | crates.io `vowl-wasm` 0.2.0 and GitHub browser tarball; main `8c78a25` passes all 18 hosted jobs (run `38177385305`), including the reviewed release-notice guard. npm trusted-publisher configuration still prevents npm registry publication. |
 | Narrative Goldmine | Runtime `9cf6cb8` uses the released CLI, shared renderer and WASM codec. Its 92 unit tests, six native notice-tool tests, 23 publisher contracts and built-browser acceptance pass. [Publisher run](https://github.com/jjohare/visionGraph/actions/runs/38179004619) and [Pages deployment](https://github.com/DreamLab-AI/knowledgeGraph/actions/runs/38180896856) succeeded; public graph/About routes and notices are verified. |

@@ -140,7 +140,7 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 | [ontomark-profile-estate](profiles/estate) | 0.4.0 | The DreamLab estate's rules as data; most users want `--profile generic` and never depend on it. |
 | [ontomark-wasm](crates/ontomark-wasm) | release asset | The worker-friendly engine protocol: index, update, classify, query, patch, ingest. |
 | [ontomark](crates/ontomark-cli) | 0.6.1 | The installable CLI: `cargo install ontomark`. |
-| [ontomark-graph](packages/graph) | [0.1.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.1.0) | The shared offline graph renderer for desktop and web hosts. |
+| [ontomark-graph](packages/graph) | [0.2.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.2.0) | The shared offline graph renderer for desktop and web hosts. |
 
 Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.
 
