@@ -1,9 +1,9 @@
 # ADR-OM-003: native, host-driven assisted ingest
 
-- Status: Proposed
+- Status: Accepted (close-out 2026-10-30; see the note at the end)
 - Date: 2026-10-12
-- Implementation: first slice landed in `crates/ontomark-ingest` (facts only; native tests, strict lints and docs, wasm32 build pass). Not published; not exposed through `ontomark-wasm`; not consumed by the plugin. No release contains OntoCast code.
-- Activation: inactive
+- Implementation: complete for the engine scope (the first slice, facts only). `crates/ontomark-ingest` is published as `ontomark-ingest` 0.1.0, and `ontomark-wasm` exposes `ingest_plan` and `ingest_accept` (`crates/ontomark-wasm/src/engine.rs`). The plugin side belongs to ADR-OBS-002.
+- Activation: staged (the crate is published and the plugin client calls both requests; installed-Obsidian acceptance, verification item 5, is not recorded)
 - Related: [ADR-OM-002](ADR-OM-002-shared-graph-and-obsidian-boundary.md), [OntoCast triage](../ONTOCAST-TRIAGE.md), [ADR-OBS-002](https://github.com/DreamLab-AI/ontomark-obsidian/blob/main/docs/adr/ADR-OBS-002-assisted-ingest-boundary-and-estate-notes.md), [upstream credits](../UPSTREAMS.md)
 
 ## Context
@@ -166,3 +166,14 @@ To let a profile derive identity from the note's path without breaking the publi
 **Keys are offered by kind.** `plan` now filters the profile's predicates by the note's kind using the model's own subject rules (`contract::applies_to`): a class is never offered `instance-of`, an individual never `subclass-of`, a property only its hierarchy. `accept` recomputes the same list, so a hand-built request cannot widen it. The engine bridge declares `domain` and `range` as annotations (the typed model has no property-axiom form), so a class note is still offered them; the engine's projection reads them itself, and a future property-axiom form in the model removes the looseness.
 
 Deviations between the bridge and the engine projection, recorded rather than hidden: the engine reads a `subclass-of` key on an individual as a type assertion; the bridge declares the key as `SubClassOf`, so on an individual the model rejects it with a diagnostic (the fixture vault's individuals use `instance-of`, so parity holds). A `type` value that names no kind is an ordinary note on both sides.
+
+## Close-out 2026-10-30
+
+`Proposed / first slice / inactive` → `Accepted / complete (engine scope) / staged`, verified at `origin/main` `e42fc7a`. The owner took the decision by shipping it:
+
+- `crates/ontomark-ingest` is on `main`. `cargo search ontomark-ingest` → `ontomark-ingest = "0.1.0"`. The crates.io API `/api/v1/crates/ontomark-ingest/0.1.0` gives `created_at` 2026-10-12 and `published_by.login` `jjohare`.
+- Engine boundary: `crates/ontomark-wasm/src/engine.rs:168-179` documents `ingest_plan` and `ingest_accept`. `docs/HANDOFF.md:133` records the transcript golden re-blessed over both.
+- Attribution, which Consequences makes mandatory: `THIRD-PARTY-NOTICES.md:9` and `docs/UPSTREAMS.md:13` cite OntoCast at `abb8d7b8d6db1a765d4f091a7423937c2cbc5d78`.
+- Consumer: `DreamLab-AI/ontomark-obsidian` `origin/main` `src/client.ts:195,205` sends `ingest_plan` and `ingest_accept`. Its `engine.json` pins engine `v0.4.0`, which already carries them (`git show v0.4.0:crates/ontomark-wasm/src/engine.rs | grep -c ingest_plan` → 6). Activation is `staged`, not `live`, only because no installed-Obsidian acceptance (verification item 5) or EXP-11 enabled-path receipt is recorded.
+
+The Implementation line's former "Not published; not exposed through `ontomark-wasm`" was overtaken by the engine boundary section (12 October 2026) and the 0.1.0 publication. The open questions above remain open and are not decided by this note.
