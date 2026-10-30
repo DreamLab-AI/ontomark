@@ -169,7 +169,7 @@ Deviations between the bridge and the engine projection, recorded rather than hi
 
 ## Close-out 2026-10-30
 
-`Proposed / first slice / inactive` → `Accepted / complete (engine scope) / staged`, verified at `origin/main` `e42fc7a`. The owner took the decision by shipping it:
+`Proposed / first slice / inactive` → `Accepted / complete (engine scope) / staged`, verified at `origin/main` `e42fc7a`. The close-out reads the owner's own publication of `ontomark-ingest` 0.1.0 as the decision; that is an inference, not a recorded ratification, and the owner should confirm it (listed in the 2026-10-30 ratification batch):
 
 - `crates/ontomark-ingest` is on `main`. `cargo search ontomark-ingest` → `ontomark-ingest = "0.1.0"`. The crates.io API `/api/v1/crates/ontomark-ingest/0.1.0` gives `created_at` 2026-10-12 and `published_by.login` `jjohare`.
 - Engine boundary: `crates/ontomark-wasm/src/engine.rs:168-179` documents `ingest_plan` and `ingest_accept`. `docs/HANDOFF.md:133` records the transcript golden re-blessed over both.
