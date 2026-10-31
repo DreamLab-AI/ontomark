@@ -8,7 +8,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 readme = "README.md"
-publish = false
+homepage = "https://github.com/DreamLab-AI/ontomark"
+keywords = ["ontology", "obsidian", "llm", "ingest"]
+categories = ["text-processing"]
 
 [features]
 default = []

@@ -2,7 +2,7 @@
 
 Host-side **Jev option** for Ontomark assisted ingest: typed Choice and Noul
 decisions (TypeSafe System One, `POST /v1/systemone`) behind the three hooks
-of [`ontomark-ingest`](../ontomark-ingest). Not published (`publish = false`).
+of [`ontomark-ingest`](https://crates.io/crates/ontomark-ingest).
 
 > Proposed research candidate; **no measured uplift**. The wiring and the
 > fallback tests show that the option is safe to switch on, not that it helps.

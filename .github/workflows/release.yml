@@ -1,0 +1,64 @@
+name: release
+# Publishing a GitHub release `vX.Y.Z` attaches the two assets consumers pin
+# by tag and sha256: the static Linux CLI (visionGraph publish.yml, Agentbox)
+# and the plugin engine archive (ontomark-obsidian engine.json). Both are
+# built here from the tagged source, so no release asset is hand-built.
+on:
+  release: { types: [published] }
+permissions: { contents: write }
+jobs:
+  assets:
+    if: startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ github.event.release.tag_name }}" }
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: "x86_64-unknown-linux-gnu, wasm32-unknown-unknown" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: The tag names the workspace version
+        run: |
+          set -euo pipefail
+          version=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "ontomark") | .version')
+          [ "v$version" = "$TAG" ] || { echo "::error::tag $TAG but ontomark is $version"; exit 1; }
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Static CLI
+        env: { RUSTFLAGS: "-C target-feature=+crt-static" }
+        run: |
+          set -euo pipefail
+          cargo build --locked --release -p ontomark --target x86_64-unknown-linux-gnu
+          mkdir -p dist
+          cp target/x86_64-unknown-linux-gnu/release/ontomark dist/ontomark-x86_64-unknown-linux-gnu
+          file dist/ontomark-x86_64-unknown-linux-gnu | tee /dev/stderr | grep -q 'static-pie linked'
+          dist/ontomark-x86_64-unknown-linux-gnu --version
+      - run: cargo install wasm-bindgen-cli --version 0.2.127 --locked
+      - name: Install checksum-pinned Binaryen 132
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/binaryen"
+          gh release download version_132 --repo WebAssembly/binaryen \
+            --pattern binaryen-version_132-x86_64-linux.tar.gz --dir "$RUNNER_TEMP/binaryen"
+          cd "$RUNNER_TEMP/binaryen"
+          echo '195ddc94f9bc89f45abdabb0b9eea86023d727ba90eac8b35b80f2544fc30572  binaryen-version_132-x86_64-linux.tar.gz' | sha256sum --check --strict
+          tar -xf binaryen-version_132-x86_64-linux.tar.gz
+          echo "$RUNNER_TEMP/binaryen/binaryen-version_132/bin" >> "$GITHUB_PATH"
+      - name: Plugin engine archive
+        run: |
+          set -euo pipefail
+          node scripts/build-plugin-engine.mjs
+          tar -czf "dist/ontomark-engine-$VERSION.tar.gz" -C target/plugin-engine .
+      - name: Attach assets with their checksums
+        run: |
+          set -euo pipefail
+          cd dist
+          for f in ontomark-x86_64-unknown-linux-gnu "ontomark-engine-$VERSION.tar.gz"; do
+            sha256sum "$f" > "$f.sha256"
+          done
+          cat ./*.sha256
+          cp ../LICENSE-MIT ../LICENSE-APACHE ../NOTICE ../THIRD-PARTY-NOTICES.md ../docs/UPSTREAMS.md .
+          gh release upload "$TAG" --clobber ./*

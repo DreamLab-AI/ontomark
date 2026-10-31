@@ -27,6 +27,39 @@
 //! Every item is a "proposed research candidate; no measured uplift". The
 //! default thresholds withhold and narrow nothing until fitted on labelled
 //! data.
+//!
+//! ```
+//! use std::time::Duration;
+//! use ontomark_jev::{JevClient, JevConfig, Transport, TransportError};
+//! use serde_json::Value;
+//!
+//! // Off by default: nothing resolves, so no request is ever built.
+//! let no_env = |_: &str| None;
+//! assert_eq!(JevConfig::default().resolve(&no_env).unwrap_err().reason, "flag-off");
+//!
+//! // Switched on with an explicit endpoint, the bearer comes from the
+//! // variable `key_env` names, never from the config itself.
+//! let config = JevConfig {
+//!     enabled: true,
+//!     endpoint: Some("http://127.0.0.1:8080/v1/systemone".into()),
+//!     key_env: Some("MY_JEV_KEY".into()),
+//!     local: true,
+//!     ..JevConfig::default()
+//! };
+//! let env = |k: &str| (k == "MY_JEV_KEY").then(|| "secret".to_owned());
+//! let resolved = config.resolve(&env).unwrap();
+//! assert_eq!(resolved.bearer.as_deref(), Some("secret"));
+//!
+//! // Without the `http` feature a host supplies the only I/O boundary.
+//! struct Offline;
+//! impl Transport for Offline {
+//!     fn post(&self, _: &str, _: Option<&str>, _: &Value, _: Duration)
+//!         -> Result<(u16, String), TransportError> {
+//!         Err(TransportError::Failed)
+//!     }
+//! }
+//! let _client = JevClient::new(config, Offline);
+//! ```
 
 mod client;
 mod config;
