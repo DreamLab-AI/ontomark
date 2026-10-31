@@ -3,8 +3,8 @@ id: ADR-OM-002
 title: "shared graph code and separate Obsidian distribution"
 date: 2026-10-11
 decision_status: accepted
-implementation_status: partial
-activation_status: inactive
+implementation_status: complete
+activation_status: live
 supersedes: []
 superseded_by: []
 verified_commit: "33924da83e4b7db2c6bc5b19162f01288e583cf8"
@@ -50,3 +50,7 @@ Public publisher runtime `9cf6cb87ef72f226b14bcf9a56126e1854683f6b` passed both 
 Nightly dreaming evaluates native core contracts without automatic merging. Browser, Obsidian and WebAssembly changes require their dedicated acceptance harnesses; the nightly configuration hands those hypotheses to their owners. Attribution travels with binary/WASM/plugin distributions; [upstream sources](../UPSTREAMS.md) and [full notices](../../THIRD-PARTY-NOTICES.md) are part of the release evidence.
 
 This decision supersedes the original monorepo `plugin/` location and the publisher-only renderer ownership. Application routing, corpus policy and Obsidian API adaptation are deliberately host-owned.
+
+## Status note, 31 October 2026
+
+The owner confirmed this record as complete and live: the release shipped, acceptance passed, and the estate runs it. This replaces the conservative `partial` / `inactive` mapping made when the ledger was unified.

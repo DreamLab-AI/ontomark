@@ -7,8 +7,8 @@ _10 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
 | ID | Title | Domain | Date | Decision | Impl | Activation | Supersedes | Superseded by | Owner | Repo |
 |----|-------|--------|------|----------|------|------------|------------|---------------|-------|------|
 | [ADR-OM-001](ADR-OM-001-sprint-decisions.md) | Decisions taken in the first ontomark sprint | — | 2026-10-11 | accepted | none | inactive | — | — | jjohare | ontomark |
-| [ADR-OM-002](ADR-OM-002-shared-graph-and-obsidian-boundary.md) | shared graph code and separate Obsidian distribution | — | 2026-10-11 | accepted | partial | inactive | — | — | jjohare | ontomark |
-| [ADR-OM-003](ADR-OM-003-native-assisted-ingest.md) | native, host-driven assisted ingest | — | 2026-10-12 | proposed | partial | staged | — | — | jjohare | ontomark |
+| [ADR-OM-002](ADR-OM-002-shared-graph-and-obsidian-boundary.md) | shared graph code and separate Obsidian distribution | — | 2026-10-11 | accepted | complete | live | — | — | jjohare | ontomark |
+| [ADR-OM-003](ADR-OM-003-native-assisted-ingest.md) | native, host-driven assisted ingest | — | 2026-10-12 | accepted | partial | staged | — | — | jjohare | ontomark |
 | [ADR-OM-004](ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) | OWL 2 EL is the local reasoning profile, and non-EL is named, not dropped | — | 2026-10-12 | accepted | partial | live | — | — | jjohare | ontomark |
 | [ADR-OM-005](ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) | one producer, explicit consumer projections, and the generation loop | — | 2026-10-12 | accepted | none | inactive | — | — | jjohare | ontomark |
 | [ADR-OM-006](ADR-OM-006-dot-triples-interop.md) | what Ontomark takes from Dot Triples, and the bridge between them | — | 2026-10-13 | accepted | partial | live | — | — | jjohare | ontomark |

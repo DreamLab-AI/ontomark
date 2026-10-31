@@ -2,15 +2,15 @@
 id: ADR-OM-003
 title: "native, host-driven assisted ingest"
 date: 2026-10-12
-decision_status: proposed
+decision_status: accepted
 implementation_status: partial
 activation_status: staged
 supersedes: []
 superseded_by: []
-verified_commit: ""
+verified_commit: "d79044cd35060efd087a0fdf18d802c8a792046f"
 verified_paths: []
 owner: jjohare
-review_trigger: "owner confirmation or rejection of the inferred acceptance; a second ingest slice beyond facts only; installed-Obsidian acceptance (verification item 5) recorded"
+review_trigger: "a second ingest slice beyond facts only; installed-Obsidian acceptance (verification item 5) recorded"
 repo: ontomark
 ---
 
@@ -194,3 +194,7 @@ Deviations between the bridge and the engine projection, recorded rather than hi
 - Consumer: `DreamLab-AI/ontomark-obsidian` `origin/main` `src/client.ts:195,205` sends `ingest_plan` and `ingest_accept`. Its `engine.json` pins engine `v0.4.0`, which already carries them (`git show v0.4.0:crates/ontomark-wasm/src/engine.rs | grep -c ingest_plan` → 6). Activation is `staged`, not `live`, only because no installed-Obsidian acceptance (verification item 5) or EXP-11 enabled-path receipt is recorded.
 
 The Implementation line's former "Not published; not exposed through `ontomark-wasm`" was overtaken by the engine boundary section (12 October 2026) and the 0.1.0 publication. The open questions above remain open and are not decided by this note.
+
+## Acceptance, 31 October 2026
+
+The owner confirmed acceptance on 31 October 2026, resolving the inferred acceptance recorded in `154bca9`. Implementation stays `partial`: the engine scope is complete and shipped in plugin 0.4.0, and estate-wide external-source ingest continues under ADR-OM-010. Activation stays `staged` until installed-Obsidian acceptance (verification item 5) is recorded.
