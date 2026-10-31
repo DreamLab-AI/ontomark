@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 
 /// One unit of body text the model sees on its own.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct Chunk {
     /// Position in the request, from zero.
     pub index: usize,
@@ -55,8 +56,42 @@ struct Section {
 /// ```
 #[must_use]
 pub fn chunk_document(doc: &Document, min_chars: usize, max_chars: usize) -> Vec<Chunk> {
-    let body = doc.body();
-    let base = doc.body_span().start;
+    chunk_range(
+        doc.source(),
+        doc.body_span().start,
+        doc.body(),
+        min_chars,
+        max_chars,
+    )
+}
+
+/// Cut plain text or Markdown into chunks exactly as [`chunk_document`] cuts
+/// a body, treating the whole of `text` as the body. Nothing is read as
+/// frontmatter, so a leading `---` rule is text like any other and every
+/// chunk's `span` is a byte span of `text` itself. This is how an external
+/// source (ADR-OM-010) is chunked.
+///
+/// ```
+/// # use ontomark_ingest::chunk::chunk_text;
+/// let text = "# A\nalpha\n\n# B\nbeta\n";
+/// let chunks = chunk_text(text, 1, 100);
+/// assert_eq!(chunks.len(), 2);
+/// assert_eq!(chunks[1].heading_path, vec!["B"]);
+/// assert_eq!(chunks[1].span.slice(text), chunks[1].text);
+/// ```
+#[must_use]
+pub fn chunk_text(text: &str, min_chars: usize, max_chars: usize) -> Vec<Chunk> {
+    chunk_range(text, 0, text, min_chars, max_chars)
+}
+
+/// `body` is `source[base..]` (or a prefix of it); spans are into `source`.
+fn chunk_range(
+    source: &str,
+    base: usize,
+    body: &str,
+    min_chars: usize,
+    max_chars: usize,
+) -> Vec<Chunk> {
     if body.trim().is_empty() {
         return Vec::new();
     }
@@ -70,7 +105,7 @@ pub fn chunk_document(doc: &Document, min_chars: usize, max_chars: usize) -> Vec
                 index: out.len(),
                 span,
                 heading_path: path.clone(),
-                text: span.slice(doc.source()).to_owned(),
+                text: span.slice(source).to_owned(),
             });
         }
     }
@@ -465,5 +500,28 @@ mod tests {
     fn deterministic() {
         let d = doc("# A\nalpha\n\n# B\nbeta\n");
         assert_eq!(chunk_document(&d, 1, 100), chunk_document(&d, 1, 100));
+    }
+
+    #[test]
+    fn text_chunks_like_a_body_and_reads_no_frontmatter() {
+        let body = "intro\n\n# One\nalpha\n\n## One.A\nbeta\n\n# Two\ngamma\n";
+        let d = doc(body);
+        let from_doc = chunk_document(&d, 1, 1000);
+        let from_text = chunk_text(body, 1, 1000);
+        let texts = |c: &[Chunk]| -> Vec<(Vec<String>, String)> {
+            c.iter()
+                .map(|c| (c.heading_path.clone(), c.text.clone()))
+                .collect()
+        };
+        assert_eq!(texts(&from_doc), texts(&from_text));
+        for c in &from_text {
+            assert_eq!(c.span.slice(body), c.text);
+        }
+        // A leading `---` block is text, not frontmatter.
+        let rule = "---\ntype: Class\n---\nbody\n";
+        let c = chunk_text(rule, 1, 1000);
+        assert_eq!(c.len(), 1);
+        assert_eq!(c[0].text, rule);
+        assert!(chunk_text("  \n", 1, 10).is_empty());
     }
 }

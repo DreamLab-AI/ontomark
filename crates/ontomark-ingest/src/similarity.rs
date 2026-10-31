@@ -23,6 +23,7 @@ use crate::normalize::label_tokens;
 /// `AGG_LEXICAL_LABEL_JACCARD`, `AGG_LEXICAL_SEQUENCE_RATIO` and
 /// `AGG_LEXICAL_TOKEN_JACCARD`.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct LexicalThresholds {
     /// Minimum token Jaccard between any label pair (default 0.5).
     pub label_jaccard: f64,
@@ -47,6 +48,7 @@ impl Default for LexicalThresholds {
 /// strongest to weakest, and order the same way, so `Exact < Initials`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum AliasTier {
     /// The normal forms are identical.
     Exact,

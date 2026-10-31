@@ -1,8 +1,8 @@
 //! The plan/accept contract end to end, over a small synthetic vault.
 
 use ontomark_ingest::{
-    AliasTier, Candidates, Grounding, Ingest, IngestError, KeySpec, ModelRequest, ModelResponse,
-    Options, ProposedAssertion, ValueKind, WithholdReason, CONFIDENCE, CONTRACT, METHOD,
+    AliasTier, Candidates, Grounding, Ingest, IngestError, ModelRequest, ModelResponse, Options,
+    ProposedAssertion, ValueKind, WithholdReason, CONFIDENCE, CONTRACT, METHOD,
 };
 use ontomark_model::{DeclarativeProfile, DocId, Iri, Kind, Model, PredicateForm, ProfileSpec};
 use ontomark_parse::{Document, Span, Value};
@@ -108,11 +108,7 @@ fn iri(s: &str) -> Iri {
 }
 
 fn respond(key: &str, value: &str, evidence: &str) -> ProposedAssertion {
-    ProposedAssertion {
-        key: key.into(),
-        value: value.into(),
-        evidence: evidence.into(),
-    }
+    ProposedAssertion::new(key, value, evidence)
 }
 
 fn reason<'a>(out: &'a Candidates, value: &str) -> &'a WithholdReason {
@@ -273,36 +269,33 @@ fn lexical_tiers_ground_initials_and_refuse_distinguishing_marks() {
     let p = profile();
     let v = Vault::new();
     let m = v.model(&p);
-    let ingest = Ingest::new(
-        &p,
-        &m,
-        Options {
-            min_chunk_chars: 1,
-            ..Options::default()
-        },
-    );
+    let ingest = Ingest::new(&p, &m, {
+        let mut o = Options::default();
+        o.min_chunk_chars = 1;
+        o
+    });
     let lab = v.doc("Lab");
     let req = ingest.plan(&DocId::new("Lab.md"), lab).unwrap();
     assert_eq!(req.chunks.len(), 2);
     assert_eq!(req.chunks[0].heading_path, vec!["People".to_owned()]);
 
     let responses = vec![
-        ModelResponse {
-            chunk: 0,
-            assertions: vec![
+        ModelResponse::new(
+            0,
+            vec![
                 respond("part-of", "Baranov D.", "Run by Baranov D."),
                 respond("founded", "2020", "since 2020"),
             ],
-        },
-        ModelResponse {
-            chunk: 1,
-            assertions: vec![
+        ),
+        ModelResponse::new(
+            1,
+            vec![
                 respond("part-of", "Company U", "part of Company U"),
                 respond("part-of", "Lab", "The lab"),
                 respond("part-of", "Duplicate", "The lab"),
                 respond("part-of", "Graph", "The lab"),
             ],
-        },
+        ),
     ];
     let out = ingest.accept(lab, &req, &responses).unwrap();
 
@@ -346,25 +339,22 @@ fn values_from_two_chunks_merge_their_evidence() {
     let p = profile();
     let v = Vault::new();
     let m = v.model(&p);
-    let ingest = Ingest::new(
-        &p,
-        &m,
-        Options {
-            min_chunk_chars: 1,
-            ..Options::default()
-        },
-    );
+    let ingest = Ingest::new(&p, &m, {
+        let mut o = Options::default();
+        o.min_chunk_chars = 1;
+        o
+    });
     let lab = v.doc("Lab");
     let req = ingest.plan(&DocId::new("Lab.md"), lab).unwrap();
     let responses = vec![
-        ModelResponse {
-            chunk: 1,
-            assertions: vec![respond("part-of", "Baranov D", "Baranov D. founded it")],
-        },
-        ModelResponse {
-            chunk: 0,
-            assertions: vec![respond("part-of", "dmitry baranov", "Run by Baranov D.")],
-        },
+        ModelResponse::new(
+            1,
+            vec![respond("part-of", "Baranov D", "Baranov D. founded it")],
+        ),
+        ModelResponse::new(
+            0,
+            vec![respond("part-of", "dmitry baranov", "Run by Baranov D.")],
+        ),
     ];
     let out = ingest.accept(lab, &req, &responses).unwrap();
     assert_eq!(out.accepted.len(), 1);
@@ -394,10 +384,10 @@ fn conflicting_single_values_are_refused_not_overwritten() {
         .accept(
             g,
             &req,
-            &[ModelResponse {
-                chunk: 0,
-                assertions: vec![respond("founded", "2002-02-02", "Founded on 2002-02-02")],
-            }],
+            &[ModelResponse::new(
+                0,
+                vec![respond("founded", "2002-02-02", "Founded on 2002-02-02")],
+            )],
         )
         .unwrap();
     assert!(out.patch.is_none());
@@ -417,23 +407,23 @@ fn tampered_requests_are_refused() {
     let ingest = Ingest::new(&p, &m, Options::default());
     let kg = v.doc("Knowledge graph");
     let req = ingest.plan(&DocId::new("Knowledge graph.md"), kg).unwrap();
-    let ok = vec![ModelResponse {
-        chunk: 0,
-        assertions: vec![respond("is-a", "graph", "is a directed graph")],
-    }];
+    let ok = vec![ModelResponse::new(
+        0,
+        vec![respond("is-a", "graph", "is a directed graph")],
+    )];
 
     // A key the profile does not grant: here the note's identity key.
     let mut keys = req.clone();
-    keys.keys.push(KeySpec {
-        key: "iri".into(),
-        predicate: iri("urn:x:iri"),
-        form: PredicateForm::Annotation,
-        value: ValueKind::Literal {
-            datatype: iri(&format!("{XSD}string")),
-        },
-        range: None,
-        present: vec![],
-    });
+    let mut extra = keys.keys[0].clone();
+    extra.key = "iri".into();
+    extra.predicate = iri("urn:x:iri");
+    extra.form = PredicateForm::Annotation;
+    extra.value = ValueKind::Literal {
+        datatype: iri(&format!("{XSD}string")),
+    };
+    extra.range = None;
+    extra.present = vec![];
+    keys.keys.push(extra);
     assert_eq!(
         ingest.accept(kg, &keys, &ok),
         Err(IngestError::RequestMismatch { field: "keys" })
@@ -468,9 +458,9 @@ fn evidence_must_mention_the_value() {
         .accept(
             kg,
             &req,
-            &[ModelResponse {
-                chunk: 0,
-                assertions: vec![
+            &[ModelResponse::new(
+                0,
+                vec![
                     // A one-letter quote is in the chunk but says nothing.
                     respond("population", "999", "a"),
                     // A real quote that does not name the entity.
@@ -479,7 +469,7 @@ fn evidence_must_mention_the_value() {
                     // only its note name: fine.
                     respond("is-a", "graph", "a directed graph"),
                 ],
-            }],
+            )],
         )
         .unwrap();
     assert_eq!(reason(&out, "999"), &WithholdReason::EvidenceDoesNotMention);
@@ -500,13 +490,13 @@ fn ambiguous_note_names_get_path_links_and_a_rerun_adds_nothing() {
     let id = DocId::new("Site.md");
     let site = v.doc("Site");
     let req = ingest.plan(&id, site).unwrap();
-    let responses = vec![ModelResponse {
-        chunk: 0,
-        assertions: vec![
+    let responses = vec![ModelResponse::new(
+        0,
+        vec![
             respond("part-of", "Alpha", "Hosted by Alpha"),
             respond("part-of", "Beta", "and Beta"),
         ],
-    }];
+    )];
     let out = ingest.accept(site, &req, &responses).unwrap();
 
     // Two entities, two candidates, neither written as the ambiguous
@@ -550,15 +540,15 @@ fn null_keys_extend_and_competing_single_values_are_withheld() {
         .accept(
             site,
             &req,
-            &[ModelResponse {
-                chunk: 0,
-                assertions: vec![
+            &[ModelResponse::new(
+                0,
+                vec![
                     respond("founded", "2021-05-05", "Opened 2021-05-05"),
                     respond("weight", "3.5", "Weighs 3.5"),
                     respond("weight", "4.5", "or 4.5"),
                     respond("weight", "3,5", "Weighs 3.5"),
                 ],
-            }],
+            )],
         )
         .unwrap();
     // `founded:` held nothing, so the date is written, not refused as a
@@ -604,26 +594,12 @@ fn request_integrity_is_checked() {
         Err(IngestError::ContractMismatch { .. })
     ));
     assert_eq!(
-        ingest.accept(
-            kg,
-            &req,
-            &[ModelResponse {
-                chunk: 7,
-                assertions: vec![]
-            }]
-        ),
+        ingest.accept(kg, &req, &[ModelResponse::new(7, vec![])]),
         Err(IngestError::UnknownChunk { chunk: 7, count: 1 })
     );
     // Nothing proposed: no patch, one informational diagnostic.
     let out = ingest
-        .accept(
-            kg,
-            &req,
-            &[ModelResponse {
-                chunk: 0,
-                assertions: vec![],
-            }],
-        )
+        .accept(kg, &req, &[ModelResponse::new(0, vec![])])
         .unwrap();
     assert!(out.patch.is_none());
     assert!(out.accepted.is_empty());

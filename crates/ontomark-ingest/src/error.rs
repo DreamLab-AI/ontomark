@@ -6,6 +6,7 @@ use ontomark_parse::PatchError;
 
 /// A plan or acceptance could not proceed.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[non_exhaustive]
 pub enum IngestError {
     /// The note declares no entity in the model, so there is nothing to
     /// assert about.
@@ -42,8 +43,19 @@ pub enum IngestError {
     /// built by hand. Only `plan`'s output is accepted.
     #[error("request {field} do not match what plan produces for this note")]
     RequestMismatch {
-        /// Which part disagreed: `note`, `keys` or `chunks`.
+        /// Which part disagreed: `note`, `keys`, `chunks` or `source`.
         field: &'static str,
+    },
+    /// A source's declared version is not the SHA-256 of its text, so a
+    /// quote could not be re-checked against the version it names.
+    #[error("source {id} declares version {declared} but its text hashes to {actual}")]
+    SourceVersion {
+        /// The source id.
+        id: String,
+        /// The version the reference declares.
+        declared: String,
+        /// The SHA-256 (hex) of the text.
+        actual: String,
     },
     /// A response names a chunk the request does not have.
     #[error("response names chunk {chunk} but the request has {count}")]

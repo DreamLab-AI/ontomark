@@ -964,7 +964,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-ingest"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "criterion",
  "indexmap 2.14.2",

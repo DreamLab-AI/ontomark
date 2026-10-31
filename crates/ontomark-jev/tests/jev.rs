@@ -54,18 +54,14 @@ fn docs() -> Vec<(DocId, Document)> {
 }
 
 fn responses() -> Vec<ModelResponse> {
-    let a = |k: &str, v: &str, e: &str| ProposedAssertion {
-        key: k.into(),
-        value: v.into(),
-        evidence: e.into(),
-    };
-    vec![ModelResponse {
-        chunk: 0,
-        assertions: vec![
+    let a = |k: &str, v: &str, e: &str| ProposedAssertion::new(k, v, e);
+    vec![ModelResponse::new(
+        0,
+        vec![
             a("is-a", "graph", "is a directed graph"),
             a("part-of", "Thing", "not a Thing"),
         ],
-    }]
+    )]
 }
 
 // ---- mock transport --------------------------------------------------------

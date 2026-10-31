@@ -64,6 +64,7 @@ impl Unavailable {
 
 /// What happened when a hook was consulted.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum JudgeOutcome {
     /// The hook was not used; the result equals the call without a hook.
     Skipped {
@@ -89,6 +90,7 @@ fn skipped(reason: impl Into<String>) -> JudgeOutcome {
 
 /// One accepted fact put to a [`FactJudge`].
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct FactClaim {
     /// The chunk it came from.
     pub chunk: usize,
@@ -138,6 +140,7 @@ impl FactJudge for NoJudge {
 
 /// The result of [`Ingest::accept_judged`].
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub struct Judged {
     /// The candidates. With the judge skipped these equal
     /// [`Ingest::accept`]'s.
@@ -167,6 +170,7 @@ pub struct HostCandidate {
 
 /// One selection question: several candidates for one key in one chunk.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct SelectionQuestion {
     /// Label of the note the facts are about.
     pub subject: String,
@@ -214,6 +218,7 @@ impl CandidateSelector for NoSelector {
 
 /// The result of [`Ingest::select_responses`].
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Selected {
     /// Responses to hand to [`Ingest::accept`], one per chunk that has any
     /// candidate, in chunk order. Quote location, grounding and every other
@@ -227,6 +232,7 @@ pub struct Selected {
 
 /// A vocabulary term a note mentions, offered to a [`FieldSuggester`].
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct SuggestionCandidate {
     /// The term's IRI.
     pub iri: Iri,
@@ -238,6 +244,7 @@ pub struct SuggestionCandidate {
 
 /// What a [`FieldSuggester`] is asked.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct SuggestionQuestion {
     /// Label of the note.
     pub subject: String,
@@ -281,6 +288,7 @@ impl FieldSuggester for NoSuggester {
 
 /// A validated suggestion: a proposal for a reviewed edit, not a patch.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct FieldSuggestion {
     /// The frontmatter key.
     pub key: String,
@@ -296,6 +304,7 @@ pub struct FieldSuggestion {
 
 /// The result of [`Ingest::suggest_fields`].
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Suggestions {
     /// Valid proposals.
     pub proposals: Vec<FieldSuggestion>,

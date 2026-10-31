@@ -1,14 +1,16 @@
 //! Turning model responses into guarded candidates.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use indexmap::IndexMap;
 use ontomark_model::{DocId, Iri, Kind, Model, PredicateForm, Profile, Resolution, Severity};
-use ontomark_parse::{Document, Patch, Span, Value, Wikilink};
+use ontomark_parse::{Document, Patch, SourceDigest, Span, Utf16Index, Value, Wikilink};
 use serde::{Deserialize, Serialize};
 
-use crate::chunk::chunk_document;
-use crate::contract::{key_specs, KeySpec, ModelRequest, ModelResponse, ValueKind, CONTRACT};
+use crate::contract::{
+    chunks_for, key_specs, KeySpec, ModelRequest, ModelResponse, SourceRef, SourceText, ValueKind,
+    CONTRACT, CONTRACT_SOURCE,
+};
 use crate::error::IngestError;
 use crate::normalize::normalize_text;
 use crate::similarity::AliasTier;
@@ -24,6 +26,7 @@ pub const METHOD: &str = "inferred";
 
 /// A span in UTF-16 code units, as Obsidian's editor counts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct Utf16Span {
     /// First code unit.
     pub start: usize,
@@ -33,6 +36,7 @@ pub struct Utf16Span {
 
 /// Where in the note a value is supported.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct EvidenceSpan {
     /// The chunk the quote was found in.
     pub chunk: usize,
@@ -42,10 +46,17 @@ pub struct EvidenceSpan {
     pub utf16: Utf16Span,
     /// The source text of the span.
     pub quote: String,
+    /// The external source the span lies in, when the evidence came from
+    /// [`crate::Ingest::accept_source`]; `span`, `utf16` and `chunk` then
+    /// index that source's text, not the note. Omitted for a note-only
+    /// ingest, so those serialise as they always did.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceRef>,
 }
 
 /// A value the candidate patch writes.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct CandidateAssertion {
     /// The frontmatter key.
     pub key: String,
@@ -70,6 +81,7 @@ pub struct CandidateAssertion {
 /// Why a proposed value was not written.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "reason", rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum WithholdReason {
     /// The key is not in the request.
     UnknownKey,
@@ -140,6 +152,7 @@ pub enum WithholdReason {
 
 /// A proposed value that was not written, and why.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct Withheld {
     /// The chunk it came from.
     pub chunk: usize,
@@ -155,6 +168,7 @@ pub struct Withheld {
 
 /// A note about the acceptance that is not attached to one value.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct IngestDiagnostic {
     /// Severity.
     pub severity: Severity,
@@ -167,6 +181,7 @@ pub struct IngestDiagnostic {
 /// The result of accepting responses: at most one patch, bound to the
 /// digest the request was planned against and already proven to apply.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct Candidates {
     /// The note.
     pub document: DocId,
@@ -180,6 +195,91 @@ pub struct Candidates {
     pub withheld: Vec<Withheld>,
     /// Other notes.
     pub diagnostics: Vec<IngestDiagnostic>,
+    /// The external source the evidence came from; `None` for a note-only
+    /// ingest, where it is also omitted from the JSON.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceRef>,
+    /// What each grounding tier decided and why values were withheld, filled
+    /// in by [`crate::Ingest::accept_source`] and omitted from the JSON
+    /// otherwise, so a note-only ingest serialises as it always did.
+    /// [`Candidates::tally`] computes the same counts for any result.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub counts: Option<Counts>,
+}
+
+/// How many values each rung of the resolution ladder decided, and how many
+/// were refused for each reason.
+///
+/// ```
+/// # use ontomark_ingest::Counts;
+/// let c = Counts::default();
+/// assert_eq!(c.literals, 0);
+/// assert!(c.names.is_empty() && c.withheld.is_empty());
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct Counts {
+    /// Accepted names by the [`AliasTier`] that grounded them. A tier with
+    /// no names is absent.
+    pub names: BTreeMap<AliasTier, usize>,
+    /// Accepted literals.
+    pub literals: usize,
+    /// Withheld values by [`WithholdReason::category`], the same string the
+    /// JSON `reason` tag carries.
+    pub withheld: BTreeMap<String, usize>,
+}
+
+impl Candidates {
+    /// Count the accepted values by tier (and literals) and the withheld
+    /// ones by reason category. One accepted value counts once, however many
+    /// places support it; each withheld record counts once.
+    #[must_use]
+    pub fn tally(&self) -> Counts {
+        let mut counts = Counts::default();
+        for a in &self.accepted {
+            match a.tier {
+                Some(tier) => *counts.names.entry(tier).or_default() += 1,
+                None => counts.literals += 1,
+            }
+        }
+        for w in &self.withheld {
+            *counts
+                .withheld
+                .entry(w.reason.category().to_owned())
+                .or_default() += 1;
+        }
+        counts
+    }
+}
+
+impl WithholdReason {
+    /// The reason's category: the snake-case `reason` tag it serialises
+    /// with.
+    ///
+    /// ```
+    /// # use ontomark_ingest::WithholdReason;
+    /// assert_eq!(WithholdReason::SelfReference.category(), "self_reference");
+    /// ```
+    #[must_use]
+    pub fn category(&self) -> &'static str {
+        match self {
+            Self::UnknownKey => "unknown_key",
+            Self::EvidenceNotFound => "evidence_not_found",
+            Self::EvidenceDoesNotMention => "evidence_does_not_mention",
+            Self::Ungrounded { .. } => "ungrounded",
+            Self::Ambiguous { .. } => "ambiguous",
+            Self::InitialsConflict { .. } => "initials_conflict",
+            Self::KindMismatch { .. } => "kind_mismatch",
+            Self::SelfReference => "self_reference",
+            Self::Unlinkable { .. } => "unlinkable",
+            Self::CompetingValues { .. } => "competing_values",
+            Self::BadLiteral { .. } => "bad_literal",
+            Self::ConflictingValue { .. } => "conflicting_value",
+            Self::UnpatchableKey => "unpatchable_key",
+            Self::AlreadyPresent => "already_present",
+            Self::JudgedUnsupported => "judged_unsupported",
+        }
+    }
 }
 
 /// Stable diagnostic codes.
@@ -210,12 +310,18 @@ pub(crate) fn accept(
     vocabulary: &Vocabulary,
     options: &Options,
     doc: &Document,
+    source: Option<&SourceText>,
     request: &ModelRequest,
     responses: &[ModelResponse],
 ) -> Result<Candidates, IngestError> {
-    if request.contract != CONTRACT {
+    let expected_contract = if source.is_some() {
+        CONTRACT_SOURCE
+    } else {
+        CONTRACT
+    };
+    if request.contract != expected_contract {
         return Err(IngestError::ContractMismatch {
-            expected: CONTRACT.to_owned(),
+            expected: expected_contract.to_owned(),
             found: request.contract.clone(),
         });
     }
@@ -245,7 +351,19 @@ pub(crate) fn accept(
     if key_specs(profile, doc, entity.kind) != request.keys {
         return Err(IngestError::RequestMismatch { field: "keys" });
     }
-    if chunk_document(doc, options.min_chunk_chars, options.max_chunk_chars) != request.chunks {
+    if request.source.as_ref() != source.map(|s| &s.reference) {
+        return Err(IngestError::RequestMismatch { field: "source" });
+    }
+    if let Some(s) = source {
+        if !s.version_matches() {
+            return Err(IngestError::SourceVersion {
+                id: s.reference.id.clone(),
+                declared: s.reference.version.clone(),
+                actual: SourceDigest::of(&s.text).hex(),
+            });
+        }
+    }
+    if chunks_for(doc, source, options) != request.chunks {
         return Err(IngestError::RequestMismatch { field: "chunks" });
     }
     for r in responses {
@@ -256,7 +374,10 @@ pub(crate) fn accept(
             });
         }
     }
-    let utf16 = doc.utf16_index();
+    // Evidence lies in the source's text when there is one, else the note's.
+    let evidence_text = source.map_or_else(|| doc.source(), |s| s.text.as_str());
+    let utf16 = Utf16Index::new(evidence_text);
+    let evidence_source = source.map(|s| s.reference.clone());
     let subject = &request.note;
     // Frontmatter the parser could not read is never patched; every value
     // is withheld rather than the whole batch failing at the proof.
@@ -309,7 +430,8 @@ pub(crate) fn accept(
                         .span(span)
                         .map(|(start, end)| Utf16Span { start, end })
                         .expect("evidence spans lie on char boundaries of the source"),
-                    quote: span.slice(doc.source()).to_owned(),
+                    quote: span.slice(evidence_text).to_owned(),
+                    source: evidence_source.clone(),
                 }
             });
             let Some(evidence) = evidence else {
@@ -534,14 +656,22 @@ pub(crate) fn accept(
     } else {
         None
     };
-    Ok(Candidates {
+    let mut out = Candidates {
         document: subject.document.clone(),
         digest: digest.hex(),
         patch,
         accepted: flat,
         withheld,
         diagnostics,
-    })
+        source: source.map(|s| s.reference.clone()),
+        counts: None,
+    };
+    // Counted last, from the final lists: the competing-values pass above
+    // moves values from accepted to withheld.
+    if source.is_some() {
+        out.counts = Some(out.tally());
+    }
+    Ok(out)
 }
 
 enum Existing {

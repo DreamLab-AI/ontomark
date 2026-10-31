@@ -51,14 +51,30 @@ let ingest = Ingest::new(&profile, &model, Options::default());
 let request = ingest.plan(&DocId::new("Knowledge graph.md"), &kg).unwrap();
 
 // The host's model answers with names and verbatim evidence, never identifiers.
-let response = ModelResponse { chunk: 0, assertions: vec![ProposedAssertion {
-    key: "is-a".into(), value: "graph".into(), evidence: "is a graph".into(),
-}]};
+let response = ModelResponse::new(0, vec![ProposedAssertion::new("is-a", "graph", "is a graph")]);
 let out = ingest.accept(&kg, &request, &[response]).unwrap();
 assert_eq!(out.accepted[0].written, "[[Graph]]");
 let patched = kg.apply(out.patch.as_ref().unwrap()).unwrap();
 assert!(patched.document.source().contains("is-a:\n- '[[Graph]]'\n"));
 ```
+
+## Evidence from outside the vault (0.2)
+
+`Ingest::plan_source` and `Ingest::accept_source` take a target note and an
+external `SourceText` (an id plus text whose version is its SHA-256). Chunks
+and quotes come from the source; the patch lands on the target, bound to its
+digest; every `EvidenceSpan` carries `source`, and `Candidates::counts` says
+how many values each grounding tier decided and why others were withheld.
+Note-only ingest serialises exactly as in 0.1.
+
+Below `SharedLabel`, the fuzzy grounding tiers never alias two names whose
+numeric tokens differ (`ISO 9001`/`ISO 14001`, `Llama 3.1 8B`/`70B`,
+`Web 2.0`/`3.0`, `IEEE 802.11`/`802.3`).
+
+0.2 marks the wire and API types `#[non_exhaustive]`; build
+`ModelResponse` and `ProposedAssertion` with `new`, and set `Options` fields
+on `Options::default()`.
+
 
 ## What `plan` produces
 

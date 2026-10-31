@@ -13,6 +13,7 @@ use crate::similarity::{
 
 /// One entity the model may name.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[non_exhaustive]
 pub struct Term {
     /// Its IRI.
     pub iri: Iri,
@@ -47,6 +48,7 @@ impl Term {
 
 /// A near miss offered when a name does not ground.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct Suggestion {
     /// The entity.
     pub iri: Iri,
@@ -60,6 +62,7 @@ pub struct Suggestion {
 /// The outcome of grounding one name.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum Grounding {
     /// Exactly one entity, and the tier that decided it.
     Resolved {

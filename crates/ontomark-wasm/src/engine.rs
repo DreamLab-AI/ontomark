@@ -805,6 +805,9 @@ fn ingest_wire(e: IngestError) -> WireError {
         IngestError::RequestMismatch { .. } => "request_mismatch",
         IngestError::UnknownChunk { .. } => "unknown_chunk",
         IngestError::Patch(_) => "patch_refused",
+        // Source errors cannot arise here: the plugin plans from the note
+        // alone. A future variant is reported as a generic ingest failure.
+        _ => "ingest_failed",
     };
     wire(code, e.to_string())
 }

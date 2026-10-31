@@ -64,22 +64,18 @@ fn setup() -> (DeclarativeProfile, Model, Document) {
 }
 
 fn assertion(key: &str, value: &str, evidence: &str) -> ProposedAssertion {
-    ProposedAssertion {
-        key: key.into(),
-        value: value.into(),
-        evidence: evidence.into(),
-    }
+    ProposedAssertion::new(key, value, evidence)
 }
 
 fn responses() -> Vec<ModelResponse> {
-    vec![ModelResponse {
-        chunk: 0,
-        assertions: vec![
+    vec![ModelResponse::new(
+        0,
+        vec![
             assertion("is-a", "graph", "is a directed graph"),
             assertion("part-of", "Thing", "not a Thing"),
             assertion("founded", "2019-03-01", "Founded on 2019-03-01"),
         ],
-    }]
+    )]
 }
 
 struct Fixed(Result<Vec<Verdict>, Unavailable>);
@@ -213,15 +209,15 @@ fn a_judge_cannot_unlock_a_value_the_plain_run_withheld() {
     let ingest = Ingest::new(&profile, &model, Options::default());
     let request = ingest.plan(&DocId::new(NOTE), &note).unwrap();
     // Two differing values for a single-valued key: plain accept withholds both.
-    let competing = vec![ModelResponse {
-        chunk: 0,
-        assertions: vec![
+    let competing = vec![ModelResponse::new(
+        0,
+        vec![
             assertion("founded", "2019-03-01", "Founded on 2019-03-01"),
             assertion("founded", "2019-03-01", "Founded on 2019-03-01"),
             assertion("is-a", "graph", "is a directed graph"),
             assertion("part-of", "Thing", "not a Thing"),
         ],
-    }];
+    )];
     let plain = ingest.accept(&note, &request, &competing).unwrap();
     struct Counting(Cell<usize>);
     impl FactJudge for Counting {
@@ -286,13 +282,13 @@ impl CandidateSelector for Answers {
 }
 
 fn all_as_responses() -> Vec<ModelResponse> {
-    vec![ModelResponse {
-        chunk: 0,
-        assertions: cands()
+    vec![ModelResponse::new(
+        0,
+        cands()
             .into_iter()
             .map(|c| assertion(&c.key, &c.value, &c.evidence))
             .collect(),
-    }]
+    )]
 }
 
 #[test]
