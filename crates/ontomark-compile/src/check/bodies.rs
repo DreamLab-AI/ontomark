@@ -58,6 +58,7 @@
 
 use std::path::PathBuf;
 
+use ontomark_parse::Fence;
 use serde::Serialize;
 
 use crate::check::repair::Scope;
@@ -151,24 +152,6 @@ enum Kind {
     Free,
 }
 
-/// The fence a line opens, as (marker character, run length).
-fn fence_open(line: &str) -> Option<(char, usize)> {
-    let t = line.trim_start();
-    let c = t.chars().next()?;
-    if c != '`' && c != '~' {
-        return None;
-    }
-    let n = t.chars().take_while(|&x| x == c).count();
-    (n >= 3).then_some((c, n))
-}
-
-/// Whether `line` closes a fence opened with `fence`.
-fn fence_closes(line: &str, fence: (char, usize)) -> bool {
-    let t = line.trim();
-    let n = t.chars().take_while(|&x| x == fence.0).count();
-    n >= fence.1 && t.chars().all(|x| x == fence.0)
-}
-
 /// Leading indentation in columns, and the byte offset where content starts.
 fn indent_of(line: &str) -> (usize, usize) {
     let mut cols = 0;
@@ -201,7 +184,7 @@ fn strip_cols(line: &str, cols: usize) -> &str {
 /// Parse a body into free lines and outline blocks.
 fn parse(body: &str) -> Vec<Item> {
     let mut items: Vec<Item> = Vec::new();
-    let mut fence: Option<(char, usize)> = None;
+    let mut fence: Option<Fence> = None;
     // Whether the last item is a block still accepting continuation lines.
     let mut open_block = false;
     // Whether the previous line was blank: a markdown block boundary.
@@ -220,7 +203,7 @@ fn parse(body: &str) -> Vec<Item> {
         if let Some(f) = fence {
             let leaves = bounded.is_some_and(|cc| !rest.is_empty() && (bullet || cols < cc));
             if !leaves {
-                if fence_closes(line, f) {
+                if f.closes(line) {
                     fence = None;
                     bounded = None;
                 }
@@ -234,7 +217,7 @@ fn parse(body: &str) -> Vec<Item> {
 
         if bullet {
             let content = rest[1..].trim_start().to_owned();
-            fence = fence_open(&content);
+            fence = Fence::open(&content);
             bounded = unclosed_below(&all[i + 1..], fence).then_some(cols + 2);
             items.push(Item::Block {
                 col: cols,
@@ -260,12 +243,12 @@ fn parse(body: &str) -> Vec<Item> {
 
         if cols == 0 || !open_block {
             open_block = false;
-            fence = fence_open(line);
+            fence = Fence::open(line);
             items.push(Item::Free(line.to_owned()));
             continue;
         }
 
-        fence = fence_open(rest);
+        fence = Fence::open(rest);
         if let Some(Item::Block { content_col, .. }) = items.last() {
             bounded = unclosed_below(&all[i + 1..], fence).then_some(*content_col);
         }
@@ -295,23 +278,23 @@ fn parse(body: &str) -> Vec<Item> {
 }
 
 /// Whether a fence just opened is never closed in `below`.
-fn unclosed_below(below: &[&str], fence: Option<(char, usize)>) -> bool {
-    fence.is_some_and(|f| !below.iter().any(|l| fence_closes(l, f)))
+fn unclosed_below(below: &[&str], fence: Option<Fence>) -> bool {
+    fence.is_some_and(|f| !below.iter().any(|l| f.closes(l)))
 }
 
 /// Close the open block's fence with a matching marker.
-fn close_fence(items: &mut [Item], fence: (char, usize)) {
+fn close_fence(items: &mut [Item], fence: Fence) {
     if let Some(Item::Block { lines, .. }) = items.last_mut() {
         while lines.last().is_some_and(|l| l.trim().is_empty()) {
             lines.pop();
         }
-        lines.push(std::iter::repeat_n(fence.0, fence.1).collect());
+        lines.push(std::iter::repeat_n(fence.marker(), fence.len()).collect());
     }
 }
 
 /// Whether a line opens a block that is never a list item's paragraph.
 fn starts_standalone(content: &str) -> bool {
-    fence_open(content).is_some()
+    Fence::open(content).is_some()
         || content.starts_with('|')
         || content.starts_with('>')
         || content.starts_with('<')
@@ -401,7 +384,7 @@ pub fn convert_body(body: &str) -> String {
     // Ancestors of the current block: (bullet column, list level its
     // children take).
     let mut stack: Vec<(usize, usize)> = Vec::new();
-    let mut fence: Option<(char, usize)> = None;
+    let mut fence: Option<Fence> = None;
 
     let count = items.len();
     for (index, item) in items.into_iter().enumerate() {
@@ -409,7 +392,7 @@ pub fn convert_body(body: &str) -> String {
             Item::Free(line) => {
                 stack.clear();
                 if let Some(f) = fence {
-                    if fence_closes(&line, f) {
+                    if f.closes(&line) {
                         fence = None;
                     }
                     out.push(line);
@@ -422,7 +405,7 @@ pub fn convert_body(body: &str) -> String {
                 if out.last.is_some_and(|k| k != Kind::Free) {
                     out.blank();
                 }
-                fence = fence_open(&line);
+                fence = Fence::open(&line);
                 let line = if fence.is_some() {
                     line
                 } else {
@@ -504,16 +487,16 @@ pub fn convert_body(body: &str) -> String {
 /// migration's: inlining an `{{embed}}` wrote the block's first child twice.
 fn collapse_blank_runs(lines: Vec<String>) -> Vec<String> {
     let mut out: Vec<String> = Vec::with_capacity(lines.len());
-    let mut fence: Option<(char, usize)> = None;
+    let mut fence: Option<Fence> = None;
     for line in lines {
         if let Some(f) = fence {
-            if fence_closes(&line, f) {
+            if f.closes(&line) {
                 fence = None;
             }
             out.push(line);
             continue;
         }
-        fence = fence_open(&line);
+        fence = Fence::open(&line);
         if line.trim().is_empty() {
             if out.last().is_some_and(|l| !l.trim().is_empty()) {
                 out.push(String::new());
@@ -606,17 +589,17 @@ fn indent(pad: &str, line: &str) -> String {
 }
 
 fn fix_inline_outside_code(lines: &[String]) -> Vec<String> {
-    let mut fence: Option<(char, usize)> = None;
+    let mut fence: Option<Fence> = None;
     lines
         .iter()
         .map(|l| {
             if let Some(f) = fence {
-                if fence_closes(l, f) {
+                if f.closes(l) {
                     fence = None;
                 }
                 return l.clone();
             }
-            fence = fence_open(l);
+            fence = Fence::open(l);
             if fence.is_some() {
                 l.clone()
             } else {

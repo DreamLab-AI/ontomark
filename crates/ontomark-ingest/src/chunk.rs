@@ -16,7 +16,7 @@
 //! `span`, so evidence found in a chunk maps back to the source without
 //! arithmetic on trimmed text.
 
-use ontomark_parse::{Document, Span};
+use ontomark_parse::{Document, Fence, Span};
 use serde::{Deserialize, Serialize};
 
 /// One unit of body text the model sees on its own.
@@ -90,19 +90,10 @@ fn heading(line: &str) -> Option<(usize, &str)> {
     Some((hashes, rest.trim().trim_end_matches('#').trim()))
 }
 
-/// `(marker, length)` for a code fence line.
-fn fence(line: &str) -> Option<(char, usize)> {
-    let t = line.trim_start();
-    ['`', '~'].into_iter().find_map(|mark| {
-        let n = t.chars().take_while(|c| *c == mark).count();
-        (n >= 3).then_some((mark, n))
-    })
-}
-
 fn sections(body: &str) -> Vec<Section> {
     let mut out: Vec<Section> = Vec::new();
     let mut stack: Vec<(usize, String)> = Vec::new();
-    let mut open_fence: Option<(char, usize)> = None;
+    let mut open_fence: Option<Fence> = None;
     let mut start = 0usize;
     let mut has_content = false;
     let mut path: Vec<String> = Vec::new();
@@ -110,15 +101,14 @@ fn sections(body: &str) -> Vec<Section> {
     for line in body.split_inclusive('\n') {
         let raw = line.trim_end_matches(['\n', '\r']);
         match open_fence {
-            Some((mark, n)) => {
-                let t = raw.trim();
-                if t.chars().count() >= n && t.chars().all(|c| c == mark) {
+            Some(fence) => {
+                if fence.closes(raw) {
                     open_fence = None;
                 }
                 has_content = true;
             }
             None => {
-                if let Some(f) = fence(raw) {
+                if let Some(f) = Fence::open(raw) {
                     open_fence = Some(f);
                     has_content = true;
                 } else if let Some((level, title)) = heading(raw) {
@@ -198,27 +188,22 @@ fn merge(
 /// line through its closing line. An unterminated fence runs to the end.
 fn fence_ranges(text: &str) -> Vec<(usize, usize)> {
     let mut out = Vec::new();
-    let mut open: Option<(char, usize, usize)> = None;
+    let mut open: Option<(Fence, usize)> = None;
     let mut offset = 0usize;
     for line in text.split_inclusive('\n') {
         let raw = line.trim_end_matches(['\n', '\r']);
         match open {
-            Some((mark, n, from)) => {
-                let t = raw.trim();
-                if t.chars().count() >= n && t.chars().all(|c| c == mark) {
+            Some((fence, from)) => {
+                if fence.closes(raw) {
                     out.push((from, offset + line.len()));
                     open = None;
                 }
             }
-            None => {
-                if let Some((mark, n)) = fence(raw) {
-                    open = Some((mark, n, offset));
-                }
-            }
+            None => open = Fence::open(raw).map(|fence| (fence, offset)),
         }
         offset += line.len();
     }
-    if let Some((_, _, from)) = open {
+    if let Some((_, from)) = open {
         out.push((from, text.len()));
     }
     out

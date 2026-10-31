@@ -22,6 +22,8 @@
 
 use std::ops::Range;
 
+use ontomark_parse::Fence;
+
 /// The code regions of one page, plus the defect the scan found.
 #[derive(Debug, Clone, Default)]
 pub struct CodeMap {
@@ -105,21 +107,21 @@ fn overlaps_any<'a>(
 /// opener.
 fn fenced_regions(text: &str) -> (Vec<Range<usize>>, Option<usize>) {
     let mut out = Vec::new();
-    let mut open: Option<(usize, usize)> = None; // (byte offset, line)
+    let mut open: Option<(Fence, usize, usize)> = None; // (opener, byte offset, line)
     let mut offset = 0usize;
     for (index, line) in text.lines().enumerate() {
-        let trimmed = line.trim_start();
-        let is_fence = trimmed.starts_with("```") || trimmed.starts_with("~~~");
-        if is_fence {
-            match open.take() {
-                // A closing fence: the whole block, terminator included.
-                Some((start, _)) => out.push(start..offset + line.len()),
-                None => open = Some((offset, index + 1)),
+        match open {
+            // A closing fence: the whole block, terminator included.
+            Some((fence, start, _)) if fence.closes(line) => {
+                out.push(start..offset + line.len());
+                open = None;
             }
+            Some(_) => {}
+            None => open = Fence::open(line).map(|fence| (fence, offset, index + 1)),
         }
         offset += line.len() + 1; // +1 for the newline `lines()` stripped
     }
-    (out, open.map(|(_, line)| line))
+    (out, open.map(|(_, _, line)| line))
 }
 
 /// Byte ranges of inline `` ` `` spans, ignoring anything already inside a
@@ -209,6 +211,24 @@ mod tests {
             !map.contains(offset_of(text, "sources::")),
             "a line after an unmatched opener is prose, not code"
         );
+    }
+
+    #[test]
+    fn prose_wrapped_in_triple_backticks_is_not_a_fence() {
+        // `knowledge/Bias.md` quoted two paragraphs as ```` ```prose``` ````;
+        // read as fences they hid the `{:width 600}` below from the gate.
+        let text = "```A quoted paragraph.```\n\n![p](a.jpg){:width 600}\n";
+        let map = CodeMap::scan(text);
+        assert!(!map.contains(offset_of(text, "{:width")));
+        assert!(!map.has_unterminated_fence());
+    }
+
+    #[test]
+    fn a_fence_with_an_info_string_does_not_close_one() {
+        let text = "```\nstray\n```owl\nkey:: value\n```\n";
+        let map = CodeMap::scan(text);
+        assert!(map.contains(offset_of(text, "key:: value")));
+        assert!(!map.has_unterminated_fence());
     }
 
     #[test]

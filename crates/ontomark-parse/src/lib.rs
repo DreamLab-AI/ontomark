@@ -44,6 +44,7 @@ mod readme_examples {}
 mod body;
 mod document;
 mod emit;
+mod fence;
 mod frontmatter;
 mod patch;
 mod span;
@@ -53,6 +54,7 @@ mod value;
 pub use body::{BodyIndex, BodyLink, FootnoteDef, FootnoteRef, InlineFootnote};
 pub use document::Document;
 pub use emit::{entry as emit_entry, scalar_text as emit_scalar, Unrepresentable};
+pub use fence::Fence;
 pub use frontmatter::{BlockStyle, Entry, Frontmatter, FrontmatterLink, FrontmatterState};
 pub use patch::{Applied, Edit, Patch, PatchError, PatchOp, Placement, Receipt};
 pub use span::{SourceDigest, Span};

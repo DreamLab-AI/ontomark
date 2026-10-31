@@ -37,6 +37,7 @@ regex = "1"
 # Unified-diff rendering for `PatchProposal`; the applier in `write::diff`
 # splits lines exactly as this crate does.
 similar = { version = "2", default-features = false, features = ["text"] }
+ontomark-parse = { workspace = true }
 walkdir = "2"
 sha2 = "0.10"
 hex = "0.4"
@@ -45,7 +46,6 @@ time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"
 [dev-dependencies]
 # Independent pre-migration backend oracle for shared-classifier parity tests.
 whelk-el = { path = "../whelk-el", version = "0.1.1" }
-ontomark-parse = { workspace = true }
 tempfile = "3"
 # Independent JSON-LD 1.1 parser (oxigraph project) that checks the JSON-LD
 # serialisation against the Turtle in the tests (with oxttl and oxrdf below).

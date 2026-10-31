@@ -5,6 +5,7 @@
 //! The body is never re-rendered. The index only records where things are, so
 //! a patch can replace one span and leave every other byte alone.
 
+use crate::fence::Fence;
 use crate::span::Span;
 use crate::value::Wikilink;
 
@@ -84,7 +85,7 @@ impl BodyIndex {
     #[must_use]
     pub fn scan(body: &str, base: usize) -> Self {
         let mut idx = Self::default();
-        let mut fence: Option<(u8, usize, usize)> = None; // (char, run, start)
+        let mut fence: Option<(Fence, usize)> = None; // (opener, start)
         let mut line_start = 0;
         while line_start < body.len() {
             let rest = &body[line_start..];
@@ -93,46 +94,25 @@ impl BodyIndex {
                 None => (rest, body.len()),
             };
             let content = line.trim_end_matches('\r');
-            let lead = content.trim_start_matches([' ', '\t', '>']);
-            let lead = lead.trim_start_matches([' ', '\t']);
-            if let Some((ch, run, start)) = fence {
-                if fence_run(lead)
-                    .is_some_and(|(c, n, rest)| c == ch && n >= run && rest.trim().is_empty())
-                {
+            if let Some((open, start)) = fence {
+                if open.closes(content) {
                     idx.code
                         .push(Span::new(base + start, base + line_start + content.len()));
                     fence = None;
                 }
-            } else if let Some((c, n, _)) = fence_run(lead) {
-                fence = Some((c, n, line_start));
+            } else if let Some(open) = Fence::open(content) {
+                fence = Some((open, line_start));
             } else {
                 scan_line(content, base + line_start, &mut idx);
             }
             line_start = next;
         }
-        if let Some((_, _, start)) = fence {
+        if let Some((_, start)) = fence {
             idx.code.push(Span::new(base + start, base + body.len()));
         }
         idx.code.sort();
         idx
     }
-}
-
-/// `(char, run length, remainder)` when `s` opens with a code fence.
-fn fence_run(s: &str) -> Option<(u8, usize, &str)> {
-    let c = *s.as_bytes().first()?;
-    if c != b'`' && c != b'~' {
-        return None;
-    }
-    let n = s.bytes().take_while(|&b| b == c).count();
-    if n < 3 {
-        return None;
-    }
-    let rest = &s[n..];
-    if c == b'`' && rest.contains('`') {
-        return None;
-    }
-    Some((c, n, rest))
 }
 
 fn scan_line(line: &str, base: usize, idx: &mut BodyIndex) {

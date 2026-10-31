@@ -33,6 +33,7 @@ use crate::input::error::{Result, VaultError};
 use crate::input::frontmatter::{self, Frontmatter, Wikilink};
 use crate::input::okf::OkfBlock;
 use crate::input::slug::slugify;
+use ontomark_parse::Fence;
 
 /// Namespace folders that are **not published**. These pages stay in the
 /// vault, are loaded by [`Vault::load`] and are ingested by `VisionClaw` —
@@ -391,14 +392,16 @@ impl Page {
 /// Extract the raw `[[…]]` tokens from `text`, skipping fenced code blocks.
 fn wikilink_tokens(text: &str) -> Vec<String> {
     let mut out = Vec::new();
-    let mut in_fence = false;
+    let mut fence: Option<Fence> = None;
     for line in text.lines() {
-        let trimmed = line.trim_start();
-        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
-            in_fence = !in_fence;
+        if let Some(open) = fence {
+            if open.closes(line) {
+                fence = None;
+            }
             continue;
         }
-        if in_fence {
+        fence = Fence::open(line);
+        if fence.is_some() {
             continue;
         }
         let bytes = line.as_bytes();
