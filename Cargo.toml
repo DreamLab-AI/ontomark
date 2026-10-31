@@ -6,6 +6,7 @@ members = [
     "crates/ontomark-reason",
     "crates/ontomark-compile",
     "crates/ontomark-ingest",
+    "crates/ontomark-source",
     "crates/ontomark-jev",
     "crates/ontomark-ngg1",
     "crates/ontomark-wasm",
