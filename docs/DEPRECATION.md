@@ -473,3 +473,32 @@ Owner decisions recorded in [ADR-OM-005](adr/ADR-OM-005-estate-alignment-one-pro
 - **Agentbox ADR-2108** ("vault baked by Nix") is the record ADR-2136 overturns; mapped in ADR-2136 today, superseded on acceptance.
 - **Snapshots.** The estate ADR copies under `docs/adr/` are replaced by `docs/adr/ESTATE-ADRS.md` (pointer index). §10.1's "ADR copies" rows now mean the sources.
 - **Not decided** (left open, see ADR-OM-005): proposal-not-Apply for estate vaults in the plugin; per-edge property IRI in NGG1; dual-licensing `nostr-bbs-core`.
+
+## 14. Obsidian-native completion: 2026-10-31
+
+Owner order (31 October): remove every live Logseq path across the estate (ontomark, ontomark-obsidian, visionGraph, knowledgeGraph, VisionClaw `project/`, Loom, Agentbox) and make `ontomark` the one ontology CLI. Census by four read-only passes the same day; `ontomark repair bodies --check --vault all` on visionGraph `e3cebfcce`: 11,631 pages, 4 failing (`knowledge/AI User`, `knowledge/Player Two Platform Implementation`, `working/2026-10-29`, `working/2026-10-30`).
+
+**Owner decisions**
+
+| Topic | Decision |
+|---|---|
+| Vault content about Logseq (108 dated journals, ~130 subject pages) | Leave in place; rewrite only the style-guide pages that instruct Logseq syntax |
+| Superseded ADRs | Keep in place, status marked superseded |
+| Other dated records (migration logs, research write-ups, `legacy/`, explorer reports) | Move to each repo's `archive/` |
+| `jjohare/logseq` | Archive on GitHub once nothing pins it (census: nothing does; its two gh-pages workflows still target knowledgeGraph) |
+| One CLI | `ontomark` for every verb it carries; `vault` shrinks to the AGPL governance transport (`propose`, `panel publish`), per ADR-OM-005 decisions 5–6 |
+| VisionClaw `graphs.logseq` localStorage shim | Remove behind a persisted-version bump |
+| `logseqXR` Cloudflare tunnel | Deferred (infrastructure rename) |
+| Delivery | Commit and push to main; visionGraph pushes only with local gates green, since they publish |
+
+**Order of work**
+
+1. **Gate first.** `repair bodies --check` passes `knowledge/Bias.md:148` (`{:width 600}`), so a clean result is not yet proof. Widen the residue gate in ontomark; extend Agentbox `check-no-logseq-paths.sh` beyond `workspace/logseq`.
+2. **Corpus.** Fix the producer, `working/templates/Journal.md` (rewritten 28 October; its Templater `<%* … -%>` block is left unrendered and abuts the starter bullet). Repair the flagged pages; make the `publish.yml` bodies step fatal; byte-diff `ontomark build` before and after.
+3. **Guards stay** as permanent regression gates (pasted Logseq content will recur). `LOGSEQ_PROPERTY` is a published SHACL code and keeps its name; `m0001` stays the registered migration.
+4. **Live code.** Drop the `(?:-\s+)?` heading-bullet branch in `build/indexes.rs` (ontomark and `crates/vault`); VisionClaw client shim, fixtures and `pages/` literals; knowledgeGraph explorer Logseq preprocessors and stale served text; Agentbox legacy path tiers.
+5. **One CLI.** Retarget Agentbox skills, `agents/ontology-curator.md`, `AGENTS.md`, management-API argv and the `[vault].cli` bake to `ontomark` where covered; remove the duplicated verbs from `crates/vault` under §9's parity gates.
+6. **Separate change:** podcast-ingest's `ingest-status::` line-1 marker is the idempotency ledger over `visionGraph/transcripts`; it moves to frontmatter with its own dry-run migration.
+7. **Archive** dated records per repo, then `jjohare/logseq` on GitHub. The local checkout (4.1 GB, one stash) is kept.
+
+Persisted identifiers are not renamed: Loom `process:vault` and `vault-portable-records`. Baked `/opt/agentbox/skills` and the Nix `ontomark` pin change only with a host-launched image rebuild.
