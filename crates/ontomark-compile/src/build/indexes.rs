@@ -170,18 +170,19 @@ pub fn scaffold_index(
     })
 }
 
-/// The "Current Landscape" heading, and any heading, each either as a markdown
-/// heading or as the Logseq heading bullet (`- ### Current Landscape`) the
-/// corpus used before `vault repair bodies`. Both forms must match: the section
-/// feeds the Loom's prose layer, and a form that stops matching empties it
-/// without an error. The captured `#` run is the heading's level.
+/// The "Current Landscape" heading, and any heading, as Markdown headings.
+/// The section feeds the Loom's prose layer, and a form that stops matching
+/// empties it without an error, so the outline heading bullet
+/// (`- ### Current Landscape`) is kept out at the source instead: visionGraph's
+/// publish refuses a page that `ontomark repair bodies --check` flags. The
+/// captured `#` run is the heading's level.
 fn landscape_regexes() -> &'static (regex::Regex, regex::Regex) {
     static R: std::sync::OnceLock<(regex::Regex, regex::Regex)> = std::sync::OnceLock::new();
     R.get_or_init(|| {
         (
-            regex::Regex::new(r"(?m)^\s*(?:-\s+)?(#{2,4})\s+Current Landscape.*$")
+            regex::Regex::new(r"(?m)^\s*(#{2,4})\s+Current Landscape.*$")
                 .expect("static landscape regex"),
-            regex::Regex::new(r"(?m)^\s*(?:-\s+)?(#{1,6})\s+").expect("static heading regex"),
+            regex::Regex::new(r"(?m)^\s*(#{1,6})\s+").expect("static heading regex"),
         )
     })
 }
@@ -192,7 +193,7 @@ fn landscape_regexes() -> &'static (regex::Regex, regex::Regex) {
 /// own sub-headings stay inside it.  Where a page has several, the last is used.
 ///
 /// Bullets lose their list markers so a consumer can splice the text straight
-/// into an LLM context block without carrying Logseq indentation semantics.
+/// into an LLM context block without carrying list indentation.
 ///
 /// # Panics
 /// Never: every slice index is taken from a `char_indices` boundary.
@@ -573,7 +574,7 @@ mod tests {
 
     #[test]
     fn current_landscape_flattens_bullets_and_stops_at_the_next_heading() {
-        let body = "- ### Current Landscape (2026)\n  - Widely adopted.\n  - Growing fast.\n- ### References\n  - Ignore me.\n";
+        let body = "### Current Landscape (2026)\n\n- Widely adopted.\n  - Growing fast.\n\n### References\n\n- Ignore me.\n";
         assert_eq!(
             extract_current_landscape(body, LANDSCAPE_CAP),
             "Widely adopted. Growing fast."
@@ -581,15 +582,16 @@ mod tests {
     }
 
     #[test]
-    fn current_landscape_reads_the_same_from_markdown_headings() {
-        let logseq = "- ### Current Landscape (2026)\n  - Widely adopted.\n  - Growing fast.\n- ### References\n  - Ignore me.\n";
+    fn current_landscape_reads_markdown_headings_not_outline_bullets() {
+        let outline = "- ### Current Landscape (2026)\n  - Widely adopted.\n  - Growing fast.\n- ### References\n  - Ignore me.\n";
         let obsidian = "### Current Landscape (2026)\n\n- Widely adopted.\n- Growing fast.\n\n### References\n\n- Ignore me.\n";
         assert_eq!(
             extract_current_landscape(obsidian, LANDSCAPE_CAP),
-            extract_current_landscape(logseq, LANDSCAPE_CAP)
+            "Widely adopted. Growing fast."
         );
+        assert_eq!(extract_current_landscape(outline, LANDSCAPE_CAP), "");
         assert_eq!(
-            extract_current_landscape(&crate::check::bodies::convert_body(logseq), LANDSCAPE_CAP),
+            extract_current_landscape(&crate::check::bodies::convert_body(outline), LANDSCAPE_CAP),
             "Widely adopted. Growing fast."
         );
     }
