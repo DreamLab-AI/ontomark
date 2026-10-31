@@ -14,6 +14,10 @@ Ontomark builds on the work of these upstream developers. Their licences remain 
 - SPIRES, by Caufield et al. (*Bioinformatics* 40(3), 2024, [doi:10.1093/bioinformatics/btae104](https://doi.org/10.1093/bioinformatics/btae104)), is the source of the names-in, grounded-identifiers-out extraction contract. Its implementation [OntoGPT](https://github.com/monarch-initiative/ontogpt) is BSD-3-Clause; no OntoGPT code is included.
 - `ontomark-ingest` depends on [strsim](https://github.com/rapidfuzz/strsim-rs) (MIT) for Jaro-Winkler and [unicode-normalization](https://github.com/unicode-rs/unicode-normalization) (MIT OR Apache-2.0) for NFD folding. Neither is yet part of a released engine archive; a distribution that includes the crate needs an inventory bound to its own source and digest, as for the engine below.
 
+## Carrel and Helix Foundry (external-source ingest methods)
+
+[ADR-OM-010](adr/ADR-OM-010-external-source-ingest-lands-as-proposals.md) takes mechanisms, not code, from two projects read on 31 October 2026: [FengZhenfei/carrel](https://github.com/FengZhenfei/carrel) @`2a5a63e` (MIT) for change classification and retrieval evaluation, and [HelixDB/helix-foundry](https://github.com/HelixDB/helix-foundry) @`ca9c9b7` (Apache-2.0) for the connector contract, typed evidence, the resolution ladder and conflicts-as-reviews. No source, prompt text or schema is copied, so neither licence's notice terms attach; this entry is credit.
+
 ## Current crate releases
 
 The packages published from source `340b8a0d3e5828dd3959dd115e7a0e67268de5f5`
