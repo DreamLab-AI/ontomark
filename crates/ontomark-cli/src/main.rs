@@ -1,6 +1,7 @@
 //! The `ontomark` binary: Markdown ontology vaults to standard artefacts, and
 //! the verbs a corpus workflow needs around that (`build`, `validate`, `gate`,
-//! `conflicts`, `repair bodies|fences`; the graph queries `find`, `retrieve`,
+//! `conflicts`, `repair bodies|fences`; `ingest`, external sources to a
+//! `vault propose` bundle that never writes the vault; the graph queries `find`, `retrieve`,
 //! `tree`; the guarded writes `edit`, `create`, `apply`; and `migrate`). It is
 //! a drop-in for `VisionClaw`'s `vault` on the verbs both have.
 //!
@@ -35,7 +36,9 @@
 //! `build --scope machine` asked for alongside `--publish-out`, `--vault
 //! working|all` or `--no-redact-private-links`, or on a layout without a
 //! working vault; any `--vault working|all` on such a layout; a `create` or
-//! `apply` whose guards refuse the write) or an invalid argument (an unknown
+//! `apply` whose guards refuse the write; an `ingest` with a non-local model
+//! endpoint and no `ONTOMARK_JEV_ALLOW_CLOUD=1`, an unknown or ambiguous
+//! target, or `--vault working|all`) or an invalid argument (an unknown
 //! `--vault`, `--scope`, `--tier` or `--severity` value included).
 //!
 //! `build --scope machine` is the bundle `VisionClaw` consumes: the public
@@ -69,6 +72,8 @@ use ontomark_compile::write::{apply, create, edit};
 use serde_json::json;
 
 mod embed;
+mod ingest_cmd;
+mod ingest_profile;
 #[cfg(feature = "jev")]
 mod jev_create;
 mod migrate_cmd;
@@ -129,6 +134,10 @@ enum Command {
     /// Fix corpus defects in place.
     #[command(subcommand)]
     Repair(RepairCommand),
+    /// Turn external sources (files, web pages) into a proposal bundle for
+    /// `vault propose`: evidence found by a model, grounded and quoted; nothing
+    /// is written to the vault (ADR-OM-010).
+    Ingest(ingest_cmd::IngestArgs),
     /// Plan, apply, roll back and inspect corpus migrations (reversible,
     /// idempotent, page-level report).
     Migrate {
@@ -644,6 +653,7 @@ fn run() -> anyhow::Result<ExitCode> {
 
     match &cli.command {
         Command::Migrate { command } => migrate_cmd::run(command, &root, &profile, cli.json),
+        Command::Ingest(args) => ingest_cmd::run(args, &root, &vocab, &profile, cli.json),
         Command::Validate(args) => {
             let mut failed = false;
             let mut reports = serde_json::Map::new();

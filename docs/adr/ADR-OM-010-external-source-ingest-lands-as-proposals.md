@@ -84,3 +84,19 @@ VisionClaw already has a source port, `CorpusSource` (ADR-2114: `describe`, `lis
 4. **End to end.** Run `ontomark ingest` against a local stub model, then `vault propose --dry-run --diff <bundle>`, which must accept the manifest.
 5. **Repeat run.** A second run with nothing changed makes zero model calls.
 6. **Activation.** One real bundle is proposed, signed on the forum and applied.
+
+## Implementation 2026-10-31
+
+Decisions 3 and 4 landed as `ontomark ingest` on branch `feat/ontomark-ingest-cli` (crates/ontomark-cli: `ingest_cmd.rs`, `ingest_profile.rs`, `tests/ingest_cli.rs`).
+
+- **Sources** read through `ontomark-source` (files, directories, URLs; ids are `file:<canonical path>` or the URL). A ledger of (source, version, parser profile) labels each source new, content changed, parser changed or unchanged. The parser profile hashes the model, endpoint, options and a fingerprint of the selected vaults. Unchanged sources still go through plan and accept so a bundle is a function of all its inputs; the response cache makes them cost no model call.
+- **Targets** are explicit (page id or exact title) or `--discover`: a label, alias or note name that occurs in the source as whole normalised words and names exactly one entity, first mention first, capped by `--max-targets`.
+- **Endpoint** policy is `ontomark-jev`'s, through a new `JevConfig::allows_endpoint`: allowed when `ONTOMARK_JEV_ALLOW_CLOUD=1`, declared local (`ONTOMARK_JEV_LOCAL`, `AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL`), or the host is a loopback, private or link-local IP literal, `localhost`, `.local` or a single-label name. Otherwise exit 2 before any request. Jev's own paths are unchanged.
+- **Model calls**: one chat completion per chunk, `temperature` 0, `max_tokens` 1536, the plan's JSON schema as `response_format` (the plugin sends `json_object` and the schema in the prompt; the prompt layout is kept). Answers are cached under `<ledger dir>/cache/<sha256(body, model, endpoint)>.json`. Budgets are checked before each call; on exhaustion the run stops, the affected pair writes no page, and `evidence.json` lists what was skipped (exit 0, `budget_exhausted: true`).
+- **Profile**: for an estate-shaped repository the model profile is derived from `ontology/vocabulary.yaml`: the `core` relations are the only fillable keys and `resource` is the identity. A plain vault reads as `generic/1`.
+- **Bundle**: `manifest/<id>.md` (target page in full, patch applied; several sources accepted in id order against the progressively patched page) and `evidence.json` (no timestamps, so a no-change re-run is byte-identical). Quotes appear only there.
+- **Vaults**: `--vault working|all` is refused (exit 2). `vault propose` reads the knowledge vault only: a working page in a manifest is proposed as a new public page (checked with `--dry-run`), which would publish private text.
+- **Provenance keys**: none written. `sources` in the vocabulary fits only URL sources, and a local path must not enter the corpus; source references live in `evidence.json`.
+- **Conflicts**: `review` in `evidence.json` lists `ConflictingValue` and `CompetingValues`. The engine raises those only for single-valued literal keys, and the vocabulary-derived profile offers relation keys only, so no ingest run can produce one yet.
+- **Verification 4 and 5** are tests in `ingest_cli.rs`: a stub model server, `ontomark validate` on the patched copy, `vault propose --dry-run --diff <bundle>/manifest` accepted, and a re-run with zero model calls. Item 6 (activation) is not done and the status fields above are unchanged.
+

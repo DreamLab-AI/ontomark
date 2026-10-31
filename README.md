@@ -117,6 +117,7 @@ chmod +x ontomark-x86_64-unknown-linux-gnu && ./ontomark-x86_64-unknown-linux-gn
 | `build --with-rvdb` | Also emits `data/ontology-corpus.records.jsonl`, the portable vector records the Loom promotes into its store. |
 | `build --certificate-out DIR` | Also writes the RDFS derivation certificate of the published graph (`oo-cert/1`: every inferred triple with its rule and premises), which the independent Lean 4 checker `oo-cert` re-verifies with no engine. The build is refused if the certificate does not cover the classifier's closure ([ADR-OM-009](docs/adr/ADR-OM-009-every-published-closure-carries-a-derivation-certificate.md)). |
 | `repair`, `migrate` | Fence and body repairs; registry-driven corpus migrations with plan/apply/rollback. |
+| `ingest` | External sources (files, web pages) to a `vault propose` bundle: a local model names values and quotes evidence, the page is patched in a manifest, nothing is written to the vault (ADR-OM-010). |
 
 Exit codes are a contract: `0` success, `1` failure, `2` a *refusal* (a credential in published content, an identity collision, an unsatisfiable corpus, a closure its certificate does not cover, a non-boolean `public:` flag, an unknown `--tier`, a scope conflict). Refusals name what they refused.
 

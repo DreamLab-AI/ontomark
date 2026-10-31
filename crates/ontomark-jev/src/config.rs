@@ -124,6 +124,38 @@ impl JevConfig {
         }
     }
 
+    /// The local-only gate for a caller that already holds an explicit
+    /// `endpoint` (an ingest host, say), without Jev's `enabled` switch.
+    ///
+    /// The endpoint is allowed when the consumer is not `local_only`
+    /// (`ONTOMARK_JEV_ALLOW_CLOUD=1`), the environment declares it local
+    /// (`ONTOMARK_JEV_LOCAL=1` or `AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL=1`), or its
+    /// host is evidently on this machine or LAN: a loopback, private or
+    /// link-local IP literal, `localhost`, a `.local` name or a single-label
+    /// name such as a container alias. No DNS lookup is made, so a name that
+    /// resolves elsewhere is the operator's declaration to make.
+    ///
+    /// # Errors
+    /// [`Unavailable`] with `bad-endpoint` for a URL that is not `http(s)` or
+    /// embeds credentials, and `not-local` for any other endpoint.
+    pub fn allows_endpoint(
+        &self,
+        endpoint: &str,
+        env: &dyn Fn(&str) -> Option<String>,
+    ) -> Result<(), Unavailable> {
+        let host = endpoint_host(endpoint).ok_or_else(|| Unavailable::new("bad-endpoint"))?;
+        if self.allow_cloud
+            || !self.local_only
+            || self.local
+            || flag(env("AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL"))
+            || host_is_local(&host)
+        {
+            Ok(())
+        } else {
+            Err(Unavailable::new("not-local"))
+        }
+    }
+
     /// Resolve the destination, first match wins:
     ///
     /// 1. the explicit `endpoint` (key from `key_env`, if set and present);
@@ -174,5 +206,95 @@ impl JevConfig {
             }
         }
         Err(Unavailable::new("no-endpoint"))
+    }
+}
+
+/// The host of an `http(s)` URL, lower-cased and without brackets or port;
+/// `None` for another scheme, embedded credentials or no host.
+fn endpoint_host(endpoint: &str) -> Option<String> {
+    let rest = endpoint
+        .strip_prefix("http://")
+        .or_else(|| endpoint.strip_prefix("https://"))?;
+    let authority = rest.split(['/', '?', '#']).next()?;
+    if authority.contains('@') {
+        return None;
+    }
+    let host = if let Some(v6) = authority.strip_prefix('[') {
+        v6.split(']').next()?
+    } else {
+        authority.split(':').next()?
+    };
+    (!host.is_empty()).then(|| host.to_ascii_lowercase())
+}
+
+/// Whether `host` is evidently local: see [`JevConfig::allows_endpoint`].
+fn host_is_local(host: &str) -> bool {
+    use std::net::IpAddr;
+    match host.parse::<IpAddr>() {
+        Ok(IpAddr::V4(ip)) => ip.is_loopback() || ip.is_private() || ip.is_link_local(),
+        Ok(IpAddr::V6(ip)) => {
+            let first = ip.segments()[0];
+            ip.is_loopback() || first & 0xfe00 == 0xfc00 || first & 0xffc0 == 0xfe80
+        }
+        Err(_) => {
+            host == "localhost"
+                || host.ends_with(".localhost")
+                || host.ends_with(".local")
+                || !host.contains('.')
+        }
+    }
+}
+
+#[cfg(test)]
+mod endpoint_tests {
+    use super::*;
+
+    fn none(_: &str) -> Option<String> {
+        None
+    }
+
+    #[test]
+    fn local_hosts_pass_and_cloud_needs_the_opt_in() {
+        let c = JevConfig::default();
+        for ok in [
+            "http://127.0.0.1:8080/v1",
+            "http://192.168.2.132:8084/v1",
+            "http://10.0.0.5/v1",
+            "http://[::1]:9/v1",
+            "http://localhost:1/v1",
+            "http://loom:8080/v1",
+            "https://box.local/v1",
+        ] {
+            assert!(c.allows_endpoint(ok, &none).is_ok(), "{ok}");
+        }
+        for no in [
+            "https://api.example.com/v1",
+            "http://8.8.8.8/v1",
+            "http://172.32.0.1/v1",
+        ] {
+            assert_eq!(
+                c.allows_endpoint(no, &none).unwrap_err().reason,
+                "not-local"
+            );
+        }
+        for bad in ["ftp://x/v1", "http://u:p@host/v1", "http:///v1"] {
+            assert_eq!(
+                c.allows_endpoint(bad, &none).unwrap_err().reason,
+                "bad-endpoint"
+            );
+        }
+    }
+
+    #[test]
+    fn the_opt_in_and_the_declarations_lift_the_refusal() {
+        let cloud = "https://api.example.com/v1";
+        let allow = JevConfig::from_env(&|k| (k == "ONTOMARK_JEV_ALLOW_CLOUD").then(|| "1".into()));
+        assert!(allow.allows_endpoint(cloud, &none).is_ok());
+        let declared = JevConfig::from_env(&|k| (k == "ONTOMARK_JEV_LOCAL").then(|| "1".into()));
+        assert!(declared.allows_endpoint(cloud, &none).is_ok());
+        let backend = |k: &str| (k == "AGENTBOX_SYSTEM_ONE_BACKEND_LOCAL").then(|| "1".to_owned());
+        assert!(JevConfig::default()
+            .allows_endpoint(cloud, &backend)
+            .is_ok());
     }
 }

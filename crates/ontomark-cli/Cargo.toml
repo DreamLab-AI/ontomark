@@ -19,11 +19,16 @@ path = "src/main.rs"
 [features]
 default = []
 ## `create --suggest`: the opt-in Jev option (advisory domain/type/parent
-## suggestions). Off by default; the default build has none of its code.
-jev = ["dep:ontomark-jev"]
+## suggestions). Off by default; the default build has none of that code.
+## (`ontomark-jev` itself is always linked: `ingest` reuses its endpoint policy.)
+jev = []
 
 [dependencies]
-ontomark-jev = { path = "../ontomark-jev", version = "0.6.1", features = ["http"], optional = true }
+ontomark-jev = { path = "../ontomark-jev", version = "0.6.1", features = ["http"] }
+ontomark-ingest = { workspace = true }
+ontomark-model = { workspace = true }
+ontomark-parse = { workspace = true }
+ontomark-source = { path = "../ontomark-source", version = "0.1.0", features = ["http"] }
 ontomark-compile = { path = "../ontomark-compile", version = "0.6.1" }
 ontomark-profile-estate = { path = "../../profiles/estate", version = "0.6.1" }
 anyhow = "1"

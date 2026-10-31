@@ -80,6 +80,7 @@ name, so a vault at `~/Vaults/Notes` produces `Notes@<sha>`.
 | `edit`, `create`, `apply` | Guarded writes: a frontmatter edit with a declared blast radius, a new page from a staged file, a human-approved `kind: amend` proposal. |
 | `repair bodies\|fences` | Logseq outliner bodies to Obsidian Markdown; unmatched code fences. |
 | `migrate list\|plan\|apply\|rollback\|status` | Registry-driven, journalled, reversible corpus migrations. |
+| `ingest --source <path\|url> (--target <note>\|--discover) --endpoint <url> --model <name>` | External sources to a proposal bundle (`manifest/` for `vault propose --diff`, `evidence.json` with quotes and spans). Local-only endpoint unless `ONTOMARK_JEV_ALLOW_CLOUD=1`; `--budget-calls`, `--budget-chars`, response cache, `--plan-only`. Exit 0 done, 1 endpoint failed, 2 refused. |
 
 Every verb takes `--json`; `--vault knowledge|working|all` selects the roles
 (`all` means both, everywhere). `ontomark <verb> --help` lists the flags.
