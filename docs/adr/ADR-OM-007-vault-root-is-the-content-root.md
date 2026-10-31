@@ -1,8 +1,28 @@
+---
+id: ADR-OM-007
+title: "the vault root is the content root; the `vault` verbs live in `ontomark`"
+date: 2026-10-16
+decision_status: accepted
+implementation_status: partial
+activation_status: live
+supersedes: []
+superseded_by: []
+verified_commit: "3cb298c9dd44084756b1227b954d2716347cd296"
+verified_paths: []
+owner: jjohare
+review_trigger: "a change to the Vault::load layout rules or to the built-in excluded-folder list"
+repo: ontomark
+---
+
 # ADR-OM-007: the vault root is the content root; the `vault` verbs live in `ontomark`
 
 - Status: Accepted (owner decisions of 16 October 2026)
 - Implementation: active from v0.3.0. Layout: `crates/ontomark-compile/src/input/page.rs` (`Vault::load`, `EXCLUDED_DIRS`, `SkipReason::ExcludedDirectory`), `profile.rs` (`Layout`). Verbs: `crates/ontomark-compile/src/ir/graph.rs`, `src/write/`, `crates/ontomark-cli`.
 - Related: ADR-OM-005 (one producer), ADR-OM-008 (any Obsidian vault is a repository: layout folders and generation prefixes from the profile), `docs/DEPRECATION.md` §2.1 and rows VC-29/VC-30, visionGraph commit `e98034e06` (the flatten), VisionClaw's matching change.
+
+Status mapping 2026-10-31: the record has no date line; 2026-10-16 is taken from its status text ("owner decisions of 16 October 2026"). the record's `Implementation: active from v0.3.0` is not a checker value. `activation_status: live` follows its word "active"; `implementation_status: partial` is the conservative reading because the record does not say "complete". Owner to confirm.
+
+Verification 2026-10-31: `verified_commit` is this record's own last-modified commit, recorded when the record was moved onto the estate ledger format. It is not a re-verification of the code the record describes, and `verified_paths` is empty, so the staleness gate is not yet armed for this record.
 
 ## Context
 

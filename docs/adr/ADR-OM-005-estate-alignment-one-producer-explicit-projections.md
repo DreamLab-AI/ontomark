@@ -1,9 +1,26 @@
+---
+id: ADR-OM-005
+title: "one producer, explicit consumer projections, and the generation loop"
+date: 2026-10-12
+decision_status: accepted
+implementation_status: none
+activation_status: inactive
+supersedes: []
+superseded_by: []
+verified_commit: "d9084dc8c5049c0fb18dcbcc6513f3af8cdbd670"
+verified_paths: []
+owner: jjohare
+review_trigger: "a DEPRECATION.md step changes a producer, a consumer projection or the generation identity; VisionClaw ADR-2137 or Agentbox ADR-2136 is accepted or rejected"
+repo: ontomark
+---
+
 # ADR-OM-005: one producer, explicit consumer projections, and the generation loop
 
 - Status: Accepted (owner decisions of 12 October 2026, recorded here; implementation none; activation inactive)
-- Date: 2026-10-12
 - Scope: the estate-wide shape that the Ontomark workspace serves. It records decisions, evidence and the migration consequences. It changes no code, workflow or Nix pin; each of those remains a `DEPRECATION.md` step with its own gate.
 - Related: ADR-OM-001 (#2, #4 licence), ADR-OM-003 (ingest), ADR-OM-004 (EL profile); VisionFlow ADR-2014 (accepted) and its 2026-10-12 alignment section; VisionClaw ADR-2137 (proposed), ADR-2106 (accepted, live); Agentbox ADR-2136 (proposed), ADR-2108 (accepted); Loom ADR-141 (proposed), ADR-142 (proposed); visionGraph ADR-VG-007.
+
+Verification 2026-10-31: `verified_commit` is this record's own last-modified commit, recorded when the record was moved onto the estate ledger format. It is not a re-verification of the code the record describes, and `verified_paths` is empty, so the staleness gate is not yet armed for this record.
 
 ## Decisions (owner, 2026-10-12)
 
