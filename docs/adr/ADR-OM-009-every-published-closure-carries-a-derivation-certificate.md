@@ -1,8 +1,28 @@
+---
+id: ADR-OM-009
+title: "every published closure carries a derivation certificate an independent checker re-verifies"
+date: 2026-10-20
+decision_status: accepted
+implementation_status: partial
+activation_status: live
+supersedes: []
+superseded_by: []
+verified_commit: "96d318973d45be7ec2d57643a478c26f32d1c0fc"
+verified_paths: []
+owner: jjohare
+review_trigger: "a change to the oo-cert/1 format, to the certificate parity rule, or to the public contract of the rdfs-certificate crate"
+repo: ontomark
+---
+
 # ADR-OM-009: every published closure carries a derivation certificate an independent checker re-verifies
 
 - Status: Accepted (owner request of 20 October 2026)
 - Implementation: active from v0.6.0. `crates/rdfs-certificate` (published to crates.io as `rdfs-certificate` 0.1.0: the RDFS engine, the `oo-cert/1` writer, the consequence delta), `crates/ontomark-compile/src/certificate.rs` (`spell`, `certify`, `parity`), `build/mod.rs` (`Options.certificate_out`, `CertificateParity`, `CertificateReport`, `Report.certificate`), `crates/ontomark-cli/src/main.rs` (`ontomark build --certificate-out`, exit 2 on parity loss). Tests: `rdfs-certificate` unit and `tests/oo_cert.rs` (runs the checker when `OO_CERT_BIN` is set), `certificate.rs` Whelk-parity test.
 - Related: ADR-OM-005 (one producer), VisionClaw ADR-2147 (the same decision for the consumer side: `vault propose` carries the consequence delta; both now consume the one crate), agentbox ADR-2136.
+
+Status mapping 2026-10-31: the record has no date line; 2026-10-20 is taken from its status text ("owner request of 20 October 2026"). the record's `Implementation: active from v0.6.0` is not a checker value. `activation_status: live` follows its word "active"; `implementation_status: partial` is the conservative reading because the record does not say "complete". Owner to confirm.
+
+Verification 2026-10-31: `verified_commit` is this record's own last-modified commit, recorded when the record was moved onto the estate ledger format. It is not a re-verification of the code the record describes, and `verified_paths` is empty, so the staleness gate is not yet armed for this record.
 
 ## Context
 

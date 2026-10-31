@@ -1,8 +1,28 @@
+---
+id: ADR-OM-008
+title: "any Obsidian vault is a repository; folders and generation prefixes come from the profile"
+date: 2026-10-17
+decision_status: accepted
+implementation_status: partial
+activation_status: live
+supersedes: []
+superseded_by: []
+verified_commit: "3cb298c9dd44084756b1227b954d2716347cd296"
+verified_paths: []
+owner: jjohare
+review_trigger: "a change to resolve_repo, to the profile Layout, or to the generation naming contract the estate consumes"
+repo: ontomark
+---
+
 # ADR-OM-008: any Obsidian vault is a repository; folders and generation prefixes come from the profile
 
 - Status: Accepted (owner request of 17 October 2026)
 - Implementation: active from v0.4.0. `crates/ontomark-cli/src/main.rs` (`resolve_repo`, `resolve_profile`, `vault_root`), `crates/ontomark-compile/src/profile.rs` (`Layout::{knowledge,working,dir_of,path_of,root_of,kind_of,flat}`, `MissingVault`, `GenerationNaming`), `input/page.rs` (`VaultKind::role_name`), `build/generation.rs` (`generation_id(prefix, commit, dirty)`), `input/vocabulary.rs` (`Vocabulary::generic`), `check/validate.rs` (role grammar from the profile). Tests: `crates/ontomark-cli/tests/plain_vault_cli.rs`, `profile.rs` unit tests, `tests/bundle_contract.rs`.
 - Related: ADR-OM-007 (the vault root is the content root), ADR-OM-005 (one producer), ADR-OM-001 (profiles as data).
+
+Status mapping 2026-10-31: the record has no date line; 2026-10-17 is taken from its status text ("owner request of 17 October 2026"). the record's `Implementation: active from v0.4.0` is not a checker value. `activation_status: live` follows its word "active"; `implementation_status: partial` is the conservative reading because the record does not say "complete". Owner to confirm.
+
+Verification 2026-10-31: `verified_commit` is this record's own last-modified commit, recorded when the record was moved onto the estate ledger format. It is not a re-verification of the code the record describes, and `verified_paths` is empty, so the staleness gate is not yet armed for this record.
 
 ## Context
 

@@ -1,8 +1,28 @@
+---
+id: ADR-OM-006
+title: "what Ontomark takes from Dot Triples, and the bridge between them"
+date: 2026-10-13
+decision_status: accepted
+implementation_status: partial
+activation_status: live
+supersedes: []
+superseded_by: []
+verified_commit: "fad22753b26557d6188c58593ca7b81f7451b1b9"
+verified_paths: []
+owner: jjohare
+review_trigger: "a change to the dot-triples bridge, to the ontomark-sparql fence, or to the Dot Triples licence"
+repo: ontomark
+---
+
 # ADR-OM-006: what Ontomark takes from Dot Triples, and the bridge between them
 
 - Status: Accepted (owner request of 13 October 2026: "adopt the good stuff with attribution")
 - Implementation: active. `bridges/dot-triples/` (this repository); the `ontomark-sparql` block in [ontomark-obsidian](https://github.com/DreamLab-AI/ontomark-obsidian) ([ADR-OBS-004](https://github.com/DreamLab-AI/ontomark-obsidian/blob/main/docs/adr/ADR-OBS-004-in-note-sparql-after-dot-triples.md)).
 - Related: ADR-OM-002 (plugin boundary), ADR-OM-005 (one producer, explicit projections), [`docs/UPSTREAMS.md`](../UPSTREAMS.md).
+
+Status mapping 2026-10-31: the record has no date line; 2026-10-13 is taken from its status text ("owner request of 13 October 2026"). the record's `Implementation: active` is not a checker value. `activation_status: live` follows its word "active"; `implementation_status: partial` is the conservative reading because the record does not say "complete". Owner to confirm.
+
+Verification 2026-10-31: `verified_commit` is this record's own last-modified commit, recorded when the record was moved onto the estate ledger format. It is not a re-verification of the code the record describes, and `verified_paths` is empty, so the staleness gate is not yet armed for this record.
 
 ## Context
 

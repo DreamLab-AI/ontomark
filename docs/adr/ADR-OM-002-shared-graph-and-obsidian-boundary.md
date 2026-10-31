@@ -1,9 +1,27 @@
+---
+id: ADR-OM-002
+title: "shared graph code and separate Obsidian distribution"
+date: 2026-10-11
+decision_status: accepted
+implementation_status: partial
+activation_status: inactive
+supersedes: []
+superseded_by: []
+verified_commit: "33924da83e4b7db2c6bc5b19162f01288e583cf8"
+verified_paths: []
+owner: jjohare
+review_trigger: "a change to what packages/graph owns, or to how the Obsidian plugin consumes the shared graph"
+repo: ontomark
+---
+
 # ADR-OM-002: shared graph code and separate Obsidian distribution
 
-- Status: Accepted
-- Date: 2026-10-11
 - Implementation: shared package 0.1.0 and Obsidian 0.1.0 released; installed Obsidian and public publisher browser acceptance passed
 - Related: [ADR-OM-001](ADR-OM-001-sprint-decisions.md), [estate removal plan](../DEPRECATION.md)
+
+Status mapping 2026-10-31: the record states `Implementation: shared package 0.1.0 and Obsidian 0.1.0 released; installed Obsidian and public publisher browser acceptance passed`, which is not a checker value and does not use the word "complete"; `implementation_status: partial` is the conservative reading. It states no activation, so `inactive` is taken. Owner to set the real values (the released-and-accepted statement may justify `complete` / `live`).
+
+Verification 2026-10-31: `verified_commit` is this record's own last-modified commit, recorded when the record was moved onto the estate ledger format. It is not a re-verification of the code the record describes, and `verified_paths` is empty, so the staleness gate is not yet armed for this record.
 
 ## Context
 

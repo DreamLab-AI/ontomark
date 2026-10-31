@@ -1,12 +1,30 @@
+---
+id: ADR-OM-001
+title: "Decisions taken in the first ontomark sprint"
+date: 2026-10-11
+decision_status: accepted
+implementation_status: none
+activation_status: inactive
+supersedes: []
+superseded_by: []
+verified_commit: "9dee3a471e90ec68e43c4964b117e05857f2a898"
+verified_paths: []
+owner: jjohare
+review_trigger: "a sprint resolution it records is reversed, or the census baseline it was verified against (tag ontomark-census-baseline-1) is re-cut"
+repo: ontomark
+---
+
 # ADR-OM-001: Decisions taken in the first ontomark sprint
 
-- Status: accepted
-- Date: 2026-10-11
 - Decides for: ontomark (this repository) and the consuming estate repos
 - Amends: VisionFlow ADR-2014, ADR-2015, ADR-2016; visionGraph ADR-VG-007;
   VisionClaw ADR-2137; Agentbox ADR-2136; Loom ADR-142; vowl-wasm ADR-001
 - Verified against: VisionClaw tag `ontomark-census-baseline-1` (`de33ca538`),
   ontomark `32a3de3`
+
+Status mapping 2026-10-31: the record states no `Implementation:` or `Activation:` line, so the lowest values (`none`, `inactive`) are taken. That is the absence of a statement, not a claim that nothing was built or that the decision is not in force. Owner to set the real values.
+
+Verification 2026-10-31: `verified_commit` is this record's own last-modified commit, recorded when the record was moved onto the estate ledger format. It is not a re-verification of the code the record describes, and `verified_paths` is empty, so the staleness gate is not yet armed for this record.
 
 ## Context
 

@@ -1,0 +1,5 @@
+{
+  "repo": "ontomark",
+  "exclude": ["ESTATE-ADRS.md"],
+  "regenerate": "bash scripts/adr-ledger.sh write"
+}

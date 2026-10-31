@@ -1,7 +1,27 @@
+---
+id: ADR-OM-004
+title: "OWL 2 EL is the local reasoning profile, and non-EL is named, not dropped"
+date: 2026-10-12
+decision_status: accepted
+implementation_status: partial
+activation_status: live
+supersedes: []
+superseded_by: []
+verified_commit: "783a24abeb9f8c71284e802a62d88b3f96b4e13f"
+verified_paths: []
+owner: jjohare
+review_trigger: "a proposal to run a non-EL profile on any local reasoning path, or a change to the ontomark-reason refusal codes"
+repo: ontomark
+---
+
 # ADR-OM-004: OWL 2 EL is the local reasoning profile, and non-EL is named, not dropped
 
 - Status: Accepted (records a decision already in force since `whelk-el` 0.1.0; written down on 12 October 2026 when the question was asked directly)
 - Implementation: active. `ontomark-reason::profile` (refusal codes), `ontomark-compile` `NON_EL_VOCABULARY` (ADR-2126 Decision 2), engine `Classification::unsupported`.
+
+Status mapping 2026-10-31: the record has no date line; 2026-10-12 is taken from its status text ("written down on 12 October 2026"). The decision was "already in force since `whelk-el` 0.1.0". the record's `Implementation: active` is not a checker value. `activation_status: live` follows its word "active"; `implementation_status: partial` is the conservative reading because the record does not say "complete". Owner to confirm.
+
+Verification 2026-10-31: `verified_commit` is this record's own last-modified commit, recorded when the record was moved onto the estate ledger format. It is not a re-verification of the code the record describes, and `verified_paths` is empty, so the staleness gate is not yet armed for this record.
 
 ## Question
 

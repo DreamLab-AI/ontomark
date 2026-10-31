@@ -1,10 +1,27 @@
+---
+id: ADR-OM-003
+title: "native, host-driven assisted ingest"
+date: 2026-10-12
+decision_status: proposed
+implementation_status: partial
+activation_status: staged
+supersedes: []
+superseded_by: []
+verified_commit: ""
+verified_paths: []
+owner: jjohare
+review_trigger: "owner confirmation or rejection of the inferred acceptance; a second ingest slice beyond facts only; installed-Obsidian acceptance (verification item 5) recorded"
+repo: ontomark
+---
+
 # ADR-OM-003: native, host-driven assisted ingest
 
 - Status: Accepted (close-out 2026-10-30; see the note at the end)
-- Date: 2026-10-12
 - Implementation: complete for the engine scope (the first slice, facts only). `crates/ontomark-ingest` is published as `ontomark-ingest` 0.1.0, and `ontomark-wasm` exposes `ingest_plan` and `ingest_accept` (`crates/ontomark-wasm/src/engine.rs`). The plugin side belongs to ADR-OBS-002.
 - Activation: staged (the crate is published and the plugin client calls both requests; installed-Obsidian acceptance, verification item 5, is not recorded)
 - Related: [ADR-OM-002](ADR-OM-002-shared-graph-and-obsidian-boundary.md), [OntoCast triage](../ONTOCAST-TRIAGE.md), [ADR-OBS-002](https://github.com/DreamLab-AI/ontomark-obsidian/blob/main/docs/adr/ADR-OBS-002-assisted-ingest-boundary-and-estate-notes.md), [upstream credits](../UPSTREAMS.md)
+
+Status mapping 2026-10-31: the record's header says `Accepted (close-out 2026-10-30)`, but its close-out note says that acceptance is an inference from the owner publishing `ontomark-ingest` 0.1.0, not a recorded ratification (ontomark commit 154bca9). `decision_status` is therefore `proposed` until the owner confirms. `implementation_status: partial` because the record says `complete for the engine scope` only and its plugin side belongs to ADR-OBS-002; `activation_status: staged` is as stated. Owner to confirm acceptance and the implementation scope.
 
 ## Context
 
