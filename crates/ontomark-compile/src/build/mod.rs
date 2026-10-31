@@ -1097,7 +1097,7 @@ mod tests {
         .unwrap();
         std::fs::write(
             pages.join("Knowledge Graph.md"),
-            "---\ntype: Class\npublic: true\nresource: urn:ngm:class:knowledge-graph\nstatus: stable\ndomain: infrastructure\ndefinition: A graph.\nmaturity: established\nquality: 0.35\nis-a: [\"[[Root Concept]]\"]\nlinks: [\"[[Root Concept]]\"]\n---\n- ### Current Landscape (2026)\n  - Widely adopted.\n",
+            "---\ntype: Class\npublic: true\nresource: urn:ngm:class:knowledge-graph\nstatus: stable\ndomain: infrastructure\ndefinition: A graph.\nmaturity: established\nquality: 0.35\nis-a: [\"[[Root Concept]]\"]\nlinks: [\"[[Root Concept]]\"]\n---\n### Current Landscape (2026)\n\n- Widely adopted.\n",
         )
         .unwrap();
         std::fs::write(
