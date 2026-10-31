@@ -1,0 +1,34 @@
+[package]
+name = "ontomark-source"
+description = "The Source port for Ontomark ingest: local files and (behind a feature) URLs rendered to versioned text, with ledger-based change classification"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+readme = "README.md"
+keywords = ["ontology", "obsidian", "ingest", "html", "markdown"]
+categories = ["text-processing", "filesystem"]
+
+[features]
+default = []
+## `Url`: a blocking HTTP(S) source. Off by default; without it the crate has no network code.
+http = ["dep:ureq"]
+
+[package.metadata.docs.rs]
+features = ["http"]
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+sha2 = { workspace = true, features = ["alloc"] }
+htmd = "0.5"
+ureq = { version = "2", optional = true }
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true
