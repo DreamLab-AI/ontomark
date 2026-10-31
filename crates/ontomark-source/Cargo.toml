@@ -16,6 +16,9 @@ default = []
 ## `Url`: a blocking HTTP(S) source. Off by default; without it the crate has no network code.
 http = ["dep:ureq"]
 
+[package.metadata.docs.rs]
+features = ["http"]
+
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }

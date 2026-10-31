@@ -22,14 +22,16 @@ marker per item) so one port shape serves the estate.
   to decide). `Ledger::can_skip` is the cheap pre-check.
 
 ```rust
-use ontomark_source::{LocalFiles, Source};
+use ontomark_source::{LocalFiles, Source, SourceError};
 
-let source = LocalFiles::new("notes");
-for item in source.list()? {
-    let fetched = source.fetch(&item)?;
-    println!("{} {}", fetched.item_id, fetched.version);
+fn main() -> Result<(), SourceError> {
+    let source = LocalFiles::new("notes");
+    for item in source.list()? {
+        let fetched = source.fetch(&item)?;
+        println!("{} {}", fetched.item_id, fetched.version);
+    }
+    Ok(())
 }
-# Ok::<(), ontomark_source::SourceError>(())
 ```
 
 Licensed under MIT OR Apache-2.0.

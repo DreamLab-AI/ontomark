@@ -65,8 +65,7 @@ pub fn version_of(text: &str) -> String {
 
 /// Elements dropped with their content when rendering HTML.
 const DROPPED: &[&str] = &[
-    "script", "style", "noscript", "template", "nav", "head", "svg", "iframe", "form", "footer",
-    "aside",
+    "script", "style", "noscript", "template", "nav", "head", "svg",
 ];
 
 /// Render `bytes` of the given kind to text. `locator` is used in errors only.
@@ -137,12 +136,12 @@ mod tests {
         let html = "<html><head><title>x</title><style>p{}</style></head><body>\
             <nav><a href='/'>Home</a></nav><script>alert(1)</script>\
             <h1>Top</h1><p>A &amp; B &lt; C &eacute;</p><h2>Sub</h2><p>Text</p>\
-            <footer>Copyright</footer></body></html>";
+            </body></html>";
         let out = render(MediaKind::Html, html.as_bytes(), "t").unwrap();
         assert!(out.starts_with("# Top\n"), "{out:?}");
         assert!(out.contains("A & B < C é"), "{out:?}");
         assert!(out.contains("## Sub"), "{out:?}");
-        for gone in ["alert", "Home", "p{}", "Copyright", "x\n"] {
+        for gone in ["alert", "Home", "p{}", "x\n"] {
             assert!(!out.contains(gone), "{gone} survived: {out:?}");
         }
     }
