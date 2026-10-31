@@ -24,13 +24,13 @@ default = []
 jev = []
 
 [dependencies]
-ontomark-jev = { path = "../ontomark-jev", version = "0.6.1", features = ["http"] }
+ontomark-jev = { path = "../ontomark-jev", version = "0.7.0", features = ["http"] }
 ontomark-ingest = { workspace = true }
 ontomark-model = { workspace = true }
 ontomark-parse = { workspace = true }
 ontomark-source = { path = "../ontomark-source", version = "0.1.0", features = ["http"] }
 ontomark-compile = { path = "../ontomark-compile", version = "0.6.1" }
-ontomark-profile-estate = { path = "../../profiles/estate", version = "0.6.1" }
+ontomark-profile-estate = { path = "../../profiles/estate", version = "0.7.0" }
 anyhow = "1"
 clap = { version = "4.5", features = ["derive", "env"] }
 serde_json = { workspace = true, features = ["preserve_order"] }

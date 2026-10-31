@@ -101,7 +101,7 @@ cargo install ontomark
 Each [release](https://github.com/DreamLab-AI/ontomark/releases) ships, built by [`release.yml`](.github/workflows/release.yml) from the tagged source, a static Linux x86-64 binary (runs on glibc and Nix hosts alike), a SHA-256 receipt, and the versioned WASM engine bundle the plugin pins.
 
 ```bash
-V=0.6.1
+V=0.7.0
 curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v$V/ontomark-x86_64-unknown-linux-gnu
 curl -fLO https://github.com/DreamLab-AI/ontomark/releases/download/v$V/ontomark-x86_64-unknown-linux-gnu.sha256
 sha256sum --check ontomark-x86_64-unknown-linux-gnu.sha256
@@ -134,13 +134,14 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 | [whelk-el](crates/whelk-el) | 0.1.1 | The saturation engine, a Rust port of Whelk, with optional native parallelism. |
 | [ontomark-reason](crates/ontomark-reason) | 0.1.2 | The OWL 2 EL profile check and classification facade: named refusals, root causes, cancellable sessions. |
 | [ontomark-ingest](crates/ontomark-ingest) | 0.2.0 | Assisted ingest: the pure plan/accept contract, grounding, lexical guards, evidence spans. No I/O, no model. |
-| [ontomark-jev](crates/ontomark-jev) | 0.6.1 | Opt-in **Jev option** for ingest (typed Choice/Noul decisions via System One), off by default, exact fallback to the plain path. See its README. |
+| [ontomark-source](crates/ontomark-source) | 0.1.0 | The Source port: local files and URLs as text with a content version, and a ledger that skips unchanged sources. |
+| [ontomark-jev](crates/ontomark-jev) | 0.7.0 | Opt-in **Jev option** for ingest (typed Choice/Noul decisions via System One), off by default, exact fallback to the plain path. See its README. |
 | [rdfs-certificate](crates/rdfs-certificate) | 0.1.0 | RDFS forward chaining that records every step in the `oo-cert/1` certificate format an independent checker re-verifies, and the consequence delta between two graphs. No graph library; used by ontomark and by VisionClaw's `vault`. |
 | [ontomark-compile](crates/ontomark-compile) | 0.6.1 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity, the derivation certificate. |
 | [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | The shared binary graph format and its zero-copy reader. |
-| [ontomark-profile-estate](profiles/estate) | 0.6.1 | The DreamLab estate's rules as data; most users want `--profile generic` and never depend on it. |
+| [ontomark-profile-estate](profiles/estate) | 0.7.0 | The DreamLab estate's rules as data; most users want `--profile generic` and never depend on it. |
 | [ontomark-wasm](crates/ontomark-wasm) | release asset | The worker-friendly engine protocol: index, update, classify, query, patch, ingest. |
-| [ontomark](crates/ontomark-cli) | 0.6.1 | The installable CLI: `cargo install ontomark`. |
+| [ontomark](crates/ontomark-cli) | 0.7.0 | The installable CLI: `cargo install ontomark`. `ontomark ingest` turns external sources into a `vault propose` bundle. |
 | [ontomark-graph](packages/graph) | [0.2.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.2.0) | The shared offline graph renderer for desktop and web hosts. |
 
 Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.
