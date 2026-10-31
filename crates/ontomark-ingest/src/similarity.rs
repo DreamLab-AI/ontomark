@@ -161,6 +161,35 @@ pub(crate) fn tokens_alias_compatible(left: &str, right: &str) -> bool {
     shorter.chars().count() == 1 && longer.starts_with(shorter)
 }
 
+/// The sorted multiset of tokens that contain a digit. `3.1`, `802.11`,
+/// `2.0` and `8b` each count as one token, because [`label_tokens`] splits
+/// on whitespace only.
+fn numeric_tokens<'a>(tokens: impl IntoIterator<Item = &'a str>) -> Vec<&'a str> {
+    let mut out: Vec<&str> = tokens
+        .into_iter()
+        .filter(|t| t.chars().any(char::is_numeric))
+        .collect();
+    out.sort_unstable();
+    out
+}
+
+/// The numeric-token guard (ADR-OM-010): two names whose numeric tokens
+/// differ as multisets denote different things (`ISO 9001` and `ISO 14001`,
+/// `Llama 3.1 8B` and `Llama 3.1 70B`, `Web 2.0` and `Web 3.0`), however
+/// alike they look. A name with a number never aliases one without it at a
+/// fuzzy tier. Applies below [`AliasTier::SharedLabel`] only.
+#[must_use]
+pub(crate) fn numeric_tokens_differ<'a>(
+    left: impl IntoIterator<Item = &'a str>,
+    right: impl IntoIterator<Item = &'a str>,
+) -> bool {
+    numeric_tokens(left) != numeric_tokens(right)
+}
+
+fn token_strs(tokens: &[String]) -> impl Iterator<Item = &str> {
+    tokens.iter().map(String::as_str)
+}
+
 /// The tokens of each label, computed once so the tiers never re-tokenise.
 #[must_use]
 pub(crate) fn tokenize_labels(labels: &[String]) -> Vec<Vec<String>> {
@@ -179,6 +208,11 @@ pub(crate) fn tokenize_labels(labels: &[String]) -> Vec<Vec<String>> {
 pub(crate) fn labels_alias_with_initials(left: &[Vec<String>], right: &[Vec<String>]) -> bool {
     for lt in left.iter().filter(|t| !t.is_empty()) {
         for rt in right.iter().filter(|t| !t.is_empty()) {
+            // `4` is an initial of `40` to the token rule; the numeric guard
+            // is what keeps `gpt 4` and `gpt 40` apart.
+            if numeric_tokens_differ(token_strs(lt), token_strs(rt)) {
+                continue;
+            }
             let (shorter, longer) = if lt.len() <= rt.len() {
                 (lt, rt)
             } else {
@@ -292,11 +326,14 @@ pub(crate) fn lexical_alias(
         return Some(AliasTier::Initials);
     }
     if !left.labels.is_empty() && !right.labels.is_empty() {
-        let mut best = 0.0f64;
-        for at in left.tokens {
-            let at: BTreeSet<&str> = at.iter().map(String::as_str).collect();
-            for bt in right.tokens {
-                let bt: BTreeSet<&str> = bt.iter().map(String::as_str).collect();
+        let mut best = f64::NEG_INFINITY;
+        for at_tokens in left.tokens {
+            let at: BTreeSet<&str> = token_strs(at_tokens).collect();
+            for bt_tokens in right.tokens {
+                if numeric_tokens_differ(token_strs(at_tokens), token_strs(bt_tokens)) {
+                    continue;
+                }
+                let bt: BTreeSet<&str> = token_strs(bt_tokens).collect();
                 best = best.max(jaccard(&at, &bt));
             }
         }
@@ -309,6 +346,11 @@ pub(crate) fn lexical_alias(
         && !b.is_empty()
         && (a.starts_with(&format!("{b} ")) || b.starts_with(&format!("{a} ")))
     {
+        return None;
+    }
+    // The ratio tiers compare whole normal forms; they too must not alias
+    // names that differ in a number.
+    if numeric_tokens_differ(label_tokens(left.normal), label_tokens(right.normal)) {
         return None;
     }
     if sequence_ratio_bound(left.normal, right.normal) >= t.sequence_ratio
@@ -483,5 +525,126 @@ mod tests {
 
         let other = Side::new(&["blockchain"]);
         assert_eq!(lexical_alias(&left, &other.names("blockchain"), &t), None);
+    }
+
+    /// Permissive thresholds so a refusal is the guard's doing, not the
+    /// default cut-offs'.
+    fn loose() -> LexicalThresholds {
+        LexicalThresholds {
+            label_jaccard: 0.3,
+            sequence_ratio: 0.5,
+            token_jaccard: 0.3,
+        }
+    }
+
+    /// The tier `lexical_alias` reports for two names, each with only its own
+    /// label (so the label tiers run) or with none (so the normal-form tiers
+    /// run).
+    fn tier_of(a: &str, b: &str, with_labels: bool, t: &LexicalThresholds) -> Option<AliasTier> {
+        let (na, nb) = (
+            crate::normalize::normalize_label(a),
+            crate::normalize::normalize_label(b),
+        );
+        let (sa, sb) = if with_labels {
+            (Side::new(&[&na]), Side::new(&[&nb]))
+        } else {
+            (Side::new(&[]), Side::new(&[]))
+        };
+        lexical_alias(&sa.names(&na), &sb.names(&nb), t)
+    }
+
+    #[test]
+    fn digit_guard_refuses_numeric_siblings_at_every_fuzzy_tier() {
+        let pairs = [
+            ("ISO 9001", "ISO 14001"),
+            ("Llama 3.1 8B", "Llama 3.1 70B"),
+            ("Web 2.0", "Web 3.0"),
+            ("IEEE 802.11", "IEEE 802.3"),
+            ("GPT-4", "GPT-5"),
+            ("GPT-4", "GPT-40"),
+            ("Web 2.0", "Web"),
+        ];
+        for (a, b) in pairs {
+            for t in [LexicalThresholds::default(), loose()] {
+                for with_labels in [true, false] {
+                    assert_eq!(tier_of(a, b, with_labels, &t), None, "{a} / {b}");
+                    assert_eq!(tier_of(b, a, with_labels, &t), None, "{b} / {a}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn the_guard_is_not_what_stops_the_controls() {
+        // The same shapes without a differing number do fire each fuzzy tier,
+        // so the refusals above are the guard's.
+        let t = loose();
+        assert_eq!(
+            tier_of("Llama 3.1 Base Chat", "Llama 3.1 Base Tuned", true, &t),
+            Some(AliasTier::LabelJaccard)
+        );
+        assert_eq!(
+            tier_of("Knowledge Graph 2.0", "Knowledge Graphs 2.0", false, &t),
+            Some(AliasTier::SequenceRatio)
+        );
+        assert_eq!(
+            tier_of(
+                "Graph Theory Primer",
+                "Graph Theory Basics",
+                false,
+                &LexicalThresholds {
+                    sequence_ratio: 0.99,
+                    ..t
+                }
+            ),
+            Some(AliasTier::TokenJaccard)
+        );
+        // `Initials` with a shared, identical number.
+        assert_eq!(
+            tier_of("Gpt 4 Turbo", "Gpt 4", true, &LexicalThresholds::default()),
+            Some(AliasTier::Initials)
+        );
+    }
+
+    #[test]
+    fn exact_and_shared_label_stay_unguarded() {
+        let t = LexicalThresholds::default();
+        assert_eq!(
+            tier_of("ISO 9001", "iso 9001", false, &t),
+            Some(AliasTier::Exact)
+        );
+        // An author who lists `ISO 14001` as an alias of `ISO 9001` has said
+        // so; the guard does not overrule an assertion.
+        let left = Side::new(&["iso 9001", "iso 14001"]);
+        let right = Side::new(&["iso 14001"]);
+        assert_eq!(
+            lexical_alias(&left.names("iso 9001"), &right.names("iso 14001"), &t),
+            Some(AliasTier::SharedLabel)
+        );
+    }
+
+    #[test]
+    fn dotted_numbers_stay_whole_tokens() {
+        fn one(s: &str) -> Vec<&str> {
+            numeric_tokens(label_tokens(s))
+        }
+        assert_eq!(one("llama 3.1 8b"), vec!["3.1", "8b"]);
+        assert_eq!(one("ieee 802.11"), vec!["802.11"]);
+        assert_eq!(one("web 2.0."), vec!["2.0"]);
+        assert!(!numeric_tokens_differ(
+            label_tokens("a 3 1"),
+            label_tokens("1 a 3")
+        ));
+        assert!(numeric_tokens_differ(
+            label_tokens("v 3.1"),
+            label_tokens("v 3 1")
+        ));
+    }
+
+    #[test]
+    fn names_differing_only_in_words_are_unchanged() {
+        let t = LexicalThresholds::default();
+        let plural = tier_of("Knowledge Graph", "Knowledge Graphs", false, &t);
+        assert_eq!(plural, Some(AliasTier::SequenceRatio));
     }
 }
