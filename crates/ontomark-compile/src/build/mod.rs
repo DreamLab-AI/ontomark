@@ -496,7 +496,12 @@ fn ensure_machine_scope(options: &Options, profile: &Profile) -> Result<(), Scop
                 .to_owned(),
         );
     }
-    if profile.layout.kind_of(&options.vault_root) != VaultKind::Knowledge {
+    if profile
+        .layout
+        .kind_of_at(&options.repo_root, &options.vault_root)
+        .ok()
+        != Some(VaultKind::Knowledge)
+    {
         conflicts.push(format!(
             "the vault root {} is not a knowledge vault",
             options.vault_root.display()
@@ -551,6 +556,7 @@ pub fn run_with(
 ) -> anyhow::Result<Report> {
     // The machine bundle's inputs are fixed, so what cannot be honoured is
     // refused before a page is read.
+    profile.layout.validate(&options.repo_root)?;
     let machine = options.scope == Scope::Machine;
     if machine {
         ensure_machine_scope(options, profile)?;
@@ -570,7 +576,9 @@ pub fn run_with(
     let census = projection::inspect_walk(&options.vault_root, &walk)?;
     let vault = Vault::load_with_walk(
         &options.vault_root,
-        profile.layout.kind_of(&options.vault_root),
+        profile
+            .layout
+            .kind_of_at(&options.repo_root, &options.vault_root)?,
         walk,
     )?;
     let aliases = alias_map(&vault);

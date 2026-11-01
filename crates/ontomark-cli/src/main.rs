@@ -67,7 +67,7 @@ use ontomark_compile::input::promotion::Blocker;
 use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::ir::graph::{self, VaultGraph};
 use ontomark_compile::ir::model::Corpus;
-use ontomark_compile::profile::{Layout, MissingVault, Profile};
+use ontomark_compile::profile::{Layout, LayoutError, MissingVault, Profile};
 use ontomark_compile::write::{apply, create, edit};
 use serde_json::json;
 
@@ -457,7 +457,9 @@ fn main() -> ExitCode {
             eprintln!("ontomark: {e:#}");
             // A vault role the layout does not place (`--vault working` on a
             // plain vault) is a refused request, not a failure: exit 2.
-            if e.downcast_ref::<MissingVault>().is_some() {
+            if e.downcast_ref::<MissingVault>().is_some()
+                || e.downcast_ref::<LayoutError>().is_some()
+            {
                 return ExitCode::from(2);
             }
             ExitCode::from(1)
@@ -649,6 +651,7 @@ fn run() -> anyhow::Result<ExitCode> {
     let cli = Cli::parse();
     let repo = resolve_repo(cli.repo.as_deref())?;
     let profile = resolve_profile(cli.profile.as_deref(), &repo)?;
+    profile.layout.validate(&repo.root)?;
     let Repo { root, vocab, .. } = repo;
 
     match &cli.command {

@@ -9,7 +9,7 @@ Loom and other readers can disable the classifier dependency:
 
 ```toml
 [dependencies]
-ontomark-compile = { version = "0.4.0", default-features = false }
+ontomark-compile = { version = "0.6.2", default-features = false }
 ```
 
 ## Vault layout
@@ -19,8 +19,8 @@ pages sit at the vault root, and a page's id is its root-relative path without
 `.md` (`ETSI/Domain.md` is `ETSI/Domain`). Top-level folders holding Obsidian
 furniture rather than pages are skipped by the page walk and reported as
 `excluded_directory` skips, never silently dropped: the built-in list
-`input::page::EXCLUDED_DIRS` (`templates`, `bases`, `assets`, `journals`), or
-the profile's `layout.excluded` in its place. Dot-folders (`.obsidian/`) are
+`input::page::EXCLUDED_DIRS` (`templates`, `bases`, `assets`, `journals`), plus
+the profile's additional `layout.excluded` entries. Dot-folders (`.obsidian/`) are
 hidden regardless; `journals/` is loaded as its own tree.
 
 Where the vaults sit under the repository root is the profile's
@@ -30,6 +30,18 @@ Where the vaults sit under the repository root is the profile's
 the repository root *is* the vault — a plain Obsidian vault opened directly.
 Code that needs a folder asks the layout (`Layout::root_of`); a role the layout
 does not place is refused by name (`MissingVault`).
+
+`Layout::validate` and `profile::resolve_roots` resolve existing symlinks and
+ancestors, reject absolute/parent paths, aliases, nested roots and escapes from
+the repository. Missing roots remain legal configuration; selecting an absent
+role is a separate error. `Layout::kind_of_at` identifies the complete resolved
+root, avoiding suffix collisions in custom layouts. These APIs work with
+`default-features = false`; they do not require a reasoner. They are configuration
+checks, not protection against concurrent filesystem replacement.
+
+`Vocabulary::discover_path` canonicalises its starting directory before walking
+ancestors. Hosts can share discovery while retaining their existing vocabulary
+parser. See [ADR-OM-011](../../docs/adr/ADR-OM-011-shared-filesystem-layout-checks.md).
 
 ```yaml
 # A vault that keeps notes in notes/, drafts in drafts/, and excludes scratch/.

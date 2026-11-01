@@ -457,6 +457,16 @@ pub fn plan(
     migration: &dyn Migration,
     profile: &Profile,
 ) -> Result<Plan, MigrateError> {
+    profile
+        .layout
+        .validate(repo_root)
+        .map_err(|e| MigrateError::Input(e.to_string()))?;
+    for kind in vaults {
+        profile
+            .layout
+            .root_of(repo_root, *kind)
+            .map_err(|e| MigrateError::Input(e.to_string()))?;
+    }
     // A plain vault has no vocabulary file and compiles under the generic one.
     let vocab_path = repo_root.join("ontology/vocabulary.yaml");
     let vocab = if vocab_path.is_file() {

@@ -32,6 +32,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::input::page::VaultKind;
 
+mod layout;
+pub use layout::{resolve_roots, LayoutError};
+
 /// A corpus profile. Every field has a generic default, so a profile file
 /// states only what it changes.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -361,7 +364,9 @@ pub enum UnknownKeys {
 pub struct Role {
     /// Admitted `type:` values; empty admits any.
     pub types: Vec<String>,
-    /// Keys every page must carry.
+    /// Keys declared as required in the exported role schema.
+    /// Runtime validation currently enforces `type` and `status` for knowledge
+    /// ontology pages; other keys require a separate validation-policy migration.
     pub required_keys: Vec<String>,
     /// Undeclared keys.
     pub unknown_keys: UnknownKeys,
@@ -487,7 +492,8 @@ pub struct Layout {
     /// role.
     pub working: Option<String>,
     /// Top-level folder names (first path component under a vault root)
-    /// whose `.md` files are not pages. Defaults to
+    /// whose `.md` files are not pages. These extend the built-in exclusions,
+    /// which cannot be removed through a profile. Defaults to
     /// [`crate::input::page::EXCLUDED_DIRS`].
     pub excluded: Vec<String>,
 }
@@ -519,10 +525,16 @@ impl Layout {
         }
     }
 
-    /// The excluded folders as the borrowed slice the page walk takes.
+    /// The built-in exclusions plus additional profile folders, without duplicates.
     #[must_use]
     pub fn excluded_dirs(&self) -> Vec<&str> {
-        self.excluded.iter().map(String::as_str).collect()
+        let mut excluded = crate::input::page::EXCLUDED_DIRS.to_vec();
+        for name in &self.excluded {
+            if !excluded.contains(&name.as_str()) {
+                excluded.push(name.as_str());
+            }
+        }
+        excluded
     }
 
     /// The repository-relative folder of a vault role, as declared: `"."` for
@@ -578,7 +590,8 @@ impl Layout {
     /// The role a vault root plays under this layout: working when its path
     /// ends with the declared working folder, knowledge otherwise. The
     /// knowledge folder can be `"."`, so knowledge is the default, not a
-    /// match.
+    /// match. This legacy lexical helper cannot disambiguate custom folders.
+    /// Filesystem consumers should use [`Self::kind_of_at`] instead.
     #[must_use]
     pub fn kind_of(&self, root: &Path) -> VaultKind {
         match self.dir_of(VaultKind::Working) {

@@ -489,13 +489,30 @@ impl Vocabulary {
     /// # Errors
     /// [`VaultError::NotAVault`] when no vocabulary is found in any ancestor.
     pub fn discover(start: impl AsRef<Path>) -> Result<(PathBuf, Self)> {
+        let path = Self::discover_path(start)?;
+        let vocabulary = Self::load(&path)?;
+        Ok((path, vocabulary))
+    }
+
+    /// Find the nearest vocabulary file from a resolved starting directory.
+    ///
+    /// Relative paths and symlinks are resolved before walking ancestors, so
+    /// `.` and the current directory search the same tree. This method locates
+    /// the file without parsing it, allowing hosts with their own wire types to
+    /// share discovery while retaining their parser.
+    ///
+    /// # Errors
+    /// Returns [`VaultError::Io`] if the starting path cannot be resolved, or
+    /// [`VaultError::NotAVault`] if no ancestor contains the vocabulary file.
+    pub fn discover_path(start: impl AsRef<Path>) -> Result<PathBuf> {
         let start = start.as_ref();
+        let resolved = std::fs::canonicalize(start).map_err(|e| VaultError::io(start, e))?;
+        let start = resolved.as_path();
         let mut dir = Some(start);
         while let Some(d) = dir {
             let candidate = d.join("ontology").join("vocabulary.yaml");
             if candidate.is_file() {
-                let vocab = Self::load(&candidate)?;
-                return Ok((candidate, vocab));
+                return Ok(candidate);
             }
             dir = d.parent();
         }

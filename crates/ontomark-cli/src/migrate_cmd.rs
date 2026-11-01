@@ -141,6 +141,9 @@ pub fn run(
         } => {
             let m = migrate::lookup(migration)
                 .with_context(|| format!("no migration `{migration}` (see `migrate list`)"))?;
+            for kind in kinds(vault) {
+                profile.layout.root_of(repo_root, kind)?;
+            }
             let plan = migrate::plan(repo_root, &kinds(vault), m.as_ref(), profile)?;
             if let Some(path) = out {
                 std::fs::write(path, plan.to_json()?)
@@ -188,6 +191,7 @@ pub fn run(
 
         MigrateCommand::Rollback { migration, digest } => {
             if migration.contains(['/', '\\'])
+                || migration.contains("..")
                 || digest.contains(['/', '\\'])
                 || digest.contains("..")
             {

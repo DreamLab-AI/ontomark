@@ -450,8 +450,8 @@ impl Vault {
         Self::load_excluding(root, kind, EXCLUDED_DIRS)
     }
 
-    /// [`Vault::load`] with the caller's list of excluded top-level folders
-    /// (a profile's `layout.excluded`) in place of [`EXCLUDED_DIRS`].
+    /// [`Vault::load`] with additional excluded top-level folders.
+    /// The built-in [`EXCLUDED_DIRS`] always apply, keeping journals separate.
     ///
     /// # Errors
     /// As [`Vault::load`].
@@ -467,7 +467,13 @@ impl Vault {
                 message: "not a directory".into(),
             });
         }
-        let walk = walk_pages(root, excluded)?;
+        let mut folders = EXCLUDED_DIRS.to_vec();
+        for folder in excluded {
+            if !folders.contains(folder) {
+                folders.push(folder);
+            }
+        }
+        let walk = walk_pages(root, &folders)?;
         Self::load_with_walk(root, kind, walk)
     }
 
@@ -905,7 +911,7 @@ mod tests {
     }
 
     #[test]
-    fn load_excluding_honours_the_callers_list() {
+    fn load_excluding_extends_the_builtin_furniture_list() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
         std::fs::create_dir_all(root.join("templates")).unwrap();
@@ -914,13 +920,19 @@ mod tests {
         std::fs::write(root.join("drafts/D.md"), "---\npublic: true\n---\n").unwrap();
         let vault = Vault::load_excluding(root, VaultKind::Working, &["drafts"]).unwrap();
         let ids: Vec<&str> = vault.pages.iter().map(|p| p.id.as_str()).collect();
-        assert_eq!(ids, ["templates/T"]);
+        assert!(ids.is_empty());
         assert_eq!(
             vault.skipped,
-            vec![Skip {
-                path: PathBuf::from("drafts/D.md"),
-                reason: SkipReason::ExcludedDirectory
-            }]
+            vec![
+                Skip {
+                    path: PathBuf::from("drafts/D.md"),
+                    reason: SkipReason::ExcludedDirectory
+                },
+                Skip {
+                    path: PathBuf::from("templates/T.md"),
+                    reason: SkipReason::ExcludedDirectory
+                },
+            ]
         );
     }
 

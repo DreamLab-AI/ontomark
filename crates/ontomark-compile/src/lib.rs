@@ -17,8 +17,7 @@
 //! root and a page's id is its root-relative path without `.md`
 //! (`ETSI/Domain.md` is `ETSI/Domain`). Top-level folders that hold Obsidian
 //! furniture rather than pages — [`input::page::EXCLUDED_DIRS`] (`templates`,
-//! `bases`, `assets`, `journals`), or the profile's `layout.excluded` in their
-//! place — are skipped by the page walk and reported as
+//! `bases`, `assets`, `journals`), plus the profile's `layout.excluded` — are skipped by the page walk and reported as
 //! [`input::page::SkipReason::ExcludedDirectory`], never silently dropped;
 //! dot-folders (`.obsidian/`) are hidden regardless. `journals/` is loaded as
 //! its own tree.

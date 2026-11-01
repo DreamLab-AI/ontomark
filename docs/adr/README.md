@@ -2,7 +2,7 @@
 
 # Architecture Decision Records
 
-_10 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
+_11 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
 
 | ID | Title | Domain | Date | Decision | Impl | Activation | Supersedes | Superseded by | Owner | Repo |
 |----|-------|--------|------|----------|------|------------|------------|---------------|-------|------|
@@ -16,3 +16,4 @@ _10 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
 | [ADR-OM-008](ADR-OM-008-any-obsidian-vault-is-a-repository.md) | any Obsidian vault is a repository; folders and generation prefixes come from the profile | — | 2026-10-17 | accepted | partial | live | — | — | jjohare | ontomark |
 | [ADR-OM-009](ADR-OM-009-every-published-closure-carries-a-derivation-certificate.md) | every published closure carries a derivation certificate an independent checker re-verifies | — | 2026-10-20 | accepted | partial | live | — | — | jjohare | ontomark |
 | [ADR-OM-010](ADR-OM-010-external-source-ingest-lands-as-proposals.md) | External-source ingest: a Source port, a host CLI, and proposals rather than writes | ingest | 2026-10-31 | proposed | none | inactive | — | — | jjohare | ontomark |
+| [ADR-OM-011](ADR-OM-011-shared-filesystem-layout-checks.md) | Shared filesystem layout checks precede role selection | — | 2026-11-01 | accepted | complete | staged | — | — | jjohare | ontomark |

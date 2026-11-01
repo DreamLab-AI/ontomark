@@ -1,6 +1,6 @@
 //! The flat Obsidian vault layout (owner decision 2026-10-16): pages sit at
 //! the vault root, the root's furniture folders are excluded by name, and a
-//! profile's `layout.excluded` overrides the built-in list for the build.
+//! profile's `layout.excluded` extends the built-in list for the build.
 //!
 //! The output contract is unchanged: knowledge pages still stage under
 //! `publish/pages/<id>.md` and working pages under `publish/working/<id>.md`.
