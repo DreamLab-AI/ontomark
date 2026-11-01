@@ -74,6 +74,22 @@ fn safe_rel(rel: &str) -> bool {
     !rel.is_empty() && p.components().all(|c| matches!(c, Component::Normal(_)))
 }
 
+// Check existing ancestors as well as the leaf. A plan's lexical path and
+// content hash do not authorise following a directory moved outside the repo.
+// This is a point-in-time check, not a race-safe filesystem capability.
+fn checked_path(repo_root: &Path, relative: &Path) -> Result<PathBuf, MigrateError> {
+    crate::profile::resolve_roots(repo_root, &[relative.to_path_buf()])
+        .map(|mut paths| paths.remove(0))
+        .map_err(|e| MigrateError::Input(e.to_string()))
+}
+
+fn check_journal_children(repo_root: &Path, relative: &Path) -> Result<(), MigrateError> {
+    for child in ["journal.jsonl", "originals"] {
+        checked_path(repo_root, &relative.join(child))?;
+    }
+    Ok(())
+}
+
 /// Apply `plan` with the registry's migration of the same id.
 ///
 /// # Errors
@@ -96,7 +112,8 @@ pub fn apply(repo_root: &Path, plan: &Plan) -> Result<ApplyReport, MigrateError>
 ///
 /// # Errors
 /// [`MigrateError::PlanMismatch`], [`MigrateError::PlanRefused`],
-/// [`MigrateError::SemanticNotAccepted`], I/O failures, or an injected
+/// [`MigrateError::SemanticNotAccepted`], [`MigrateError::Input`] for escaping
+/// bookkeeping paths, I/O failures, or an injected
 /// [`MigrateError::Interrupted`].
 pub fn apply_with(
     repo_root: &Path,
@@ -121,7 +138,12 @@ pub fn apply_with(
         return Err(MigrateError::SemanticNotAccepted(migration.id().to_owned()));
     }
 
-    let dir = journal::journal_dir(repo_root, migration.id(), &plan.input_digest);
+    let relative = PathBuf::from(".ontomark")
+        .join("migrations")
+        .join(migration.id())
+        .join(&plan.input_digest);
+    let dir = checked_path(repo_root, &relative)?;
+    check_journal_children(repo_root, &relative)?;
     let mut log = journal::Writer::open(&dir)?;
     journal::write_atomic(&dir.join("plan.json"), plan.to_json()?.as_bytes())?;
     log.append(&Event::Begin {
@@ -156,6 +178,10 @@ pub fn apply_with(
         };
         if opts.stop_after == Some(report.applied) && !opts.die_before_commit_record {
             return Err(MigrateError::Interrupted(report.applied));
+        }
+        if let Err(error) = checked_path(repo_root, Path::new(&page.path)) {
+            note_conflict(&mut log, &mut report, &page.path, error.to_string())?;
+            continue;
         }
         let path = repo_root.join(&page.path);
         match std::fs::symlink_metadata(&path) {
@@ -267,8 +293,17 @@ pub struct RollbackReport {
 /// is re-read and must hash to the planned `before`.
 ///
 /// # Errors
-/// An unreadable journal or original, or an I/O failure.
+/// An unreadable journal or original, an escaping journal path, or an I/O failure.
 pub fn rollback(repo_root: &Path, journal: &Path) -> Result<RollbackReport, MigrateError> {
+    let canonical_repo =
+        std::fs::canonicalize(repo_root).map_err(|e| MigrateError::io(repo_root, e))?;
+    let canonical_journal =
+        std::fs::canonicalize(journal).map_err(|e| MigrateError::io(journal, e))?;
+    let relative = canonical_journal
+        .strip_prefix(&canonical_repo)
+        .map_err(|_| MigrateError::Input("migration journal is outside the repository".into()))?;
+    check_journal_children(&canonical_repo, relative)?;
+    let journal = canonical_journal.as_path();
     let events = journal::read(journal)?;
     let mut seen = BTreeSet::new();
     let mut intents = Vec::new();
@@ -307,6 +342,10 @@ pub fn rollback(repo_root: &Path, journal: &Path) -> Result<RollbackReport, Migr
         };
         if !safe_rel(rel) {
             leave(&mut log, "malformed journal entry".to_owned())?;
+            continue;
+        }
+        if let Err(error) = checked_path(repo_root, Path::new(rel)) {
+            leave(&mut log, error.to_string())?;
             continue;
         }
         let path = repo_root.join(rel);

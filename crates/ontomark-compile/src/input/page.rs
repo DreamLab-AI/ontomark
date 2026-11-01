@@ -440,12 +440,27 @@ pub struct Vault {
     pub skipped: Vec<Skip>,
 }
 
+/// Reject a link used as a separately selected walk root. Child-link settings
+/// do not protect this boundary: WalkDir follows its root link by default.
+pub(crate) fn reject_linked_root(root: &Path) -> Result<()> {
+    match std::fs::symlink_metadata(root) {
+        Ok(metadata) if metadata.file_type().is_symlink() => Err(VaultError::NotAVault {
+            root: root.to_path_buf(),
+            message: "a journal or repair root must not be a symbolic link".into(),
+        }),
+        Ok(_) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(VaultError::io(root, error)),
+    }
+}
+
 impl Vault {
     /// Load every page under `root`, skipping [`EXCLUDED_DIRS`].
     ///
     /// # Errors
     /// [`VaultError::NotAVault`] when `root` is not a directory;
-    /// [`VaultError::Io`] or [`VaultError::Frontmatter`] on a bad page.
+    /// [`VaultError::Io`] or [`VaultError::Frontmatter`] on a bad page;
+    /// [`VaultError::NotAVault`] for a linked journal root.
     pub fn load(root: impl AsRef<Path>, kind: VaultKind) -> Result<Self> {
         Self::load_excluding(root, kind, EXCLUDED_DIRS)
     }
@@ -482,7 +497,8 @@ impl Vault {
     /// the tree once (OM-00 step 1).
     ///
     /// # Errors
-    /// [`VaultError::Io`] or [`VaultError::Frontmatter`] on a bad page.
+    /// [`VaultError::Io`] or [`VaultError::Frontmatter`] on a bad page;
+    /// [`VaultError::NotAVault`] for a linked journal root.
     ///
     /// # Panics
     /// Never in practice: `walk` was made of `root`, and the `strip_prefix`
@@ -506,6 +522,7 @@ impl Vault {
         // tree: a journal's identity is its date, not a path. A vault without
         // one is normal.
         let journals_dir = root.join("journals");
+        reject_linked_root(&journals_dir)?;
         let mut skipped = walk.skipped;
         let mut journals = Vec::new();
         if journals_dir.is_dir() {

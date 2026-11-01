@@ -340,6 +340,8 @@ fn read_considered(
         };
         // The vault root (its furniture folders excluded) and then `journals/`:
         // the same two trees `Vault::load` reads.
+        crate::input::page::reject_linked_root(&vault_dir.join("journals"))
+            .map_err(|e| MigrateError::Input(e.to_string()))?;
         let trees: [(std::path::PathBuf, &[&str]); 2] = [
             (vault_dir.clone(), &excluded),
             (vault_dir.join("journals"), &[]),

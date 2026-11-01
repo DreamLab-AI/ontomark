@@ -784,10 +784,11 @@ pub struct Report {
 /// Convert every page under `options.scopes`.
 ///
 /// # Errors
-/// Any read or write failure.
+/// A symlinked scope root or any read or write failure.
 pub fn run(options: &Options) -> anyhow::Result<Report> {
     let mut report = Report::default();
     for scope in &options.scopes {
+        crate::input::page::reject_linked_root(&scope.dir)?;
         if !scope.dir.is_dir() {
             continue;
         }

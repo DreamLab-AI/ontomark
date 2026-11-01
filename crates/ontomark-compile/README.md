@@ -9,7 +9,7 @@ Loom and other readers can disable the classifier dependency:
 
 ```toml
 [dependencies]
-ontomark-compile = { version = "0.6.2", default-features = false }
+ontomark-compile = { version = "0.6.3", default-features = false }
 ```
 
 ## Vault layout
@@ -38,6 +38,13 @@ role is a separate error. `Layout::kind_of_at` identifies the complete resolved
 root, avoiding suffix collisions in custom layouts. These APIs work with
 `default-features = false`; they do not require a reasoner. They are configuration
 checks, not protection against concurrent filesystem replacement.
+
+A separately walked `journals/` directory must not be a symlink. Body and fence
+repair also refuse symlinked scope roots before writing. Migration apply/rollback
+recheck target containment, including existing parent directories, and bound their
+journal/originals paths before access. Moving a planned directory outside the
+repository produces a conflict instead of an external write. These checks still
+do not exclude a filesystem race during an operation.
 
 `Vocabulary::discover_path` canonicalises its starting directory before walking
 ancestors. Hosts can share discovery while retaining their existing vocabulary

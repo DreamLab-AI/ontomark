@@ -34,3 +34,26 @@ policy/corpus migration, not one of the repaired layout defects.
 These are synthetic fixture and build results. No real-corpus producer parity,
 consumer deployment, concurrent-filesystem sandbox or complete privacy guarantee
 is established. VisionClaw adoption has its own feature and acceptance record.
+
+## Journal-root follow-up: compiler 0.6.3, CLI 0.7.2
+
+The fresh review at `a55033c` found that separately walked journal roots still
+followed symlinks, and migration apply/rollback checked the leaf but not a
+redirected parent. Six new tests failed against that release. The repair uses a
+shared journal/repair-root refusal and the existing `resolve_roots` API for
+migration target and bookkeeping containment. Two additional regressions cover
+fence repair and a linked existing log file. All eight pass in the full suites.
+
+The same gate commands were executed for this patch: workspace **1,113 passed,
+8 ignored**; all features **693 passed, 7 ignored**; no defaults **589 passed,
+2 ignored**. Strict Clippy, rustfmt, warning-free workspace rustdoc, both release
+WASM builds and compiler package verification pass. No source or fixture was
+substituted for these runs. Stable redirected parents are checked; concurrent
+replacement during an operation remains outside the guarantee.
+
+The first release's raw security receipt was lost in a worktree scratch-archive
+sequencing error. Its stdout and completed test logs survived. A fresh clean-tree
+review at `a55033c` was retained before this follow-up; it met the HIGH threshold
+and reported the two journal findings plus the existing ignored `public_gate`
+configuration field. That last policy finding remains open. The incident and raw
+receipts are retained with the VisionFlow audit evidence.

@@ -613,3 +613,132 @@ fn the_registry_lists_m0001() {
     assert_eq!(ids, ["m0001-obsidian-bodies"]);
     assert!(migrate::lookup("m0001-obsidian-bodies").is_some());
 }
+
+#[cfg(unix)]
+fn redirect_journals(root: &Path, outside: &Path) -> PathBuf {
+    let source = root.join("working/journals");
+    let destination = outside.join("journals");
+    fs::rename(&source, &destination).unwrap();
+    std::os::unix::fs::symlink(&destination, &source).unwrap();
+    destination.join("2026-10-12.md")
+}
+
+#[cfg(unix)]
+#[test]
+fn journal_boundary_loader_refuses_a_linked_journal_root() {
+    let (_d, root) = seeded();
+    let outside = tempfile::tempdir().unwrap();
+    redirect_journals(&root, outside.path());
+    assert!(
+        ontomark_compile::input::page::Vault::load(root.join("working"), VaultKind::Working)
+            .is_err()
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn journal_boundary_planner_refuses_a_linked_journal_root() {
+    let (_d, root) = seeded();
+    let outside = tempfile::tempdir().unwrap();
+    redirect_journals(&root, outside.path());
+    assert!(plan(&root, &BOTH, &ObsidianBodies, &profile()).is_err());
+}
+
+#[cfg(unix)]
+#[test]
+fn journal_boundary_apply_refuses_a_redirected_parent() {
+    let (_d, root) = seeded();
+    let p = plan_m1(&root);
+    let outside = tempfile::tempdir().unwrap();
+    let external = redirect_journals(&root, outside.path());
+    let before = fs::read(&external).unwrap();
+    let report = apply(&root, &p).unwrap();
+    assert!(report
+        .conflicts
+        .iter()
+        .any(|c| c.path == "working/journals/2026-10-12.md"));
+    assert_eq!(fs::read(&external).unwrap(), before);
+}
+
+#[cfg(unix)]
+#[test]
+fn journal_boundary_rollback_refuses_a_redirected_parent() {
+    let (_d, root) = seeded();
+    let p = plan_m1(&root);
+    let applied = apply(&root, &p).unwrap();
+    let outside = tempfile::tempdir().unwrap();
+    let external = redirect_journals(&root, outside.path());
+    let before = fs::read(&external).unwrap();
+    let report = rollback(&root, &applied.journal).unwrap();
+    assert!(report
+        .conflicts
+        .iter()
+        .any(|c| c.path == "working/journals/2026-10-12.md"));
+    assert_eq!(fs::read(&external).unwrap(), before);
+}
+
+#[cfg(unix)]
+#[test]
+fn journal_boundary_body_repair_refuses_a_linked_scope() {
+    use ontomark_compile::check::{bodies, repair};
+    let (_d, root) = seeded();
+    let outside = tempfile::tempdir().unwrap();
+    let external = redirect_journals(&root, outside.path());
+    let before = fs::read(&external).unwrap();
+    let options = bodies::Options {
+        scopes: repair::scopes_for(
+            &[(VaultKind::Working, &root.join("working"))],
+            &profile().layout.excluded_dirs(),
+        ),
+        dry_run: false,
+    };
+    assert!(bodies::run(&options).is_err());
+    assert_eq!(fs::read(&external).unwrap(), before);
+}
+
+#[cfg(unix)]
+#[test]
+fn journal_boundary_migration_log_cannot_be_redirected_outside() {
+    let (_d, root) = seeded();
+    let p = plan_m1(&root);
+    let outside = tempfile::tempdir().unwrap();
+    std::os::unix::fs::symlink(outside.path(), root.join(".ontomark")).unwrap();
+    assert!(apply(&root, &p).is_err());
+    assert_eq!(fs::read_dir(outside.path()).unwrap().count(), 0);
+}
+
+#[cfg(unix)]
+#[test]
+fn journal_boundary_fence_repair_refuses_a_linked_scope() {
+    use ontomark_compile::check::repair;
+    let (_d, root) = seeded();
+    let outside = tempfile::tempdir().unwrap();
+    let external = redirect_journals(&root, outside.path());
+    let before = fs::read(&external).unwrap();
+    let options = repair::Options {
+        scopes: repair::scopes_for(
+            &[(VaultKind::Working, &root.join("working"))],
+            &profile().layout.excluded_dirs(),
+        ),
+        dry_run: false,
+    };
+    assert!(repair::run(&options).is_err());
+    assert_eq!(fs::read(&external).unwrap(), before);
+}
+
+#[cfg(unix)]
+#[test]
+fn journal_boundary_existing_log_file_cannot_be_redirected_outside() {
+    let (_d, root) = seeded();
+    let p = plan_m1(&root);
+    let applied = apply(&root, &p).unwrap();
+    let outside = tempfile::tempdir().unwrap();
+    let original = applied.journal.join("journal.jsonl");
+    let external = outside.path().join("log");
+    fs::rename(&original, &external).unwrap();
+    std::os::unix::fs::symlink(&external, &original).unwrap();
+    let before = fs::read(&external).unwrap();
+    assert!(apply(&root, &p).is_err());
+    assert!(rollback(&root, &applied.journal).is_err());
+    assert_eq!(fs::read(&external).unwrap(), before);
+}

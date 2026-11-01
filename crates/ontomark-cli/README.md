@@ -63,6 +63,11 @@ root; `"."` means the root itself. The output contract is the same whatever
 the input layout: knowledge pages stage under `publish/pages/`, working pages
 under `publish/working/`, and reports are keyed by role name.
 
+Declared role roots must resolve to disjoint paths inside the repository. A linked
+`journals/` directory is refused, as are linked repair scope roots. Migration
+apply/rollback check resolved parents as well as content hashes before changing a
+page, and their logs/originals must remain inside the repository.
+
 Every build stamps a generation, `<prefix>@<commit>` (`+dirty` when the vault
 paths had uncommitted changes), into `.generation.json`. The prefix is the
 profile's pin (`visionGraph` for the estate) or the repository's directory

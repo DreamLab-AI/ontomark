@@ -40,6 +40,10 @@ retains the parity boundary in ADR-OM-005.
   Selecting an absent role still returns `MissingVault`; the CLI refuses it with 2.
 - Furniture exclusions are additive: profile entries cannot reclassify templates,
   bases, assets or journals as graph pages. Journals retain their separate tree.
+- Separately selected journal roots and repair scope roots cannot be symlinks.
+  Migration apply/rollback recheck target ancestors and journal/log/originals
+  containment before access; a directory moved outside the repository after
+  planning becomes a conflict. This extends the same owner path checks.
 - Rollback refuses parent-component migration names before journal access, matching
   the existing digest guard.
 - `Vocabulary::discover_path` shares canonical ancestor discovery independently
@@ -67,3 +71,18 @@ root symlinks and missing migration roles. `profile/layout.rs` tests the public
 API, including missing ancestors and non-directory repositories. Compiler feature
 legs include defaults, all features and no defaults. The [verification receipt](../evidence/2026-11-01-layout-checks.md) records the
 executed commands and acceptance boundary.
+
+## Journal-root follow-up — 2026-11-01
+
+A fresh security review after the first patch exposed a second root boundary:
+`journals/` is walked independently, so child-link settings did not protect it.
+Six failing probes reproduced loader/planner traversal, body-repair writes,
+apply/rollback writes through replaced parents and redirected migration logs.
+The repair rejects linked journal/repair roots and reuses `resolve_roots` for
+migration targets and bookkeeping paths. Two further tests cover fence repair
+and an existing log-file symlink. See the updated verification receipt.
+
+The same review found that the legacy `FrontmatterGrammar.public_gate` field is
+not consumed by the hard-coded `public` visibility check. This remains an open
+policy finding alongside generic required-key enforcement; this filesystem
+patch does not imply either has been implemented.

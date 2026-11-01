@@ -43,15 +43,6 @@ pub(crate) enum Event {
     RollbackComplete { restored: usize, conflicts: usize },
 }
 
-/// The journal directory of a plan.
-pub(crate) fn journal_dir(repo_root: &Path, migration_id: &str, input_digest: &str) -> PathBuf {
-    repo_root
-        .join(".ontomark")
-        .join("migrations")
-        .join(migration_id)
-        .join(input_digest)
-}
-
 pub(crate) fn now() -> String {
     time::OffsetDateTime::now_utc()
         .format(&time::format_description::well_known::Rfc3339)
