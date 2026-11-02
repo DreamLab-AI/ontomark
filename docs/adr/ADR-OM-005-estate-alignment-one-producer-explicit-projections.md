@@ -16,6 +16,12 @@ repo: ontomark
 
 # ADR-OM-005: one producer, explicit consumer projections, and the generation loop
 
+## External review reconciliation — 2026-11-02
+
+At `4b9d15d`, the external “sole producer” description agrees with the publication ownership decision, not a claim that every consumer is current. Agentbox's grouped-proposal adapter and VisionClaw's retained `vault propose` are distinct consumers: a signed multi-page proposal is not evidence that the single-page apply path can execute it.
+
+The amendment path in `crates/ontomark-compile/src/write/apply.rs:280-286` reparses the resulting page and validates introduced errors, but does not compare old and new resource IRIs. Preserve resource immutability as an explicit acceptance gap, alongside grouped-proposal compatibility and digest checks at the governance consumer. No proposal was signed or applied in this review.
+
 - Status: Accepted (owner decisions of 12 October 2026, recorded here; implementation none; activation inactive)
 - Scope: the estate-wide shape that the Ontomark workspace serves. It records decisions, evidence and the migration consequences. It changes no code, workflow or Nix pin; each of those remains a `DEPRECATION.md` step with its own gate.
 - Related: ADR-OM-001 (#2, #4 licence), ADR-OM-003 (ingest), ADR-OM-004 (EL profile); VisionFlow ADR-2014 (accepted) and its 2026-10-12 alignment section; VisionClaw ADR-2137 (proposed), ADR-2106 (accepted, live); Agentbox ADR-2136 (proposed), ADR-2108 (accepted); Loom ADR-141 (proposed), ADR-142 (proposed); visionGraph ADR-VG-007.

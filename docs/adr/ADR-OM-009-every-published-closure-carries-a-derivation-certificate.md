@@ -16,6 +16,12 @@ repo: ontomark
 
 # ADR-OM-009: every published closure carries a derivation certificate an independent checker re-verifies
 
+## External review reconciliation — 2026-11-02
+
+Source reconciliation at `4b9d15d` confirms the conditional named-closure parity gate (`crates/ontomark-compile/src/build/mod.rs:700-711`). It is a certificate for that defined fragment when requested; neither a proof of factual corpus truth nor an unconditional certificate on builds without the flag. The historical 351,421/731,141/9.5 s receipt above is not a fresh benchmark.
+
+Two external concerns remain. Certificate files are written directly to the requested directory (`build/mod.rs:724-727`) before the bundle's `Staged::promote` (`:1026`); certificate and bundle are not one promotion transaction. Also `crates/rdfs-certificate/src/lib.rs:611-622` excludes blank-node-bearing triples but does not exclude `owl:versionIRI` from consequence comparison. Acceptance needs interrupted promotion/rollback receipts and a version-header-only change control, while retaining genuine named-consequence changes.
+
 - Status: Accepted (owner request of 20 October 2026)
 - Implementation: active from v0.6.0. `crates/rdfs-certificate` (published to crates.io as `rdfs-certificate` 0.1.0: the RDFS engine, the `oo-cert/1` writer, the consequence delta), `crates/ontomark-compile/src/certificate.rs` (`spell`, `certify`, `parity`), `build/mod.rs` (`Options.certificate_out`, `CertificateParity`, `CertificateReport`, `Report.certificate`), `crates/ontomark-cli/src/main.rs` (`ontomark build --certificate-out`, exit 2 on parity loss). Tests: `rdfs-certificate` unit and `tests/oo_cert.rs` (runs the checker when `OO_CERT_BIN` is set), `certificate.rs` Whelk-parity test.
 - Related: ADR-OM-005 (one producer), VisionClaw ADR-2147 (the same decision for the consumer side: `vault propose` carries the consequence delta; both now consume the one crate), agentbox ADR-2136.
