@@ -16,6 +16,10 @@ repo: ontomark
 
 # ADR-OM-009: every published closure carries a derivation certificate an independent checker re-verifies
 
+## External findings repair — 2026-11-03
+
+Certificate files now enter the same Staged bundle and generation manifest as the ontology, and share its promotion point. --certificate-out must name a directory below --out (for example site-data/certificate); external, traversing and symlink destinations are refused before publication work. This is an intentional CLI tightening: callers previously using a temporary external certificate directory must use a bundle child. Tests cover actual certified/stamped output and failed promotion preserving both old bundle and old certificate. Consequence comparison now excludes owl:versionIRI generation labels while retaining named semantic differences. No new independent Lean checker run or release is claimed.
+
 ## External review reconciliation — 2026-11-02
 
 Source reconciliation at `4b9d15d` confirms the conditional named-closure parity gate (`crates/ontomark-compile/src/build/mod.rs:700-711`). It is a certificate for that defined fragment when requested; neither a proof of factual corpus truth nor an unconditional certificate on builds without the flag. The historical 351,421/731,141/9.5 s receipt above is not a fresh benchmark.

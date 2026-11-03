@@ -87,7 +87,7 @@ pub struct Options {
     /// writes no `publish/` tree (see [`ScopeConflict`] for what it refuses).
     pub scope: Scope,
     /// Write the RDFS derivation certificate of the published graph into this
-    /// directory (`asserted.tsv`, `derivations.tsv`, `asserted.sha256`,
+    /// directory below `out`, such as `out/certificate` (`asserted.tsv`, `derivations.tsv`, `asserted.sha256`,
     /// `scope.tsv`, the `oo-cert/1` format), ADR-OM-009. The certified named
     /// closure must equal the classifier's or the build is refused with
     /// [`CertificateParity`]: a generation is never published with a closure
@@ -433,6 +433,87 @@ impl Staged {
     }
 }
 
+// External certificate destinations cannot share the bundle's commit point.
+fn certificate_prefix(out: &Path, dir: &Path) -> anyhow::Result<String> {
+    use std::path::Component;
+    let cwd = std::env::current_dir()?;
+    let absolute = |path: &Path| -> anyhow::Result<PathBuf> {
+        let path = if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            cwd.join(path)
+        };
+        let mut clean = PathBuf::new();
+        for component in path.components() {
+            anyhow::ensure!(
+                !matches!(component, Component::ParentDir),
+                "certificate destination cannot contain parent traversal"
+            );
+            if !matches!(component, Component::CurDir) {
+                clean.push(component);
+            }
+            if let Ok(meta) = std::fs::symlink_metadata(&clean) {
+                anyhow::ensure!(
+                    !meta.file_type().is_symlink(),
+                    "certificate destination cannot follow symlinks"
+                );
+            }
+        }
+        Ok(clean)
+    };
+    let out = absolute(out)?;
+    let dir = absolute(dir)?;
+    let relative = dir
+        .strip_prefix(&out)
+        .context("--certificate-out must be inside --out (for example out/certificate)")?;
+    anyhow::ensure!(
+        !relative.as_os_str().is_empty(),
+        "certificate destination must be a directory below --out"
+    );
+    Ok(relative.to_string_lossy().replace('\\', "/"))
+}
+
+#[cfg(test)]
+mod certificate_transaction_tests {
+    use super::*;
+
+    #[test]
+    fn certificate_and_bundle_share_promotion_and_failure_keeps_both() {
+        let root = tempfile::tempdir().unwrap();
+        let out = root.path().join("out");
+        assert_eq!(
+            certificate_prefix(&out, &out.join("certificate")).unwrap(),
+            "certificate"
+        );
+        assert!(certificate_prefix(&out, &root.path().join("outside")).is_err());
+        assert!(certificate_prefix(&out, &out.join("../outside")).is_err());
+        let mut old = Staged::new();
+        old.add("bundle.json", b"old".to_vec());
+        old.add("certificate/asserted.tsv", b"old".to_vec());
+        old.promote(&out).unwrap();
+        let mut broken = Staged::new();
+        broken.add("bundle.json", b"new".to_vec());
+        broken.add("certificate", b"not a directory".to_vec());
+        broken.add("certificate/asserted.tsv", b"new".to_vec());
+        assert!(broken.promote(&out).is_err());
+        assert_eq!(std::fs::read(out.join("bundle.json")).unwrap(), b"old");
+        assert_eq!(
+            std::fs::read(out.join("certificate/asserted.tsv")).unwrap(),
+            b"old"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn certificate_destination_refuses_symlinks() {
+        let root = tempfile::tempdir().unwrap();
+        let out = root.path().join("out");
+        std::fs::create_dir(&out).unwrap();
+        std::os::unix::fs::symlink(root.path(), out.join("escape")).unwrap();
+        assert!(certificate_prefix(&out, &out.join("escape/certificate")).is_err());
+    }
+}
+
 /// An ISO-8601 UTC instant in `CPython`'s `datetime.isoformat()` shape.
 #[must_use]
 pub fn now_iso() -> String {
@@ -554,6 +635,11 @@ pub fn run_with(
     classifier: &dyn reason::Classifier,
     embedder: Option<&dyn records::Embedder>,
 ) -> anyhow::Result<Report> {
+    let certificate_prefix = options
+        .certificate_out
+        .as_ref()
+        .map(|dir| certificate_prefix(&options.out, dir))
+        .transpose()?;
     // The machine bundle's inputs are fixed, so what cannot be honoured is
     // refused before a page is read.
     profile.layout.validate(&options.repo_root)?;
@@ -697,6 +783,7 @@ pub fn run_with(
     let reasoning = reason::reason(&graph, classifier)?;
     // ADR-OM-009: the warrant for the closure, from the very graph that is
     // reasoned and published, before anything is written.
+    let mut staged = Staged::new();
     let certificate = match &options.certificate_out {
         Some(dir) => {
             let started = std::time::Instant::now();
@@ -720,9 +807,29 @@ pub fn run_with(
                     |(_, d)| *d,
                 ),
             );
-            let summary = cert
-                .write(dir, &generation_label)
-                .with_context(|| format!("writing the certificate to {}", dir.display()))?;
+            let prefix = certificate_prefix
+                .as_ref()
+                .expect("certificate destination was validated");
+            let asserted = cert.asserted_bytes();
+            let digest = cert.asserted_sha256();
+            let summary = rdfs_certificate::Summary {
+                format: rdfs_certificate::FORMAT.to_owned(),
+                rule_table: rdfs_certificate::RULE_TABLE.to_owned(),
+                asserted: cert.asserted_count(),
+                derivations: cert.derivation_count(),
+                by_rule: cert.by_rule(),
+                asserted_sha256: digest.clone(),
+            };
+            staged.add(format!("{prefix}/asserted.tsv"), asserted);
+            staged.add(
+                format!("{prefix}/derivations.tsv"),
+                cert.derivations_bytes(),
+            );
+            staged.add(format!("{prefix}/asserted.sha256"), format!("{digest}\n"));
+            staged.add(
+                format!("{prefix}/scope.tsv"),
+                cert.scope_tsv(&generation_label),
+            );
             Some(CertificateReport {
                 dir: dir.clone(),
                 summary,
@@ -768,7 +875,6 @@ pub fn run_with(
     let listed = merged.as_ref().unwrap_or(&corpus);
     let page_count = listed.records.len();
 
-    let mut staged = Staged::new();
     // `publish/` either rides inside the bundle or is promoted on its own —
     // the latter only after the write-once check below passes.
     if machine {
@@ -1177,6 +1283,40 @@ scalars:
             ".generation.json",
         ] {
             assert!(out.join(name).is_file(), "missing {name}");
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "whelk-el")]
+    fn a_certificate_is_inside_the_promoted_and_stamped_generation() {
+        let dir = tempfile::tempdir().unwrap();
+        fixture_vault(dir.path());
+        let out = dir.path().join("www");
+        let options = Options {
+            vault_root: dir.path().join("knowledge"),
+            out: out.clone(),
+            repo_root: dir.path().to_path_buf(),
+            with_markdown_mirror: false,
+            with_working_publish: false,
+            redact_private_links: None,
+            publish_out: None,
+            generated_at: None,
+            source: None,
+            stale_after: None,
+            scope: Scope::Public,
+            certificate_out: Some(out.join("certificate")),
+        };
+        let report = run(&options, &vocab()).unwrap();
+        assert!(report.certificate.is_some());
+        let marker = std::fs::read_to_string(out.join(".generation.json")).unwrap();
+        for name in [
+            "asserted.tsv",
+            "derivations.tsv",
+            "asserted.sha256",
+            "scope.tsv",
+        ] {
+            assert!(out.join("certificate").join(name).is_file());
+            assert!(marker.contains(&format!("certificate/{name}")));
         }
     }
 

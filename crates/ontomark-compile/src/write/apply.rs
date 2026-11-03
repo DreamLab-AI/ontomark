@@ -279,6 +279,15 @@ pub fn prepare(
     let page =
         Page::parse(&current.path, &current.rel_path, id, &rendered).map_err(|e| invalid(&e))?;
 
+    let patched_iri = page.resource(&vocab.namespace);
+    if patched_iri != actual_iri {
+        return Err(ApplyError::IriMismatch {
+            page: id.to_owned(),
+            expected: actual_iri,
+            actual: patched_iri,
+        });
+    }
+
     let introduced = introduced_errors(profile, vault, vocab, &current, page);
     if !introduced.is_empty() {
         return Err(ApplyError::Invalid(introduced));
@@ -597,6 +606,22 @@ relations:
         p.digest = expected_digest(&p);
         assert_eq!(
             prep(&vault, &p, &[], docs1()).unwrap_err().code(),
+            "IRI_MISMATCH"
+        );
+    }
+
+    #[test]
+    fn an_approved_patch_cannot_change_resource_identity() {
+        let dir = tempfile::tempdir().unwrap();
+        let vault = vault_in(dir.path());
+        let after = FT.replace(
+            "resource: urn:ngm:class:fungible-token",
+            "resource: urn:ngm:class:other",
+        );
+        assert_eq!(
+            prep(&vault, &proposal(&after), &[], docs1())
+                .unwrap_err()
+                .code(),
             "IRI_MISMATCH"
         );
     }

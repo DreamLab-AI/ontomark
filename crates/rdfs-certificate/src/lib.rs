@@ -613,6 +613,11 @@ impl Certificate {
         let mut excluded = 0;
         let asserted = self.asserted.iter().map(|&f| self.spell(f));
         for (s, p, o) in asserted.chain(self.conclusions()) {
+            // Generation labels describe the bundle, not a change to the
+            // ontology's named entailments.
+            if p == "<http://www.w3.org/2002/07/owl#versionIRI>" {
+                continue;
+            }
             if s.starts_with("_:") || o.starts_with("_:") {
                 excluded += 1;
             } else {
@@ -1016,6 +1021,23 @@ mod tests {
         let (comparable, excluded) = c.comparable_closure();
         assert_eq!(comparable.len(), 1);
         assert_eq!(excluded, 3);
+    }
+
+    #[test]
+    fn generation_version_labels_do_not_change_consequences() {
+        let before = certify([(
+            "<urn:ontology>",
+            "<http://www.w3.org/2002/07/owl#versionIRI>",
+            "<urn:version:a>",
+        )]);
+        let after = certify([(
+            "<urn:ontology>",
+            "<http://www.w3.org/2002/07/owl#versionIRI>",
+            "<urn:version:b>",
+        )]);
+        let delta = consequence_delta(&before, &after);
+        assert_eq!(delta.new_consequences, 0);
+        assert_eq!(delta.lost_consequences, 0);
     }
 
     #[test]

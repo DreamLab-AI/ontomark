@@ -16,6 +16,10 @@ repo: ontomark
 
 # ADR-OM-005: one producer, explicit consumer projections, and the generation loop
 
+## External findings repair — 2026-11-03
+
+Single-page apply now compares the amended page's resource IRI with its original identity after parsing the approved patch and --set changes. An approved text patch cannot rename the semantic resource. The regression proves IRI_MISMATCH on an identity-changing amendment. Grouped signing/admission and governance digest checks remain consumer contracts and are not implemented by this single-page guard.
+
 ## External review reconciliation — 2026-11-02
 
 At `4b9d15d`, the external “sole producer” description agrees with the publication ownership decision, not a claim that every consumer is current. Agentbox's grouped-proposal adapter and VisionClaw's retained `vault propose` are distinct consumers: a signed multi-page proposal is not evidence that the single-page apply path can execute it.

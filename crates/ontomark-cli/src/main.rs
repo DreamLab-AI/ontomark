@@ -402,7 +402,7 @@ struct BuildArgs {
     #[arg(long)]
     stats: bool,
     /// Write the RDFS derivation certificate of the published graph into this
-    /// directory (`oo-cert/1`: asserted.tsv, derivations.tsv, asserted.sha256,
+    /// directory below --out, e.g. site-data/certificate (`oo-cert/1`: asserted.tsv, derivations.tsv, asserted.sha256,
     /// scope.tsv), ADR-OM-009. An independent checker (`oo-cert`, Lean 4)
     /// re-derives every line. The build is refused if the certified named
     /// closure is not the classifier's.
