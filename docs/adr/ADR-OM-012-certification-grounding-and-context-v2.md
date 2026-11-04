@@ -4,16 +4,16 @@ title: Certified keys are never patched, questions are graded for coverage, and 
 date: 2026-11-04
 decision_status: accepted
 implementation_status: complete
-activation_status: staged
+activation_status: live
 supersedes: []
 superseded_by: []
-verified_commit: ef485105e175f17d2697a9cda0abeb4997e097f8
+verified_commit: 1176316b055b4eea5e7aa0b1ffb8e73a00415f73
 verified_paths: [crates/ontomark-ingest/src/certification.rs, crates/ontomark-ingest/src/accept.rs, crates/ontomark-ingest/src/judge.rs, crates/ontomark-ingest/src/coverage.rs, crates/ontomark-ingest/tests/certification.rs, crates/ontomark-ingest/tests/coverage.rs, crates/ontomark-cli/src/ground_cmd.rs, crates/ontomark-cli/tests/conformance.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-compile/src/ir/model.rs, crates/ontomark-compile/src/build/page_api.rs, crates/ontomark-compile/src/build/okf.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/write/edit.rs, conformance/fixtures/estate-small.golden/MANIFEST]
 owner: jjohare
 review_trigger: the first `verified` stamp written with `keys`; a release that the visionGraph publisher pins; a second actor kind admitted as human; a page API consumer that cannot take the added `certification` field
 repo: ontomark
-evidence_class: source+test
-acceptance_boundary: crate code, unit, integration and golden tests, and validate/build runs against the visionGraph corpus with this branch and with the pinned v0.7.3; no release cut, no publisher pin bump, nothing served
+evidence_class: source+test+runtime
+acceptance_boundary: released as ontomark v0.8.0 (GitHub release assets built by CI; crates ontomark-compile 0.7.0, ontomark-ingest 0.2.1, ontomark-profile-estate 0.8.0, ontomark 0.8.0 on crates.io), pinned by the visionGraph publisher and served by narrativegoldmine.com on 2026-11-04; corpus-visiongraph golden re-captured at the release
 amends: [ADR-OM-003, ADR-OM-010]
 ---
 
@@ -145,3 +145,22 @@ different contexts carried one name (visionGraph ADR-VG-009).
   - `api/pages/fungible-token.json` gives `certification: {state: certified,
     keys: [enables, is-a]}`.
   - No page API key is unmapped in v2.
+
+## Activation (2026-11-04)
+
+- **Released** as `v0.8.0` (`1176316b0`). The release workflow built the static CLI;
+  its sha256 is `a1dfb1e913d5fe38b7b694dac82c8e2b44b00699382999a08cf56933c6c10d64`.
+  On crates.io: `ontomark-compile` 0.7.0 (the new `ClassRecord` field is breaking),
+  `ontomark-ingest` 0.2.1, `ontomark-profile-estate` 0.8.0 and `ontomark` 0.8.0.
+- **Pinned and served.** visionGraph's publisher pins v0.8.0 (ADR-VG-009). On
+  narrativegoldmine.com, `context/v1.jsonld` keeps its bytes (`452d5ce0…`), and
+  `context/v2.jsonld` and `ns/v2.jsonld` serve the same generated document
+  (`4da97d77…`, 84 terms including `certification`), byte-identical to a local
+  build with the release binary. Fungible Token's page document reports
+  `certification: {state: certified, keys: []}`. Of 9,595 page documents, 9,594
+  report `pending` and 1 reports `certified`.
+- **Golden.** `corpus-visiongraph` was re-captured with the v0.8.0 release build at
+  visionGraph `5ba194ae3`.
+- **Agentbox** pins v0.8.0 (agentbox ADR-2136). Agents get `ontomark ground` at
+  the next image rebuild.
+

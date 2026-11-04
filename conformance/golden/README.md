@@ -6,13 +6,11 @@ Reference outputs of VisionClaw's `vault build` at tag `ontomark-census-baseline
 
 | Directory | Source | Stored |
 |---|---|---|
-| `corpus-visiongraph/` | visionGraph `b5e36abd1`, `--vault all` | `MANIFEST`, `out.sha256`, `publish.sha256`, `build-stats.json`. Hashes only; no corpus bytes. Bulk directories (`api/pages`, `api/markdown`, `okf/concepts`, staging `pages`/`working`) are one aggregate line: sha256 of the sorted `sha256  bytes  path` listing, and the file count. |
+| `corpus-visiongraph/` | visionGraph `5ba194ae3`, `--vault all`, ontomark 0.8.0 | `MANIFEST`, `out.sha256`, `publish.sha256`, `build-stats.json`. Hashes only; no corpus bytes. Bulk directories (`api/pages`, `api/markdown`, `okf/concepts`, staging `pages`/`working`) are one aggregate line: sha256 of the sorted `sha256  bytes  path` listing, and the file count. |
 | `../fixtures/estate-small.golden/` | `../fixtures/estate-small` (50 public pages from VisionClaw's golden fixture, plus synthetic pages) | Hashes and the complete `expected/` outputs |
 
-`corpus-visiongraph/` was captured on the Logseq-era `pages/` layout
-(`knowledge/pages/`, `working/pages/`) and is re-captured when visionGraph
-flattens its vaults to the root layout ontomark reads since 2026-10-16;
-`estate-small.golden/` was re-captured on the flat layout that day.
+Both goldens are captured on the flat root layout; `corpus-visiongraph/` was
+re-captured with ontomark 0.8.0 on 2026-11-04 (vocabulary v2).
 
 `generated_at` and the snapshot commit are recorded in each `MANIFEST`. The
 build is deterministic apart from those two values (two builds of the same
