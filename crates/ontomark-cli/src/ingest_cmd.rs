@@ -131,9 +131,9 @@ struct Fetch {
 }
 
 /// One note of the selected vaults.
-struct Note {
-    id: DocId,
-    doc: Document,
+pub(crate) struct Note {
+    pub(crate) id: DocId,
+    pub(crate) doc: Document,
     vault: VaultKind,
 }
 
@@ -243,7 +243,7 @@ fn fetch_sources(args: &IngestArgs, ledger: &Ledger, parser: &str) -> anyhow::Re
     Ok(out)
 }
 
-fn load_notes(
+pub(crate) fn load_notes(
     root: &Path,
     profile: &VaultProfile,
     kinds: &[VaultKind],

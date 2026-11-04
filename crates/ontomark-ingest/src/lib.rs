@@ -118,6 +118,7 @@
 
 mod accept;
 mod contract;
+mod coverage;
 mod error;
 mod judge;
 mod vocabulary;
@@ -135,6 +136,7 @@ pub use contract::{
     KeySpec, ModelRequest, ModelResponse, NoteRef, ProposedAssertion, SourceRef, SourceText,
     ValueKind, CONTRACT, CONTRACT_SOURCE, INSTRUCTIONS, INSTRUCTIONS_SOURCE,
 };
+pub use coverage::{Coverage, GroundedName, UnclearName, UncoveredName};
 pub use error::IngestError;
 pub use judge::{
     CandidateSelector, FactClaim, FactJudge, FieldSuggester, FieldSuggestion, HostCandidate,
@@ -197,6 +199,20 @@ impl<'a> Ingest<'a> {
             vocabulary,
             options,
         }
+    }
+
+    /// Grade how much of a question the vocabulary covers, given the names
+    /// the question mentions (see [`Coverage`]). Uses this engine's lexical
+    /// thresholds and suggestion count.
+    #[must_use]
+    pub fn coverage<S: AsRef<str>>(&self, names: &[S]) -> Coverage {
+        self.vocabulary.coverage(
+            self.profile,
+            self.model,
+            names,
+            &self.options.lexical,
+            self.options.suggestions,
+        )
     }
 
     /// The vocabulary the model is allowed to use.

@@ -72,6 +72,7 @@ use ontomark_compile::write::{apply, create, edit};
 use serde_json::json;
 
 mod embed;
+mod ground_cmd;
 mod ingest_cmd;
 mod ingest_profile;
 #[cfg(feature = "jev")]
@@ -138,6 +139,10 @@ enum Command {
     /// `vault propose`: evidence found by a model, grounded and quoted; nothing
     /// is written to the vault (ADR-OM-010).
     Ingest(ingest_cmd::IngestArgs),
+    /// Grade how much of a question the knowledge vault covers, given the
+    /// names it mentions: grounded, unclear (ambiguous) or uncovered, with a
+    /// coverage ratio. Read-only (ADR-OM-012).
+    Ground(ground_cmd::GroundArgs),
     /// Plan, apply, roll back and inspect corpus migrations (reversible,
     /// idempotent, page-level report).
     Migrate {
@@ -657,6 +662,7 @@ fn run() -> anyhow::Result<ExitCode> {
     match &cli.command {
         Command::Migrate { command } => migrate_cmd::run(command, &root, &profile, cli.json),
         Command::Ingest(args) => ingest_cmd::run(args, &root, &vocab, &profile, cli.json),
+        Command::Ground(args) => ground_cmd::run(args, &root, &vocab, &profile, cli.json),
         Command::Validate(args) => {
             let mut failed = false;
             let mut reports = serde_json::Map::new();
