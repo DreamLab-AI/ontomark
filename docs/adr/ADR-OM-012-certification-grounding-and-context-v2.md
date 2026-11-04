@@ -88,12 +88,23 @@ different contexts carried one name (visionGraph ADR-VG-009).
   re-blessed in a targeted way (MANIFEST `reblessed_note_3`): only page documents,
   `ns/v2`, `context/v2` and the generation markers changed. `ontology.ttl`,
   `context/v1`, `publish/` and the verbs are byte-identical.
-- **No triple changes.** Across the 9,609-page visionGraph corpus, this branch,
-  `main` and v0.7.3 produce the same `ontology.ttl`. They also produce the same
-  inferred, scaffold and prose indexes once `generated_at` is masked. So VisionFlow
-  ADR-2022's corpus history records nothing from this change.
-- **The day-one effect is nil.** One visionGraph page carries a human stamp
-  (whole page) and none carries `keys`. The only write path is
+- **No triple changes, measured two ways over the 9,609-page visionGraph
+  corpus.**
+  - Same vault: this branch, ontomark `main` and v0.7.3 produce the same
+    `ontology.ttl`, and the same inferred, scaffold and prose indexes once
+    `generated_at` is masked.
+  - Same binary (v0.7.3): visionGraph `main` (vocabulary v1) and the v2 branch
+    produce the same file set. Only the two generation markers and `okf/index.md`
+    differ, by `vocabulary_version` 1 → 2 and the content digest. No artefact names
+    the `context/v2` URL.
+
+  So VisionFlow ADR-2022's corpus history records nothing from this change.
+- **Day-one effect: one page.** *Fungible Token* already carries a whole-page
+  human stamp, so it becomes fully certified:
+  - `accept` withholds every proposal for it as `certified`;
+  - its page API document reports `state: certified`.
+
+  No page carries `keys` yet. The only write path is
   `ontomark edit --set 'verified+={by: human:…, at: …, keys: [..]}'`, run by a
   human. No bulk certification is possible or intended.
 - **`ground` costs a vault load:** about 3.7 s cold over visionGraph. An agent
