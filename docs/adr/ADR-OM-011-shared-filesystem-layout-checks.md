@@ -7,7 +7,7 @@ implementation_status: complete
 activation_status: staged
 supersedes: []
 superseded_by: []
-verified_commit: 395c18b3c8f037bd9fe883121b515506f4430d8d
+verified_commit: ef485105e175f17d2697a9cda0abeb4997e097f8
 verified_paths: [crates/ontomark-compile/src/profile/layout.rs, crates/ontomark-compile/src/profile.rs, crates/ontomark-compile/src/input/page.rs, crates/ontomark-compile/src/input/vocabulary.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/migrate/plan.rs, crates/ontomark-cli/src/main.rs, crates/ontomark-cli/src/migrate_cmd.rs, crates/ontomark-cli/tests/layout_contract.rs, crates/ontomark-compile/src/check/bodies.rs, crates/ontomark-compile/src/check/repair.rs, crates/ontomark-compile/src/migrate/apply.rs, crates/ontomark-compile/src/migrate/journal.rs, crates/ontomark-compile/tests/migrate.rs]
 owner: jjohare
 review_trigger: a change to root discovery, role placement, exclusions or a consumer adopting these checks
@@ -86,3 +86,11 @@ The same review found that the legacy `FrontmatterGrammar.public_gate` field is
 not consumed by the hard-coded `public` visibility check. This remains an open
 policy finding alongside generic required-key enforcement; this filesystem
 patch does not imply either has been implemented.
+
+## Re-verification — 2026-11-04
+
+Re-verified at `ef485105e175f17d2697a9cda0abeb4997e097f8` after ADR-OM-012 touched two governed paths:
+`crates/ontomark-cli/src/main.rs` gained the `ground` subcommand's dispatch line,
+and `crates/ontomark-compile/src/build/mod.rs` emits `context/v2.jsonld`. Neither
+changes root discovery, role placement or exclusions. `layout_contract` and the
+`migrate` integration tests pass unchanged.
