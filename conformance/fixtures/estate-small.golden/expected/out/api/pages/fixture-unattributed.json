@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:fixture-unattributed",
   "domain": "robotics",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "Synthetic public class whose generator is not on the attribution roster.",
   "subClassOf": [
     {

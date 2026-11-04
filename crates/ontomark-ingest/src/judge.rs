@@ -662,10 +662,11 @@ impl Ingest<'_> {
             outcome: skipped(why),
         };
         let terms = self.mentioned_terms(id, doc);
+        let certification = crate::Certification::of(doc, &self.options().verified_key);
         let keys: Vec<KeySpec> = request
             .keys
             .iter()
-            .filter(|k| matches!(k.value, ValueKind::Name))
+            .filter(|k| matches!(k.value, ValueKind::Name) && !certification.covers(&k.key))
             .cloned()
             .collect();
         if terms.is_empty() || keys.is_empty() {

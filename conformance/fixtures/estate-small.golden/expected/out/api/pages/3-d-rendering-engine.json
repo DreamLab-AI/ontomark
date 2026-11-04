@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-rendering-engine",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "A 3D rendering engine is software that converts three-dimensional geometric data into two-dimensional images through processes including geometry processing, lighting calculation, texture mapping, and rasterisation or ray tracing. In real-time contexts it targets interactive frame rates (90 Hz+) and must minimise motion-to-photon latency for XR presence.",
   "subClassOf": [
     {

@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:acinq",
   "domain": "blockchain",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "ACINQ is a Paris-based Bitcoin technology company specialising in the development and operation of Lightning Network infrastructure, most notably the Eclair Lightning Network node implementation written in Scala and the Phoenix self-custodial mobile Bitcoin wallet. The company operates one of the largest publicly reachable Lightning Network routing nodes, providing significant liquidity and routing capacity to the network. ACINQ contributes to the BOLT (Basis of Lightning Technology) protocol specification process and has pioneered features such as trampoline routing to reduce the on-device computation required by mobile Lightning clients.",
   "subClassOf": [
     {

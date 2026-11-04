@@ -148,6 +148,9 @@ pub enum WithholdReason {
     /// quote does not entail the fact. The judge can only add this reason;
     /// it never lets a value through that [`crate::Ingest::accept`] refused.
     JudgedUnsupported,
+    /// A human `verified` stamp on the note covers this key, so ingest may
+    /// not change it (see [`crate::Certification`]).
+    Certified,
 }
 
 /// A proposed value that was not written, and why.
@@ -278,6 +281,7 @@ impl WithholdReason {
             Self::UnpatchableKey => "unpatchable_key",
             Self::AlreadyPresent => "already_present",
             Self::JudgedUnsupported => "judged_unsupported",
+            Self::Certified => "certified",
         }
     }
 }
@@ -382,6 +386,8 @@ pub(crate) fn accept(
     // Frontmatter the parser could not read is never patched; every value
     // is withheld rather than the whole batch failing at the proof.
     let locked = doc.frontmatter().is_some_and(|f| !f.is_parsed());
+    // Read from the note, never the request: a request cannot drop it.
+    let certification = crate::Certification::of(doc, &options.verified_key);
     let mut diagnostics = Vec::new();
     let mut withheld = Vec::new();
     // key -> identity -> candidate, in first-seen order. A name's identity
@@ -411,6 +417,10 @@ pub(crate) fn accept(
                     evidence,
                 });
             };
+            if certification.covers(&a.key) {
+                refuse(WithholdReason::Certified, None);
+                continue;
+            }
             let Some(spec) = request.keys.iter().find(|k| k.key == a.key) else {
                 refuse(WithholdReason::UnknownKey, None);
                 continue;

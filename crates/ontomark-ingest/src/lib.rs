@@ -117,6 +117,7 @@
 //! builds for `wasm32-unknown-unknown` unchanged.
 
 mod accept;
+mod certification;
 mod contract;
 mod coverage;
 mod error;
@@ -131,6 +132,7 @@ pub use accept::{
     codes, CandidateAssertion, Candidates, Counts, EvidenceSpan, IngestDiagnostic, Utf16Span,
     Withheld, WithholdReason, CONFIDENCE, METHOD,
 };
+pub use certification::{is_human_actor, Certification};
 pub use chunk::Chunk;
 pub use contract::{
     KeySpec, ModelRequest, ModelResponse, NoteRef, ProposedAssertion, SourceRef, SourceText,
@@ -166,6 +168,9 @@ pub struct Options {
     pub lexical: LexicalThresholds,
     /// How many near-miss suggestions to report for an ungrounded name.
     pub suggestions: usize,
+    /// The frontmatter key holding the note's human-review stamps; keys a
+    /// human stamp covers are never patched (see [`Certification`]).
+    pub verified_key: String,
 }
 
 impl Default for Options {
@@ -175,6 +180,7 @@ impl Default for Options {
             max_chunk_chars: 12000,
             lexical: LexicalThresholds::default(),
             suggestions: 3,
+            verified_key: "verified".to_owned(),
         }
     }
 }

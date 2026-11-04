@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3d-modelling",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "3D modelling is the creation of a mathematical representation of a three-dimensional surface or volume using specialised software. Models are commonly built from polygon meshes, parametric surfaces or volumetric data and define the geometry that is later textured, rigged, animated and rendered. It is the foundational discipline for games, film, visualisation, product design and spatial computing.",
   "subClassOf": [
     {

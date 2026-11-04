@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-file-format",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "3D File Formats are standardised container structures for encoding three-dimensional geometric data, textures, materials, animations, and metadata, enabling asset portability across tools, rendering engines, and platforms.",
   "subClassOf": [
     {

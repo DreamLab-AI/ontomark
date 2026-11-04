@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-asset-standard",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "A 3D Asset Standard is a formal specification defining the file formats, metadata schemas, coordinate systems, material models, animation encodings, and interoperability protocols required for consistent creation, exchange, and real-time rendering of three-dimensional digital content across diverse software platforms and runtime environments. Such standards normalise vertex data structures, physically based rendering (PBR) material pipelines, level-of-detail hierarchies, skeletal animation rigs, and compression algorithms so that assets created in one authoring tool function correctly in another without manual conversion or data loss. Prominent examples include the Khronos Group glTF 2.0 specification for web and mobile 3D delivery, Pixar's Universal Scene Description (USD/USDZ) for complex scene composition, and the Metaverse Standards Forum interoperability profiles. These specifications underpin spatial computing, extended reality, game engines, digital-twin platforms, and emerging metaverse ecosystems by ensuring deterministic visual fidelity and semantic asset identity across the entire content pipeline.",
   "subClassOf": [
     {

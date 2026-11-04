@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:aaai",
   "domain": "ai",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "AAAI (the Association for the Advancement of Artificial Intelligence), founded in 1979 under the original name 'American Association for Artificial Intelligence' and renamed in 2007, is the principal non-profit scientific society devoted to advancing research in and responsible use of artificial intelligence. It is best known for its flagship annual peer-reviewed conference \u2014 one of the most selective and broadly scoped venues in AI \u2014 alongside the AI, Ethics and Society (AIES) conference, symposia, workshops, and the journal AI Magazine. AAAI also engages in education, public communication, and policy discussion concerning AI; administers the AAAI Fellows Program recognising sustained contributions to the discipline; and maintains historical continuity as the first professional society dedicated exclusively to AI, founded by leaders including Allen Newell, Edward Feigenbaum, Marvin Minsky, and John McCarthy. AAAI 2026 \u2014 the 40th annual conference \u2014 received 23,680 submissions and accepted 4,167 papers at a 17.6% acceptance rate, making it the most competitive edition in the conference's history.",
   "subClassOf": [
     {

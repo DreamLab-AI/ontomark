@@ -158,6 +158,8 @@ pub struct ClassRecord {
     /// `None` when the page carries no parseable stamp. Resolved to a `did:nostr`
     /// by the attribution roster at emit time; never guessed.
     pub generated_by: Option<crate::input::okf::Actor>,
+    /// Which keys human `verified` stamps cover (ADR-OM-012).
+    pub certification: crate::input::okf::Certification,
     /// `is-a`.
     pub sub_class_of: Vec<Ref>,
     /// `instance-of`.
@@ -409,6 +411,7 @@ impl Corpus {
                     .get("generated")
                     .and_then(crate::input::okf::Stamp::from_yaml)
                     .map(|st| st.by),
+                certification: crate::input::okf::Certification::from_verified(fm.get("verified")),
                 sub_class_of: links_of(page, IS_A_KEY),
                 instance_of: links_of(page, INSTANCE_OF_KEY),
                 relations,

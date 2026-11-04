@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:1-hive",
   "domain": "governance",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "A decentralised community and DAO that issues the Honey community currency and develops governance tooling such as the Gardens framework for conviction voting.",
   "subClassOf": [
     {

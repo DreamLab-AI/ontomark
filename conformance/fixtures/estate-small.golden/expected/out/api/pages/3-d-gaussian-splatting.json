@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-gaussian-splatting",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "A neural rendering technique that represents 3D scenes as collections of millions of 3D Gaussian primitives with learnable positions, colours, opacities, and covariances, enabling photorealistic real-time rendering at 100+ frames per second through GPU-accelerated rasterisation, revolutionising telepresence and immersive collaboration with unprecedented visual fidelity.",
   "subClassOf": [
     {

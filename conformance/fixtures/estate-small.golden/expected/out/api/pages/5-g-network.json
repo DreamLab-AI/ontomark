@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:5-g-network",
   "domain": "infrastructure",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "A 5G Network is the end-to-end fifth-generation mobile telecommunications system comprising a 5G New Radio (NR) radio access network built around gNB base stations, a cloud-native 5G Core implementing a service-based architecture with independently deployable network functions (AMF, SMF, UPF, PCF, NRF, AUSF), and the transport infrastructure interconnecting them. The architecture fundamentally separates the control plane from the user plane, enables network slicing to provision multiple virtualised logical networks on shared physical resources, and integrates multi-access edge computing nodes for deterministic low-latency application hosting. Defined across 3GPP Release 15 (frozen 2018) through Release 18 (5G-Advanced), 5G networks support three canonical service classes: enhanced Mobile Broadband (eMBB), Ultra-Reliable Low-Latency Communications (URLLC), and massive Machine-Type Communications (mMTC), making them the foundational connectivity layer for industrial IoT, autonomous systems, extended reality, and private campus networks.",
   "subClassOf": [
     {

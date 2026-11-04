@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-animation",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "3D Animation is the discipline of creating motion in three-dimensional digital environments using techniques such as keyframe animation, motion capture, and procedural simulation. It underpins character movement, environmental dynamics, and cinematic sequences in spatial computing platforms, game engines, and metaverse applications.",
   "subClassOf": [
     {

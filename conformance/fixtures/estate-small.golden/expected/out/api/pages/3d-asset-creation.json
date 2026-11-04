@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3d-asset-creation",
   "domain": "metaverse",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "The production of three-dimensional digital assets\u2014models, characters, environments, props, and their materials, textures, rigs, and animations\u2014ready for use in games, film, extended reality, simulation, and digital-twin applications. 3D asset creation is the spatial specialisation of general asset creation, spanning manual modelling and sculpting, photogrammetry and scanning, procedural generation, and increasingly generative AI pipelines that produce textured meshes from text or image prompts.",
   "subClassOf": [
     {

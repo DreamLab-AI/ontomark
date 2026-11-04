@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:6-g-network-slice",
   "domain": "infrastructure",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "Virtual partition of 6G infrastructure guaranteeing specified quality-of-service levels for immersive workloads through isolated resource allocation.",
   "subClassOf": [
     {

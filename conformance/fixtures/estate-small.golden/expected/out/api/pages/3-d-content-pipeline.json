@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-content-pipeline",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "The comprehensive workflows, tools, and methodologies for creating, processing, optimising, and delivering three-dimensional assets for metaverse and spatial computing applications. A 3D content pipeline spans concept art, geometry modelling, UV mapping, PBR texturing, rigging, LOD generation, and platform-specific optimisation, integrating DCC tools, game engines, version control, and CI/CD systems to support distributed teams and continuous asset delivery.",
   "subClassOf": [
     {

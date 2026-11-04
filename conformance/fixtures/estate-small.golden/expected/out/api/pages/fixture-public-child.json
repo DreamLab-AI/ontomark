@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:fixture-public-child",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "Synthetic public class whose direct parent is private. Its own facts publish; the private parent and anything derived through it must not.",
   "subClassOf": [
     {

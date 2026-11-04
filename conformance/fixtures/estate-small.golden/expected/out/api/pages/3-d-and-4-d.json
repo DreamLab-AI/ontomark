@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-and-4-d",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "The domain of three-dimensional and four-dimensional content creation, covering tools, techniques, and AI-powered pipelines for generating, editing, and rendering 3D assets and temporally dynamic (4D) representations. Encompasses text-to-3D systems (NVIDIA Edify, Luma Genie, Point-E), neural radiance fields, Gaussian splatting, and diffusion-based mesh generation, as well as 6D pose estimation, scene-scale generation, and integration with AR/VR workflows.",
   "subClassOf": [
     {

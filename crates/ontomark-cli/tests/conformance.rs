@@ -306,3 +306,24 @@ fn layout_tolerance_admits_last_digit_drift_and_nothing_else() {
     assert!(json_diff_within(a, moved, LAYOUT_TOLERANCE).is_some());
     assert!(json_diff_within(a, renumbered, LAYOUT_TOLERANCE).is_some());
 }
+
+/// ADR-OM-012: ingest's certification rule and the compiler's human gate
+/// must agree on who counts as human, or a page could pass the promotion
+/// gate while ingest still patches it (or the reverse).
+#[test]
+fn ingest_and_compile_agree_on_human_actors() {
+    use ontomark_compile::input::okf::Actor;
+    for s in [
+        "human:npub1abc",
+        " human:npub1abc ",
+        "human:",
+        "agent:ontology-mesh/1",
+        "process:vault/1.0",
+        "did:nostr:jjohare",
+        "npub1abc",
+        "",
+    ] {
+        let compile = s.parse::<Actor>().is_ok_and(|a| a.is_human());
+        assert_eq!(ontomark_ingest::is_human_actor(s), compile, "{s:?}");
+    }
+}

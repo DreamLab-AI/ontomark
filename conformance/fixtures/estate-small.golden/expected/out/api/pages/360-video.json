@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:360-video",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "A spherical video format captured with omnidirectional camera rigs that records the full 360-degree field of view around a single vantage point, allowing viewers to look in any direction during playback on headsets, browsers, or mobile devices. Because the footage is fixed to the capture position, it offers rotational (three-degrees-of-freedom) immersion but no positional movement, distinguishing it from volumetric formats that reconstruct scene geometry.",
   "subClassOf": [
     {

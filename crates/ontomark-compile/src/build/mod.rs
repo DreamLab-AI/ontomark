@@ -928,16 +928,18 @@ pub fn run_with(
         "api/validation-report.json",
         to_indented(&report.summary())?,
     );
-    // The context is served from /ns/v2.jsonld; the property IRIs inside it
-    // still cite the profile's vocabulary namespace. Every path ships, byte-identical,
-    // because consumers exist for each (contract C3). `/api/schema/context.jsonld`
-    // is the old site's pinned URL — its five prefixes are a strict subset of
-    // this document — and the publish workflow requires it.
+    // Version 1 ships unchanged at /context/v1.jsonld and at the old site's
+    // pinned /api/schema/context.jsonld (contract C3; the publish workflow
+    // requires it): a versioned URL never changes its bytes.
     let context = okf::context(profile, vocab);
     let context_json = to_indented(&context)?;
     staged.add("context/v1.jsonld", context_json.clone());
-    staged.add("api/schema/context.jsonld", context_json.clone());
-    staged.add("ns/v2.jsonld", context_json);
+    staged.add("api/schema/context.jsonld", context_json);
+    // Version 2 (ADR-OM-012): the closed context of the page API. `ns/v2`
+    // was a copy of v1 under a v2 name; it now serves v2 itself.
+    let context_v2 = to_indented(&okf::context_v2(profile, vocab))?;
+    staged.add("context/v2.jsonld", context_v2.clone());
+    staged.add("ns/v2.jsonld", context_v2);
 
     // WebVOWL graph — the explorer's build input.
     staged.add(

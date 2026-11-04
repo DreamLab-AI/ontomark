@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:a2-a-protocol",
   "domain": "ai",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "The Agent-to-Agent (A2A) Protocol is an open communication specification, initially proposed by Google in April 2025 and transferred to the Linux Foundation in June 2025, that defines how autonomous AI agents discover one another, negotiate capabilities, delegate tasks, and exchange results across heterogeneous agent frameworks and cloud environments. It uses HTTP/HTTPS transport with JSON-RPC 2.0 structured messages and Server-Sent Events for streaming, an Agent Card system at a well-known URI for capability advertisement, and enterprise-grade authentication through OAuth 2.0, mTLS, and JWT, enabling cross-vendor agent interoperability without requiring shared infrastructure. A2A complements tool-access protocols such as the Model Context Protocol by standardising the agent-to-agent interaction layer, and reached v1.0 production readiness in 2026 with adoption by over 150 organisations including Microsoft, AWS, Salesforce, SAP, and ServiceNow.",
   "subClassOf": [
     {

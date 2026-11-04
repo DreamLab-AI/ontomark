@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:acl",
   "domain": "security",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "An Access Control List (ACL) is a data structure attached to a resource \u2014 such as a file, directory, or network interface \u2014 that enumerates which subjects (users, groups, or processes) are permitted to perform which operations on that resource. Each entry in the list is called an Access Control Entry (ACE) and specifies a principal, a set of permissions (read, write, execute, delete), and whether those permissions are granted or denied. ACLs originated in file-system security (POSIX, NTFS) and were subsequently extended to networking, where routers and firewalls use IP-level ACLs to filter packets by source address, destination port, and protocol. In distributed and cloud environments ACLs underpin fine-grained authorisation that complements role-based and attribute-based access-control models.",
   "subClassOf": [
     {

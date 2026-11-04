@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:1-inch",
   "domain": "blockchain",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "A decentralised exchange aggregator that routes trades across multiple liquidity sources to find favourable execution prices on Ethereum and other chains.",
   "subClassOf": [
     {

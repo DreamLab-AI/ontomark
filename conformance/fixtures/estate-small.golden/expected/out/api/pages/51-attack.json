@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:51-attack",
   "domain": "blockchain",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "A 51% Attack is a consensus-layer attack on a Proof-of-Work blockchain in which a single entity or coalition controls more than half of the network's hash rate, enabling double-spending, transaction censorship, and chain reorganisation. The attack exploits the longest-chain rule: the attacker mines a private fork containing fraudulent transactions and, once it exceeds the honest chain in cumulative work, broadcasts it to override confirmed history.",
   "subClassOf": [
     {

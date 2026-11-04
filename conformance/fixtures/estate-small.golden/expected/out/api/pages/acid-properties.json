@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:acid-properties",
   "domain": "distributed-systems",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "ACID Properties are the four guarantees - Atomicity, Consistency, Isolation and Durability - that define a reliable database transaction. Atomicity ensures a transaction is all-or-nothing; Consistency preserves invariants; Isolation hides concurrent intermediate states; and Durability persists committed results across failures. Together they let applications reason about correctness despite concurrency and crashes, distinguishing strongly consistent transactional systems from eventually consistent alternatives.",
   "subClassOf": [
     {

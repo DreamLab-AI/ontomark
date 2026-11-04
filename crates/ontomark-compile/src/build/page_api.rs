@@ -103,6 +103,13 @@ pub fn build_attributed(
                     }),
                 );
             }
+            entry.insert(
+                "certification".into(),
+                json!({
+                    "state": record.certification.state(),
+                    "keys": record.certification.keys,
+                }),
+            );
             entry.insert("definition".into(), json!(record.definition));
             entry.insert("subClassOf".into(), refs_to_json(&record.sub_class_of));
             entry.insert("entityType".into(), json!(record.entity_type.as_str()));
@@ -221,6 +228,7 @@ mod tests {
             quality: 0.5,
             legacy_term_id: String::new(),
             generated_by: None,
+            certification: crate::input::okf::Certification::default(),
             sub_class_of: Vec::new(),
             instance_of: Vec::new(),
             relations: IndexMap::new(),
@@ -324,5 +332,55 @@ mod tests {
         assert!(!obj.contains_key("relationships"));
         assert!(obj.contains_key("wikilinks"));
         assert!(index.as_object().unwrap().is_empty());
+    }
+
+    /// ADR-OM-012: the v2 context is closed over the page API document.
+    /// Every top-level key, every `relationships` key and every key of the
+    /// `certification` and link objects must expand to an IRI.
+    #[test]
+    fn context_v2_has_a_term_for_every_page_api_key() {
+        let mut yaml = String::from("version: 2\nnamespace: \"urn:ngm:class:\"\nrelations:\n");
+        for (fm, json) in RELATION_KEYS {
+            yaml.push_str(&format!(
+                "  {fm}: {{ owl: \"vc:{json}\", json_key: {json} }}\n"
+            ));
+        }
+        yaml.push_str("scalars:\n  domain: { type: text, owl: vc:sourceDomain }\n");
+        let vocab = crate::input::vocabulary::Vocabulary::from_yaml_str(&yaml).unwrap();
+        let profile = crate::profile::testing::est();
+        let ctx = super::super::okf::context_v2(profile, &vocab);
+        let terms = ctx["@context"].as_object().unwrap();
+
+        let mut r = record("A");
+        r.relations.insert(
+            "requires",
+            vec![Ref {
+                iri: "urn:ngm:class:b".into(),
+                label: "B".into(),
+            }],
+        );
+        r.certification.keys = vec!["is-a".into()];
+        let mut closure = Closure::default();
+        closure
+            .inferred_superclasses
+            .insert("a".into(), vec!["b".into()]);
+        let (docs, _) = build(&corpus_of(vec![r]), &closure, &HashMap::new());
+        let doc = docs[0].value.as_object().unwrap();
+        for key in doc.keys() {
+            assert!(terms.contains_key(key), "page API key {key} has no v2 term");
+        }
+        for key in doc["relationships"].as_object().unwrap().keys() {
+            assert!(terms.contains_key(key), "relationship {key} has no v2 term");
+        }
+        let scoped = terms["certification"]["@context"].as_object().unwrap();
+        for key in doc["certification"].as_object().unwrap().keys() {
+            assert!(scoped.contains_key(key), "certification.{key} has no term");
+        }
+        for key in ["id", "label", "slug"] {
+            assert!(terms.contains_key(key), "link-object key {key} has no term");
+        }
+        assert_eq!(doc["certification"]["state"], "partial");
+        assert_eq!(terms["domain"], "vc:sourceDomain");
+        assert_eq!(terms["qualityScore"]["@type"], "xsd:float");
     }
 }

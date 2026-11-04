@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-generation",
   "domain": "artificial-intelligence",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "3D Generation refers to the automated or semi-automated creation of three-dimensional geometry, appearance, and scene representations using machine learning models, procedural algorithms, or hybrid approaches. Techniques include text-to-3D, image-to-3D, and scene-level generation via neural radiance fields, Gaussian splatting, diffusion models, and large multi-modal networks. The field aims to dramatically reduce the time and skill threshold required to produce photorealistic or stylised 3D content for gaming, film, spatial computing, e-commerce, digital twins, and robotics simulation.",
   "subClassOf": [
     {

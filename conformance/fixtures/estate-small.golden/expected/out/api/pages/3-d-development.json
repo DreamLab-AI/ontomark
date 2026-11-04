@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-development",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "3D Development encompasses the modologies, tools, and workflows for creating, iterating, and deploying three-dimensional digital assets and environments.",
   "subClassOf": [
     {

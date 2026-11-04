@@ -63,6 +63,120 @@ pub fn context(profile: &Profile, vocab: &Vocabulary) -> Value {
     json!({ "@context": Value::Object(ctx) })
 }
 
+/// Build the version 2 JSON-LD context (`context/v2.jsonld`, also served
+/// at `ns/v2.jsonld`), ADR-OM-012.
+///
+/// Version 1 maps relation keys and scalars to IRIs but leaves most of the
+/// page API unmapped and coins `vc:<key>` for every scalar, even one whose
+/// vocabulary entry names a different property (`domain` is
+/// `vc:sourceDomain`). Version 2 is the closed context of the page API
+/// document: every key [`super::page_api`] emits has a term, scalars use
+/// their vocabulary `owl:` property and datatype, link objects (`{id,
+/// label}`) are nodes, and the `certification` block carries the
+/// field-level review state. Version 1 is left byte-for-byte as it was:
+/// its URL is versioned and already consumed.
+#[must_use]
+pub fn context_v2(profile: &Profile, vocab: &Vocabulary) -> Value {
+    let iris = &profile.iris;
+    let vc = iris.vocabulary_prefix.as_str();
+    let mut ctx = serde_json::Map::new();
+    ctx.insert("@version".into(), json!(1.1));
+    ctx.insert(vc.to_owned(), json!(iris.vocabulary_namespace));
+    ctx.insert(iris.class_prefix.clone(), json!(iris.class_base()));
+    ctx.insert(
+        iris.individual_prefix.clone(),
+        json!(iris.individual_base()),
+    );
+    for (prefix, ns) in [
+        ("owl", "http://www.w3.org/2002/07/owl#"),
+        ("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"),
+        ("rdfs", "http://www.w3.org/2000/01/rdf-schema#"),
+        ("xsd", "http://www.w3.org/2001/XMLSchema#"),
+        ("prov", "http://www.w3.org/ns/prov#"),
+        ("skos", "http://www.w3.org/2004/02/skos/core#"),
+    ] {
+        ctx.insert(prefix.into(), json!(ns));
+    }
+    let local = |name: &str| format!("{vc}:{name}");
+    // Node identity and the link objects every list holds.
+    ctx.insert("id".into(), json!("@id"));
+    ctx.insert("label".into(), json!("rdfs:label"));
+    ctx.insert("title".into(), json!("rdfs:label"));
+    ctx.insert("slug".into(), json!(local("slug")));
+    ctx.insert(
+        "public".into(),
+        json!({ "@id": local("public"), "@type": "xsd:boolean" }),
+    );
+    ctx.insert(
+        "classIri".into(),
+        json!({ "@id": local("classIri"), "@type": "@id" }),
+    );
+    ctx.insert(
+        "entityType".into(),
+        json!({ "@id": "rdf:type", "@type": "@vocab" }),
+    );
+    ctx.insert("Class".into(), json!("owl:Class"));
+    ctx.insert("Individual".into(), json!("owl:NamedIndividual"));
+    ctx.insert("definition".into(), json!("rdfs:comment"));
+    // Scalars: the vocabulary's own property and datatype.
+    let scalar = |key: &str, json_key: &str, datatype: Option<&str>| -> (String, Value) {
+        let id = vocab
+            .scalars
+            .get(key)
+            .and_then(|d| d.owl.clone())
+            .unwrap_or_else(|| local(key));
+        let v = match datatype {
+            Some(t) => json!({ "@id": id, "@type": t }),
+            None => json!(id),
+        };
+        (json_key.to_owned(), v)
+    };
+    for (k, v) in [
+        scalar("domain", "domain", None),
+        scalar("maturity", "maturity", None),
+        scalar("quality", "qualityScore", Some("xsd:float")),
+    ] {
+        ctx.insert(k, v);
+    }
+    let set = |id: String| json!({ "@id": id, "@container": "@set" });
+    ctx.insert("subClassOf".into(), set("rdfs:subClassOf".into()));
+    for (key, def) in &vocab.relations {
+        ctx.insert(vocab.json_key(key), set(vocab.expand(&def.owl)));
+    }
+    ctx.insert("relationships".into(), json!(local("relations")));
+    ctx.insert(
+        "inheritedRelations".into(),
+        json!(local("inheritedRelations")),
+    );
+    ctx.insert(
+        "inferredSuperClasses".into(),
+        set(local("inferredSuperClass")),
+    );
+    ctx.insert("wikilinks".into(), set(local("wikilink")));
+    ctx.insert("backlinks".into(), set(local("backlink")));
+    ctx.insert(
+        "provenance".into(),
+        json!({
+            "@id": "prov:qualifiedAttribution",
+            "@context": {
+                "wasAttributedTo": { "@id": "prov:agent", "@type": "@id" },
+                "actor": local("actor"),
+            },
+        }),
+    );
+    ctx.insert(
+        "certification".into(),
+        json!({
+            "@id": local("certification"),
+            "@context": {
+                "state": local("certificationState"),
+                "keys": { "@id": local("certifiedKey"), "@container": "@set" },
+            },
+        }),
+    );
+    json!({ "@context": Value::Object(ctx) })
+}
+
 /// Build the OKF bundle: `index.md` plus `concepts/<slug>.md` per public class.
 #[must_use]
 pub fn bundle(
@@ -234,6 +348,7 @@ scalars:
             quality: 0.5,
             legacy_term_id: String::new(),
             generated_by: None,
+            certification: crate::input::okf::Certification::default(),
             sub_class_of: Vec::new(),
             instance_of: Vec::new(),
             relations: IndexMap::new(),

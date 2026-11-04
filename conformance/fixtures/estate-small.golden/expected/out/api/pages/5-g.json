@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:5-g",
   "domain": "infrastructure",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "5G (Fifth Generation) is the latest generation of mobile cellular network technology, standardised by 3GPP from Release 15 onwards, characterised by peak data rates exceeding 20 Gbps, radio latencies below 1 ms, and support for up to one million connected devices per square kilometre. It introduces three primary use-case families: enhanced mobile broadband (eMBB), ultra-reliable low-latency communications (URLLC), and massive machine-type communications (mMTC). 5G underpins advances in spatial computing, autonomous vehicles, industrial automation, and IoT at scale.",
   "subClassOf": [
     {

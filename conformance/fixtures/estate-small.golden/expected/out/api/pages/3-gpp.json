@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-gpp",
   "domain": "standards",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "The 3rd Generation Partnership Project (3GPP) is a global consortium of regional telecommunications standards bodies that develops and maintains versioned technical specifications governing mobile communication systems, from UMTS (3G) through LTE (4G) to NR (5G) and the emerging 6G framework. Operating through working groups (RAN, SA, CT), it produces Releases that introduce new radio access technologies, core network architectures, and service-layer capabilities. 3GPP specifications are the foundational technical substrate for the global cellular infrastructure serving billions of devices.",
   "subClassOf": [
     {

@@ -235,6 +235,68 @@ impl Source {
     }
 }
 
+/// Field-level certification read from `verified` stamps (ADR-OM-012).
+///
+/// A human stamp (`by: human:<npub>` with an `at`) certifies the whole page
+/// when it lists no `keys`, and only the keys it lists otherwise. Agent and
+/// process stamps certify nothing. `ontomark-ingest`'s `Certification`
+/// applies the same rule and never patches a certified key.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Certification {
+    /// A human stamp without `keys` covers the whole page.
+    pub whole_page: bool,
+    /// Keys named by human stamps that list `keys`, sorted and de-duplicated.
+    pub keys: Vec<String>,
+}
+
+impl Certification {
+    /// Read the certification out of a frontmatter `verified` value.
+    #[must_use]
+    pub fn from_verified(verified: Option<&Yaml>) -> Self {
+        let mut out = Self::default();
+        let Some(stamps) = verified.and_then(Yaml::as_sequence) else {
+            return out;
+        };
+        let mut keys = std::collections::BTreeSet::new();
+        for v in stamps {
+            let Some(stamp) = Stamp::from_yaml(v) else {
+                continue;
+            };
+            if !stamp.by.is_human() || stamp.at.trim().is_empty() {
+                continue;
+            }
+            match v
+                .as_mapping()
+                .and_then(|m| m.get(Yaml::String("keys".into())))
+            {
+                None | Some(Yaml::Null) => out.whole_page = true,
+                Some(list) => keys.extend(
+                    list.as_sequence()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(Yaml::as_str)
+                        .map(|k| k.trim().to_owned())
+                        .filter(|k| !k.is_empty()),
+                ),
+            }
+        }
+        out.keys = keys.into_iter().collect();
+        out
+    }
+
+    /// `certified` (whole page), `partial` (some keys) or `pending` (none).
+    #[must_use]
+    pub fn state(&self) -> &'static str {
+        if self.whole_page {
+            "certified"
+        } else if self.keys.is_empty() {
+            "pending"
+        } else {
+            "partial"
+        }
+    }
+}
+
 /// The OKF block projected out of a page's frontmatter.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct OkfBlock {
@@ -357,6 +419,25 @@ mod tests {
         let okf = OkfBlock::from_frontmatter(&fm);
         assert!(okf.status.is_none());
         assert_eq!(okf.status_raw.as_deref(), Some("half-baked"));
+    }
+
+    #[test]
+    fn certification_counts_only_dated_human_stamps() {
+        let y = |s: &str| serde_yaml::from_str::<Yaml>(s).unwrap();
+        let c = |s: &str| Certification::from_verified(Some(&y(s)));
+        assert_eq!(Certification::from_verified(None).state(), "pending");
+        assert_eq!(
+            c("[{by: 'agent:x/1', at: '2026-11-04'}]").state(),
+            "pending"
+        );
+        assert_eq!(c("[{by: 'human:npub1'}]").state(), "pending");
+        assert_eq!(
+            c("[{by: 'human:npub1', at: '2026-11-04'}]").state(),
+            "certified"
+        );
+        let partial = c("[{by: 'human:npub1', at: '2026-11-04', keys: [requires, is-a, is-a]}]");
+        assert_eq!(partial.state(), "partial");
+        assert_eq!(partial.keys, ["is-a", "requires"]);
     }
 
     #[test]

@@ -403,6 +403,50 @@ mod tests {
     }
 
     #[test]
+    fn a_keyed_verified_stamp_survives_append_and_a_later_edit() {
+        // ADR-OM-012: field-level certification lives in `verified[].keys`;
+        // writing it and editing the page afterwards must both keep it.
+        let first = apply(
+            &page(),
+            &[Change::parse_set(
+                "verified+={by: human:npub1, at: 2026-11-04T00:00:00Z, keys: [is-a, quality]}",
+            )
+            .unwrap()],
+            Expectation {
+                docs: Some(1),
+                blocks: Some(1),
+            },
+        )
+        .unwrap();
+        let reread = Page::parse("/v/A.md", "A.md", "A", &first.rendered).unwrap();
+        let second = apply(
+            &reread,
+            &[Change::parse_set("status=stable").unwrap()],
+            Expectation {
+                docs: Some(1),
+                blocks: Some(1),
+            },
+        )
+        .unwrap();
+        let fm = Page::parse("/v/A.md", "A.md", "A", &second.rendered)
+            .unwrap()
+            .frontmatter;
+        let stamp = fm.get("verified").and_then(Yaml::as_sequence).unwrap()[0]
+            .as_mapping()
+            .unwrap()
+            .clone();
+        let keys: Vec<&str> = stamp
+            .get(Yaml::String("keys".into()))
+            .and_then(Yaml::as_sequence)
+            .unwrap()
+            .iter()
+            .filter_map(Yaml::as_str)
+            .collect();
+        assert_eq!(keys, ["is-a", "quality"]);
+        assert!(second.rendered.contains("status: stable"));
+    }
+
+    #[test]
     fn unset_removes_a_key() {
         let out = apply(
             &page(),

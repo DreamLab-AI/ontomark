@@ -5,6 +5,10 @@
   "public": true,
   "classIri": "urn:ngm:class:3-d-asset",
   "domain": "spatial-computing",
+  "certification": {
+    "state": "pending",
+    "keys": []
+  },
   "definition": "A 3D Asset is a discrete, self-contained digital artefact encoding three-dimensional geometry, surface materials, skeletal animation rigs, and associated metadata in a machine-readable interchange format such as glTF 2.0, USD, FBX, or OBJ. Such assets are produced by digital content creation tools, stored in asset management systems with versioning and provenance records, and consumed at runtime by rendering engines, game engines, and spatial computing platforms. Production-quality 3D assets typically incorporate multiple levels of detail (LOD), physically-based rendering (PBR) material maps (albedo, metallic-roughness, normal, occlusion, emissive), collision meshes for physics simulation, and compressed texture atlases optimised for a target hardware envelope. Cross-platform delivery relies on open standards maintained by the Khronos Group and Pixar/Academy Software Foundation, enabling asset reuse across metaverse environments, digital twins, extended reality (XR) applications, and game titles.",
   "subClassOf": [
     {
