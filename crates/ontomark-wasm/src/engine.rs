@@ -819,6 +819,9 @@ fn wire(code: &str, message: impl Into<String>) -> WireError {
     }
 }
 
+/// Compares bytes, not a `&str` slice: `len - 3` need not fall on a character
+/// boundary (a path ending in "éé" or an emoji), and slicing there panics.
 fn is_markdown(path: &str) -> bool {
-    path.len() > 3 && path[path.len() - 3..].eq_ignore_ascii_case(".md")
+    let bytes = path.as_bytes();
+    bytes.len() > 3 && bytes[bytes.len() - 3..].eq_ignore_ascii_case(b".md")
 }
