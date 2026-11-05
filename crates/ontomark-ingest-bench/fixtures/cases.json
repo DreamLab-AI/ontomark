@@ -1,0 +1,642 @@
+{
+ "version": 1,
+ "about": "Labelled single-fact cases for ontomark-ingest. Every quote occurs verbatim in its note and names an existing vocabulary term, so each is syntactically groundable; `supported` says whether the quote actually states the fact. Categories other than affirmative, paraphrase and the positive half of paired are adversarial: the words are present but the fact is not asserted.",
+ "vocabulary": [
+  "Animal",
+  "Mammal",
+  "Bird",
+  "Fish",
+  "Reptile",
+  "Amphibian",
+  "Insect",
+  "Plant",
+  "Tree",
+  "Fungus",
+  "Vehicle",
+  "Machine",
+  "Organisation",
+  "Company",
+  "Charity",
+  "City",
+  "Country",
+  "Continent",
+  "Planet",
+  "Star",
+  "Instrument",
+  "Tool",
+  "Language",
+  "Mineral",
+  "Europe",
+  "Asia",
+  "Africa",
+  "Solar System",
+  "Milky Way",
+  "Orchestra",
+  "Engine",
+  "Car",
+  "Galaxy",
+  "Region"
+ ],
+ "cases": [
+  {
+   "id": "affirmative-01",
+   "category": "affirmative",
+   "subject": "Wolf",
+   "body": "The Wolf is a Mammal that hunts in packs.",
+   "key": "is-a",
+   "value": "Mammal",
+   "quote": "is a Mammal",
+   "supported": true
+  },
+  {
+   "id": "affirmative-02",
+   "category": "affirmative",
+   "subject": "Eagle",
+   "body": "An Eagle is a Bird of prey with keen eyesight.",
+   "key": "is-a",
+   "value": "Bird",
+   "quote": "is a Bird",
+   "supported": true
+  },
+  {
+   "id": "affirmative-03",
+   "category": "affirmative",
+   "subject": "Salmon",
+   "body": "The Salmon is a Fish that returns to its home river to spawn.",
+   "key": "is-a",
+   "value": "Fish",
+   "quote": "is a Fish",
+   "supported": true
+  },
+  {
+   "id": "affirmative-04",
+   "category": "affirmative",
+   "subject": "Oak",
+   "body": "The Oak is a Tree with lobed leaves.",
+   "key": "is-a",
+   "value": "Tree",
+   "quote": "is a Tree",
+   "supported": true
+  },
+  {
+   "id": "affirmative-05",
+   "category": "affirmative",
+   "subject": "Violin",
+   "body": "The Violin is an Instrument played with a bow.",
+   "key": "is-a",
+   "value": "Instrument",
+   "quote": "is an Instrument",
+   "supported": true
+  },
+  {
+   "id": "affirmative-06",
+   "category": "affirmative",
+   "subject": "France",
+   "body": "France is part of Europe.",
+   "key": "part-of",
+   "value": "Europe",
+   "quote": "part of Europe",
+   "supported": true
+  },
+  {
+   "id": "affirmative-07",
+   "category": "affirmative",
+   "subject": "Earth",
+   "body": "The Earth is part of the Solar System.",
+   "key": "part-of",
+   "value": "Solar System",
+   "quote": "part of the Solar System",
+   "supported": true
+  },
+  {
+   "id": "affirmative-08",
+   "category": "affirmative",
+   "subject": "Acme",
+   "body": "Acme was founded on 1999-04-01 in a garage.",
+   "key": "founded",
+   "value": "1999-04-01",
+   "quote": "founded on 1999-04-01",
+   "supported": true
+  },
+  {
+   "id": "affirmative-09",
+   "category": "affirmative",
+   "subject": "Oxfam",
+   "body": "Oxfam is a Charity that works on poverty.",
+   "key": "is-a",
+   "value": "Charity",
+   "quote": "is a Charity",
+   "supported": true
+  },
+  {
+   "id": "affirmative-10",
+   "category": "affirmative",
+   "subject": "Crankshaft",
+   "body": "The Crankshaft is part of the Engine.",
+   "key": "part-of",
+   "value": "Engine",
+   "quote": "part of the Engine",
+   "supported": true
+  },
+  {
+   "id": "paraphrase-01",
+   "category": "paraphrase",
+   "subject": "Fox",
+   "body": "Foxes belong among the Mammals of the northern woods.",
+   "key": "is-a",
+   "value": "Mammal",
+   "quote": "belong among the Mammals",
+   "supported": true
+  },
+  {
+   "id": "paraphrase-02",
+   "category": "paraphrase",
+   "subject": "Frog",
+   "body": "Every Frog counts as an Amphibian.",
+   "key": "is-a",
+   "value": "Amphibian",
+   "quote": "counts as an Amphibian",
+   "supported": true
+  },
+  {
+   "id": "paraphrase-03",
+   "category": "paraphrase",
+   "subject": "Ant",
+   "body": "Zoologists classify the Ant as an Insect.",
+   "key": "is-a",
+   "value": "Insect",
+   "quote": "classify the Ant as an Insect",
+   "supported": true
+  },
+  {
+   "id": "paraphrase-04",
+   "category": "paraphrase",
+   "subject": "Kenya",
+   "body": "Kenya lies within Africa, on the east coast.",
+   "key": "part-of",
+   "value": "Africa",
+   "quote": "lies within Africa",
+   "supported": true
+  },
+  {
+   "id": "paraphrase-05",
+   "category": "paraphrase",
+   "subject": "Globex",
+   "body": "Globex was established on 2004-09-15 by two engineers.",
+   "key": "founded",
+   "value": "2004-09-15",
+   "quote": "established on 2004-09-15",
+   "supported": true
+  },
+  {
+   "id": "paraphrase-06",
+   "category": "paraphrase",
+   "subject": "Quartz",
+   "body": "Quartz is among the most common Minerals in the crust.",
+   "key": "is-a",
+   "value": "Mineral",
+   "quote": "among the most common Minerals",
+   "supported": true
+  },
+  {
+   "id": "negated-01",
+   "category": "negated",
+   "subject": "Whale",
+   "body": "The Whale is not a Fish, despite living in the sea.",
+   "key": "is-a",
+   "value": "Fish",
+   "quote": "not a Fish",
+   "supported": false
+  },
+  {
+   "id": "negated-02",
+   "category": "negated",
+   "subject": "Bat",
+   "body": "A Bat is no Bird, although it flies.",
+   "key": "is-a",
+   "value": "Bird",
+   "quote": "no Bird",
+   "supported": false
+  },
+  {
+   "id": "negated-03",
+   "category": "negated",
+   "subject": "Mushroom",
+   "body": "A Mushroom is not a Plant.",
+   "key": "is-a",
+   "value": "Plant",
+   "quote": "not a Plant",
+   "supported": false
+  },
+  {
+   "id": "negated-04",
+   "category": "negated",
+   "subject": "Turkey nation",
+   "body": "This country is not part of Asia for the purposes of this note.",
+   "key": "part-of",
+   "value": "Asia",
+   "quote": "not part of Asia",
+   "supported": false
+  },
+  {
+   "id": "negated-05",
+   "category": "negated",
+   "subject": "Pluto",
+   "body": "Pluto is no longer counted as a Planet.",
+   "key": "is-a",
+   "value": "Planet",
+   "quote": "counted as a Planet",
+   "supported": false
+  },
+  {
+   "id": "negated-06",
+   "category": "negated",
+   "subject": "Initech",
+   "body": "Initech was not founded on 2001-01-01, whatever the brochure says.",
+   "key": "founded",
+   "value": "2001-01-01",
+   "quote": "founded on 2001-01-01",
+   "supported": false
+  },
+  {
+   "id": "negated-07",
+   "category": "negated",
+   "subject": "Sponge",
+   "body": "A Sponge is not a Plant, though it does not move.",
+   "key": "is-a",
+   "value": "Plant",
+   "quote": "not a Plant",
+   "supported": false
+  },
+  {
+   "id": "negated-08",
+   "category": "negated",
+   "subject": "Penguin",
+   "body": "A Penguin is a Bird but it is not a Fish.",
+   "key": "is-a",
+   "value": "Fish",
+   "quote": "not a Fish",
+   "supported": false
+  },
+  {
+   "id": "hypothetical-01",
+   "category": "hypothetical",
+   "subject": "Dragon",
+   "body": "If it existed, the Dragon would be a Reptile.",
+   "key": "is-a",
+   "value": "Reptile",
+   "quote": "would be a Reptile",
+   "supported": false
+  },
+  {
+   "id": "hypothetical-02",
+   "category": "hypothetical",
+   "subject": "Hovercar",
+   "body": "Were it ever built, the Hovercar would be a Vehicle.",
+   "key": "is-a",
+   "value": "Vehicle",
+   "quote": "would be a Vehicle",
+   "supported": false
+  },
+  {
+   "id": "hypothetical-03",
+   "category": "hypothetical",
+   "subject": "Hooli",
+   "body": "Hooli would have been founded on 2010-06-01 had funding arrived.",
+   "key": "founded",
+   "value": "2010-06-01",
+   "quote": "founded on 2010-06-01",
+   "supported": false
+  },
+  {
+   "id": "hypothetical-04",
+   "category": "hypothetical",
+   "subject": "Atlantis",
+   "body": "Suppose Atlantis were real: it would be part of Europe.",
+   "key": "part-of",
+   "value": "Europe",
+   "quote": "part of Europe",
+   "supported": false
+  },
+  {
+   "id": "hypothetical-05",
+   "category": "hypothetical",
+   "subject": "Robodog",
+   "body": "In the design brief, the Robodog should become a Machine that guards farms.",
+   "key": "is-a",
+   "value": "Machine",
+   "quote": "become a Machine",
+   "supported": false
+  },
+  {
+   "id": "hypothetical-06",
+   "category": "hypothetical",
+   "subject": "Newland",
+   "body": "If the referendum passes, Newland will be a Country.",
+   "key": "is-a",
+   "value": "Country",
+   "quote": "be a Country",
+   "supported": false
+  },
+  {
+   "id": "historical-01",
+   "category": "historical",
+   "subject": "Bat lore",
+   "body": "Medieval bestiaries listed the bat as a Bird.",
+   "key": "is-a",
+   "value": "Bird",
+   "quote": "listed the bat as a Bird",
+   "supported": false
+  },
+  {
+   "id": "historical-02",
+   "category": "historical",
+   "subject": "Pluto history",
+   "body": "From 1930 to 2006 Pluto was classed as a Planet.",
+   "key": "is-a",
+   "value": "Planet",
+   "quote": "classed as a Planet",
+   "supported": false
+  },
+  {
+   "id": "historical-03",
+   "category": "historical",
+   "subject": "Whale lore",
+   "body": "Early naturalists described the whale as a Fish.",
+   "key": "is-a",
+   "value": "Fish",
+   "quote": "described the whale as a Fish",
+   "supported": false
+  },
+  {
+   "id": "historical-04",
+   "category": "historical",
+   "subject": "Constantinople",
+   "body": "Constantinople was once part of Europe's Roman domain, then of Asia.",
+   "key": "part-of",
+   "value": "Europe",
+   "quote": "part of Europe",
+   "supported": false
+  },
+  {
+   "id": "historical-05",
+   "category": "historical",
+   "subject": "Tomato history",
+   "body": "Tomatoes were long regarded as a Fungus by some herbalists.",
+   "key": "is-a",
+   "value": "Fungus",
+   "quote": "regarded as a Fungus",
+   "supported": false
+  },
+  {
+   "id": "historical-06",
+   "category": "historical",
+   "subject": "Old Acme",
+   "body": "Old Acme was a Company until it dissolved.",
+   "key": "is-a",
+   "value": "Company",
+   "quote": "was a Company",
+   "supported": false
+  },
+  {
+   "id": "attributed-01",
+   "category": "attributed",
+   "subject": "Dugong",
+   "body": "Sailors claimed the Dugong was a Fish of the open sea.",
+   "key": "is-a",
+   "value": "Fish",
+   "quote": "was a Fish",
+   "supported": false
+  },
+  {
+   "id": "attributed-02",
+   "category": "attributed",
+   "subject": "Unicorn",
+   "body": "Pliny wrote that the Unicorn is a Mammal.",
+   "key": "is-a",
+   "value": "Mammal",
+   "quote": "is a Mammal",
+   "supported": false
+  },
+  {
+   "id": "attributed-03",
+   "category": "attributed",
+   "subject": "Ponzi Co",
+   "body": "Its marketing says Ponzi Co is a Charity.",
+   "key": "is-a",
+   "value": "Charity",
+   "quote": "is a Charity",
+   "supported": false
+  },
+  {
+   "id": "attributed-04",
+   "category": "attributed",
+   "subject": "Vortex",
+   "body": "A forum post insists the Vortex is a Star.",
+   "key": "is-a",
+   "value": "Star",
+   "quote": "is a Star",
+   "supported": false
+  },
+  {
+   "id": "attributed-05",
+   "category": "attributed",
+   "subject": "Shell Corp",
+   "body": "The founders' memoir says Shell Corp was founded on 1995-02-02.",
+   "key": "founded",
+   "value": "1995-02-02",
+   "quote": "founded on 1995-02-02",
+   "supported": false
+  },
+  {
+   "id": "attributed-06",
+   "category": "attributed",
+   "subject": "Sealand",
+   "body": "Its owners say Sealand is a Country.",
+   "key": "is-a",
+   "value": "Country",
+   "quote": "is a Country",
+   "supported": false
+  },
+  {
+   "id": "uncertain-01",
+   "category": "uncertain",
+   "subject": "Specimen 7",
+   "body": "Specimen 7 may be a Reptile; the scales are inconclusive.",
+   "key": "is-a",
+   "value": "Reptile",
+   "quote": "may be a Reptile",
+   "supported": false
+  },
+  {
+   "id": "uncertain-02",
+   "category": "uncertain",
+   "subject": "Object X",
+   "body": "Object X is possibly a Star, or possibly a Planet.",
+   "key": "is-a",
+   "value": "Star",
+   "quote": "possibly a Star",
+   "supported": false
+  },
+  {
+   "id": "uncertain-03",
+   "category": "uncertain",
+   "subject": "Glyph tongue",
+   "body": "The Glyph tongue might be a Language, but no speaker has been found.",
+   "key": "is-a",
+   "value": "Language",
+   "quote": "might be a Language",
+   "supported": false
+  },
+  {
+   "id": "uncertain-04",
+   "category": "uncertain",
+   "subject": "Proto Ltd",
+   "body": "Proto Ltd was perhaps founded on 1988-08-08; records are lost.",
+   "key": "founded",
+   "value": "1988-08-08",
+   "quote": "founded on 1988-08-08",
+   "supported": false
+  },
+  {
+   "id": "uncertain-05",
+   "category": "uncertain",
+   "subject": "Blob",
+   "body": "The Blob is probably not a Fungus, though it could be a Plant.",
+   "key": "is-a",
+   "value": "Plant",
+   "quote": "could be a Plant",
+   "supported": false
+  },
+  {
+   "id": "uncertain-06",
+   "category": "uncertain",
+   "subject": "Isle K",
+   "body": "Isle K is thought by some to be part of Africa.",
+   "key": "part-of",
+   "value": "Africa",
+   "quote": "part of Africa",
+   "supported": false
+  },
+  {
+   "id": "contradicted-01",
+   "category": "contradicted",
+   "subject": "Coral",
+   "body": "Coral is a Plant. Correction: Coral is an Animal, not a Plant.",
+   "key": "is-a",
+   "value": "Plant",
+   "quote": "Coral is a Plant",
+   "supported": false
+  },
+  {
+   "id": "contradicted-02",
+   "category": "contradicted",
+   "subject": "Tortoise",
+   "body": "The Tortoise is an Amphibian. That earlier line is wrong; it is a Reptile.",
+   "key": "is-a",
+   "value": "Amphibian",
+   "quote": "is an Amphibian",
+   "supported": false
+  },
+  {
+   "id": "contradicted-03",
+   "category": "contradicted",
+   "subject": "Lichen",
+   "body": "The Lichen is a Plant. Update: it is a symbiosis led by a Fungus, not a Plant.",
+   "key": "is-a",
+   "value": "Plant",
+   "quote": "is a Plant",
+   "supported": false
+  },
+  {
+   "id": "contradicted-04",
+   "category": "contradicted",
+   "subject": "Wayne Ent",
+   "body": "Wayne Ent was founded on 1990-01-01. Erratum: the correct date is 1939-05-01.",
+   "key": "founded",
+   "value": "1990-01-01",
+   "quote": "founded on 1990-01-01",
+   "supported": false
+  },
+  {
+   "id": "contradicted-05",
+   "category": "contradicted",
+   "subject": "Cyprus",
+   "body": "Cyprus is part of Europe. Geographically, however, it lies in Asia, not Europe.",
+   "key": "part-of",
+   "value": "Europe",
+   "quote": "part of Europe",
+   "supported": false
+  },
+  {
+   "id": "contradicted-06",
+   "category": "contradicted",
+   "subject": "Seahorse",
+   "body": "The Seahorse is a Mammal. No: it is a Fish.",
+   "key": "is-a",
+   "value": "Mammal",
+   "quote": "is a Mammal",
+   "supported": false
+  },
+  {
+   "id": "paired-01",
+   "category": "paired",
+   "subject": "Lynx",
+   "body": "The Lynx is a Mammal, not a Reptile.",
+   "key": "is-a",
+   "value": "Mammal",
+   "quote": "is a Mammal",
+   "supported": true
+  },
+  {
+   "id": "paired-02",
+   "category": "paired",
+   "subject": "Lynx b",
+   "body": "The Lynx b is a Mammal, not a Reptile.",
+   "key": "is-a",
+   "value": "Reptile",
+   "quote": "not a Reptile",
+   "supported": false
+  },
+  {
+   "id": "paired-03",
+   "category": "paired",
+   "subject": "Heron",
+   "body": "The Heron is a Bird and not a Fish.",
+   "key": "is-a",
+   "value": "Bird",
+   "quote": "is a Bird",
+   "supported": true
+  },
+  {
+   "id": "paired-04",
+   "category": "paired",
+   "subject": "Heron b",
+   "body": "The Heron b is a Bird and not a Fish.",
+   "key": "is-a",
+   "value": "Fish",
+   "quote": "not a Fish",
+   "supported": false
+  },
+  {
+   "id": "paired-05",
+   "category": "paired",
+   "subject": "Peru",
+   "body": "Peru is part of South America, and not part of Africa.",
+   "key": "part-of",
+   "value": "Africa",
+   "quote": "not part of Africa",
+   "supported": false
+  },
+  {
+   "id": "paired-06",
+   "category": "paired",
+   "subject": "Lisbon",
+   "body": "Lisbon is a City and is part of Europe, not Asia.",
+   "key": "part-of",
+   "value": "Europe",
+   "quote": "part of Europe",
+   "supported": true
+  }
+ ]
+}

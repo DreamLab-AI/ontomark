@@ -1,0 +1,22 @@
+[package]
+name = "ontomark-ingest-bench"
+description = "Labelled extraction benchmark for ontomark-ingest: the deterministic engine, a base model, and the Jev judge, scored on affirmative and adversarial statements."
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+ontomark-ingest = { workspace = true }
+ontomark-model = { workspace = true }
+ontomark-parse = { workspace = true }
+ontomark-jev = { path = "../ontomark-jev", features = ["http"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+ureq = { version = "2", features = ["json"] }
+
+[lints]
+workspace = true

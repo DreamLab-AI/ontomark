@@ -14,6 +14,7 @@ members = [
     "crates/whelk-el",
     "crates/rdfs-certificate",
     "profiles/estate",
+    "crates/ontomark-ingest-bench",
 ]
 
 [workspace.package]

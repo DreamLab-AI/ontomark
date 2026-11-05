@@ -1042,6 +1042,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ontomark-ingest-bench"
+version = "0.1.0"
+dependencies = [
+ "ontomark-ingest",
+ "ontomark-jev",
+ "ontomark-model",
+ "ontomark-parse",
+ "serde",
+ "serde_json",
+ "ureq",
+]
+
+[[package]]
 name = "ontomark-jev"
 version = "0.7.0"
 dependencies = [
