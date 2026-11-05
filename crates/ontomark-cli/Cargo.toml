@@ -1,7 +1,7 @@
 [package]
 name = "ontomark"
 description = "Markdown ontology vaults to standard artefacts: build, validate, gate, conflicts, find, retrieve, tree, guarded edits and migrations for Obsidian vaults and estate repositories"
-version = "0.8.0"
+version = "0.8.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
