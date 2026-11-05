@@ -59,7 +59,7 @@ sequenceDiagram
     Note over I: digest check · locate evidence · ground names<br/>(exact → lexical tiers → suggestions) · XSD checks · kind guard
     I->>P: Patch bound to digest, applied once in memory to prove it
     I-->>H: Candidates {patch?, accepted[], withheld[reason], diagnostics[]}
-    H->>H: diff preview; apply on confirm; undo stays available
+    H->>H: diff preview · apply on confirm · undo stays available
 ```
 
 - `ModelRequest` is plain data: the prompt contract (a versioned data file, not code), the chunks, the vocabulary slice the model may use, and the expected response schema. The host sends it to whatever model it chooses.

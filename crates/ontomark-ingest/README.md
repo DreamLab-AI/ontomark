@@ -25,7 +25,7 @@ sequenceDiagram
     I->>P: Patch::new(digest).set(key, value) then apply once to prove it
     P-->>I: Applied (discarded) or PatchError
     I-->>H: Candidates {patch?, accepted[], withheld[reason], diagnostics[]}
-    H->>H: show diff preview; on confirm apply patch; undo stays available
+    H->>H: show diff preview · on confirm apply patch · undo stays available
 ```
 
 ```rust
