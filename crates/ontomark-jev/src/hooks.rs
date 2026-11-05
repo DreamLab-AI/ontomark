@@ -67,26 +67,47 @@ impl<T: Transport> FactJudge for JevFactJudge<T> {
 }
 
 impl<T: Transport> JevFactJudge<T> {
-    fn judge_inner(&self, claims: &[FactClaim]) -> Result<Vec<Verdict>, Unavailable> {
+    /// The probability, per claim and in order, that its quote supports it.
+    /// [`FactJudge::judge`] turns these into verdicts with
+    /// [`JevConfig::reject_at_or_below`](crate::JevConfig); a benchmark reads
+    /// them directly to sweep that threshold without asking again.
+    ///
+    /// # Errors
+    /// [`Unavailable`] when the option is off, the endpoint fails, or an
+    /// answer is malformed.
+    pub fn support(&self, claims: &[FactClaim]) -> Result<Vec<f64>, Unavailable> {
+        self.0.logged(FACT_SET, self.support_inner(claims))
+    }
+
+    fn support_inner(&self, claims: &[FactClaim]) -> Result<Vec<f64>, Unavailable> {
         let mut out = Vec::with_capacity(claims.len());
         for batch in claims.chunks(FACT_BATCH) {
             let state = fact_state(batch);
             size_ok(&state)?;
             let answers = self.0.ask(state, fact_questions(batch.len()))?;
             for i in 0..batch.len() {
-                let p = noul(&answers[&format!("c{i}")])?;
-                let reject = self.0.config.reject_at_or_below;
-                // A threshold of 0 means "never withhold", even for p = 0.
-                out.push(if reject > 0.0 && p <= reject {
+                out.push(noul(&answers[&format!("c{i}")])?);
+            }
+        }
+        Ok(out)
+    }
+
+    fn judge_inner(&self, claims: &[FactClaim]) -> Result<Vec<Verdict>, Unavailable> {
+        let reject = self.0.config.reject_at_or_below;
+        Ok(self
+            .support_inner(claims)?
+            .into_iter()
+            // A threshold of 0 means "never withhold", even for p = 0.
+            .map(|p| {
+                if reject > 0.0 && p <= reject {
                     Verdict::Unsupported
                 } else if p >= 0.5 {
                     Verdict::Supported
                 } else {
                     Verdict::Undecided
-                });
-            }
-        }
-        Ok(out)
+                }
+            })
+            .collect())
     }
 }
 
