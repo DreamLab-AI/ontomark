@@ -20,7 +20,7 @@ The review is kept verbatim in [REVIEW.md](REVIEW.md). It covered this repositor
 | I | "Accepted (n)" overstates what was checked | Confirmed (wording) | Fixed in `8dab879`: "Grounded, ready for review (n)" |
 | J | No labelled extraction benchmark | Confirmed gap | Added in `a1424ef`: [`ontomark-ingest-bench`](../../../crates/ontomark-ingest-bench), 60 labelled cases, four arms, selective-risk curves. Results below |
 | K | 64 chunks × 60 s with no overall deadline | Confirmed | Fixed in `8dab879`: a 10-minute run deadline; each call's timeout is capped at the time left; nothing partial is applied |
-| L | The plugin pins engine v0.7.0 while core is v0.8.0 | Confirmed | Pending: repin to v0.8.1 in plugin 0.5.0 |
+| L | The plugin pins engine v0.7.0 while core is v0.8.0 | Confirmed | Done: plugin [0.5.0](https://github.com/DreamLab-AI/ontomark-obsidian/releases/tag/0.5.0) pins v0.8.1 (`271c4e1`); every plugin gate passed against it, and the wasm transcript changed only in its version string |
 
 Items in the review's gap analysis not addressed here: cross-pipeline equivalence fixtures, stable authored IRIs and migration maps, and SPARQL intermediate resource bounds.
 
@@ -47,4 +47,4 @@ This measures the review's central point: grounding is not support. Grounding ac
 | 4. UTF-8 panic and malformed-input fuzzing | Done (F) |
 | 5. Privacy canaries and false-suppression measurement | **Not done** (G) |
 | 6. Labelled extraction benchmark | Done (J) |
-| 7. Exact-version acceptance against the pinned engine | Pending the repin (L); the plugin's automated gates are not an installed-desktop acceptance |
+| 7. Exact-version acceptance against the pinned engine | Partly: every automated plugin gate (tsc, vitest, build, bundle check, wasm, offline Docker, ingest e2e) passed against the pinned v0.8.1 engine. Not cleared: no installed-desktop acceptance of 0.5.0 |
