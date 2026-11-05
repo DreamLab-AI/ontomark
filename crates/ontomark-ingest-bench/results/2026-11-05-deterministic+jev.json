@@ -1,0 +1,798 @@
+{
+  "accepted": {
+    "by_category": {
+      "affirmative": {
+        "errors": 0,
+        "false_acceptance": null,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 0,
+        "tp": 10
+      },
+      "attributed": {
+        "errors": 0,
+        "false_acceptance": 1.0,
+        "fn": 0,
+        "fp": 6,
+        "precision": 0.0,
+        "recall": null,
+        "tn": 0,
+        "tp": 0
+      },
+      "contradicted": {
+        "errors": 0,
+        "false_acceptance": 1.0,
+        "fn": 0,
+        "fp": 6,
+        "precision": 0.0,
+        "recall": null,
+        "tn": 0,
+        "tp": 0
+      },
+      "historical": {
+        "errors": 0,
+        "false_acceptance": 1.0,
+        "fn": 0,
+        "fp": 6,
+        "precision": 0.0,
+        "recall": null,
+        "tn": 0,
+        "tp": 0
+      },
+      "hypothetical": {
+        "errors": 0,
+        "false_acceptance": 1.0,
+        "fn": 0,
+        "fp": 6,
+        "precision": 0.0,
+        "recall": null,
+        "tn": 0,
+        "tp": 0
+      },
+      "negated": {
+        "errors": 0,
+        "false_acceptance": 1.0,
+        "fn": 0,
+        "fp": 8,
+        "precision": 0.0,
+        "recall": null,
+        "tn": 0,
+        "tp": 0
+      },
+      "paired": {
+        "errors": 0,
+        "false_acceptance": 1.0,
+        "fn": 0,
+        "fp": 3,
+        "precision": 0.5,
+        "recall": 1.0,
+        "tn": 0,
+        "tp": 3
+      },
+      "paraphrase": {
+        "errors": 0,
+        "false_acceptance": null,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tn": 0,
+        "tp": 6
+      },
+      "uncertain": {
+        "errors": 0,
+        "false_acceptance": 1.0,
+        "fn": 0,
+        "fp": 6,
+        "precision": 0.0,
+        "recall": null,
+        "tn": 0,
+        "tp": 0
+      }
+    },
+    "overall": {
+      "errors": 0,
+      "false_acceptance": 1.0,
+      "fn": 0,
+      "fp": 41,
+      "precision": 0.31666666666666665,
+      "recall": 1.0,
+      "tn": 0,
+      "tp": 19
+    }
+  },
+  "arm": "deterministic+jev",
+  "benchmark": "ontomark-ingest-bench",
+  "cases": 60,
+  "dataset_version": 1,
+  "endpoint": null,
+  "extra_accepted": 0,
+  "model": null,
+  "positives": 19,
+  "results": [
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-01",
+      "support": 0.52,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-02",
+      "support": 0.73,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-03",
+      "support": 0.79,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-04",
+      "support": 0.71,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-05",
+      "support": 0.47,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-06",
+      "support": 0.69,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-07",
+      "support": 0.78,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-08",
+      "support": 0.88,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-09",
+      "support": 0.55,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "affirmative",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "affirmative-10",
+      "support": 0.77,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "paraphrase",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paraphrase-01",
+      "support": 0.39,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "paraphrase",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paraphrase-02",
+      "support": 0.43,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "paraphrase",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paraphrase-03",
+      "support": 0.58,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "paraphrase",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paraphrase-04",
+      "support": 0.64,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "paraphrase",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paraphrase-05",
+      "support": 0.67,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "paraphrase",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paraphrase-06",
+      "support": 0.13,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "negated",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "negated-01",
+      "support": 0.06,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "negated",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "negated-02",
+      "support": 0.04,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "negated",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "negated-03",
+      "support": 0.04,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "negated",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "negated-04",
+      "support": 0.06,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "negated",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "negated-05",
+      "support": 0.23,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "negated",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "negated-06",
+      "support": 0.88,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "negated",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "negated-07",
+      "support": 0.05,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "negated",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "negated-08",
+      "support": 0.06,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "hypothetical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "hypothetical-01",
+      "support": 0.58,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "hypothetical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "hypothetical-02",
+      "support": 0.41,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "hypothetical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "hypothetical-03",
+      "support": 0.84,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "hypothetical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "hypothetical-04",
+      "support": 0.7,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "hypothetical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "hypothetical-05",
+      "support": 0.38,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "hypothetical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "hypothetical-06",
+      "support": 0.44,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "historical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "historical-01",
+      "support": 0.45,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "historical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "historical-02",
+      "support": 0.37,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "historical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "historical-03",
+      "support": 0.62,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "historical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "historical-04",
+      "support": 0.75,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "historical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "historical-05",
+      "support": 0.36,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "historical",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "historical-06",
+      "support": 0.37,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "attributed",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "attributed-01",
+      "support": 0.71,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "attributed",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "attributed-02",
+      "support": 0.57,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "attributed",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "attributed-03",
+      "support": 0.61,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "attributed",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "attributed-04",
+      "support": 0.71,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "attributed",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "attributed-05",
+      "support": 0.83,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "attributed",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "attributed-06",
+      "support": 0.53,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "uncertain",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "uncertain-01",
+      "support": 0.25,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "uncertain",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "uncertain-02",
+      "support": 0.1,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "uncertain",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "uncertain-03",
+      "support": 0.19,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "uncertain",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "uncertain-04",
+      "support": 0.85,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "uncertain",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "uncertain-05",
+      "support": 0.2,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "uncertain",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "uncertain-06",
+      "support": 0.77,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "contradicted",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "contradicted-01",
+      "support": 0.93,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "contradicted",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "contradicted-02",
+      "support": 0.59,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "contradicted",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "contradicted-03",
+      "support": 0.71,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "contradicted",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "contradicted-04",
+      "support": 0.9,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "contradicted",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "contradicted-05",
+      "support": 0.67,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "contradicted",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "contradicted-06",
+      "support": 0.52,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "paired",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paired-01",
+      "support": 0.59,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "paired",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paired-02",
+      "support": 0.03,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "paired",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paired-03",
+      "support": 0.67,
+      "supported": true
+    },
+    {
+      "accepted": true,
+      "category": "paired",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paired-04",
+      "support": 0.05,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "paired",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paired-05",
+      "support": 0.12,
+      "supported": false
+    },
+    {
+      "accepted": true,
+      "category": "paired",
+      "error": null,
+      "extra_accepted": 0,
+      "id": "paired-06",
+      "support": 0.74,
+      "supported": true
+    }
+  ],
+  "risk_curve": [
+    {
+      "kept": 60,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 1.0,
+        "fn": 0,
+        "fp": 41,
+        "precision": 0.31666666666666665,
+        "recall": 1.0,
+        "tn": 0,
+        "tp": 19
+      },
+      "withhold_at_or_below": 0.0
+    },
+    {
+      "kept": 51,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 0.7804878048780488,
+        "fn": 0,
+        "fp": 32,
+        "precision": 0.37254901960784315,
+        "recall": 1.0,
+        "tn": 9,
+        "tp": 19
+      },
+      "withhold_at_or_below": 0.1
+    },
+    {
+      "kept": 47,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 0.7073170731707317,
+        "fn": 1,
+        "fp": 29,
+        "precision": 0.3829787234042553,
+        "recall": 0.9473684210526315,
+        "tn": 12,
+        "tp": 18
+      },
+      "withhold_at_or_below": 0.2
+    },
+    {
+      "kept": 45,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 0.6585365853658537,
+        "fn": 1,
+        "fp": 27,
+        "precision": 0.4,
+        "recall": 0.9473684210526315,
+        "tn": 14,
+        "tp": 18
+      },
+      "withhold_at_or_below": 0.3
+    },
+    {
+      "kept": 40,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 0.5609756097560976,
+        "fn": 2,
+        "fp": 23,
+        "precision": 0.425,
+        "recall": 0.8947368421052632,
+        "tn": 18,
+        "tp": 17
+      },
+      "withhold_at_or_below": 0.4
+    },
+    {
+      "kept": 35,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 0.4878048780487805,
+        "fn": 4,
+        "fp": 20,
+        "precision": 0.42857142857142855,
+        "recall": 0.7894736842105263,
+        "tn": 21,
+        "tp": 15
+      },
+      "withhold_at_or_below": 0.5
+    },
+    {
+      "kept": 26,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 0.36585365853658536,
+        "fn": 8,
+        "fp": 15,
+        "precision": 0.4230769230769231,
+        "recall": 0.5789473684210527,
+        "tn": 26,
+        "tp": 11
+      },
+      "withhold_at_or_below": 0.6
+    },
+    {
+      "kept": 18,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 0.2682926829268293,
+        "fn": 12,
+        "fp": 11,
+        "precision": 0.3888888888888889,
+        "recall": 0.3684210526315789,
+        "tn": 30,
+        "tp": 7
+      },
+      "withhold_at_or_below": 0.7
+    },
+    {
+      "kept": 7,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 0.14634146341463414,
+        "fn": 18,
+        "fp": 6,
+        "precision": 0.14285714285714285,
+        "recall": 0.05263157894736842,
+        "tn": 35,
+        "tp": 1
+      },
+      "withhold_at_or_below": 0.8
+    },
+    {
+      "kept": 1,
+      "score": {
+        "errors": 0,
+        "false_acceptance": 0.024390243902439025,
+        "fn": 19,
+        "fp": 1,
+        "precision": 0.0,
+        "recall": 0.0,
+        "tn": 40,
+        "tp": 0
+      },
+      "withhold_at_or_below": 0.9
+    }
+  ]
+}
