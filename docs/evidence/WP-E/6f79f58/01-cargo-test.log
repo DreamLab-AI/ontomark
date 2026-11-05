@@ -1,0 +1,124 @@
+$ cargo test -p ontomark-wasm
+# sha=6f79f58 at=2026-10-11T19:23:51Z
+   Compiling unicode-ident v1.0.26
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling typenum v1.20.1
+   Compiling cfg-if v1.0.5
+   Compiling libc v0.2.190
+   Compiling getrandom v0.3.4
+   Compiling zerocopy v0.8.62
+   Compiling thiserror v2.0.21
+   Compiling serde_core v1.0.229
+   Compiling memchr v2.8.3
+   Compiling const-oid v0.10.2
+   Compiling wasm-bindgen-shared v0.2.127
+   Compiling peg-runtime v0.8.6
+   Compiling version_check v0.9.5
+   Compiling rustversion v1.0.23
+   Compiling oxiri v0.2.11
+   Compiling oxilangtag v0.1.6
+   Compiling foldhash v0.2.0
+   Compiling rand_core v0.6.4
+   Compiling cpufeatures v0.3.1
+   Compiling serde v1.0.229
+   Compiling zmij v1.0.23
+   Compiling regex-syntax v0.8.11
+   Compiling bumpalo v3.20.3
+   Compiling equivalent v1.0.2
+   Compiling json-event-parser v0.2.3
+   Compiling arraydeque v0.5.1
+   Compiling serde_json v1.0.154
+   Compiling hex v0.4.3
+   Compiling once_cell v1.21.4
+   Compiling rustc-hash v2.1.3
+   Compiling itoa v1.0.18
+   Compiling similar v2.7.0
+   Compiling hashbrown v0.17.1
+   Compiling rand_xoshiro v0.6.0
+   Compiling im v15.1.0
+   Compiling aho-corasick v1.1.5
+   Compiling quick-xml v0.37.5
+   Compiling hashlink v0.12.2
+   Compiling yaml-rust2 v0.13.0
+   Compiling syn v3.0.8
+   Compiling syn v2.0.119
+   Compiling peg-macros v0.8.6
+   Compiling wasm-bindgen v0.2.127
+   Compiling hybrid-array v0.4.15
+   Compiling bitmaps v2.1.0
+   Compiling regex-automata v0.4.18
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling sized-chunks v0.6.5
+   Compiling digest v0.11.3
+   Compiling peg v0.8.6
+   Compiling rand_core v0.9.5
+   Compiling sha2 v0.11.0
+   Compiling md-5 v0.11.0
+   Compiling sha1 v0.11.0
+   Compiling indexmap v2.14.2
+   Compiling wasm-bindgen-macro-support v0.2.127
+   Compiling whelk-el v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/whelk-el)
+   Compiling thiserror-impl v2.0.21
+   Compiling serde_derive v1.0.229
+   Compiling regex v1.13.1
+   Compiling oxsdatatypes v0.2.3
+   Compiling ontomark-parse v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-parse)
+   Compiling wasm-bindgen-macro v0.2.127
+   Compiling ontomark-reason v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-reason)
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.9.0
+   Compiling rand v0.9.5
+   Compiling oxrdf v0.3.4
+   Compiling spargebra v0.4.7
+   Compiling sparesults v0.3.4
+   Compiling sparopt v0.3.7
+   Compiling spareval v0.2.7
+   Compiling ontomark-wasm v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-wasm)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 09s
+     Running unittests src/lib.rs (target/debug/deps/ontomark_wasm-0db84d2ec1dda322)
+
+running 22 tests
+test profile::tests::default_profile_is_generic ... ok
+test profile::tests::kinds_parse_case_and_prefix_insensitively ... ok
+test projection::tests::ambiguous_titles_are_reported_not_guessed ... ok
+test projection::tests::plain_notes_and_prose_links_yield_nothing ... ok
+test projection::tests::generic_typed_pages_give_axioms_and_unresolved_links_diagnose ... ok
+test text::tests::diff_has_headers_and_hunks ... ok
+test reason::tests::refused_axioms_are_reported_and_mark_the_result_incomplete ... ok
+test query::tests::graph_detection_finds_nested_graph_patterns ... ok
+test text::tests::host_span_counts_utf16_for_astral_and_accented_text ... ok
+test text::tests::pct_encoding_keeps_slashes_and_encodes_unicode ... ok
+test projection::tests::estate_profile_requires_resource_and_keeps_it_verbatim ... ok
+test query::tests::row_cap_truncates ... ok
+test query::tests::refusals_have_specific_codes ... ok
+test reason::tests::subsumption_is_transitive_and_marks_told_edges ... ok
+test reason::tests::cycles_are_equivalences ... ok
+test reason::tests::existential_reasoning_goes_beyond_a_told_closure ... ok
+test reason::tests::disjoint_superclasses_make_a_class_unsatisfiable ... ok
+test query::tests::select_with_filter_order_limit_over_selected_graph ... ok
+test query::tests::optional_union_construct_work ... ok
+test reason::tests::complete_policy_over_budget_falls_back_to_relevant ... ok
+test reason::tests::stepping_gives_the_same_result_as_one_shot ... ok
+test query::tests::store_matches_oxrdf_dataset_on_every_pattern_shape ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/transcript.rs (target/debug/deps/transcript-593ee2844a0ac3c8)
+
+running 3 tests
+test transcript_matches_golden ... ok
+test transcript_semantics ... ok
+test reads_never_mutate_and_rebuild_is_identical ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests ontomark_wasm
+
+running 1 test
+test crates/ontomark-wasm/src/lib.rs - (line 13) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+
+# exit=0

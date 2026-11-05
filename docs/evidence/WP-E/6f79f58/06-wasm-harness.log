@@ -1,0 +1,37 @@
+$ node --test test/wasm-harness.test.mjs
+# sha=6f79f58 at=2026-10-11T19:26:14Z
+TAP version 13
+# Subtest: nodejs-target wasm replays the script byte-identically to native
+ok 1 - nodejs-target wasm replays the script byte-identically to native
+  ---
+  duration_ms: 69.510104
+  type: 'test'
+  ...
+# Subtest: web-target wasm (the bytes embedded in the plugin) via initSync matches native
+ok 2 - web-target wasm (the bytes embedded in the plugin) via initSync matches native
+  ---
+  duration_ms: 12.113427
+  type: 'test'
+  ...
+# Subtest: bundle check is not vacuous: it flags the raw web glue, which loads wasm by fetch
+ok 3 - bundle check is not vacuous: it flags the raw web glue, which loads wasm by fetch
+  ---
+  duration_ms: 98.339231
+  type: 'test'
+  ...
+# Subtest: wasm-only runtime paths: entropy (RAND, UUID, STRUUID, BNODE, CONSTRUCT bnodes) and clock (NOW) execute
+ok 4 - wasm-only runtime paths: entropy (RAND, UUID, STRUUID, BNODE, CONSTRUCT bnodes) and clock (NOW) execute
+  ---
+  duration_ms: 7.772105
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 371.049847
+# exit=0

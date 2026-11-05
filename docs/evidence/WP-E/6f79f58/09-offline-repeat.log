@@ -1,0 +1,7 @@
+$ (plugin) for i in 1..5: node scripts/offline-test.mjs
+# sha=6f79f58 at=2026-10-11T19:26:18Z
+run 1 exit=0 {"passed":40,"failed":0,"interfaces":["lo"],"outbound":"ENETUNREACH","attempts":0,"race":"cancelled"}
+run 2 exit=0 {"passed":40,"failed":0,"interfaces":["lo"],"outbound":"ENETUNREACH","attempts":0,"race":"cancelled"}
+run 3 exit=0 {"passed":40,"failed":0,"interfaces":["lo"],"outbound":"ENETUNREACH","attempts":0,"race":"cancelled"}
+run 4 exit=0 {"passed":40,"failed":0,"interfaces":["lo"],"outbound":"ENETUNREACH","attempts":0,"race":"cancelled"}
+run 5 exit=0 {"passed":40,"failed":0,"interfaces":["lo"],"outbound":"ENETUNREACH","attempts":0,"race":"cancelled"}

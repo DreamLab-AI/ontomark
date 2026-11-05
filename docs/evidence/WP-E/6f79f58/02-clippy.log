@@ -1,0 +1,77 @@
+$ cargo clippy -p ontomark-wasm --all-targets -- -D warnings
+# sha=6f79f58 at=2026-10-11T19:25:01Z
+   Compiling unicode-ident v1.0.26
+    Checking cfg-if v1.0.5
+    Checking typenum v1.20.1
+    Checking memchr v2.8.3
+    Checking const-oid v0.10.2
+    Checking foldhash v0.2.0
+    Checking oxiri v0.2.11
+    Checking oxilangtag v0.1.6
+    Checking peg-runtime v0.8.6
+    Checking rand_core v0.6.4
+    Checking cpufeatures v0.3.1
+    Checking regex-syntax v0.8.11
+    Checking arraydeque v0.5.1
+    Checking equivalent v1.0.2
+    Checking json-event-parser v0.2.3
+    Checking itoa v1.0.18
+    Checking once_cell v1.21.4
+    Checking rustc-hash v2.1.3
+    Checking hex v0.4.3
+    Checking similar v2.7.0
+    Checking libc v0.2.190
+    Checking zerocopy v0.8.62
+    Checking serde_core v1.0.229
+    Checking zmij v1.0.23
+   Compiling proc-macro2 v1.0.107
+   Compiling wasm-bindgen-shared v0.2.127
+    Checking hashbrown v0.17.1
+    Checking rand_xoshiro v0.6.0
+    Checking aho-corasick v1.1.5
+    Checking quick-xml v0.37.5
+   Compiling quote v1.0.47
+    Checking hashlink v0.12.2
+   Compiling syn v3.0.8
+   Compiling syn v2.0.119
+   Compiling peg-macros v0.8.6
+    Checking yaml-rust2 v0.13.0
+    Checking hybrid-array v0.4.15
+    Checking bitmaps v2.1.0
+    Checking getrandom v0.3.4
+    Checking rand_core v0.9.5
+    Checking regex-automata v0.4.18
+    Checking crypto-common v0.2.2
+    Checking block-buffer v0.12.1
+    Checking sized-chunks v0.6.5
+    Checking im v15.1.0
+    Checking indexmap v2.14.2
+    Checking serde_json v1.0.154
+    Checking peg v0.8.6
+    Checking digest v0.11.3
+    Checking sha2 v0.11.0
+    Checking md-5 v0.11.0
+    Checking sha1 v0.11.0
+    Checking whelk-el v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/whelk-el)
+   Compiling thiserror-impl v2.0.21
+   Compiling serde_derive v1.0.229
+    Checking regex v1.13.1
+    Checking ppv-lite86 v0.2.21
+   Compiling wasm-bindgen-macro-support v0.2.127
+    Checking thiserror v2.0.21
+    Checking oxsdatatypes v0.2.3
+    Checking rand_chacha v0.9.0
+    Checking rand v0.9.5
+    Checking oxrdf v0.3.4
+    Checking spargebra v0.4.7
+    Checking sparesults v0.3.4
+   Compiling wasm-bindgen-macro v0.2.127
+    Checking serde v1.0.229
+    Checking wasm-bindgen v0.2.127
+    Checking ontomark-parse v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-parse)
+    Checking ontomark-reason v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-reason)
+    Checking sparopt v0.3.7
+    Checking spareval v0.2.7
+    Checking ontomark-wasm v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-wasm)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.56s
+# exit=0

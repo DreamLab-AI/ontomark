@@ -1,0 +1,101 @@
+$ npm run build
+# sha=6f79f58 at=2026-10-11T19:25:11Z
+
+> ontomark-obsidian@0.1.0 build
+> node scripts/build-wasm.mjs && tsc --noEmit -p . && node esbuild.config.mjs production
+
+ Downloading crates ...
+  Downloaded futures-task v0.3.34
+  Downloaded futures-core v0.3.34
+  Downloaded slab v0.4.12
+  Downloaded pin-project-lite v0.2.17
+  Downloaded futures-util v0.3.34
+  Downloaded js-sys v0.3.104
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.26
+   Compiling quote v1.0.47
+   Compiling wasm-bindgen-shared v0.2.127
+   Compiling rustversion v1.0.23
+   Compiling cfg-if v1.0.5
+   Compiling bumpalo v3.20.3
+   Compiling typenum v1.20.1
+   Compiling once_cell v1.21.4
+   Compiling zerocopy v0.8.62
+   Compiling getrandom v0.3.4
+   Compiling thiserror v2.0.21
+   Compiling slab v0.4.12
+   Compiling futures-core v0.3.34
+   Compiling pin-project-lite v0.2.17
+   Compiling futures-task v0.3.34
+   Compiling serde_core v1.0.229
+   Compiling memchr v2.8.3
+   Compiling const-oid v0.10.2
+   Compiling version_check v0.9.5
+   Compiling oxiri v0.2.11
+   Compiling oxilangtag v0.1.6
+   Compiling peg-runtime v0.8.6
+   Compiling foldhash v0.2.0
+   Compiling serde v1.0.229
+   Compiling rand_core v0.6.4
+   Compiling zmij v1.0.23
+   Compiling regex-syntax v0.8.11
+   Compiling equivalent v1.0.2
+   Compiling arraydeque v0.5.1
+   Compiling serde_json v1.0.154
+   Compiling json-event-parser v0.2.3
+   Compiling hex v0.4.3
+   Compiling itoa v1.0.18
+   Compiling rustc-hash v2.1.3
+   Compiling similar v2.7.0
+   Compiling futures-util v0.3.34
+   Compiling rand_xoshiro v0.6.0
+   Compiling hashbrown v0.17.1
+   Compiling im v15.1.0
+   Compiling aho-corasick v1.1.5
+   Compiling quick-xml v0.37.5
+   Compiling hashlink v0.12.2
+   Compiling wasm-bindgen v0.2.127
+   Compiling hybrid-array v0.4.15
+   Compiling bitmaps v2.1.0
+   Compiling syn v2.0.119
+   Compiling syn v3.0.8
+   Compiling yaml-rust2 v0.13.0
+   Compiling peg-macros v0.8.6
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling sized-chunks v0.6.5
+   Compiling regex-automata v0.4.18
+   Compiling peg v0.8.6
+   Compiling digest v0.11.3
+   Compiling sha2 v0.11.0
+   Compiling md-5 v0.11.0
+   Compiling sha1 v0.11.0
+   Compiling indexmap v2.14.2
+   Compiling thiserror-impl v2.0.21
+   Compiling serde_derive v1.0.229
+   Compiling whelk-el v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/whelk-el)
+   Compiling ppv-lite86 v0.2.21
+   Compiling regex v1.13.1
+   Compiling wasm-bindgen-macro-support v0.2.127
+   Compiling ontomark-parse v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-parse)
+   Compiling ontomark-reason v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-reason)
+   Compiling wasm-bindgen-macro v0.2.127
+   Compiling js-sys v0.3.104
+   Compiling rand_core v0.9.5
+   Compiling rand_chacha v0.9.0
+   Compiling rand v0.9.5
+   Compiling oxsdatatypes v0.2.3
+   Compiling oxrdf v0.3.4
+   Compiling spargebra v0.4.7
+   Compiling sparesults v0.3.4
+   Compiling sparopt v0.3.7
+   Compiling spareval v0.2.7
+   Compiling ontomark-wasm v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-wasm)
+    Finished `release` profile [optimized] target(s) in 48.91s
+wasm-opt web: 4695635 -> 2464884 bytes
+wasm-opt node: 4695635 -> 2464884 bytes
+
+  dist/main.js  3.2mb ⚠️
+
+⚡ Done in 77ms
+# exit=0

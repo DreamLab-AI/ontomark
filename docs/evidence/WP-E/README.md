@@ -58,3 +58,11 @@ mechanisms were exercised on real threads.
    reasoner (`el_complete: false`), so EXP-01 parity is not claimed. It
    switches to `ontomark-reason` (whelk-el) behind the `Reasoner` seam when
    WP-B publishes a stepped API.
+
+## Later run at `6f79f58`
+
+[`6f79f58/`](6f79f58/) holds a second set of logs from `6f79f58`, the commit that
+switched classification to `ontomark-reason` (whelk-el). It also has
+`00-just-check.log` and `09-offline-repeat.log` (five offline runs, 40/40 each).
+All runs exit 0. These logs were recorded before the resume fixes and kept as
+historical evidence; the receipts above still describe `03d7187`.

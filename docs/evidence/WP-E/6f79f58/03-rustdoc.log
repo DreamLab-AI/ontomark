@@ -1,0 +1,15 @@
+$ env RUSTDOCFLAGS=-D warnings cargo doc --workspace --no-deps
+# sha=6f79f58 at=2026-10-11T19:25:10Z
+ Documenting ontomark-model v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-model)
+ Documenting ontomark-cli v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-cli)
+ Documenting ontomark-compile v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-compile)
+    Checking whelk-el v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/whelk-el)
+ Documenting whelk-el v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/whelk-el)
+    Checking ontomark-parse v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-parse)
+ Documenting ontomark-parse v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-parse)
+    Checking ontomark-reason v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-reason)
+ Documenting ontomark-reason v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-reason)
+ Documenting ontomark-wasm v0.1.0 (/home/devuser/workspace/ontomark-wp-e/crates/ontomark-wasm)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.46s
+   Generated /home/devuser/workspace/ontomark-wp-e/target/doc/ontomark_cli/index.html and 6 other files
+# exit=0

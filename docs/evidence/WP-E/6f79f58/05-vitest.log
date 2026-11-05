@@ -1,0 +1,12 @@
+$ npx vitest run
+# sha=6f79f58 at=2026-10-11T19:26:10Z
+
+ RUN  v5.0.3 /home/devuser/workspace/ontomark-wp-e/plugin
+
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  20:26:10
+   Duration  3.33s (tests 87%, transform 11%, import 2%)
+
+# exit=0
