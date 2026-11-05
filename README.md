@@ -133,15 +133,16 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 | [ontomark-model](crates/ontomark-model) | 0.1.2 | Meaning: typed entities, IRIs as identity, predicate forms, reference resolution, pluggable `Profile`. |
 | [whelk-el](crates/whelk-el) | 0.1.1 | The saturation engine, a Rust port of Whelk, with optional native parallelism. |
 | [ontomark-reason](crates/ontomark-reason) | 0.1.2 | The OWL 2 EL profile check and classification facade: named refusals, root causes, cancellable sessions. |
-| [ontomark-ingest](crates/ontomark-ingest) | 0.2.0 | Assisted ingest: the pure plan/accept contract, grounding, lexical guards, evidence spans. No I/O, no model. |
+| [ontomark-ingest](crates/ontomark-ingest) | 0.2.1 | Assisted ingest: the pure plan/accept contract, grounding, lexical guards, evidence spans. No I/O, no model. |
 | [ontomark-source](crates/ontomark-source) | 0.1.0 | The Source port: local files and URLs as text with a content version, and a ledger that skips unchanged sources. |
-| [ontomark-jev](crates/ontomark-jev) | 0.7.0 | Opt-in **Jev option** for ingest (typed Choice/Noul decisions via System One), off by default, exact fallback to the plain path. See its README. |
-| [rdfs-certificate](crates/rdfs-certificate) | 0.1.0 | RDFS forward chaining that records every step in the `oo-cert/1` certificate format an independent checker re-verifies, and the consequence delta between two graphs. No graph library; used by ontomark and by VisionClaw's `vault`. |
-| [ontomark-compile](crates/ontomark-compile) | 0.6.1 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity, the derivation certificate. |
+| [ontomark-jev](crates/ontomark-jev) | 0.7.1 | Opt-in **Jev option** for ingest (typed Choice/Noul decisions via System One), off by default, exact fallback to the plain path. See its README. |
+| [rdfs-certificate](crates/rdfs-certificate) | 0.1.1 | RDFS forward chaining that records every step in the `oo-cert/1` certificate format an independent checker re-verifies, and the consequence delta between two graphs. No graph library; used by ontomark and by VisionClaw's `vault`. |
+| [ontomark-compile](crates/ontomark-compile) | 0.7.0 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity, the derivation certificate. |
 | [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | The shared binary graph format and its zero-copy reader. |
-| [ontomark-profile-estate](profiles/estate) | 0.7.0 | The DreamLab estate's rules as data; most users want `--profile generic` and never depend on it. |
+| [ontomark-profile-estate](profiles/estate) | 0.8.0 | The DreamLab estate's rules as data; most users want `--profile generic` and never depend on it. |
 | [ontomark-wasm](crates/ontomark-wasm) | release asset | The worker-friendly engine protocol: index, update, classify, query, patch, ingest. |
-| [ontomark](crates/ontomark-cli) | 0.7.0 | The installable CLI: `cargo install ontomark`. `ontomark ingest` turns external sources into a `vault propose` bundle. |
+| [ontomark](crates/ontomark-cli) | 0.8.1 | The installable CLI: `cargo install ontomark`. `ontomark ingest` turns external sources into a `vault propose` bundle. |
+| [ontomark-ingest-bench](crates/ontomark-ingest-bench) | not published | The labelled extraction benchmark: grounding, model and Jev arms, selective-risk curves. |
 | [ontomark-graph](packages/graph) | [0.2.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.2.0) | The shared offline graph renderer for desktop and web hosts. |
 
 Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.
@@ -174,7 +175,7 @@ cargo build --locked -p ontomark-ingest --target wasm32-unknown-unknown --releas
 
 ## Current status and limits
 
-**Reviewed 21 October 2026 against `6944be3`.** The CLI and compiler manifests declare **0.6.0**. The current Obsidian plugin pins engine **0.4.0**, so later compiler changes do not automatically appear inside the editor. Check each consumer’s pin and generation before treating a toolchain change as an estate-wide deployment.
+**Reviewed 5 November 2026.** The CLI manifest declares **0.8.1** and the engine **0.7.1**. The Obsidian plugin pins its engine by release tag and SHA-256, so engine changes reach the editor only when the plugin is repinned. Check each consumer’s pin and generation before treating a toolchain change as an estate-wide deployment.
 
 Version 0.6.0 adds an RDFS derivation certificate and consequence-delta support through the shared [`rdfs-certificate`](crates/rdfs-certificate) crate. The compiler checks the certified named subclass closure against its classifier output and refuses a mismatch. This is a derivation check under the implemented rules, not a proof of arbitrary OWL entailment or the truth of source assertions. [`certificate.rs`](crates/ontomark-compile/src/certificate.rs) and [ADR-OM-009](docs/adr/ADR-OM-009-every-published-closure-carries-a-derivation-certificate.md) define the boundary. An independent Lean checker is a separate tool; producing a certificate does not establish that it has been run.
 
@@ -187,6 +188,7 @@ Turtle, JSON-LD, SHACL, SKOS, PROV-O and Dublin Core form the publication surfac
 - [Current hand-off](docs/HANDOFF.md): verified results, outstanding work and integration boundaries.
 - [API documentation](docs/api/): crate contracts and capabilities.
 - Decisions: [ADR-OM-001](docs/adr/ADR-OM-001-sprint-decisions.md) (profiles, licensing, reasoner), [ADR-OM-002](docs/adr/ADR-OM-002-shared-graph-and-obsidian-boundary.md) (shared graph and plugin boundary), [ADR-OM-003](docs/adr/ADR-OM-003-native-assisted-ingest.md) (assisted ingest), [ADR-OM-004](docs/adr/ADR-OM-004-owl2-el-as-the-local-reasoning-profile.md) (OWL 2 EL), [ADR-OM-005](docs/adr/ADR-OM-005-estate-alignment-one-producer-explicit-projections.md) (one producer, the generation loop), [ADR-OM-006](docs/adr/ADR-OM-006-dot-triples-interop.md) (Dot Triples interop), [ADR-OM-007](docs/adr/ADR-OM-007-vault-root-is-the-content-root.md) (flat vaults, the vault verbs), [ADR-OM-008](docs/adr/ADR-OM-008-any-obsidian-vault-is-a-repository.md) (any Obsidian vault is a repository; layout and generation prefix from the profile), [ADR-OM-009](docs/adr/ADR-OM-009-every-published-closure-carries-a-derivation-certificate.md) (derivation certificates), and the [estate ADR index](docs/adr/ESTATE-ADRS.md).
+- [External review, 5 November 2026](docs/reviews/2026-11-05-external/REGISTER.md): each finding's verdict and outcome, the extraction benchmark results, and which release gates remain open.
 - [OntoCast triage](docs/ONTOCAST-TRIAGE.md): what the ingest design adapted from OntoCast and what it did not.
 - [Dot Triples bridge](bridges/dot-triples/README.md): one SPARQL CONSTRUCT that lifts Cristian Vasquez's [dot-triples](https://github.com/cristianvasquez/dot-triples) output into Ontomark's vocabulary, tested for parity with the engine.
 - [Upstream projects](docs/UPSTREAMS.md) and [third-party notices](THIRD-PARTY-NOTICES.md).
