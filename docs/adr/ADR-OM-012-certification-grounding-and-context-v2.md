@@ -7,7 +7,7 @@ implementation_status: complete
 activation_status: live
 supersedes: []
 superseded_by: []
-verified_commit: 1176316b055b4eea5e7aa0b1ffb8e73a00415f73
+verified_commit: 818db90958e6e069ec7c42c2ebe46b45ad8dae52
 verified_paths: [crates/ontomark-ingest/src/certification.rs, crates/ontomark-ingest/src/accept.rs, crates/ontomark-ingest/src/judge.rs, crates/ontomark-ingest/src/coverage.rs, crates/ontomark-ingest/tests/certification.rs, crates/ontomark-ingest/tests/coverage.rs, crates/ontomark-cli/src/ground_cmd.rs, crates/ontomark-cli/tests/conformance.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-compile/src/ir/model.rs, crates/ontomark-compile/src/build/page_api.rs, crates/ontomark-compile/src/build/okf.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/write/edit.rs, conformance/fixtures/estate-small.golden/MANIFEST]
 owner: jjohare
 review_trigger: the first `verified` stamp written with `keys`; a release that the visionGraph publisher pins; a second actor kind admitted as human; a page API consumer that cannot take the added `certification` field

@@ -7,7 +7,7 @@ implementation_status: complete
 activation_status: staged
 supersedes: []
 superseded_by: []
-verified_commit: ef485105e175f17d2697a9cda0abeb4997e097f8
+verified_commit: 818db90958e6e069ec7c42c2ebe46b45ad8dae52
 verified_paths: [crates/ontomark-compile/src/profile/layout.rs, crates/ontomark-compile/src/profile.rs, crates/ontomark-compile/src/input/page.rs, crates/ontomark-compile/src/input/vocabulary.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/migrate/plan.rs, crates/ontomark-cli/src/main.rs, crates/ontomark-cli/src/migrate_cmd.rs, crates/ontomark-cli/tests/layout_contract.rs, crates/ontomark-compile/src/check/bodies.rs, crates/ontomark-compile/src/check/repair.rs, crates/ontomark-compile/src/migrate/apply.rs, crates/ontomark-compile/src/migrate/journal.rs, crates/ontomark-compile/tests/migrate.rs]
 owner: jjohare
 review_trigger: a change to root discovery, role placement, exclusions or a consumer adopting these checks
