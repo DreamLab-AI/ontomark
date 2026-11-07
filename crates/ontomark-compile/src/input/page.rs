@@ -269,7 +269,7 @@ impl Page {
     pub fn is_public(&self) -> bool {
         matches!(
             self.frontmatter.get("public"),
-            Some(serde_yaml::Value::Bool(true))
+            Some(serde_norway::Value::Bool(true))
         )
     }
 
@@ -375,7 +375,7 @@ impl Page {
     /// Re-render the page as it should appear on disk.
     ///
     /// # Errors
-    /// Propagates a `serde_yaml` error if a frontmatter value is not
+    /// Propagates a YAML backend error if a frontmatter value is not
     /// representable.
     pub fn render(&self) -> Result<String> {
         let fm = self

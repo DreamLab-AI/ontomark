@@ -49,7 +49,7 @@
 use std::collections::BTreeMap;
 
 use serde::Serialize;
-use serde_yaml::Value as Yaml;
+use serde_norway::Value as Yaml;
 
 use crate::build::publish::held_back;
 use crate::input::frontmatter::Wikilink;
@@ -285,7 +285,7 @@ impl PrivateLinks {
                 (!kept.is_empty()).then_some(Yaml::Sequence(kept))
             }
             Yaml::Mapping(values) => {
-                let kept: serde_yaml::Mapping = values
+                let kept: serde_norway::Mapping = values
                     .iter()
                     .filter_map(|(k, v)| self.frontmatter_value(home, v).map(|v| (k.clone(), v)))
                     .collect();
@@ -445,9 +445,9 @@ impl PrivateLinks {
             let k = k.trim();
             k == "defines-as"
                 || (k.starts_with(['\"', '\''])
-                    && serde_yaml::from_str::<String>(k).ok().as_deref() == Some("defines-as"))
+                    && serde_norway::from_str::<String>(k).ok().as_deref() == Some("defines-as"))
         }) {
-            if let Ok(Yaml::Mapping(map)) = serde_yaml::from_str::<Yaml>(&block.concat()) {
+            if let Ok(Yaml::Mapping(map)) = serde_norway::from_str::<Yaml>(&block.concat()) {
                 if map.values().any(|v| self.value_has_private_target(home, v)) {
                     tally.frontmatter_keys_removed += 1;
                     tally.frontmatter_entries_removed += 1;
@@ -469,7 +469,7 @@ impl PrivateLinks {
                 return;
             }
         } else if block.len() == 1 && !after_key.is_empty() {
-            if let Ok(Yaml::String(s)) = serde_yaml::from_str::<Yaml>(strip_comment(after_key)) {
+            if let Ok(Yaml::String(s)) = serde_norway::from_str::<Yaml>(strip_comment(after_key)) {
                 if self.whole_private_link(home, &s) {
                     tally.frontmatter_entries_removed += 1;
                     tally.frontmatter_keys_removed += 1;
@@ -513,7 +513,7 @@ impl PrivateLinks {
             let value = first[indent..].trim_start_matches('-').trim();
             let private = item.len() == 1
                 && matches!(
-                    serde_yaml::from_str::<Yaml>(strip_comment(value)),
+                    serde_norway::from_str::<Yaml>(strip_comment(value)),
                     Ok(Yaml::String(ref s)) if self.whole_private_link(home, s)
                 );
             if private {

@@ -22,7 +22,7 @@
 use std::collections::BTreeMap;
 
 use serde::Serialize;
-use serde_yaml::Value as Yaml;
+use serde_norway::Value as Yaml;
 
 use crate::input::page::Page;
 
@@ -91,7 +91,7 @@ impl Change {
 /// Parse a CLI value as YAML, falling back to a plain string.
 #[must_use]
 pub fn parse_value(raw: &str) -> Yaml {
-    serde_yaml::from_str::<Yaml>(raw).map_or_else(
+    serde_norway::from_str::<Yaml>(raw).map_or_else(
         |_| Yaml::String(raw.to_owned()),
         |v| {
             if matches!(v, Yaml::Null) && !raw.trim().is_empty() {
@@ -283,7 +283,7 @@ pub fn apply_changes(page: &mut Page, changes: &[Change]) -> BTreeMap<String, [O
 }
 
 fn render_yaml(v: &Yaml) -> String {
-    serde_yaml::to_string(v)
+    serde_norway::to_string(v)
         .unwrap_or_default()
         .trim_end()
         .to_owned()

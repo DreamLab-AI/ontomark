@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use ontomark_compile::input::frontmatter::{split, Frontmatter};
 use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::profile::Profile;
-use serde_yaml::Value as Yaml;
+use serde_norway::Value as Yaml;
 use sha2::{Digest, Sha256};
 
 fn root() -> PathBuf {
@@ -133,7 +133,7 @@ fn yaml_lines() -> Vec<String> {
         let text = std::fs::read_to_string(root.join(vocab)).unwrap();
         let v = Vocabulary::from_yaml_str(&text).expect("shipped vocabulary parses");
         let json = serde_json::to_string(&v).unwrap();
-        let yaml = serde_yaml::to_string(&v).unwrap();
+        let yaml = serde_norway::to_string(&v).unwrap();
         lines.push(format!(
             "{vocab}\tvocabulary\t{}\t{}",
             sha(&json),

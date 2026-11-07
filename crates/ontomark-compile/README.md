@@ -9,7 +9,7 @@ Loom and other readers can disable the classifier dependency:
 
 ```toml
 [dependencies]
-ontomark-compile = { version = "0.6.3", default-features = false }
+ontomark-compile = { version = "0.8.0", default-features = false }
 ```
 
 ## Vault layout

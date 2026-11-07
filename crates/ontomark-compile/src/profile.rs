@@ -102,8 +102,8 @@ impl Profile {
     ///
     /// # Errors
     /// The YAML is malformed or names a key this version does not know.
-    pub fn from_yaml(text: &str) -> Result<Self, serde_yaml::Error> {
-        serde_yaml::from_str(text)
+    pub fn from_yaml(text: &str) -> Result<Self, serde_norway::Error> {
+        serde_norway::from_str(text)
     }
 }
 

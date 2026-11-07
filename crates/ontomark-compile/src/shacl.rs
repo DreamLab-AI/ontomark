@@ -146,7 +146,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Write as _;
 use std::sync::OnceLock;
 
-use serde_yaml::Value as Yaml;
+use serde_norway::Value as Yaml;
 
 use crate::build::turtle::{Graph, Subject, Term};
 use crate::input::frontmatter::Wikilink;

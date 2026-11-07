@@ -295,7 +295,7 @@ pub struct ScalarDef {
     /// `value: count` broke loading on the first number key that had one, so it
     /// stays a `Value` and [`ScalarDef::known_values`] only reads it for text.
     #[serde(default)]
-    pub observed: IndexMap<String, serde_yaml::Value>,
+    pub observed: IndexMap<String, serde_norway::Value>,
     /// Inclusive lower bound for a `number`.
     #[serde(default)]
     pub min: Option<f64>,
@@ -531,7 +531,7 @@ impl Vocabulary {
     /// OWL 2 EL (a message starting [`NON_EL_VOCABULARY`]; see
     /// [`NON_EL_OWL_TERMS`]).
     pub fn from_yaml_str(yaml: &str) -> std::result::Result<Self, String> {
-        let vocab: Self = serde_yaml::from_str(yaml).map_err(|e| e.to_string())?;
+        let vocab: Self = serde_norway::from_str(yaml).map_err(|e| e.to_string())?;
         vocab.check()?;
         Ok(vocab)
     }

@@ -1093,7 +1093,9 @@ pub fn run_with(
     sources.push((
         "ontology/vocabulary.yaml".to_owned(),
         hex::encode(<sha2::Sha256 as sha2::Digest>::digest(
-            serde_yaml::to_string(vocab).unwrap_or_default().as_bytes(),
+            serde_norway::to_string(vocab)
+                .unwrap_or_default()
+                .as_bytes(),
         )),
     ));
     let content_digest = generation::content_digest_of_hashes(sources);

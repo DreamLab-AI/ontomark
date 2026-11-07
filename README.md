@@ -137,7 +137,7 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 | [ontomark-source](crates/ontomark-source) | 0.1.0 | The Source port: local files and URLs as text with a content version, and a ledger that skips unchanged sources. |
 | [ontomark-jev](crates/ontomark-jev) | 0.7.1 | Opt-in **Jev option** for ingest (typed Choice/Noul decisions via System One), off by default, exact fallback to the plain path. See its README. |
 | [rdfs-certificate](crates/rdfs-certificate) | 0.1.1 | RDFS forward chaining that records every step in the `oo-cert/1` certificate format an independent checker re-verifies, and the consequence delta between two graphs. No graph library; used by ontomark and by VisionClaw's `vault`. |
-| [ontomark-compile](crates/ontomark-compile) | 0.7.0 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity, the derivation certificate. |
+| [ontomark-compile](crates/ontomark-compile) | 0.8.0 | The publication compiler: emitters, redaction, the two-scope build, vault layout, generation identity, the derivation certificate. |
 | [ontomark-ngg1](crates/ontomark-ngg1) | 0.1.0 | The shared binary graph format and its zero-copy reader. |
 | [ontomark-profile-estate](profiles/estate) | 0.8.0 | The DreamLab estate's rules as data; most users want `--profile generic` and never depend on it. |
 | [ontomark-wasm](crates/ontomark-wasm) | release asset | The worker-friendly engine protocol: index, update, classify, query, patch, ingest. |

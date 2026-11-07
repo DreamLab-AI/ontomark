@@ -137,8 +137,8 @@ pub fn inspect_walk(
         // Never coerce a string or a number into publication permission: only a
         // real YAML boolean counts, and anything else refuses the build.
         match fm.get("public") {
-            Some(serde_yaml::Value::Bool(true)) => bump("included_public"),
-            None | Some(serde_yaml::Value::Bool(false)) => bump("included_private"),
+            Some(serde_norway::Value::Bool(true)) => bump("included_public"),
+            None | Some(serde_norway::Value::Bool(false)) => bump("included_private"),
             Some(_) => bump("invalid_publication_flag"),
         }
     }
@@ -622,11 +622,11 @@ fn clean_vault(vault: &Vault, links: &crate::build::redact::PrivateLinks) -> Vau
         }
         // Pin the curated set, including an empty set: removing `links` would
         // silently switch the record back to a scan of all body wikilinks.
-        let public_links: Vec<serde_yaml::Value> = page
+        let public_links: Vec<serde_norway::Value> = page
             .outbound_links()
             .into_iter()
             .filter(|w| !links.is_private(vault.kind, &w.target))
-            .map(|w| serde_yaml::Value::String(w.to_string()))
+            .map(|w| serde_norway::Value::String(w.to_string()))
             .collect();
         page.frontmatter.map.retain(|key, value| {
             if key.as_str() == Some(crate::input::definition::DEFINES_AS_KEY)

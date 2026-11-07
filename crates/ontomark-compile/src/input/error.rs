@@ -22,7 +22,7 @@ pub enum VaultError {
         path: PathBuf,
         /// The YAML parser's complaint.
         #[source]
-        source: serde_yaml::Error,
+        source: serde_norway::Error,
     },
 
     /// `ontology/vocabulary.yaml` did not parse or is internally inconsistent.

@@ -352,7 +352,7 @@ fn page_level_checks(
         );
     }
     if let Some(value) = page.frontmatter.get("public") {
-        if !matches!(value, serde_yaml::Value::Bool(_)) {
+        if !matches!(value, serde_norway::Value::Bool(_)) {
             report.push(
                 path,
                 Severity::Error,
@@ -361,7 +361,7 @@ fn page_level_checks(
                     "{} has `public: {}`; publication permission must be a YAML boolean \
                      (`true`/`false`), never a quoted string or a number",
                     page.rel_path.display(),
-                    serde_yaml::to_string(value).unwrap_or_default().trim()
+                    serde_norway::to_string(value).unwrap_or_default().trim()
                 ),
             );
         }

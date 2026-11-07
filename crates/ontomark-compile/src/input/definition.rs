@@ -46,18 +46,18 @@
 //!   defines-as: { owl: "owl:equivalentClass", status: provisional }
 //! "#).unwrap();
 //!
-//! let value: serde_yaml::Value =
-//!     serde_yaml::from_str("[\"[[Robot]]\", {has-part: \"[[Gripper]]\"}]").unwrap();
+//! let value: serde_norway::Value =
+//!     serde_norway::from_str("[\"[[Robot]]\", {has-part: \"[[Gripper]]\"}]").unwrap();
 //! let conjuncts = parse(&value, &vocab).unwrap();
 //! assert!(matches!(&conjuncts[0], Conjunct::Named(w) if w.target == "Robot"));
 //! assert!(matches!(&conjuncts[1],
 //!     Conjunct::Some { relation, filler } if relation == "has-part" && filler.target == "Gripper"));
 //!
-//! let only: serde_yaml::Value = serde_yaml::from_str("[{only: \"[[Gripper]]\"}]").unwrap();
+//! let only: serde_norway::Value = serde_norway::from_str("[{only: \"[[Gripper]]\"}]").unwrap();
 //! assert!(parse(&only, &vocab).unwrap_err().contains("outside OWL 2 EL"));
 //! ```
 
-use serde_yaml::Value as Yaml;
+use serde_norway::Value as Yaml;
 
 use crate::input::frontmatter::Wikilink;
 use crate::input::vocabulary::Vocabulary;
@@ -314,7 +314,7 @@ relations:
     }
 
     fn yaml(s: &str) -> Yaml {
-        serde_yaml::from_str(s).unwrap()
+        serde_norway::from_str(s).unwrap()
     }
 
     fn err(s: &str) -> String {

@@ -18,7 +18,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
-use serde_yaml::Value as Yaml;
+use serde_norway::Value as Yaml;
 
 use crate::input::frontmatter::{Frontmatter, Wikilink};
 
@@ -179,7 +179,7 @@ impl Stamp {
     /// Render as an inline YAML mapping value.
     #[must_use]
     pub fn to_yaml(&self) -> Yaml {
-        let mut m = serde_yaml::Mapping::new();
+        let mut m = serde_norway::Mapping::new();
         m.insert(Yaml::String("by".into()), Yaml::String(self.by.as_string()));
         m.insert(Yaml::String("at".into()), Yaml::String(self.at.clone()));
         Yaml::Mapping(m)
@@ -215,7 +215,7 @@ impl Source {
     /// Render as a YAML mapping.
     #[must_use]
     pub fn to_yaml(&self) -> Yaml {
-        let mut m = serde_yaml::Mapping::new();
+        let mut m = serde_norway::Mapping::new();
         m.insert(Yaml::String("id".into()), Yaml::String(self.id.clone()));
         m.insert(
             Yaml::String("resource".into()),
@@ -423,7 +423,7 @@ mod tests {
 
     #[test]
     fn certification_counts_only_dated_human_stamps() {
-        let y = |s: &str| serde_yaml::from_str::<Yaml>(s).unwrap();
+        let y = |s: &str| serde_norway::from_str::<Yaml>(s).unwrap();
         let c = |s: &str| Certification::from_verified(Some(&y(s)));
         assert_eq!(Certification::from_verified(None).state(), "pending");
         assert_eq!(

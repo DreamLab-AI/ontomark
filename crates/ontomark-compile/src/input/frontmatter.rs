@@ -1,7 +1,7 @@
 //! YAML frontmatter: the canonical home of ontology metadata (Q4).
 //!
 //! A page is `---` / YAML mapping / `---` / body. The mapping is kept as a
-//! [`serde_yaml::Mapping`], which is insertion-ordered, so a round-trip through
+//! [`serde_norway::Mapping`], which is insertion-ordered, so a round-trip through
 //! [`Frontmatter::parse`] and [`Frontmatter::render`] preserves the author's
 //! key order rather than alphabetising it.
 //!
@@ -13,7 +13,7 @@
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
-use serde_yaml::Value as Yaml;
+use serde_norway::Value as Yaml;
 
 /// A resolved `[[Target]]` or `[[Target|Alias]]` reference.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -80,7 +80,7 @@ impl fmt::Display for Wikilink {
 pub struct Frontmatter {
     /// The raw mapping. Prefer the typed accessors; this is public so
     /// `vault edit` can rewrite keys in place.
-    pub map: serde_yaml::Mapping,
+    pub map: serde_norway::Mapping,
 }
 
 /// The result of splitting a page file into frontmatter and body.
@@ -173,13 +173,13 @@ impl Frontmatter {
     /// Parse a YAML mapping.
     ///
     /// # Errors
-    /// Returns the `serde_yaml` error when `yaml` is not a mapping or is
+    /// Returns the YAML backend error when `yaml` is not a mapping or is
     /// syntactically invalid.
-    pub fn parse(yaml: &str) -> serde_yaml::Result<Self> {
+    pub fn parse(yaml: &str) -> serde_norway::Result<Self> {
         if yaml.trim().is_empty() {
             return Ok(Self::default());
         }
-        let value: Yaml = serde_yaml::from_str(yaml)?;
+        let value: Yaml = serde_norway::from_str(yaml)?;
         match value {
             Yaml::Mapping(map) => Ok(Self { map }),
             Yaml::Null => Ok(Self::default()),
@@ -194,12 +194,12 @@ impl Frontmatter {
     /// no keys.
     ///
     /// # Errors
-    /// Returns the `serde_yaml` error if a value cannot be represented.
-    pub fn render(&self) -> serde_yaml::Result<String> {
+    /// Returns the YAML backend error if a value cannot be represented.
+    pub fn render(&self) -> serde_norway::Result<String> {
         if self.map.is_empty() {
             return Ok(String::new());
         }
-        let body = serde_yaml::to_string(&Yaml::Mapping(self.map.clone()))?;
+        let body = serde_norway::to_string(&Yaml::Mapping(self.map.clone()))?;
         Ok(format!("---\n{body}---\n"))
     }
 
