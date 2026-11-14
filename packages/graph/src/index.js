@@ -39,7 +39,9 @@ export function mountGraph(container,initial,options={}) {
   validateGraph(initial);
   const doc=container.ownerDocument;const win=doc.defaultView;
   const canvas=doc.createElement('canvas');canvas.className='ontomark-graph-canvas';canvas.tabIndex=0;
-  canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Ontology graph. Drag a node to move it, drag the background to pan, scroll to zoom. Arrow keys select nodes; Enter opens the selected note.');
+  canvas.setAttribute('role','img');
+  // The host names what the graph shows; the default keeps the wording earlier releases shipped.
+  const label=()=>canvas.setAttribute('aria-label',options.ariaLabel??'Ontology graph. Drag a node to move it, drag the background to pan, scroll to zoom. Arrow keys select nodes; Enter opens the selected note.');label();
   canvas.style.cssText='display:block;width:100%;height:100%;min-height:260px;touch-action:none;outline-offset:-3px';
   const status=doc.createElement('div');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   status.style.cssText='position:absolute;left:8px;bottom:8px;font:12px sans-serif;pointer-events:none';
@@ -74,8 +76,10 @@ export function mountGraph(container,initial,options={}) {
     const ranked=[...graph.nodes].sort((a,b)=>(b.degree??0)-(a.degree??0));const labelled=new Set(ranked.slice(0,graph.nodes.length<=120?120:40).map(n=>n.id));
     for(const n of graph.nodes){const p=screen(positions.get(n.id)),r=radius(n);if(p.x<-100||p.y<-30||p.x>width+100||p.y>height+30)continue;
       ctx.fillStyle=n.color||(n.kind==='individual'?'#d49b54':n.kind==='property'?'#a382c9':'#6e9d88');ctx.beginPath();
-      if(n.kind==='property'){ctx.moveTo(p.x,p.y-r);ctx.lineTo(p.x+r,p.y);ctx.lineTo(p.x,p.y+r);ctx.lineTo(p.x-r,p.y);ctx.closePath();}
-      else if(n.kind==='individual')ctx.rect(p.x-r,p.y-r,2*r,2*r);else ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
+      // An explicit shape wins; otherwise the ontology kind picks it, as before.
+      const shape=n.shape??(n.kind==='property'?'diamond':n.kind==='individual'?'square':'circle');
+      if(shape==='diamond'){ctx.moveTo(p.x,p.y-r);ctx.lineTo(p.x+r,p.y);ctx.lineTo(p.x,p.y+r);ctx.lineTo(p.x-r,p.y);ctx.closePath();}
+      else if(shape==='square')ctx.rect(p.x-r,p.y-r,2*r,2*r);else ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
       if(n.id===selected||n.id===hover){ctx.strokeStyle=fg||'#333';ctx.lineWidth=2;ctx.stroke();}
       if(labelled.has(n.id)||n.id===selected||n.id===hover){ctx.fillStyle=fg||'#333';ctx.fillText(n.label,p.x+r+5,p.y);}
     }
@@ -104,9 +108,12 @@ export function mountGraph(container,initial,options={}) {
   function zoomBy(factor){if(!Number.isFinite(factor)||factor<=0)throw new Error('Invalid zoom factor');zoom=Math.max(.05,Math.min(30,zoom*factor));request();}
   const observer=new win.ResizeObserver(resize);observer.observe(container);resize();fit();
   return {
-    setGraph(next,{preserveViewport=false}={}){validateGraph(next);endDrag();graph=next;lookup=new Map(next.nodes.map(n=>[n.id,n]));positions=seedPositions(next);if(selected&&!lookup.has(selected))selected=null;hover=null;if(preserveViewport)request();else fit();},
+    setGraph(next,{preserveViewport=false,preservePositions=false}={}){validateGraph(next);endDrag();const seeded=seedPositions(next);
+      // A node that survives the update stays where it was unless the host supplies its position, so a live layout is not thrown away.
+      if(preservePositions)for(const n of next.nodes){const old=positions.get(n.id);if(old&&n.x===undefined&&n.y===undefined)seeded.set(n.id,old);}
+      graph=next;lookup=new Map(next.nodes.map(n=>[n.id,n]));positions=seeded;if(selected&&!lookup.has(selected))selected=null;hover=null;if(preserveViewport)request();else fit();},
     setPositions(next){if(next.length!==graph.nodes.length*2||!Array.from(next).every(Number.isFinite))throw new Error('Position snapshot length/values invalid');graph.nodes.forEach((n,i)=>{if(!(drag?.active&&n.id===drag.node))positions.set(n.id,{x:next[i*2],y:next[i*2+1]});});request();},
-    setOptions(next){Object.assign(options,next);request();},
+    setOptions(next){Object.assign(options,next);label();request();},
     setSelection,fit,zoomBy,getState:()=>({selected,zoom,nodes:graph.nodes.length,edges:graph.edges.length}),
     destroy(){if(dead)return;endDrag();dead=true;if(frame)win.cancelAnimationFrame(frame);observer.disconnect();for(const [t,f,o] of listeners)canvas.removeEventListener(t,f,o);canvas.remove();status.remove();container.style.position=previousPosition;positions.clear();lookup.clear();},
   };

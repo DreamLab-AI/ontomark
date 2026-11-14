@@ -54,3 +54,13 @@ This decision supersedes the original monorepo `plugin/` location and the publis
 ## Status note, 31 October 2026
 
 The owner confirmed this record as complete and live: the release shipped, acceptance passed, and the estate runs it. This replaces the conservative `partial` / `inactive` mapping made when the ledger was unified.
+
+## Status note, 14 November 2026
+
+Graph package 0.3.0 adds a third consumer and a layout driver, both inside the boundary above.
+
+- **Vellum** (a VS Code web extension) draws note links with the shared renderer. Its integration decision is [ADR-VEL-001](https://github.com/DreamLab-AI/vellum-markdown-editor/blob/main/docs/adr/ADR-VEL-001-shared-graph-and-rust-wasm.md). The renderer gains two additive options for it: `ariaLabel`, because a note-link graph is not an "Ontology graph", and `preservePositions` on `setGraph`, because an update otherwise reseeds every node. Defaults are unchanged, so the Obsidian and publisher consumers see the same behaviour as 0.2.0.
+- **Layout** stays outside the renderer. `packages/graph/src/layout.js` is a separate entry point (`@dreamlab-ai/ontomark-graph/layout`) that drives an engine the host supplies and reports snapshots for `setPositions`. It performs no I/O and loads no module. The renderer still imports nothing and starts no worker.
+- **The engine is `vowl-wasm`'s existing force simulation**, through an adapter. No second layout implementation and no second graph codec were written: bundles without `loadArrays` take the graph through the module's own NGG1 encoder.
+
+Verified here: 29 package tests, one of them against the released `vowl-wasm` 0.2.3 bundle and against a `vowl-wasm` build with `loadArrays`. An independent review of the driver found five defects (a drag stopping the layout on bundles before 0.2.2, a second failed graph going unreported, an unchanged graph leaving a reseeded renderer unarranged, a throwing host callback stalling unseen, and an early settle); each is fixed with a regression test. Not verified here: a browser run of the mounted renderer with the driver, and any measurement of layout cost on large graphs.
