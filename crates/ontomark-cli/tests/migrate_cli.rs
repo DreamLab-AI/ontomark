@@ -105,7 +105,7 @@ fn a_stale_plan_exits_one_and_leaves_the_edited_page() {
     let (_d, root) = repo();
     let plan = root.join("plan.json");
     let plan_arg = plan.to_str().unwrap();
-    run(&root, &["plan", "m0001-obsidian-bodies", "--out", plan_arg]);
+    let _ = run(&root, &["plan", "m0001-obsidian-bodies", "--out", plan_arg]);
     let page = root.join("knowledge/5G.md");
     let mut text = fs::read_to_string(&page).unwrap();
     text.push_str("- late edit\n");

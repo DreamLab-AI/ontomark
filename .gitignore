@@ -12,3 +12,6 @@
 
 # agent worktrees
 .claude/
+
+# Local agent tooling state (holds a signing key); never tracked.
+.agentic-qe/
