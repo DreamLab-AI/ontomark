@@ -411,7 +411,7 @@ impl Corpus {
                     .get("generated")
                     .and_then(crate::input::okf::Stamp::from_yaml)
                     .map(|st| st.by),
-                certification: crate::input::okf::Certification::from_verified(fm.get("verified")),
+                certification: crate::input::okf::Certification::for_page(page),
                 sub_class_of: links_of(page, IS_A_KEY),
                 instance_of: links_of(page, INSTANCE_OF_KEY),
                 relations,

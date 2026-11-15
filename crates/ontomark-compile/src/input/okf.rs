@@ -247,6 +247,15 @@ pub struct Certification {
     pub whole_page: bool,
     /// Keys named by human stamps that list `keys`, sorted and de-duplicated.
     pub keys: Vec<String>,
+    /// Current content-bound human review stamps.
+    #[serde(default)]
+    pub current: usize,
+    /// Changed or malformed content-bound human review stamps.
+    #[serde(default)]
+    pub stale: usize,
+    /// Historical human review stamps lacking a content binding.
+    #[serde(default)]
+    pub unbound: usize,
 }
 
 impl Certification {
@@ -281,6 +290,69 @@ impl Certification {
             }
         }
         out.keys = keys.into_iter().collect();
+        out
+    }
+
+    /// Evaluate binding freshness against the current page (ADR-2024).
+    #[must_use]
+    pub fn for_page(page: &crate::input::page::Page) -> Self {
+        let mut out = Self::from_verified(page.frontmatter.get("verified"));
+        let Ok(yaml) = page.frontmatter.render() else {
+            return Self::default();
+        };
+        let doc = ontomark_parse::Document::parse(format!("{yaml}{}", page.body));
+        let Some(ontomark_parse::Value::Seq(stamps)) = doc.value("verified") else {
+            return out;
+        };
+        for stamp in stamps {
+            let ontomark_parse::Value::Map(m) = stamp else {
+                continue;
+            };
+            let Some(by) = m.get("by").and_then(ontomark_parse::Value::as_str) else {
+                continue;
+            };
+            if !by.parse::<Actor>().is_ok_and(|a| a.is_human()) {
+                continue;
+            }
+            if !m
+                .get("at")
+                .and_then(ontomark_parse::Value::as_str)
+                .is_some_and(|at| !at.trim().is_empty())
+            {
+                continue;
+            }
+            let keys = match m.get("keys") {
+                None | Some(ontomark_parse::Value::Null) => None,
+                Some(ontomark_parse::Value::Seq(items))
+                    if items
+                        .iter()
+                        .all(|v| v.as_str().is_some_and(|k| !k.trim().is_empty())) =>
+                {
+                    Some(
+                        items
+                            .iter()
+                            .filter_map(|v| v.as_str().map(str::to_owned))
+                            .collect::<Vec<_>>(),
+                    )
+                }
+                Some(_) => {
+                    out.stale += 1;
+                    continue;
+                }
+            };
+            let binding = m.get("content_digest");
+            let digest = binding.and_then(ontomark_parse::Value::as_str);
+            let status = if binding.is_some() && digest.is_none() {
+                ontomark_parse::certification::Freshness::Stale
+            } else {
+                ontomark_parse::certification::freshness(&doc, "verified", keys.as_deref(), digest)
+            };
+            match status {
+                ontomark_parse::certification::Freshness::Current => out.current += 1,
+                ontomark_parse::certification::Freshness::Stale => out.stale += 1,
+                ontomark_parse::certification::Freshness::Unbound => out.unbound += 1,
+            }
+        }
         out
     }
 

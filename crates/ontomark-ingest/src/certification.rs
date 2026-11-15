@@ -38,6 +38,12 @@ pub struct Certification {
     pub whole_page: bool,
     /// Keys named by human stamps that list `keys`, sorted.
     pub keys: BTreeSet<String>,
+    /// Number of matching content-bound human stamps.
+    pub current: usize,
+    /// Number of human stamps whose binding no longer matches.
+    pub stale: usize,
+    /// Number of historical human stamps without a content binding.
+    pub unbound: usize,
 }
 
 impl Certification {
@@ -67,6 +73,38 @@ impl Certification {
             if !(human && dated) {
                 continue;
             }
+            let keys = match m.get("keys") {
+                None | Some(Value::Null) => None,
+                Some(Value::Seq(items))
+                    if items
+                        .iter()
+                        .all(|v| v.as_str().is_some_and(|k| !k.trim().is_empty())) =>
+                {
+                    Some(
+                        items
+                            .iter()
+                            .filter_map(|v| v.as_str().map(str::to_owned))
+                            .collect::<Vec<_>>(),
+                    )
+                }
+                Some(_) => {
+                    out.stale += 1;
+                    continue;
+                }
+            };
+            let binding = m.get("content_digest");
+            let digest = binding.and_then(Value::as_str);
+            let status = if binding.is_some() && digest.is_none() {
+                ontomark_parse::certification::Freshness::Stale
+            } else {
+                ontomark_parse::certification::freshness(doc, verified_key, keys.as_deref(), digest)
+            };
+            match status {
+                ontomark_parse::certification::Freshness::Current => out.current += 1,
+                ontomark_parse::certification::Freshness::Stale => out.stale += 1,
+                ontomark_parse::certification::Freshness::Unbound => out.unbound += 1,
+            }
+            // Historical review still protects the scope from automated ingest.
             match m.get("keys") {
                 None | Some(Value::Null) => out.whole_page = true,
                 Some(v) => out.keys.extend(

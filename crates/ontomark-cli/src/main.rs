@@ -128,6 +128,8 @@ enum Command {
     Tree(TreeArgs),
     /// Guarded mutation; refused without `--expect`.
     Edit(EditArgs),
+    /// Compute a content binding for explicit human review; never writes a stamp.
+    ReviewBinding(ReviewBindingArgs),
     /// Write a new knowledge page from a staged file; never overwrites.
     Create(CreateArgs),
     /// Apply a human-approved `kind: amend` proposal to its page.
@@ -283,6 +285,17 @@ struct TreeArgs {
     /// The edge type to follow, inverted.
     #[arg(long, default_value = "is-a")]
     predicate: String,
+}
+
+#[derive(Debug, Args)]
+struct ReviewBindingArgs {
+    #[command(flatten)]
+    selector: VaultSelector,
+    /// Page identifier within the selected vault.
+    id: String,
+    /// Reviewed frontmatter key; repeat for multiple keys. Omit for the whole page.
+    #[arg(long = "key")]
+    keys: Vec<String>,
 }
 
 #[derive(Debug, Args)]
@@ -977,6 +990,28 @@ fn run() -> anyhow::Result<ExitCode> {
             Ok(ExitCode::SUCCESS)
         }
 
+        Command::ReviewBinding(args) => {
+            let vault = load(&root, &profile, &args.selector.kinds())?
+                .into_iter()
+                .next()
+                .context("no vault selected")?;
+            let page = vault
+                .get(&args.id)
+                .with_context(|| format!("no page with id `{}`", args.id))?;
+            let source = format!("{}{}", page.frontmatter.render()?, page.body);
+            let doc = ontomark_parse::Document::parse(&source);
+            let keys = if args.keys.is_empty() {
+                None
+            } else {
+                Some(args.keys.as_slice())
+            };
+            let digest = ontomark_parse::certification::content_digest(&doc, "verified", keys)
+                .context("invalid review scope or unsupported frontmatter")?;
+            let value =
+                serde_json::json!({"content_digest": digest, "keys": keys, "writes_stamp": false});
+            emit(cli.json, &value, || println!("{digest}"))?;
+            Ok(ExitCode::SUCCESS)
+        }
         Command::Edit(args) => {
             let Some(expect_raw) = &args.expect else {
                 anyhow::bail!(

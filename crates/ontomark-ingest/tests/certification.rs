@@ -177,3 +177,21 @@ fn suggester_is_never_offered_a_certified_key() {
         assert_eq!(out.proposals.len(), offered.len(), "{verified}");
     }
 }
+
+#[test]
+fn bound_reviews_report_freshness_without_unlocking_ingest() {
+    use ontomark_parse::{certification::content_digest, Document};
+    let original = Document::parse("---\ntitle: A\nvalue: old\n---\nbody");
+    let keys = vec!["value".to_owned()];
+    let digest = content_digest(&original, "verified", Some(&keys)).unwrap();
+    let note = |value: &str| {
+        Document::parse(format!("---\ntitle: A\nvalue: {value}\nverified:\n  - by: human:npub1test\n    at: 2026-11-15\n    keys: [value]\n    content_digest: {digest}\n---\nbody"))
+    };
+    let current = ontomark_ingest::Certification::of(&note("old"), "verified");
+    assert_eq!(current.current, 1);
+    assert_eq!(current.stale, 0);
+    let stale = ontomark_ingest::Certification::of(&note("new"), "verified");
+    assert_eq!(stale.current, 0);
+    assert_eq!(stale.stale, 1);
+    assert!(stale.covers("value"));
+}

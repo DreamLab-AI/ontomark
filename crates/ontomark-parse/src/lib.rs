@@ -60,3 +60,6 @@ pub use patch::{Applied, Edit, Patch, PatchError, PatchOp, Placement, Receipt};
 pub use span::{SourceDigest, Span};
 pub use utf16::Utf16Index;
 pub use value::{Subpath, Value, Wikilink};
+
+/// Content bindings for explicit human review stamps.
+pub mod certification;

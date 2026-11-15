@@ -85,9 +85,21 @@ impl Scope {
     }
 }
 
+/// The software that compiled a bundle, separate from content authorship.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BuildProducer {
+    /// Compiler package name.
+    pub name: String,
+    /// Compiler package version.
+    pub version: String,
+}
+
 /// The `.generation.json` document (contract C3).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Generation {
+    /// Compiler identity; absent in legacy bundles and never inferred by readers.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub built_by: Option<BuildProducer>,
     /// `<prefix>@<sha>`, suffixed `+dirty` for an uncommitted build; see
     /// [`generation_id`].
     pub id: String,
@@ -271,6 +283,10 @@ pub fn generation(
     artifacts: Vec<Artifact>,
 ) -> Generation {
     Generation {
+        built_by: Some(BuildProducer {
+            name: env!("CARGO_PKG_NAME").to_owned(),
+            version: env!("CARGO_PKG_VERSION").to_owned(),
+        }),
         id: generation_id(prefix, &commit, dirty),
         commit,
         dirty,
