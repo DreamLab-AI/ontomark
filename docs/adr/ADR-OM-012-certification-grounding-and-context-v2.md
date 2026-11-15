@@ -7,7 +7,7 @@ implementation_status: complete
 activation_status: live
 supersedes: []
 superseded_by: []
-verified_commit: 818db90958e6e069ec7c42c2ebe46b45ad8dae52
+verified_commit: 59e30991886d3d6e808a3ad99281a8a64401d28a
 verified_paths: [crates/ontomark-ingest/src/certification.rs, crates/ontomark-ingest/src/accept.rs, crates/ontomark-ingest/src/judge.rs, crates/ontomark-ingest/src/coverage.rs, crates/ontomark-ingest/tests/certification.rs, crates/ontomark-ingest/tests/coverage.rs, crates/ontomark-cli/src/ground_cmd.rs, crates/ontomark-cli/tests/conformance.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-compile/src/ir/model.rs, crates/ontomark-compile/src/build/page_api.rs, crates/ontomark-compile/src/build/okf.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/write/edit.rs, conformance/fixtures/estate-small.golden/MANIFEST]
 owner: jjohare
 review_trigger: the first `verified` stamp written with `keys`; a release that the visionGraph publisher pins; a second actor kind admitted as human; a page API consumer that cannot take the added `certification` field
@@ -124,9 +124,8 @@ different contexts carried one name (visionGraph ADR-VG-009).
 
 ## Open questions
 
-- A hand edit to a value after it was certified leaves the key marked certified.
-  Binding a stamp to a digest of the values it covers would close that gap. It
-  would also make `keys` awkward to write by hand, so it is not done yet.
+- Review freshness is now specified by ADR-OM-013: changed bound values become stale; historical protection remains. The original v2 certification field continues to describe that protection.
+  The explicit `review-binding` command prepares a digest without recertifying or writing a stamp.
 - `ground` grades names lexically. An embedding tier (RuVector, already in the
   estate) would catch paraphrases. It would also make the grade
   non-deterministic, which this ADR avoids.
@@ -164,3 +163,9 @@ different contexts carried one name (visionGraph ADR-VG-009).
 - **Agentbox** pins v0.8.0 (agentbox ADR-2136). Agents get `ontomark ground` at
   the next image rebuild.
 
+
+## Re-verification — 2026-11-15
+
+ADR-OM-013 adds explicit freshness without changing v2 context meanings. Keyed,
+whole-page, stale and unbound ingest protection pass the certification controls;
+CLI export tests confirm legacy API separation and public projection boundaries.

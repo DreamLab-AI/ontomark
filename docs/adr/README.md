@@ -2,7 +2,7 @@
 
 # Architecture Decision Records
 
-_12 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
+_13 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
 
 | ID | Title | Domain | Date | Decision | Impl | Activation | Supersedes | Superseded by | Owner | Repo |
 |----|-------|--------|------|----------|------|------------|------------|---------------|-------|------|
@@ -18,3 +18,4 @@ _12 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
 | [ADR-OM-010](ADR-OM-010-external-source-ingest-lands-as-proposals.md) | External-source ingest: a Source port, a host CLI, and proposals rather than writes | ingest | 2026-10-31 | proposed | none | inactive | — | — | jjohare | ontomark |
 | [ADR-OM-011](ADR-OM-011-shared-filesystem-layout-checks.md) | Shared filesystem layout checks precede role selection | — | 2026-11-01 | accepted | complete | staged | — | — | jjohare | ontomark |
 | [ADR-OM-012](ADR-OM-012-certification-grounding-and-context-v2.md) | Certified keys are never patched, questions are graded for coverage, and the v2 context is generated and closed over the page API | — | 2026-11-04 | accepted | complete | live | — | — | jjohare | ontomark |
+| [ADR-OM-013](ADR-OM-013-content-bound-review-and-build-provenance.md) | Bind human review to source content and identify the bundle compiler separately | — | 2026-11-15 | accepted | complete | staged | — | — | jjohare | ontomark |

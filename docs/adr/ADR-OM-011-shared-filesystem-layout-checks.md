@@ -7,7 +7,7 @@ implementation_status: complete
 activation_status: staged
 supersedes: []
 superseded_by: []
-verified_commit: 818db90958e6e069ec7c42c2ebe46b45ad8dae52
+verified_commit: 59e30991886d3d6e808a3ad99281a8a64401d28a
 verified_paths: [crates/ontomark-compile/src/profile/layout.rs, crates/ontomark-compile/src/profile.rs, crates/ontomark-compile/src/input/page.rs, crates/ontomark-compile/src/input/vocabulary.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/migrate/plan.rs, crates/ontomark-cli/src/main.rs, crates/ontomark-cli/src/migrate_cmd.rs, crates/ontomark-cli/tests/layout_contract.rs, crates/ontomark-compile/src/check/bodies.rs, crates/ontomark-compile/src/check/repair.rs, crates/ontomark-compile/src/migrate/apply.rs, crates/ontomark-compile/src/migrate/journal.rs, crates/ontomark-compile/tests/migrate.rs]
 owner: jjohare
 review_trigger: a change to root discovery, role placement, exclusions or a consumer adopting these checks
@@ -94,3 +94,9 @@ Re-verified at `ef485105e175f17d2697a9cda0abeb4997e097f8` after ADR-OM-012 touch
 and `crates/ontomark-compile/src/build/mod.rs` emits `context/v2.jsonld`. Neither
 changes root discovery, role placement or exclusions. `layout_contract` and the
 `migrate` integration tests pass unchanged.
+
+## Re-verification — 2026-11-15
+
+The new review-binding CLI dispatch and v3 build outputs preserve filesystem
+root discovery and role separation. The layout, migration and machine-scope
+CLI controls pass with the ADR-2024 implementation.
