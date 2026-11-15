@@ -157,6 +157,9 @@ pub struct ClassRecord {
     /// [`Actor`](crate::input::okf::Actor)), or
     /// `None` when the page carries no parseable stamp. Resolved to a `did:nostr`
     /// by the attribution roster at emit time; never guessed.
+    /// Explicit source attestations; never synthesised from compiler identity.
+    pub attestations: serde_json::Map<String, serde_json::Value>,
+    /// Parsed content generator, when explicitly supplied.
     pub generated_by: Option<crate::input::okf::Actor>,
     /// Which keys human `verified` stamps cover (ADR-OM-012).
     pub certification: crate::input::okf::Certification,
@@ -407,6 +410,14 @@ impl Corpus {
                     .unwrap_or_else(|| "draft".to_owned()),
                 quality: fm.number("quality").unwrap_or(0.0),
                 legacy_term_id: fm.text("legacy-term-id").unwrap_or_default(),
+                attestations: ["generated", "verified"]
+                    .into_iter()
+                    .filter_map(|key| {
+                        fm.get(key)
+                            .and_then(|value| serde_json::to_value(value).ok())
+                            .map(|value| (key.to_owned(), value))
+                    })
+                    .collect(),
                 generated_by: fm
                     .get("generated")
                     .and_then(crate::input::okf::Stamp::from_yaml)

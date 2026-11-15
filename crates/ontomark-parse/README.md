@@ -76,3 +76,8 @@ Builds for native and `wasm32-unknown-unknown`; no I/O, no allocation beyond
 the document itself.
 
 Licensed under MIT OR Apache-2.0. See `LICENSE-MIT`, `LICENSE-APACHE` and `NOTICE`.
+
+Review bindings use `certification::content_digest` and `certification::assess`:
+key-scoped or whole-page SHA-256 bindings, current/stale/unbound human stamps, and
+historical ingest protection. The portable `provenance` types keep compiler identity
+separate from source review. See [the contract](../../docs/api/review-bindings.md).

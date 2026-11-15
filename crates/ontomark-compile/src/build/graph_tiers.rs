@@ -864,6 +864,7 @@ mod tests {
             maturity: "established".into(),
             quality: 0.5,
             legacy_term_id: String::new(),
+            attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
             sub_class_of: Vec::new(),

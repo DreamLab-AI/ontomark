@@ -922,6 +922,20 @@ pub fn run_with(
             doc.page_id.clone(),
         );
     }
+    let (v3_documents, v3_index) = page_api::build_v3(
+        listed,
+        &structural,
+        page_backlinks.as_ref().unwrap_or(&backlinks),
+        &roster,
+    );
+    for doc in &v3_documents {
+        staged.add_for(
+            format!("api/v3/pages/{}.json", doc.slug),
+            to_indented(&doc.value)?,
+            doc.page_id.clone(),
+        );
+    }
+    staged.add("api/v3/pages/_domain-index.json", to_indented(&v3_index)?);
     staged.add("api/pages/_domain-index.json", to_indented(&domain_index)?);
     staged.add("api/census.json", to_indented(&census)?);
     staged.add(
@@ -940,6 +954,10 @@ pub fn run_with(
     let context_v2 = to_indented(&okf::context_v2(profile, vocab))?;
     staged.add("context/v2.jsonld", context_v2.clone());
     staged.add("ns/v2.jsonld", context_v2);
+
+    let context_v3 = to_indented(&okf::context_v3(profile, vocab))?;
+    staged.add("context/v3.jsonld", context_v3.clone());
+    staged.add("ns/v3.jsonld", context_v3);
 
     // WebVOWL graph — the explorer's build input.
     staged.add(

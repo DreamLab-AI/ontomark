@@ -97,6 +97,13 @@ impl Generation {
         if self.generated_at.is_empty() {
             return Err(invalid("generated_at is empty"));
         }
+        if self
+            .built_by
+            .as_ref()
+            .is_some_and(|p| p.name.trim().is_empty() || p.version.trim().is_empty())
+        {
+            return Err(invalid("build producer name and version must be non-empty"));
+        }
         let mut names = HashSet::new();
         for artifact in &self.artifacts {
             let safe = !artifact.name.contains(['\\', '\0'])
@@ -163,6 +170,9 @@ pub struct ClassEntry<A = Value, M = Value, C = Value> {
     /// Verification attestations.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub verified: Vec<A>,
+    /// Source review binding freshness; unknown for legacy omitted metadata.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review_binding: Option<ontomark_parse::provenance::ReviewSummary>,
     /// Source mappings.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub map: Vec<M>,
@@ -188,6 +198,7 @@ impl<A, M, C> Default for ClassEntry<A, M, C> {
             bl: Vec::new(),
             generated: None,
             verified: Vec::new(),
+            review_binding: None,
             map: Vec::new(),
             ac: Vec::new(),
             extensions: IndexMap::new(),

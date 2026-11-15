@@ -60,6 +60,11 @@ jobs:
           ref: 548a7fbf2d19e3ee9af54d686124f37978773eb7
           path: .plugin-consumer
       - run: bash scripts/test-plugin-consumer.sh .plugin-consumer
+      - name: Native and WASM review binding parity
+        run: |
+          cargo build --locked -p ontomark
+          wasm-bindgen target/wasm32-unknown-unknown/release/ontomark_wasm.wasm --target nodejs --out-dir target/provenance-wasm
+          node scripts/test-review-binding-wasm.cjs
   secrets:
     runs-on: ubuntu-latest
     steps:

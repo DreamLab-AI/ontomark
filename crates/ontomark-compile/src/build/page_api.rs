@@ -65,6 +65,30 @@ pub fn build(
     )
 }
 
+/// Version 3 page documents expose review freshness separately from historical protection.
+/// The legacy page API remains unchanged; consumers opt into `api/v3/pages/`.
+#[must_use]
+#[allow(clippy::implicit_hasher)]
+pub fn build_v3(
+    corpus: &Corpus,
+    closure: &Closure,
+    backlinks: &HashMap<String, Vec<String>>,
+    roster: &super::attribution::Roster,
+) -> (Vec<PageDocument>, Value) {
+    let (mut documents, index) = build_attributed(corpus, closure, backlinks, roster);
+    let records: HashMap<_, _> = corpus.public().map(|r| (r.page_id.as_str(), r)).collect();
+    for doc in &mut documents {
+        if let Some(record) = records.get(doc.page_id.as_str()) {
+            doc.value["reviewBinding"] = json!({
+                "current": record.certification.current,
+                "stale": record.certification.stale,
+                "unbound": record.certification.unbound,
+            });
+        }
+    }
+    (documents, index)
+}
+
 /// Page documents with a `provenance` block when the page's generator resolves in the roster.
 #[must_use]
 #[allow(clippy::implicit_hasher, clippy::too_many_lines)]
@@ -227,6 +251,7 @@ mod tests {
             maturity: "draft".into(),
             quality: 0.5,
             legacy_term_id: String::new(),
+            attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
             sub_class_of: Vec::new(),

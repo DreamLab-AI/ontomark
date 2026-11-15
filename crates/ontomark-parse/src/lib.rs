@@ -63,3 +63,6 @@ pub use value::{Subpath, Value, Wikilink};
 
 /// Content bindings for explicit human review stamps.
 pub mod certification;
+
+/// Portable build and review metadata.
+pub mod provenance;

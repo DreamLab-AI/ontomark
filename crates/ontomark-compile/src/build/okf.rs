@@ -177,6 +177,22 @@ pub fn context_v2(profile: &Profile, vocab: &Vocabulary) -> Value {
     json!({ "@context": Value::Object(ctx) })
 }
 
+/// Version 3 adds content-binding freshness without changing either legacy context.
+#[must_use]
+pub fn context_v3(profile: &Profile, vocab: &Vocabulary) -> Value {
+    let mut context = context_v2(profile, vocab);
+    let vc = &profile.iris.vocabulary_prefix;
+    context["@context"]["reviewBinding"] = json!({
+        "@id": format!("{vc}:reviewBinding"),
+        "@context": {
+            "current": {"@id": format!("{vc}:currentReviewCount"), "@type": "xsd:nonNegativeInteger"},
+            "stale": {"@id": format!("{vc}:staleReviewCount"), "@type": "xsd:nonNegativeInteger"},
+            "unbound": {"@id": format!("{vc}:unboundReviewCount"), "@type": "xsd:nonNegativeInteger"}
+        }
+    });
+    context
+}
+
 /// Build the OKF bundle: `index.md` plus `concepts/<slug>.md` per public class.
 #[must_use]
 pub fn bundle(
@@ -278,6 +294,9 @@ fn concept_file(record: &ClassRecord) -> String {
             let _ = writeln!(out, "  - {}", r.iri);
         }
     }
+    for (key, value) in &record.attestations {
+        let _ = writeln!(out, "{key}: {value}");
+    }
     let _ = writeln!(out, "---");
     let _ = writeln!(out);
     let _ = writeln!(out, "# {}", record.label);
@@ -347,6 +366,7 @@ scalars:
             maturity: "established".into(),
             quality: 0.5,
             legacy_term_id: String::new(),
+            attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
             sub_class_of: Vec::new(),

@@ -159,6 +159,8 @@ pub fn scaffold_index(
                 .map(|v| v.iter().take(BACKLINK_CAP).cloned().collect::<Vec<_>>())
                 .unwrap_or_default()),
         );
+        entry.extend(record.attestations.clone());
+        entry.insert("review_binding".into(), json!({"current": record.certification.current, "stale": record.certification.stale, "unbound": record.certification.unbound}));
         classes.insert(slug, Value::Object(entry));
     }
 
@@ -425,6 +427,7 @@ mod tests {
             maturity: "draft".into(),
             quality: 0.0,
             legacy_term_id: String::new(),
+            attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
             sub_class_of: Vec::new(),

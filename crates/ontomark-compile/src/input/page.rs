@@ -190,6 +190,8 @@ pub struct Page {
     /// `content_digest` is computed from what was parsed rather than from a
     /// second read of the file (S2.2).
     pub source_sha256: String,
+    /// Exact parsed source, retained for lossless review bindings.
+    pub source: String,
 }
 
 impl Page {
@@ -221,6 +223,7 @@ impl Page {
             body: split.body.to_owned(),
             body_line: split.body_line,
             unterminated_frontmatter: split.unterminated,
+            source: text.to_owned(),
             source_sha256: hex::encode(<sha2::Sha256 as sha2::Digest>::digest(text.as_bytes())),
         })
     }

@@ -27,7 +27,7 @@
 
 use std::collections::BTreeSet;
 
-use ontomark_parse::{Document, Value};
+use ontomark_parse::Document;
 use serde::{Deserialize, Serialize};
 
 /// The keys a note's human review covers.
@@ -39,10 +39,13 @@ pub struct Certification {
     /// Keys named by human stamps that list `keys`, sorted.
     pub keys: BTreeSet<String>,
     /// Number of matching content-bound human stamps.
+    #[serde(default)]
     pub current: usize,
     /// Number of human stamps whose binding no longer matches.
+    #[serde(default)]
     pub stale: usize,
     /// Number of historical human stamps without a content binding.
+    #[serde(default)]
     pub unbound: usize,
 }
 
@@ -62,60 +65,14 @@ impl Certification {
     /// ```
     #[must_use]
     pub fn of(doc: &Document, verified_key: &str) -> Self {
-        let mut out = Self::default();
-        let Some(Value::Seq(stamps)) = doc.value(verified_key) else {
-            return out;
-        };
-        for stamp in stamps {
-            let Value::Map(m) = stamp else { continue };
-            let human = matches!(m.get("by"), Some(Value::String(by)) if is_human_actor(by));
-            let dated = matches!(m.get("at"), Some(Value::String(at)) if !at.trim().is_empty());
-            if !(human && dated) {
-                continue;
-            }
-            let keys = match m.get("keys") {
-                None | Some(Value::Null) => None,
-                Some(Value::Seq(items))
-                    if items
-                        .iter()
-                        .all(|v| v.as_str().is_some_and(|k| !k.trim().is_empty())) =>
-                {
-                    Some(
-                        items
-                            .iter()
-                            .filter_map(|v| v.as_str().map(str::to_owned))
-                            .collect::<Vec<_>>(),
-                    )
-                }
-                Some(_) => {
-                    out.stale += 1;
-                    continue;
-                }
-            };
-            let binding = m.get("content_digest");
-            let digest = binding.and_then(Value::as_str);
-            let status = if binding.is_some() && digest.is_none() {
-                ontomark_parse::certification::Freshness::Stale
-            } else {
-                ontomark_parse::certification::freshness(doc, verified_key, keys.as_deref(), digest)
-            };
-            match status {
-                ontomark_parse::certification::Freshness::Current => out.current += 1,
-                ontomark_parse::certification::Freshness::Stale => out.stale += 1,
-                ontomark_parse::certification::Freshness::Unbound => out.unbound += 1,
-            }
-            // Historical review still protects the scope from automated ingest.
-            match m.get("keys") {
-                None | Some(Value::Null) => out.whole_page = true,
-                Some(v) => out.keys.extend(
-                    v.texts()
-                        .into_iter()
-                        .map(|k| k.trim().to_owned())
-                        .filter(|k| !k.is_empty()),
-                ),
-            }
+        let assessment = ontomark_parse::certification::assess(doc, verified_key);
+        Self {
+            whole_page: assessment.whole_page,
+            keys: assessment.keys,
+            current: assessment.current,
+            stale: assessment.stale,
+            unbound: assessment.unbound,
         }
-        out
     }
 
     /// `true` when a human stamp covers `key`.

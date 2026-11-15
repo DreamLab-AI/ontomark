@@ -998,8 +998,7 @@ fn run() -> anyhow::Result<ExitCode> {
             let page = vault
                 .get(&args.id)
                 .with_context(|| format!("no page with id `{}`", args.id))?;
-            let source = format!("{}{}", page.frontmatter.render()?, page.body);
-            let doc = ontomark_parse::Document::parse(&source);
+            let doc = ontomark_parse::Document::parse(&page.source);
             let keys = if args.keys.is_empty() {
                 None
             } else {

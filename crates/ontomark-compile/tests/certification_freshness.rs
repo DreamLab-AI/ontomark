@@ -41,3 +41,20 @@ fn compiler_identity_does_not_rewrite_legacy_provenance() {
     assert_eq!(legacy.id, g.id);
     assert_eq!(legacy.content_digest, g.content_digest);
 }
+
+#[test]
+fn compiler_never_rounds_a_reviewed_float_before_checking_it() {
+    let source = "---\nvalue: 1.00000000000000001\n---\nbody";
+    let digest = content_digest(&Document::parse(source), "verified", None).unwrap();
+    let stamped = source.replace("\n---\nbody", &format!("\nverified:\n  - by: human:test\n    at: 2026-11-15\n    content_digest: {digest}\n---\nbody"));
+    let page = Page::parse("a.md", "a.md", "a", &stamped).unwrap();
+    assert_eq!(Certification::for_page(&page).current, 1);
+    let changed = Page::parse(
+        "a.md",
+        "a.md",
+        "a",
+        &stamped.replace("1.00000000000000001", "1.00000000000000002"),
+    )
+    .unwrap();
+    assert_eq!(Certification::for_page(&changed).stale, 1);
+}

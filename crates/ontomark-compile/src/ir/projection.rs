@@ -371,6 +371,22 @@ impl Redactor {
             .collect()
     }
 
+    fn clean_attestation(&self, value: &serde_json::Value) -> serde_json::Value {
+        use serde_json::Value;
+        match value {
+            Value::String(s) => Value::String(self.redact(s)),
+            Value::Array(items) => {
+                Value::Array(items.iter().map(|v| self.clean_attestation(v)).collect())
+            }
+            Value::Object(map) => Value::Object(
+                map.iter()
+                    .map(|(k, v)| (self.redact(k), self.clean_attestation(v)))
+                    .collect(),
+            ),
+            _ => value.clone(),
+        }
+    }
+
     fn clean_record(&self, r: &ClassRecord) -> ClassRecord {
         let mut relations: IndexMap<&'static str, Vec<Ref>> = IndexMap::new();
         for (key, refs) in &r.relations {
@@ -393,6 +409,11 @@ impl Redactor {
             maturity: self.redact(&r.maturity),
             quality: r.quality,
             legacy_term_id: self.redact(&r.legacy_term_id),
+            attestations: r
+                .attestations
+                .iter()
+                .map(|(key, value)| (key.clone(), self.clean_attestation(value)))
+                .collect(),
             generated_by: r.generated_by.clone(),
             certification: r.certification.clone(),
             sub_class_of: self.clean_refs(&r.sub_class_of),
@@ -931,6 +952,7 @@ mod tests {
             maturity: "draft".into(),
             quality: 0.0,
             legacy_term_id: String::new(),
+            attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
             sub_class_of: Vec::new(),

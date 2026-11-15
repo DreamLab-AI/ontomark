@@ -94,3 +94,24 @@ impl Default for WasmEngine {
 pub fn version() -> String {
     env!("CARGO_PKG_VERSION").to_owned()
 }
+
+/// Prepare a review binding and report source freshness without modifying it.
+/// `keys_json` is `null` for the whole page or a non-empty JSON array of keys.
+/// The returned JSON contains either `error` or `content_digest` and counts.
+#[wasm_bindgen]
+#[must_use]
+pub fn review_binding(source: &str, keys_json: &str) -> String {
+    let keys: Option<Vec<String>> = match serde_json::from_str(keys_json) {
+        Ok(keys) => keys,
+        Err(error) => return serde_json::json!({"error": error.to_string()}).to_string(),
+    };
+    let doc = ontomark_parse::Document::parse(source);
+    let Some(digest) =
+        ontomark_parse::certification::content_digest(&doc, "verified", keys.as_deref())
+    else {
+        return serde_json::json!({"error": "invalid review scope or unsupported frontmatter"})
+            .to_string();
+    };
+    let status = ontomark_parse::certification::assess(&doc, "verified");
+    serde_json::json!({"content_digest": digest, "current": status.current, "stale": status.stale, "unbound": status.unbound, "writes_stamp": false}).to_string()
+}

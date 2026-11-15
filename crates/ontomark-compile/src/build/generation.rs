@@ -85,14 +85,7 @@ impl Scope {
     }
 }
 
-/// The software that compiled a bundle, separate from content authorship.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct BuildProducer {
-    /// Compiler package name.
-    pub name: String,
-    /// Compiler package version.
-    pub version: String,
-}
+pub use ontomark_parse::provenance::BuildProducer;
 
 /// The `.generation.json` document (contract C3).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -147,6 +147,33 @@ fn json_diff_within(a: &[u8], b: &[u8], tol: f64) -> Option<String> {
     }
 }
 
+// ADR-2024 deliberately adds source attestations and review freshness. Compare
+// the retained legacy payload after removing only those named additions; the
+// real CLI export test separately checks their values against source stamps.
+fn provenance_extension(path: &str) -> bool {
+    path == "data/scaffold-index.json" || path.starts_with("okf/concepts/")
+}
+
+fn legacy_payload(path: &str, bytes: &[u8]) -> Vec<u8> {
+    if path == "data/scaffold-index.json" {
+        let mut value: serde_json::Value = serde_json::from_slice(bytes).unwrap();
+        for entry in value["classes"].as_object_mut().unwrap().values_mut() {
+            for key in ["generated", "verified", "review_binding"] {
+                entry.as_object_mut().unwrap().remove(key);
+            }
+        }
+        serde_json::to_vec(&value).unwrap()
+    } else {
+        let source = std::str::from_utf8(bytes).unwrap();
+        source
+            .lines()
+            .filter(|line| !line.starts_with("generated: ") && !line.starts_with("verified: "))
+            .collect::<Vec<_>>()
+            .join("\n")
+            .into_bytes()
+    }
+}
+
 /// Compare two trees, returning one line per difference.
 ///
 /// Every artefact is compared byte for byte except the two generation markers,
@@ -169,6 +196,9 @@ fn tree_diff(label: &str, want: &Path, got: &Path) -> Vec<String> {
                     diffs.push(format!("{label}/{path}: {why}"));
                 }
             }
+            Some(b)
+                if provenance_extension(path)
+                    && legacy_payload(path, b) == legacy_payload(path, bytes) => {}
             Some(b) if b != bytes => diffs.push(format!("{label}/{path}: bytes differ")),
             Some(_) => {}
         }
@@ -176,6 +206,11 @@ fn tree_diff(label: &str, want: &Path, got: &Path) -> Vec<String> {
     diffs.extend(
         got.keys()
             .filter(|p| !want.contains_key(*p))
+            .filter(|p| {
+                !(p.starts_with("api/v3/pages/")
+                    && want.contains_key(&p.replacen("api/v3/", "api/", 1)))
+                    && !matches!(p.as_str(), "context/v3.jsonld" | "ns/v3.jsonld")
+            })
             .map(|p| format!("{label}/{p}: unexpected")),
     );
     diffs
@@ -199,6 +234,9 @@ fn marker_diff(label: &str, want: &[u8], got: &[u8]) -> Vec<String> {
     if want_digest.is_none() || got_digest.is_none() {
         diffs.push(format!("{label}: a marker has no content_digest"));
     }
+    let producer = take(&mut got, "built_by").expect("ADR-2024 compiler identity");
+    assert_eq!(producer["name"], "ontomark-compile");
+    assert!(producer["version"].as_str().is_some_and(|v| !v.is_empty()));
     let want_artifacts = take(&mut want, "artifacts").unwrap_or_default();
     let got_artifacts = take(&mut got, "artifacts").unwrap_or_default();
     if want != got {
@@ -214,7 +252,11 @@ fn marker_diff(label: &str, want: &[u8], got: &[u8]) -> Vec<String> {
         // A layout-sensitive file's hash, and the data marker that lists it, move
         // with its coordinates; the file itself is compared within `LAYOUT_TOLERANCE`.
         let name = artifact["name"].as_str().unwrap_or_default();
-        if is_layout_sensitive(name) || name.ends_with(".generation.json") {
+        if is_layout_sensitive(name)
+            || name.ends_with(".generation.json")
+            || provenance_extension(name)
+            || name == "scaffold-index.json"
+        {
             continue;
         }
         if !got_set.contains(&artifact.to_string()) {
@@ -227,7 +269,7 @@ fn marker_diff(label: &str, want: &[u8], got: &[u8]) -> Vec<String> {
 }
 
 #[test]
-fn build_is_byte_identical_to_the_legacy_golden() {
+fn build_retains_legacy_bytes_except_versioned_provenance_additions() {
     let m = manifest();
     let vault = fixture_copy();
     let out = tempfile::tempdir().expect("out dir");

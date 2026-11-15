@@ -15,6 +15,99 @@ pub enum Freshness {
     Stale,
 }
 
+/// Human review scopes and their freshness, independent of any host adapter.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Assessment {
+    /// Historical whole-page protection, including stale and unbound review.
+    pub whole_page: bool,
+    /// Historically protected keys, sorted and deduplicated.
+    pub keys: std::collections::BTreeSet<String>,
+    /// Content-bound stamps matching the current source.
+    pub current: usize,
+    /// Stamps with changed content or malformed bindings/scopes.
+    pub stale: usize,
+    /// Historical stamps without a binding.
+    pub unbound: usize,
+}
+
+/// Assess dated human stamps without granting authority to a digest.
+/// Invalid scopes never claim current review. Valid historical scopes retain
+/// ingest protection, even when their digest is malformed or stale.
+#[must_use]
+pub fn assess(doc: &Document, verified_key: &str) -> Assessment {
+    let mut out = Assessment::default();
+    let Some(Value::Seq(stamps)) = doc.value(verified_key) else {
+        return out;
+    };
+    for stamp in stamps {
+        let Value::Map(m) = stamp else {
+            continue;
+        };
+        let human = m.get("by").and_then(Value::as_str).is_some_and(|s| {
+            s.trim()
+                .strip_prefix("human:")
+                .is_some_and(|id| !id.trim().is_empty())
+        });
+        let dated = m
+            .get("at")
+            .and_then(Value::as_str)
+            .is_some_and(|s| !s.trim().is_empty());
+        if !human || !dated {
+            continue;
+        }
+        // Preserve every identifiable legacy protection even if the scope is
+        // malformed; malformed metadata must never unlock automated writes.
+        match m.get("keys") {
+            None | Some(Value::Null) => out.whole_page = true,
+            Some(value) => out.keys.extend(
+                value
+                    .texts()
+                    .into_iter()
+                    .map(|k| k.trim().to_owned())
+                    .filter(|k| !k.is_empty()),
+            ),
+        }
+        let keys = match m.get("keys") {
+            None | Some(Value::Null) => None,
+            Some(Value::Seq(items))
+                if !items.is_empty()
+                    && items.iter().all(|v| {
+                        v.as_str()
+                            .is_some_and(|k| !k.trim().is_empty() && k != verified_key)
+                    }) =>
+            {
+                Some(
+                    items
+                        .iter()
+                        .filter_map(|v| v.as_str().map(str::to_owned))
+                        .collect::<Vec<_>>(),
+                )
+            }
+            Some(_) => {
+                out.stale += 1;
+                continue;
+            }
+        };
+        match &keys {
+            None => out.whole_page = true,
+            Some(keys) => out.keys.extend(keys.iter().cloned()),
+        }
+        let binding = m.get("content_digest");
+        let digest = binding.and_then(Value::as_str);
+        let status = if binding.is_some() && digest.is_none() {
+            Freshness::Stale
+        } else {
+            freshness(doc, verified_key, keys.as_deref(), digest)
+        };
+        match status {
+            Freshness::Current => out.current += 1,
+            Freshness::Stale => out.stale += 1,
+            Freshness::Unbound => out.unbound += 1,
+        }
+    }
+    out
+}
+
 fn bytes(h: &mut Sha256, value: &[u8]) {
     h.update((value.len() as u64).to_be_bytes());
     h.update(value);
@@ -29,12 +122,7 @@ fn value(h: &mut Sha256, v: &Value) {
         }
         Value::Float(s) => {
             h.update([3]);
-            bytes(
-                h,
-                s.parse::<f64>()
-                    .map_or_else(|_| s.clone(), |v| format!("{:016x}", v.to_bits()))
-                    .as_bytes(),
-            );
+            bytes(h, s.as_bytes());
         }
         Value::String(s) => {
             h.update([4]);
@@ -61,6 +149,7 @@ fn value(h: &mut Sha256, v: &Value) {
 /// Compute the binding for selected frontmatter keys, or the whole page.
 /// Whole-page bindings exclude the verification list and include the exact body.
 /// Map order is ignored; sequence order, types and missing values are significant.
+/// Float spelling is preserved to avoid rounding distinct reviewed values.
 /// Returns `None` for unsupported/malformed frontmatter or an invalid key scope.
 #[must_use]
 pub fn content_digest(

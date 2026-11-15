@@ -167,13 +167,20 @@ pub struct Stamp {
     pub by: Actor,
     /// When, as an ISO-8601 instant.
     pub at: String,
+    /// Review scope, content binding and future metadata preserved verbatim.
+    #[serde(flatten)]
+    pub extensions: std::collections::BTreeMap<String, Yaml>,
 }
 
 impl Stamp {
     /// Build a stamp.
     #[must_use]
     pub fn new(by: Actor, at: impl Into<String>) -> Self {
-        Self { by, at: at.into() }
+        Self {
+            by,
+            at: at.into(),
+            extensions: Default::default(),
+        }
     }
 
     /// Render as an inline YAML mapping value.
@@ -182,6 +189,11 @@ impl Stamp {
         let mut m = serde_norway::Mapping::new();
         m.insert(Yaml::String("by".into()), Yaml::String(self.by.as_string()));
         m.insert(Yaml::String("at".into()), Yaml::String(self.at.clone()));
+        for (key, value) in &self.extensions {
+            if key != "by" && key != "at" {
+                m.insert(Yaml::String(key.clone()), value.clone());
+            }
+        }
         Yaml::Mapping(m)
     }
 
@@ -192,7 +204,14 @@ impl Stamp {
         let m = v.as_mapping()?;
         let by = m.get(Yaml::String("by".into()))?.as_str()?.parse().ok()?;
         let at = m.get(Yaml::String("at".into()))?.as_str()?.to_owned();
-        Some(Self { by, at })
+        let extensions = m
+            .iter()
+            .filter_map(|(key, value)| {
+                let key = key.as_str()?;
+                (!matches!(key, "by" | "at")).then(|| (key.to_owned(), value.clone()))
+            })
+            .collect();
+        Some(Self { by, at, extensions })
     }
 }
 
@@ -296,64 +315,15 @@ impl Certification {
     /// Evaluate binding freshness against the current page (ADR-2024).
     #[must_use]
     pub fn for_page(page: &crate::input::page::Page) -> Self {
-        let mut out = Self::from_verified(page.frontmatter.get("verified"));
-        let Ok(yaml) = page.frontmatter.render() else {
-            return Self::default();
-        };
-        let doc = ontomark_parse::Document::parse(format!("{yaml}{}", page.body));
-        let Some(ontomark_parse::Value::Seq(stamps)) = doc.value("verified") else {
-            return out;
-        };
-        for stamp in stamps {
-            let ontomark_parse::Value::Map(m) = stamp else {
-                continue;
-            };
-            let Some(by) = m.get("by").and_then(ontomark_parse::Value::as_str) else {
-                continue;
-            };
-            if !by.parse::<Actor>().is_ok_and(|a| a.is_human()) {
-                continue;
-            }
-            if !m
-                .get("at")
-                .and_then(ontomark_parse::Value::as_str)
-                .is_some_and(|at| !at.trim().is_empty())
-            {
-                continue;
-            }
-            let keys = match m.get("keys") {
-                None | Some(ontomark_parse::Value::Null) => None,
-                Some(ontomark_parse::Value::Seq(items))
-                    if items
-                        .iter()
-                        .all(|v| v.as_str().is_some_and(|k| !k.trim().is_empty())) =>
-                {
-                    Some(
-                        items
-                            .iter()
-                            .filter_map(|v| v.as_str().map(str::to_owned))
-                            .collect::<Vec<_>>(),
-                    )
-                }
-                Some(_) => {
-                    out.stale += 1;
-                    continue;
-                }
-            };
-            let binding = m.get("content_digest");
-            let digest = binding.and_then(ontomark_parse::Value::as_str);
-            let status = if binding.is_some() && digest.is_none() {
-                ontomark_parse::certification::Freshness::Stale
-            } else {
-                ontomark_parse::certification::freshness(&doc, "verified", keys.as_deref(), digest)
-            };
-            match status {
-                ontomark_parse::certification::Freshness::Current => out.current += 1,
-                ontomark_parse::certification::Freshness::Stale => out.stale += 1,
-                ontomark_parse::certification::Freshness::Unbound => out.unbound += 1,
-            }
+        let doc = ontomark_parse::Document::parse(&page.source);
+        let assessment = ontomark_parse::certification::assess(&doc, "verified");
+        Self {
+            whole_page: assessment.whole_page,
+            keys: assessment.keys.into_iter().collect(),
+            current: assessment.current,
+            stale: assessment.stale,
+            unbound: assessment.unbound,
         }
-        out
     }
 
     /// `certified` (whole page), `partial` (some keys) or `pending` (none).
