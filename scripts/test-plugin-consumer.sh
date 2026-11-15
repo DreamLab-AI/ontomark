@@ -11,9 +11,9 @@ tar -czf "$bundle" -C "$engine" web node ontomark.wasm engine-manifest.json LICE
 export ONTOMARK_ENGINE_BUNDLE="$bundle"
 export ONTOMARK_ENGINE_SHA256
 ONTOMARK_ENGINE_SHA256=$(sha256sum "$bundle" | cut -d ' ' -f 1)
-# Golden transcript remains asserted by the native core test; compare this
-# candidate's WASM responses against that same reviewed fixture in the consumer.
-cp -R "$root/crates/ontomark-wasm/tests/fixtures/." "$consumer/test/fixtures/"
+# Keep the consumer's own fixtures: its host exclusion filter deliberately differs
+# from the native core fixture. The pinned consumer transcript asserts that host
+# boundary against the candidate engine; native parity is checked in the core.
 cd "$consumer"
 npm ci --include=dev
 npm run build

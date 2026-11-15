@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: DreamLab-AI/ontomark-obsidian
-          ref: 548a7fbf2d19e3ee9af54d686124f37978773eb7
+          ref: 64bdc5bf6309fca94bf0437b52c1484618470ed0
           path: .plugin-consumer
       - run: bash scripts/test-plugin-consumer.sh .plugin-consumer
       - name: Native and WASM review binding parity
