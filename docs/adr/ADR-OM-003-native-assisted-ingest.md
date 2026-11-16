@@ -21,7 +21,7 @@ repo: ontomark
 - Activation: staged (the crate is published and the plugin client calls both requests; installed-Obsidian acceptance, verification item 5, is not recorded)
 - Related: [ADR-OM-002](ADR-OM-002-shared-graph-and-obsidian-boundary.md), [OntoCast triage](../ONTOCAST-TRIAGE.md), [ADR-OBS-002](https://github.com/DreamLab-AI/ontomark-obsidian/blob/main/docs/adr/ADR-OBS-002-assisted-ingest-boundary-and-estate-notes.md), [upstream credits](../UPSTREAMS.md)
 
-Status mapping 2026-10-31: the record's header says `Accepted (close-out 2026-10-30)`, but its close-out note says that acceptance is an inference from the owner publishing `ontomark-ingest` 0.1.0, not a recorded ratification (ontomark commit 154bca9). `decision_status` is therefore `proposed` until the owner confirms. `implementation_status: partial` because the record says `complete for the engine scope` only and its plugin side belongs to ADR-OBS-002; `activation_status: staged` is as stated. Owner to confirm acceptance and the implementation scope.
+Status mapping 2026-10-31: the record's header says `Accepted (close-out 2026-10-30)`, but its close-out note says that acceptance is an inference from the owner publishing `ontomark-ingest` 0.1.0, not a recorded ratification (ontomark commit 154bca9). `decision_status` was therefore `proposed` until the owner confirmed. The owner confirmed acceptance in session on 16 November 2026, so `decision_status` is `accepted`, as the front matter states. `implementation_status: partial` because the record says `complete for the engine scope` only and its plugin side belongs to ADR-OBS-002; `activation_status: staged` is as stated. Owner to confirm acceptance and the implementation scope.
 
 ## Context
 
