@@ -71,22 +71,77 @@ export function layoutInput(graph, known = new Map()) {
   return {count, seed, edgeA, edgeB, rowPtr, colIdx, degrees, retained};
 }
 
+/** Readability settings for `createLayout`'s `params`, for hosts that draw nodes at a radius of up to
+ * 12 px plus a label. They need `@dreamlab-ai/vowl-wasm` 0.4.0 or later; an older bundle ignores them.
+ *
+ * - `collideRadius` 21: every node is a disc of this radius in world units, so nodes settle at least
+ *   42 apart. Use 14 to pack tighter.
+ * - `collideStrength` 0.7: share of an overlap resolved per pass.
+ * - `collideIterations` 3: collision passes per tick.
+ * - `componentGravity` 0.1: draws disconnected fragments in around the main graph.
+ *
+ * All four are off by default, and a layout without `params` is the 0.3.0 one. */
+export const RECOMMENDED_LAYOUT_PARAMS = Object.freeze({collideRadius: 21, collideStrength: 0.7, collideIterations: 3, componentGravity: 0.1});
+
+/** `NggExplorer.setParam` keys by the vowl-wasm release that introduced them. `setParam` ignores keys it
+ * does not know and has no getter, so the bundle's own `version()` is the only way to tell. `reheat` is
+ * an action, not a setting, and is never applied as one. */
+const VOWL_PARAMS = [
+  [[0, 2, 0], ['charge', 'linkDistance', 'linkStrength', 'damping', 'centerGravity', 'alphaMin']],
+  [[0, 2, 1], ['theta']],
+  [[0, 4, 0], ['collideRadius', 'collideStrength', 'collideIterations', 'componentGravity']],
+];
+
+function vowlParamKeys(mod, explorer) {
+  if (typeof explorer.setParam !== 'function') return [];
+  let version = null;
+  try { version = typeof mod.version === 'function' ? String(mod.version()) : null; } catch { /* treated as unknown */ }
+  const parts = /^(\d+)\.(\d+)\.(\d+)/.exec(version ?? '')?.slice(1).map(Number);
+  const atLeast = (min) => parts !== undefined && (parts[0] - min[0] || parts[1] - min[1] || parts[2] - min[2]) >= 0;
+  // An unknown version gets the keys every bundle with setParam has had.
+  return VOWL_PARAMS.filter(([min], i) => i === 0 || atLeast(min)).flatMap(([, keys]) => keys);
+}
+
+function checkParams(params) {
+  if (params === null || typeof params !== 'object' || Array.isArray(params)) throw new TypeError('Layout params must be an object of numbers');
+  return params;
+}
+
 /** Adapt an initialised `@dreamlab-ai/vowl-wasm` module to the engine contract.
  *
  * Uses `NggExplorer.loadArrays` where the bundle has it. Earlier bundles
  * (0.2.x) take the same graph through the module's own NGG1 encoder, so no
- * second codec exists in JavaScript. */
+ * second codec exists in JavaScript.
+ *
+ * `setParams` passes `NggExplorer.setParam` keys the bundle supports
+ * (`supportedParams`, read from its `version()`) and reports the rest as
+ * ignored. Applied values are set again after every load. Without a call no
+ * parameter is ever set. */
 export function vowlEngine(mod) {
   if (typeof mod?.NggExplorer !== 'function') throw new Error('Layout module has no NggExplorer export');
   let explorer = new mod.NggExplorer(), constants = null;
+  const supportedParams = Object.freeze(vowlParamKeys(mod, explorer));
+  const params = new Map();
+  const apply = () => { for (const [key, value] of params) explorer.setParam(key, value); };
   // Pinning arrived in vowl-wasm 0.2.2. Without it the driver reports a drag as unsupported instead of failing.
   const pins = typeof explorer.pinNode === 'function' && typeof explorer.unpinNode === 'function'
     ? {pin(i, x, y) { return explorer.pinNode(i, x, y); }, unpin(i) { return explorer.unpinNode(i); }} : {};
   return {
     ...pins,
+    supportedParams,
+    setParams(next) {
+      const applied = [], ignored = [];
+      for (const [key, value] of Object.entries(checkParams(next))) {
+        if (!supportedParams.includes(key) || typeof value !== 'number' || !Number.isFinite(value)) { ignored.push(key); continue; }
+        params.set(key, value); explorer.setParam(key, value); applied.push(key);
+      }
+      return {applied, ignored};
+    },
     load(input) {
       if (typeof explorer.loadArrays === 'function') {
         explorer.loadArrays(input.seed, input.edgeA, input.edgeB, new Uint8Array(input.edgeA.length));
+        // Current bundles keep settings across a load; setting them again guards one that resets.
+        apply();
         return;
       }
       if (typeof mod.encodeNgg1 !== 'function' || typeof mod.ngg1Constants !== 'function') throw new Error('Layout module can load neither arrays nor NGG1');
@@ -95,6 +150,7 @@ export function vowlEngine(mod) {
       explorer.loadCsr(mod.encodeNgg1(input.seed, Uint32Array.from({length: n}, (_, i) => i),
         new Uint16Array(n).fill(constants.DOMAIN_NONE), new Uint16Array(n).fill(constants.CATEGORY_NONE),
         new Uint8Array(n), input.degrees, blank, blank, input.rowPtr, input.colIdx, new Uint8Array(input.colIdx.length)));
+      apply();
     },
     tick() { explorer.tick(); },
     finished() { return explorer.isFinished(); },
@@ -109,10 +165,14 @@ export function vowlEngine(mod) {
  * Each `setGraph` that changes the graph starts a new generation; a slice
  * scheduled for an earlier one does nothing, so a superseded graph never
  * reports positions. An engine or `onPositions` callback that throws, or a
- * non-finite value, stops the layout and reaches `onError` once per graph; the last good snapshot stays with the host. */
+ * non-finite value, stops the layout and reaches `onError` once per graph; the last good snapshot stays with the host.
+ *
+ * `params` and `setParams` tune an engine that has `setParams` (as `vowlEngine`'s does); keys the engine
+ * cannot apply reach `onIgnoredParams`. */
 export function createLayout(engine, options = {}) {
   for (const method of ['load', 'tick', 'finished', 'read']) if (typeof engine?.[method] !== 'function') throw new Error(`Layout engine lacks ${method}()`);
-  const {onPositions, onSettled, onError, frameBudgetMs = 6, maxTicksPerFrame = 60, warmAlpha = 0.3} = options;
+  const {onPositions, onSettled, onError, onIgnoredParams, frameBudgetMs = 6, maxTicksPerFrame = 60, warmAlpha = 0.3} = options;
+  if (options.params !== undefined) checkParams(options.params);
   if (!(frameBudgetMs > 0) || !Number.isInteger(maxTicksPerFrame) || maxTicksPerFrame < 1) throw new Error('Layout frame budget and tick limit must be positive');
   if (!(warmAlpha > 0) || !Number.isFinite(warmAlpha)) throw new Error('Layout warm alpha must be positive and finite');
   if ((options.schedule === undefined) !== (options.cancel === undefined)) throw new Error('Supply schedule and cancel together');
@@ -148,6 +208,12 @@ export function createLayout(engine, options = {}) {
     if (!done) request(); else if (!wasDone) onSettled?.();
   }
   const locate = (id) => (loaded ? index.get(id) : undefined);
+  function tune(params) {
+    const result = typeof engine.setParams === 'function' ? engine.setParams(params) : {applied: [], ignored: Object.keys(params)};
+    if (result.ignored.length) onIgnoredParams?.(result.ignored.slice());
+    return result;
+  }
+  if (options.params !== undefined) tune(options.params);
 
   return {
     /** Lay out `graph`. Nodes kept from the previous graph start where they were. A graph with the same nodes and springs as the current one is not reloaded; its snapshot is reported once more. */
@@ -187,6 +253,19 @@ export function createLayout(engine, options = {}) {
       try { if (!engine.unpin(i)) return false; engine.reheat?.(warmAlpha); } catch (error) { fail(error); return false; }
       request();
       return true;
+    },
+    /** Change engine parameters, merged over those already set; pass a key's default to turn it off.
+     * A loaded layout restarts warm to show the change. */
+    setParams(params) {
+      alive();
+      checkParams(params);
+      let result;
+      try { result = tune(params); } catch (error) { fail(error); return {applied: [], ignored: Object.keys(params)}; }
+      if (loaded && result.applied.length) {
+        try { engine.reheat?.(warmAlpha); } catch (error) { fail(error); return result; }
+        request();
+      }
+      return result;
     },
     /** Resume a settled layout. */
     reheat(alpha = warmAlpha) {

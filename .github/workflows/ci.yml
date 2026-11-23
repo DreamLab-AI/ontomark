@@ -9,7 +9,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with: { targets: wasm32-unknown-unknown, components: "rustfmt, clippy" }
       - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      # The layout tests run the driver against the real vowl-wasm bundle, a pinned dev dependency.
+      - run: npm ci --ignore-scripts
+        working-directory: packages/graph
       - run: node --test packages/graph/test/*.test.mjs
+        env: { ONTOMARK_REQUIRE_VOWL: "1" }
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace

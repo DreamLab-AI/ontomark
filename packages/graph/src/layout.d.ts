@@ -26,6 +26,35 @@ export interface LayoutEngine {
   unpin?(index: number): boolean;
   reheat?(alpha: number): void;
   dispose?(): void;
+  /** Merge parameter values over those already set and report which keys took effect. Values persist across `load`. */
+  setParams?(params: LayoutParams): LayoutParamsResult;
+}
+
+/** Engine parameters by name, e.g. vowl-wasm `NggExplorer.setParam` keys such as `charge` or `collideRadius`. */
+export type LayoutParams = Readonly<Record<string, number>>;
+
+/** `applied` keys were set; `ignored` keys are unknown to the engine (or to its version), not finite numbers, or actions such as `reheat`. */
+export interface LayoutParamsResult {
+  applied: string[];
+  ignored: string[];
+}
+
+/** The vowl-wasm 0.4.0 readability settings for nodes drawn at up to 12 px radius plus a label. */
+export type RecommendedLayoutParams = {
+  /** Every node is a disc of this radius in world units; nodes settle at least twice it apart. 14 packs tighter. */
+  readonly collideRadius: 21;
+  /** Share of an overlap resolved per pass. */
+  readonly collideStrength: 0.7;
+  /** Collision passes per tick. */
+  readonly collideIterations: 3;
+  /** Pulls each disconnected component toward the centre as a rigid body. */
+  readonly componentGravity: 0.1;
+};
+
+/** The engine `vowlEngine` returns: `supportedParams` lists the `setParam` keys of the loaded bundle's version. */
+export interface VowlLayoutEngine extends LayoutEngine {
+  readonly supportedParams: readonly string[];
+  setParams(params: LayoutParams): LayoutParamsResult;
 }
 
 export interface LayoutOptions {
@@ -41,7 +70,12 @@ export interface LayoutOptions {
   frameBudgetMs?: number;
   /** Tick limit per slice, whatever the clock says. Default 60. */
   maxTicksPerFrame?: number;
-  /** Temperature for a warm restart, a drag or `reheat()`. Default 0.3. */
+  /** Engine parameters applied before the first graph, as by `setParams`. Without them the engine keeps its defaults.
+   * `RECOMMENDED_LAYOUT_PARAMS` turns on vowl-wasm 0.4.0's collision and component gravity. */
+  params?: LayoutParams;
+  /** Keys from `params` or `setParams` the engine could not apply. An engine without `setParams` ignores every key. */
+  onIgnoredParams?: (keys: string[]) => void;
+  /** Temperature for a warm restart, a drag, a parameter change or `reheat()`. Default 0.3. */
   warmAlpha?: number;
   /** Scheduler pair; defaults to animation frames, or a 16 ms timer where there are none. Supply both or neither. */
   schedule?: (callback: () => void) => unknown;
@@ -58,6 +92,9 @@ export interface Layout {
   pin(id: string, x: number, y: number): boolean;
   unpin(id: string): boolean;
   reheat(alpha?: number): boolean;
+  /** Change engine parameters live, merged over those already set; pass a key's default to turn it off
+   * (`collideRadius: 0`, `componentGravity: 0`). A loaded layout restarts warm to show the change. */
+  setParams(params: LayoutParams): LayoutParamsResult;
   /** A copy of the latest snapshot. */
   positions(): Float32Array;
   getState(): {nodes: number; generation: number; running: boolean; failed: boolean};
@@ -65,6 +102,9 @@ export interface Layout {
 }
 
 export function layoutInput(graph: GraphData, known?: ReadonlyMap<string, {x: number; y: number}>): LayoutInput;
-/** Adapt an initialised `@dreamlab-ai/vowl-wasm` module: 0.2.0 or later to lay out, 0.2.2 or later to pin a dragged node. */
-export function vowlEngine(module: object): LayoutEngine;
+/** `collideRadius` 21, `collideStrength` 0.7, `collideIterations` 3, `componentGravity` 0.1. Frozen. */
+export const RECOMMENDED_LAYOUT_PARAMS: RecommendedLayoutParams;
+/** Adapt an initialised `@dreamlab-ai/vowl-wasm` module: 0.2.0 or later to lay out, 0.2.2 or later to pin a dragged node,
+ * 0.4.0 or later for collision and component gravity. */
+export function vowlEngine(module: object): VowlLayoutEngine;
 export function createLayout(engine: LayoutEngine, options?: LayoutOptions): Layout;
