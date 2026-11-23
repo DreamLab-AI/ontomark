@@ -15,3 +15,6 @@
 
 # Local agent tooling state (holds a signing key); never tracked.
 .agentic-qe/
+
+# npm dev dependencies of packages/graph
+node_modules/

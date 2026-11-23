@@ -143,7 +143,7 @@ Each crate has a README and full rustdoc with executable examples. Read them in 
 | [ontomark-wasm](crates/ontomark-wasm) | release asset | The worker-friendly engine protocol: index, update, classify, query, patch, ingest. |
 | [ontomark](crates/ontomark-cli) | 0.8.1 | The installable CLI: `cargo install ontomark`. `ontomark ingest` turns external sources into a `vault propose` bundle. |
 | [ontomark-ingest-bench](crates/ontomark-ingest-bench) | not published | The labelled extraction benchmark: grounding, model and Jev arms, selective-risk curves. |
-| [ontomark-graph](packages/graph) | [0.3.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.3.0) | The shared offline graph renderer for desktop and web hosts, with a host-side layout driver. |
+| [ontomark-graph](packages/graph) | [0.4.0](https://github.com/DreamLab-AI/ontomark/releases/tag/ontomark-graph-v0.4.0) | The shared offline graph renderer for desktop and web hosts, with a host-side layout driver. |
 
 Parser, model, reasoner and ingest build for native and `wasm32-unknown-unknown`. The compiler's portable feature set disables its native backend.
 

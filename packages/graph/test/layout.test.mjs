@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {existsSync, readFileSync} from 'node:fs';
 import {join} from 'node:path';
-import {pathToFileURL} from 'node:url';
-import {createLayout, layoutInput, vowlEngine} from '../src/layout.js';
+import {fileURLToPath, pathToFileURL} from 'node:url';
+import {RECOMMENDED_LAYOUT_PARAMS, createLayout, layoutInput, vowlEngine} from '../src/layout.js';
 import {mountGraph} from '../src/index.js';
 
 const graph = {
@@ -234,16 +234,105 @@ test('the renderer keeps positions across setGraph on request and takes a host l
   plain.destroy(); view.destroy();
 });
 
-// The released bundle is not a dependency of this package. Point ONTOMARK_VOWL_PKG at an unpacked
-// @dreamlab-ai/vowl-wasm (0.2.0 or later) to run the driver against the real simulation.
-const pkg = process.env.ONTOMARK_VOWL_PKG;
-test('drives the vowl-wasm simulation to a finite, spread, deterministic layout', {skip: pkg && existsSync(join(pkg, 'vowl_wasm.js')) ? false : 'set ONTOMARK_VOWL_PKG to an unpacked @dreamlab-ai/vowl-wasm'}, async () => {
+test('engine parameters: an engine without setParams ignores them, and a live change reheats a loaded layout', () => {
+  const time = clock(), plain = fakeEngine(1), ignored = [];
+  const layout = createLayout(plain, {...time, now: () => 0, params: {charge: 1}, onIgnoredParams: (keys) => ignored.push(keys)});
+  assert.deepEqual(ignored, [['charge']], 'reported, not thrown');
+  assert.deepEqual(layout.setParams({collideRadius: 21}), {applied: [], ignored: ['collideRadius']});
+
+  const engine = fakeEngine(1), seen = [];
+  engine.setParams = (params) => { seen.push({...params}); const keys = Object.keys(params); return {applied: keys.filter((k) => k !== 'bogus'), ignored: keys.filter((k) => k === 'bogus')}; };
+  const tuned = createLayout(engine, {...time, now: () => 0, params: {collideRadius: 21}});
+  assert.deepEqual(seen, [{collideRadius: 21}], 'the option reaches the engine before any graph');
+  assert.equal(tuned.setParams({componentGravity: 0.1}).applied[0], 'componentGravity');
+  assert.ok(!engine.calls.some((c) => c[0] === 'reheat'), 'nothing loaded: nothing to reheat');
+  tuned.setGraph(graph); time.run();
+  assert.equal(time.pending(), 0);
+  assert.deepEqual(tuned.setParams({collideRadius: 14, bogus: 1}), {applied: ['collideRadius'], ignored: ['bogus']});
+  assert.deepEqual(engine.calls.at(-1), ['reheat', 0.3]);
+  assert.equal(time.pending(), 1, 'a settled layout resumes to show the change');
+  assert.throws(() => tuned.setParams(null), /object/);
+  assert.throws(() => createLayout(fakeEngine(), {params: 3}), /object/);
+});
+
+/** A stand-in vowl-wasm module: records setParam calls; `version` and `setParam` can be left out. */
+function fakeVowl(version, {setParam = true} = {}) {
+  const log = [];
+  class NggExplorer { loadArrays() { log.push(['load']); } tick() {} isFinished() { return true; } writePositionsInto() {} reheat() {} }
+  if (setParam) NggExplorer.prototype.setParam = function (key, value) { log.push([key, value]); };
+  return {log, mod: version === undefined ? {NggExplorer} : {NggExplorer, version: () => version}};
+}
+
+test('vowlEngine applies only the keys the loaded bundle knows, and re-applies them after every load', () => {
+  const v4 = fakeVowl('0.4.0');
+  const e4 = vowlEngine(v4.mod);
+  assert.ok(e4.supportedParams.includes('collideRadius') && !e4.supportedParams.includes('reheat'));
+  assert.deepEqual(e4.setParams({...RECOMMENDED_LAYOUT_PARAMS, reheat: 1, charge: NaN, linkDistance: '60'}),
+    {applied: ['collideRadius', 'collideStrength', 'collideIterations', 'componentGravity'], ignored: ['reheat', 'charge', 'linkDistance']});
+  v4.log.length = 0;
+  e4.load(layoutInput(graph)); e4.load(layoutInput(graph));
+  assert.deepEqual(v4.log.filter((c) => c[0] !== 'load').length, 8, 'each load re-applies the four keys');
+  assert.deepEqual(v4.log.slice(0, 2), [['load'], ['collideRadius', 21]], 'after the load, not before');
+
+  // 0.3.0 silently drops keys it does not know, so the adapter must not claim it applied them.
+  const v3 = fakeVowl('0.3.0');
+  assert.deepEqual(vowlEngine(v3.mod).setParams({collideRadius: 21, charge: 1500, theta: 0.5}), {applied: ['charge', 'theta'], ignored: ['collideRadius']});
+  assert.deepEqual(v3.log, [['charge', 1500], ['theta', 0.5]]);
+  assert.deepEqual(vowlEngine(fakeVowl('0.2.0').mod).setParams({theta: 0.5, damping: 0.5}), {applied: ['damping'], ignored: ['theta']});
+  assert.deepEqual(vowlEngine(fakeVowl(undefined).mod).setParams({theta: 0.5, charge: 1}), {applied: ['charge'], ignored: ['theta']}, 'no version: the 0.2.0 keys only');
+  assert.deepEqual(vowlEngine(fakeVowl('garbage').mod).supportedParams, vowlEngine(fakeVowl(undefined).mod).supportedParams);
+  assert.deepEqual(vowlEngine(fakeVowl('0.4.0', {setParam: false}).mod).setParams({charge: 1}), {applied: [], ignored: ['charge']});
+
+  // No params: setParam is never called, so the layout is exactly the 0.3.0 one.
+  const quiet = fakeVowl('0.4.0'), time = clock();
+  const layout = createLayout(vowlEngine(quiet.mod), {...time, now: () => 0});
+  layout.setGraph(graph); time.run();
+  assert.deepEqual(quiet.log, [['load']]);
+});
+
+test('RECOMMENDED_LAYOUT_PARAMS holds the vowl-wasm 0.4.0 readability settings and cannot be changed', () => {
+  assert.deepEqual({...RECOMMENDED_LAYOUT_PARAMS}, {collideRadius: 21, collideStrength: 0.7, collideIterations: 3, componentGravity: 0.1});
+  assert.ok(Object.isFrozen(RECOMMENDED_LAYOUT_PARAMS));
+});
+
+// @dreamlab-ai/vowl-wasm is a dev dependency, not a runtime one (npm ci in this directory installs it).
+// ONTOMARK_VOWL_PKG points the tests at another unpacked bundle; CI sets ONTOMARK_REQUIRE_VOWL so they cannot skip.
+const pkg = process.env.ONTOMARK_VOWL_PKG || fileURLToPath(new URL('../node_modules/@dreamlab-ai/vowl-wasm', import.meta.url));
+const real = existsSync(join(pkg, 'vowl_wasm.js'));
+test('the vowl-wasm bundle is present where CI requires it', {skip: process.env.ONTOMARK_REQUIRE_VOWL ? false : 'ONTOMARK_REQUIRE_VOWL is not set'}, () => {
+  assert.ok(real, `no vowl-wasm bundle at ${pkg}`);
+});
+const skip = real ? false : 'run npm ci here, or set ONTOMARK_VOWL_PKG to an unpacked @dreamlab-ai/vowl-wasm';
+async function vowl() {
   const mod = await import(pathToFileURL(join(pkg, 'vowl_wasm.js')).href);
   mod.initSync({module: readFileSync(join(pkg, 'vowl_wasm_bg.wasm'))});
-  const run = (g) => { const time = clock(); let settled = 0; const layout = createLayout(vowlEngine(mod), {...time, now: () => 0, onSettled: () => settled++}); layout.setGraph(g); time.run(); const p = layout.positions(); layout.destroy(); assert.equal(settled, 1); return p; };
-  const first = run(graph);
+  return mod;
+}
+/** Run a layout to rest and return its snapshot. */
+function settle(mod, g, options = {}) {
+  const time = clock(); let settled = 0;
+  const layout = createLayout(vowlEngine(mod), {...time, now: () => 0, onSettled: () => settled++, ...options});
+  layout.setGraph(g); time.run();
+  const p = layout.positions(); layout.destroy();
+  assert.equal(settled, 1);
+  return p;
+}
+function minPairDistance(p) {
+  let min = Infinity;
+  for (let i = 0; i < p.length; i += 2) for (let j = i + 2; j < p.length; j += 2) min = Math.min(min, Math.hypot(p[i] - p[j], p[i + 1] - p[j + 1]));
+  return min;
+}
+/** A hub with twenty leaves plus three unconnected nodes: crowded by default. */
+const star = {
+  nodes: [{id: 'hub', label: 'hub'}, ...Array.from({length: 20}, (_, i) => ({id: `l${i}`, label: `l${i}`})), ...Array.from({length: 3}, (_, i) => ({id: `iso${i}`, label: `iso${i}`}))],
+  edges: Array.from({length: 20}, (_, i) => ({source: 'hub', target: `l${i}`})),
+};
+
+test('drives the vowl-wasm simulation to a finite, spread, deterministic layout', {skip}, async () => {
+  const mod = await vowl();
+  const first = settle(mod, graph);
   assert.ok(first.every(Number.isFinite));
-  assert.deepEqual(Array.from(run(graph)), Array.from(first), 'same graph, same layout');
+  assert.deepEqual(Array.from(settle(mod, graph)), Array.from(first), 'same graph, same layout');
   const d = (i, j) => Math.hypot(first[i * 2] - first[j * 2], first[i * 2 + 1] - first[j * 2 + 1]);
   assert.ok(d(0, 1) > 20 && d(0, 1) < 200 && d(0, 2) > 20 && d(0, 2) < 200, 'linked notes rest near the spring length');
   assert.ok(d(1, 2) > 20, 'siblings do not overlap');
@@ -256,5 +345,53 @@ test('drives the vowl-wasm simulation to a finite, spread, deterministic layout'
   assert.deepEqual(Array.from(layout.positions().slice(10, 12)), [900, 900], 'a pinned node stays under the pointer');
   assert.equal(layout.unpin('n5'), true); time.run();
   assert.ok(layout.positions().every(Number.isFinite));
+  layout.destroy();
+});
+
+test('without params the real engine lays out exactly as ontomark-graph 0.3.0 did', {skip}, async () => {
+  const mod = await vowl();
+  // Recorded from ontomark-graph 0.3.0's driver, before parameters existed; vowl-wasm 0.3.0 and 0.4.0 agree.
+  const recorded = [11.24706745147705, 0.23808103799819946, -45.811763763427734, 19.130062103271484, -1.5592970848083496, -57.684757232666016, 34.60725784301758, 44.849124908447266];
+  if (['0.3.0', '0.4.0'].includes(mod.version())) assert.deepEqual(Array.from(settle(mod, graph)), recorded);
+  assert.deepEqual(Array.from(settle(mod, graph, {params: {}})), Array.from(settle(mod, graph)), 'an empty params object changes nothing');
+  assert.deepEqual(Array.from(settle(mod, star, {params: {collideRadius: 0, componentGravity: 0}})), Array.from(settle(mod, star)), 'passing the defaults changes nothing');
+});
+
+test('the recommended params keep nodes two collision radii apart and pack loose components in', {skip}, async () => {
+  const mod = await vowl();
+  const supported = vowlEngine(mod).supportedParams;
+  if (!supported.includes('collideRadius')) { assert.deepEqual(settle(mod, star, {params: RECOMMENDED_LAYOUT_PARAMS}).every(Number.isFinite), true); return; }
+  const r = RECOMMENDED_LAYOUT_PARAMS.collideRadius;
+  const plain = settle(mod, star), tuned = settle(mod, star, {params: RECOMMENDED_LAYOUT_PARAMS});
+  assert.ok(minPairDistance(plain) < 1.5 * r, `the default layout crowds this fixture (min ${minPairDistance(plain)})`);
+  assert.ok(minPairDistance(tuned) >= 2 * r - 0.5, `min pair distance ${minPairDistance(tuned)} with collideRadius ${r}`);
+  const extent = (p) => Math.max(...Array.from({length: p.length / 2}, (_, i) => Math.hypot(p[i * 2], p[i * 2 + 1])));
+  const loose = {...star, edges: star.edges.slice(0, 12)};
+  assert.ok(extent(settle(mod, loose, {params: RECOMMENDED_LAYOUT_PARAMS})) < extent(settle(mod, loose)), 'component gravity draws fragments in');
+  const tight = settle(mod, star, {params: {...RECOMMENDED_LAYOUT_PARAMS, collideRadius: 14}});
+  assert.ok(minPairDistance(tight) >= 28 - 0.5 && minPairDistance(tight) < minPairDistance(tuned), 'collideRadius 14 packs tighter');
+});
+
+test('a live parameter change re-lays a settled graph, and params survive a graph update', {skip}, async () => {
+  const mod = await vowl();
+  const time = clock(), ignored = [];
+  const layout = createLayout(vowlEngine(mod), {...time, now: () => 0, onIgnoredParams: (keys) => ignored.push(...keys)});
+  layout.setGraph(star); time.run();
+  assert.ok(minPairDistance(layout.positions()) < 30);
+  const result = layout.setParams({...RECOMMENDED_LAYOUT_PARAMS, reheat: 1});
+  assert.deepEqual(ignored, result.ignored);
+  time.run();
+  assert.ok(layout.positions().every(Number.isFinite));
+  if (!vowlEngine(mod).supportedParams.includes('collideRadius')) {
+    // An older bundle: the readability keys are reported as ignored, and the layout carries on.
+    assert.deepEqual(result, {applied: [], ignored: [...Object.keys(RECOMMENDED_LAYOUT_PARAMS), 'reheat']});
+    return layout.destroy();
+  }
+  assert.deepEqual(result.ignored, ['reheat']);
+  assert.ok(minPairDistance(layout.positions()) >= 2 * RECOMMENDED_LAYOUT_PARAMS.collideRadius - 0.5, 'a settled layout resumes and separates');
+  // A changed graph is a fresh load: the params still apply.
+  const grown = {nodes: [...star.nodes, {id: 'late', label: 'late'}], edges: [...star.edges, {source: 'hub', target: 'late'}]};
+  layout.setGraph(grown); time.run();
+  assert.ok(minPairDistance(layout.positions()) >= 2 * RECOMMENDED_LAYOUT_PARAMS.collideRadius - 0.5, 'params survive a reload');
   layout.destroy();
 });

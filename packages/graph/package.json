@@ -1,10 +1,14 @@
 {
   "name": "@dreamlab-ai/ontomark-graph",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Shared offline graph rendering, traversal and layout driving for desktop and web consumers",
   "type": "module",
   "license": "MIT OR Apache-2.0",
-  "repository": {"type": "git", "url": "https://github.com/DreamLab-AI/ontomark", "directory": "packages/graph"},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DreamLab-AI/ontomark",
+    "directory": "packages/graph"
+  },
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
@@ -18,11 +22,15 @@
   "files": [
     "src",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE-MIT",
     "LICENSE-APACHE",
     "NOTICE"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "@dreamlab-ai/vowl-wasm": "0.4.0"
   }
 }
