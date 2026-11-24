@@ -64,3 +64,18 @@ Graph package 0.3.0 adds a third consumer and a layout driver, both inside the b
 - **The engine is `vowl-wasm`'s existing force simulation**, through an adapter. No second layout implementation and no second graph codec were written: bundles without `loadArrays` take the graph through the module's own NGG1 encoder.
 
 Verified here: 29 package tests, one of them against the released `vowl-wasm` 0.2.3 bundle and against a `vowl-wasm` build with `loadArrays`. An independent review of the driver found five defects (a drag stopping the layout on bundles before 0.2.2, a second failed graph going unreported, an unchanged graph leaving a reseeded renderer unarranged, a throwing host callback stalling unseen, and an early settle); each is fixed with a regression test. Not verified here: a browser run of the mounted renderer with the driver, and any measurement of layout cost on large graphs.
+
+## Status note, 24 November 2026
+
+Graph package 0.4.0 (released 2026-11-23, PR #8) passes layout engine parameters through the driver. This stays inside the boundary above, and the note on 0.3.0 still holds: no second layout implementation and no codec, and the renderer is unchanged. Everything new is opt-in. Without `params` the layout is exactly the 0.3.0 one.
+
+- **`createLayout` option `params`, and live `layout.setParams(params)`.** These pass parameters to an engine that has `setParams`. The values merge over earlier ones, and a loaded layout restarts warm. Keys the engine cannot apply come back as `{applied, ignored}` and reach the option `onIgnoredParams`.
+- **`vowlEngine` engines gain `setParams` and `supportedParams`.** `NggExplorer.setParam` ignores keys it does not know and has no getter, so the adapter reads the bundle's `version()` and applies only the keys that version has:
+  - `charge`, `linkDistance`, `linkStrength`, `damping`, `centerGravity` and `alphaMin` from 0.2.0;
+  - `theta` from 0.2.1;
+  - the collision keys `collideRadius`, `collideStrength` and `collideIterations`, plus `componentGravity`, from `vowl-wasm` 0.4.0.
+
+  A bundle with no readable version gets the 0.2.0 keys. Applied values are set again after every load, and `reheat` is never treated as a parameter.
+- **`RECOMMENDED_LAYOUT_PARAMS`** (`collideRadius` 21, `collideStrength` 0.7, `collideIterations` 3, `componentGravity` 0.1) carries the `vowl-wasm` 0.4.0 `NggExplorer` collision and component-gravity settings, for nodes drawn at up to 12 px radius plus a label.
+
+Verified here at `8222170`: 36 package tests pass (`node --test`), including those that run the driver against the real `@dreamlab-ai/vowl-wasm` 0.4.0 bundle. That bundle is a dev dependency pinned with its integrity, and CI requires it (`ONTOMARK_REQUIRE_VOWL`). Without params the 0.3.0 layout is reproduced exactly, and with the recommended params every pair of nodes is at least two collision radii apart. Downstream, WasmVOWL's modern explorer lays out on `NggExplorer` through this driver and adapter. The README version table and `packages/graph/README.md` already name 0.4.0 as current. Not verified here: a browser run of the mounted renderer with the driver, or any measurement of layout cost on large graphs.
