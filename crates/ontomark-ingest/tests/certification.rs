@@ -30,6 +30,10 @@ fn subject(verified: &str) -> Document {
 
 /// Accept one `is-a` and one `note` proposal against a note with `verified`.
 fn run(verified: &str) -> (Vec<String>, Vec<(String, String)>) {
+    run_with(verified, Options::default())
+}
+
+fn run_with(verified: &str, options: Options) -> (Vec<String>, Vec<(String, String)>) {
     let profile = profile();
     let graph = Document::parse("---\ntype: Class\niri: urn:x:Graph\n---\n");
     let kg = subject(verified);
@@ -38,7 +42,7 @@ fn run(verified: &str) -> (Vec<String>, Vec<(String, String)>) {
         &profile,
         [(DocId::new("Graph.md"), &graph), (id.clone(), &kg)],
     );
-    let ingest = Ingest::new(&profile, &model, Options::default());
+    let ingest = Ingest::new(&profile, &model, options);
     let request = ingest.plan(&id, &kg).unwrap();
     let response = ModelResponse::new(
         0,
@@ -194,4 +198,39 @@ fn bound_reviews_report_freshness_without_unlocking_ingest() {
     assert_eq!(stale.current, 0);
     assert_eq!(stale.stale, 1);
     assert!(stale.covers("value"));
+}
+
+/// Item 1: under vocabulary 3 the old `human:` spelling does not certify, and
+/// only the roster's keys do; the default (vocabulary 2) keeps the prefix rule.
+#[test]
+fn the_old_human_spelling_certifies_only_when_the_host_allows_it() {
+    let by_human = subject(
+        "verified:\n  - by: human:npub1x\n    at: 2026-11-04T00:00:00Z\n    keys: [is-a]\n",
+    );
+    let by_did = subject(
+        "verified:\n  - by: did:nostr:ab\n    at: 2026-11-04T00:00:00Z\n    keys: [is-a]\n",
+    );
+    let humans = ["did:nostr:ab".to_owned()];
+    assert!(Certification::of_under(&by_human, "verified", &humans, true).covers("is-a"));
+    assert!(!Certification::of_under(&by_human, "verified", &humans, false).covers("is-a"));
+    assert!(Certification::of_under(&by_did, "verified", &humans, false).covers("is-a"));
+    assert!(!Certification::of_under(&by_did, "verified", &[], false).covers("is-a"));
+    assert!(Options::default().legacy_human_prefix);
+    // End to end through `accept`: with the prefix off the whole-page `human:`
+    // stamp protects nothing; with a roster key it protects everything.
+    let whole = "verified:\n  - by: human:npub1x\n    at: 2026-11-04T00:00:00Z\n";
+    let mut off = Options::default();
+    off.legacy_human_prefix = false;
+    let (accepted, withheld) = run_with(whole, off.clone());
+    assert_eq!(accepted.len(), 2, "{withheld:?}");
+    assert!(withheld.is_empty());
+    let (accepted, withheld) = run(whole);
+    assert!(accepted.is_empty(), "the default keeps the prefix rule");
+    assert_eq!(withheld.len(), 2);
+    let did_whole = "verified:\n  - by: did:nostr:ab\n    at: 2026-11-04T00:00:00Z\n";
+    let mut with_roster = off;
+    with_roster.human_dids = vec!["did:nostr:ab".to_owned()];
+    let (accepted, withheld) = run_with(did_whole, with_roster);
+    assert!(accepted.is_empty());
+    assert_eq!(withheld.len(), 2);
 }

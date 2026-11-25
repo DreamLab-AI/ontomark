@@ -173,9 +173,15 @@ pub struct Options {
     pub verified_key: String,
     /// `did:nostr:` keys that name a human principal (the attribution roster's
     /// `kind: human` principals and their `also` keys, vocabulary 3). A
-    /// `verified` stamp by one of them certifies like a `human:` stamp. Empty
-    /// by default, which leaves only `human:` stamps certifying.
+    /// `verified` stamp by one of them certifies. Empty by default, which leaves
+    /// only `human:` stamps certifying (see [`Options::legacy_human_prefix`]).
     pub human_dids: Vec<String>,
+    /// Whether the old `human:<npub or label>` spelling certifies. `true` (the
+    /// default) is the vocabulary 2 rule as released. Vocabulary 3 makes that
+    /// spelling an invalid stamp that does not certify, so a host reading a
+    /// vocabulary 3 vault sets `false` and only [`Options::human_dids`] certify
+    /// (the CLI does this; a host that does not keeps the prefix rule).
+    pub legacy_human_prefix: bool,
 }
 
 impl Default for Options {
@@ -187,6 +193,7 @@ impl Default for Options {
             suggestions: 3,
             verified_key: "verified".to_owned(),
             human_dids: Vec::new(),
+            legacy_human_prefix: true,
         }
     }
 }

@@ -536,10 +536,12 @@ fn execute(
     let model = Model::build(&model_profile, notes.iter().map(|n| (n.id.clone(), &n.doc)));
     let mut options = Options::default();
     if vocab.is_v3() {
-        // A `verified` stamp by a human principal's did:nostr key certifies
-        // like a `human:` stamp, so the ingest guard keeps protecting it.
+        // A `verified` stamp by a human principal's did:nostr key certifies,
+        // so the ingest guard keeps protecting it; the old `human:` spelling
+        // is an invalid stamp under version 3 and no longer does (B1).
         options.human_dids =
             ontomark_compile::build::attribution::Roster::discover(root).human_dids();
+        options.legacy_human_prefix = false;
     }
     let ingest = Ingest::new(&model_profile, &model, options.clone());
 

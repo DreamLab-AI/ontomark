@@ -604,3 +604,49 @@ fn vault_propose_dry_run_accepts_the_manifest() {
     );
     eprintln!("diff:\n{diff}");
 }
+
+/// Item 1 through the CLI: a whole-page `verified` stamp in the old
+/// `human:<npub>` spelling locks the page under vocabulary 2 (nothing is
+/// proposed for it) but not under vocabulary 3, where that spelling is an
+/// invalid stamp and certifies nothing; a roster principal's did stamp locks it
+/// under 3.
+#[test]
+fn the_old_human_spelling_locks_a_page_only_under_version_2() {
+    const OPERATOR: &str =
+        "did:nostr:b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a";
+    let stamped = |by: &str| format!("verified:\n- by: {by}\n  at: '2026-11-04T00:00:00Z'\n");
+    let proposed = |e: &Env| {
+        let stub = Stub::start();
+        let out = run_model(e, &stub, &[]);
+        assert!(out.status.success(), "{out:?}");
+        let ev = evidence(e);
+        let page = std::fs::read_to_string(e.work.join("bundle/manifest/Quantum Widget.md"));
+        (ev.to_string(), page.unwrap_or_default())
+    };
+    let v3 = |e: &Env| {
+        let vocab = e.repo.join("ontology/vocabulary.yaml");
+        let text = std::fs::read_to_string(&vocab).unwrap();
+        std::fs::write(&vocab, text.replacen("version: 1", "version: 3", 1)).unwrap();
+        write(
+            &e.repo.join("ontology/attribution.yaml"),
+            &format!("principals:\n  - did: {OPERATOR}\n    label: jjohare\n    kind: human\n"),
+        );
+    };
+
+    let e = env(&stamped("human:npub1abc"));
+    let (ev, page) = proposed(&e);
+    assert!(ev.contains("certified"), "version 2: {ev}");
+    assert!(!page.contains("[[Gamma]]"), "{page}");
+
+    let e = env(&stamped("human:npub1abc"));
+    v3(&e);
+    let (ev, page) = proposed(&e);
+    assert!(!ev.contains("\"certified\""), "version 3: {ev}");
+    assert!(page.contains("[[Gamma]]"), "{page}");
+
+    let e = env(&stamped(OPERATOR));
+    v3(&e);
+    let (ev, page) = proposed(&e);
+    assert!(ev.contains("certified"), "version 3, roster key: {ev}");
+    assert!(!page.contains("[[Gamma]]"), "{page}");
+}

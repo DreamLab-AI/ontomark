@@ -646,4 +646,72 @@ mod tests {
         assert!(okf.is_human_verified_with(Some(&roster)));
         assert!(!okf.is_human_verified());
     }
+
+    /// Item 1: under vocabulary 3 the retired `human:<npub or label>` spelling
+    /// certifies nowhere (page certification, the stable-page warning, the
+    /// roster's own test), with or without a roster; under vocabulary 2 the
+    /// prefix rule is as released.
+    #[test]
+    fn the_old_human_spelling_certifies_only_under_version_2() {
+        use crate::input::okf::{Certification, OkfBlock};
+        use crate::input::vocabulary::Vocabulary;
+        let v2 = Vocabulary::from_yaml_str("version: 2\n").unwrap();
+        let v3 = Vocabulary::from_yaml_str("version: 3\n").unwrap();
+        let roster = roster();
+        for by in [
+            "human:npub16kv2h3hdalphuyzj8tkycq8cm9n54ymer23558ds80afkc9e7frqwrawzj",
+            "human:jjohare",
+        ] {
+            let src = format!(
+                "---\ntype: Class\nresource: urn:ngm:class:a\nstatus: stable\npublic: true\nverified:\n  - by: {by}\n    at: '2026-11-04T00:00:00Z'\n---\n"
+            );
+            let page = crate::input::page::Page::parse(
+                std::path::Path::new("/v/A.md"),
+                "A.md",
+                "A".to_owned(),
+                &src,
+            )
+            .unwrap();
+            let okf = OkfBlock::from_frontmatter(&page.frontmatter);
+            for r in [None, Some(&roster)] {
+                assert_eq!(
+                    Certification::for_page_under(&page, &v3, r).state(),
+                    "pending",
+                    "{by}"
+                );
+                assert!(!okf.is_human_verified_under(&v3, r), "{by}");
+                assert_eq!(
+                    Certification::for_page_under(&page, &v2, r).state(),
+                    "certified",
+                    "{by}"
+                );
+                assert!(okf.is_human_verified_under(&v2, r), "{by}");
+            }
+            let stamp = &okf.verified[0].by;
+            assert!(
+                !roster.is_human_actor(stamp),
+                "{by}: a roster never reads the prefix"
+            );
+            assert!(!roster.is_human_by(by));
+        }
+        // A did stamp by the operator certifies under 3 with the roster only.
+        let src = format!(
+            "---\ntype: Class\nresource: urn:ngm:class:a\nstatus: stable\npublic: true\nverified:\n  - by: {B4}\n    at: '2026-11-04T00:00:00Z'\n---\n"
+        );
+        let page = crate::input::page::Page::parse(
+            std::path::Path::new("/v/A.md"),
+            "A.md",
+            "A".to_owned(),
+            &src,
+        )
+        .unwrap();
+        assert_eq!(
+            Certification::for_page_under(&page, &v3, Some(&roster)).state(),
+            "certified"
+        );
+        assert_eq!(
+            Certification::for_page_under(&page, &v3, None).state(),
+            "pending"
+        );
+    }
 }

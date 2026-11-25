@@ -471,6 +471,34 @@ impl Certification {
         }
     }
 
+    /// [`Certification::for_page_with`] under `vocab`: the one entry point
+    /// the build, validation and the page API use. Under vocabulary 3 the
+    /// retired `human:<npub or label>` spelling does not certify (it is an
+    /// `INVALID_STAMP` error) and only a roster principal's own keys of
+    /// `kind: human` do (B1); with no roster nothing certifies. Under
+    /// vocabulary 2 the `human:` prefix rule is exactly as released.
+    #[must_use]
+    pub fn for_page_under(
+        page: &crate::input::page::Page,
+        vocab: &crate::input::vocabulary::Vocabulary,
+        roster: Option<&crate::build::attribution::Roster>,
+    ) -> Self {
+        if !vocab.is_v3() {
+            return Self::for_page_with(page, roster);
+        }
+        let doc = ontomark_parse::Document::parse(&page.source);
+        let assessment = ontomark_parse::certification::assess_with(&doc, "verified", &|by| {
+            roster.is_some_and(|r| r.is_human_by(by))
+        });
+        Self {
+            whole_page: assessment.whole_page,
+            keys: assessment.keys.into_iter().collect(),
+            current: assessment.current,
+            stale: assessment.stale,
+            unbound: assessment.unbound,
+        }
+    }
+
     /// `certified` (whole page), `partial` (some keys) or `pending` (none).
     #[must_use]
     pub fn state(&self) -> &'static str {
@@ -554,6 +582,25 @@ impl OkfBlock {
         self.verified
             .iter()
             .any(|s| s.by.is_human() || roster.is_some_and(|r| r.is_human_actor(&s.by)))
+    }
+
+    /// [`OkfBlock::is_human_verified_with`] under `vocab`. Under vocabulary 3
+    /// only a roster principal's own keys of `kind: human` count; the retired
+    /// `human:` spelling does not. Under vocabulary 2 it is
+    /// [`OkfBlock::is_human_verified_with`] unchanged.
+    #[must_use]
+    pub fn is_human_verified_under(
+        &self,
+        vocab: &crate::input::vocabulary::Vocabulary,
+        roster: Option<&crate::build::attribution::Roster>,
+    ) -> bool {
+        if vocab.is_v3() {
+            self.verified
+                .iter()
+                .any(|s| roster.is_some_and(|r| r.is_human_actor(&s.by)))
+        } else {
+            self.is_human_verified_with(roster)
+        }
     }
 }
 

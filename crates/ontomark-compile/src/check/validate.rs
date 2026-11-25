@@ -926,7 +926,10 @@ fn validate_okf(
         _ => {}
     }
 
-    if !own_status && okf.status == Some(Status::Stable) && !okf.is_human_verified_with(roster) {
+    if !own_status
+        && okf.status == Some(Status::Stable)
+        && !okf.is_human_verified_under(vocab, roster)
+    {
         report.push(
             path,
             Severity::Warning,

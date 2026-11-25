@@ -954,3 +954,47 @@ fn a_swarm_key_filed_under_the_operator_cannot_approve_or_confirm() {
     r.writer = ontomark_write::Writer::new(HUMAN_ALSO);
     assert!(e.transition(&r).is_ok());
 }
+
+/// Item 1: the old `human:` spelling is only an alias for a KEY here, and the
+/// approver check reads that key through the roster (B1), never the prefix. A
+/// `human:` writer whose key the roster does not list as human is refused; the
+/// operator's own key spelt `human:<npub>` resolves to the operator; a
+/// `human:<label>` is not a key at all.
+#[test]
+fn a_human_prefixed_writer_is_judged_by_its_key_not_its_prefix() {
+    use ontomark_compile::input::principal::{did_body, hex_to_npub};
+    let draft = belief("p1", "draft", "");
+    let e = engine(&[("b/D", &draft)]);
+    let approve = |by: &str| {
+        let mut r = tr(
+            "b/D",
+            Move::Approve {
+                resolutions: vec![],
+            },
+        );
+        r.writer = ontomark_write::Writer::new(by);
+        e.transition(&r)
+    };
+    // The swarm key as `human:<npub>`: still the swarm's key, so refused.
+    let swarm_npub = hex_to_npub(did_body(SWARM).unwrap()).unwrap();
+    assert_eq!(
+        approve(&format!("human:{swarm_npub}")).unwrap_err().code,
+        code::APPROVER
+    );
+    // An unlisted key: the prefix does not make it human.
+    let stranger = hex_to_npub(&"7".repeat(64)).unwrap();
+    assert_eq!(
+        approve(&format!("human:{stranger}")).unwrap_err().code,
+        code::APPROVER
+    );
+    // A label is not a key.
+    assert_eq!(
+        approve("human:jjohare").unwrap_err().code,
+        code::INVALID_REQUEST
+    );
+    // The operator's `also` key spelt `human:<npub>` resolves to the operator
+    // and the stamp is written in the did form.
+    let own = hex_to_npub(did_body(HUMAN_ALSO).unwrap()).unwrap();
+    let plan = approve(&format!("human:{own}")).unwrap();
+    assert!(!format!("{plan:?}").contains("human:"));
+}

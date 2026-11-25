@@ -148,3 +148,46 @@ fn an_instrument_key_does_not_certify_and_an_empty_stamp_is_an_error() {
     assert!(!on("OperatorVerified", "VERIFIED_NOT_HUMAN"));
     assert!(on("EmptyStamp", "INVALID_STAMP"));
 }
+
+/// Item 1 on the fixture: under vocabulary 3 the old `human:<npub>` spelling is
+/// an `INVALID_STAMP` error and no longer certifies (the stable page then has
+/// no human entry: `UNVERIFIED_STABLE`), while the operator's own key still
+/// does. Under vocabulary 2 the prefix rule is as released: no error, and it
+/// certifies.
+#[test]
+fn the_old_human_spelling_does_not_certify_under_version_3() {
+    let run = |repo: &Path| {
+        let out = Command::new(env!("CARGO_BIN_EXE_ontomark"))
+            .arg("--repo")
+            .arg(repo)
+            .args(["validate", "--vault", "knowledge", "--json"])
+            .output()
+            .unwrap();
+        serde_json::from_slice::<serde_json::Value>(&out.stdout).unwrap()
+    };
+    let on = |json: &serde_json::Value, page: &str, code: &str| {
+        json["knowledge"]["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|i| i["path"].as_str().is_some_and(|p| p.contains(page)) && i["code"] == code)
+    };
+    let v3 = run(&fixture());
+    assert!(on(&v3, "HumanPrefixVerified", "INVALID_STAMP"));
+    assert!(on(&v3, "HumanPrefixVerified", "UNVERIFIED_STABLE"));
+    assert!(!on(&v3, "OperatorVerified", "UNVERIFIED_STABLE"));
+    assert!(on(&v3, "SwarmVerified", "UNVERIFIED_STABLE"));
+
+    let dir = tempfile::tempdir().unwrap();
+    let repo = dir.path().join("repo");
+    copy_tree(&fixture(), &repo);
+    let vocab = repo.join("ontology/vocabulary.yaml");
+    let text = std::fs::read_to_string(&vocab).unwrap();
+    std::fs::write(&vocab, text.replacen("version: 3", "version: 2", 1)).unwrap();
+    let v2 = run(&repo);
+    assert!(!on(&v2, "HumanPrefixVerified", "INVALID_STAMP"));
+    assert!(
+        !on(&v2, "HumanPrefixVerified", "UNVERIFIED_STABLE"),
+        "under version 2 the human: prefix still certifies"
+    );
+}

@@ -85,8 +85,34 @@ impl Certification {
     /// ```
     #[must_use]
     pub fn of_with(doc: &Document, verified_key: &str, human_dids: &[String]) -> Self {
+        Self::of_under(doc, verified_key, human_dids, true)
+    }
+
+    /// [`Certification::of_with`] with the vocabulary's reading of the old
+    /// `human:<npub or label>` spelling. Under vocabulary 3 that spelling is an
+    /// invalid stamp and does not certify, so a host passes
+    /// `legacy_human_prefix: false` and only `human_dids` certify. Under
+    /// vocabulary 2 it is `true`, the rule as released.
+    ///
+    /// ```
+    /// use ontomark_ingest::Certification;
+    /// use ontomark_parse::Document;
+    ///
+    /// let doc = Document::parse(
+    ///     "---\nverified:\n  - by: human:npub1x\n    at: 2026-11-04T00:00:00Z\n    keys: [is-a]\n---\n",
+    /// );
+    /// assert!(Certification::of_under(&doc, "verified", &[], true).covers("is-a"));
+    /// assert!(!Certification::of_under(&doc, "verified", &[], false).covers("is-a"));
+    /// ```
+    #[must_use]
+    pub fn of_under(
+        doc: &Document,
+        verified_key: &str,
+        human_dids: &[String],
+        legacy_human_prefix: bool,
+    ) -> Self {
         let assessment = ontomark_parse::certification::assess_with(doc, verified_key, &|by| {
-            ontomark_parse::certification::is_human_prefixed(by)
+            (legacy_human_prefix && ontomark_parse::certification::is_human_prefixed(by))
                 || human_dids.iter().any(|d| d == by)
         });
         Self {

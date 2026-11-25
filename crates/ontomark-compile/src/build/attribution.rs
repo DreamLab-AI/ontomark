@@ -236,13 +236,17 @@ impl Roster {
         Some(ResolvedPrincipal { canonical, kind })
     }
 
-    /// Whether `actor` is a person: a `human:` actor, or a `did:nostr:` key the
+    /// Whether `actor` is a person under the roster: a `did:nostr:` key the
     /// roster resolves to a principal of `kind: human` (canonical or listed
-    /// under `also`). An organisation, an unknown key and an agent are not.
+    /// under `also`, B1). An organisation, an unknown key, an agent and the
+    /// retired `human:<npub or label>` spelling are not: that prefix is a
+    /// vocabulary 2 rule, applied only where the vocabulary is 2
+    /// ([`crate::input::okf::OkfBlock::is_human_verified_under`]), never as a
+    /// roster fact.
     #[must_use]
     pub fn is_human_actor(&self, actor: &Actor) -> bool {
         match actor {
-            Actor::Human(_) => actor.is_human(),
+            Actor::Human(_) => false,
             Actor::Did(_) => self
                 .resolve_principal(&actor.as_string())
                 .is_some_and(|p| p.kind == PrincipalKind::Human),

@@ -595,7 +595,7 @@ impl Corpus {
 
     /// [`Corpus::build`] reading certification against an attribution roster,
     /// so a `verified` stamp by a `did:nostr:` principal of `kind: human`
-    /// certifies like a `human:` stamp (vocabulary 3). `None` is [`Corpus::build`].
+    /// certifies (vocabulary 3, where the old `human:` spelling does not). `None` is [`Corpus::build`].
     #[must_use]
     pub fn build_with(
         vault: &Vault,
@@ -693,7 +693,9 @@ impl Corpus {
                     .get("generated")
                     .and_then(crate::input::okf::Stamp::from_yaml)
                     .map(|st| st.by),
-                certification: crate::input::okf::Certification::for_page_with(page, roster),
+                certification: crate::input::okf::Certification::for_page_under(
+                    page, vocab, roster,
+                ),
                 v3: vocab
                     .is_v3()
                     .then(|| Box::new(v3_facts(page, vocab, roster, &resolve))),
