@@ -151,6 +151,30 @@ pub struct SourceFact {
     pub locator: Option<String>,
 }
 
+/// One `statements` entry (ADR-VG-010 §4): a time-qualified value of one
+/// relation. It is open when it has no `valid_to` and closed when it has one.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StatementFact {
+    /// The relation key as written (`requires`, `standardized-by`, …).
+    pub key: String,
+    /// The value: a wikilink resolved to its IRI, or an IRI as written.
+    pub value: String,
+    /// `valid-from`, when it is a strict UTC second-precision instant.
+    pub valid_from: Option<String>,
+    /// `valid-to`, when it is a strict UTC second-precision instant.
+    pub valid_to: Option<String>,
+    /// `reason`: `world-changed`, `corrected`, `merged`, `renamed` or `withdrawn`.
+    pub reason: Option<String>,
+    /// `replaced-by`, resolved to an IRI.
+    pub replaced_by: Option<String>,
+    /// `at`: when the close was recorded, as written.
+    pub at: Option<String>,
+    /// `by`: the canonical principal DID of whoever recorded it.
+    pub by: Option<String>,
+    /// `sources`: ids of the page's own `sources` entries.
+    pub sources: Vec<String>,
+}
+
 /// What a page says under vocabulary version 3 that the emitters publish
 /// (ADR-VG-010 §7, ADR-VG-011 §1). Absent under version 2, so a version 2 build
 /// is byte-identical to the releases before it.
@@ -176,6 +200,8 @@ pub struct V3Facts {
     pub type_name: Option<String>,
     /// Whether the page's type is a durable memory kind.
     pub memory: bool,
+    /// `statements` entries (ADR-VG-010 §4), values resolved to IRIs.
+    pub statements: Vec<StatementFact>,
     /// Typed `sources` that may be published, in the author's order. Filled by
     /// [`Corpus::attach_sources`]; empty until then.
     pub sources: Vec<SourceFact>,
@@ -484,9 +510,75 @@ fn v3_facts(
             .as_deref()
             .is_some_and(|t| vocab.working_type(t).memory),
         type_name,
+        statements: statements_of(fm, roster, resolve),
         sources: Vec::new(),
         sources_withheld: 0,
     }
+}
+
+/// The page's `statements`, in the author's order. An entry with no usable
+/// `key` or `value` is skipped (`INVALID_STATEMENT` reports it); the value is
+/// resolved like any relation value.
+fn statements_of(
+    fm: &crate::input::frontmatter::Frontmatter,
+    roster: Option<&crate::build::attribution::Roster>,
+    resolve: &dyn Fn(&str, &str) -> Ref,
+) -> Vec<StatementFact> {
+    use crate::input::frontmatter::Wikilink;
+    use crate::input::time::parse_utc_seconds;
+    use serde_norway::Value as Yaml;
+
+    let Some(Yaml::Sequence(items)) = fm.get("statements") else {
+        return Vec::new();
+    };
+    let iri_of = |text: &str| -> Option<String> {
+        Wikilink::parse(text).map_or_else(
+            || is_safe_iri(text).then(|| text.to_owned()),
+            |link| Some(resolve(&link.target, link.label()).iri),
+        )
+    };
+    items
+        .iter()
+        .filter_map(Yaml::as_mapping)
+        .filter_map(|m| {
+            let text = |k: &str| {
+                m.get(Yaml::String(k.into()))
+                    .and_then(Yaml::as_str)
+                    .map(|s| s.trim().to_owned())
+                    .filter(|s| !s.is_empty())
+            };
+            let instant = |k: &str| text(k).filter(|s| parse_utc_seconds(s).is_some());
+            let key = text("key")?;
+            let value = iri_of(&text("value")?)?;
+            let by = text("by")
+                .and_then(|b| b.parse::<crate::input::okf::Actor>().ok())
+                .and_then(|a| a.principal_did())
+                .map(|did| {
+                    roster
+                        .and_then(|r| r.resolve_principal(&did))
+                        .map_or(did, |p| p.canonical)
+                });
+            let sources = match m.get(Yaml::String("sources".into())) {
+                Some(Yaml::Sequence(ids)) => ids
+                    .iter()
+                    .filter_map(Yaml::as_str)
+                    .map(|s| s.trim().to_owned())
+                    .collect(),
+                _ => Vec::new(),
+            };
+            Some(StatementFact {
+                key,
+                value,
+                valid_from: instant("valid-from"),
+                valid_to: instant("valid-to"),
+                reason: text("reason"),
+                replaced_by: text("replaced-by").and_then(|r| iri_of(&r)),
+                at: text("at"),
+                by,
+                sources,
+            })
+        })
+        .collect()
 }
 
 /// An IRI that can be written between `<` and `>` in Turtle unescaped: a

@@ -154,3 +154,85 @@ fn sources_reach_the_published_ontology_and_page_api_without_leaking_a_private_t
         }
     }
 }
+
+/// A public class with one open and one closed statement.
+fn statements_repo(dir: &Path) -> PathBuf {
+    let root = dir.join("repo");
+    write(
+        &root,
+        "ontology/vocabulary.yaml",
+        include_str!("../../ontomark-cli/tests/vocab-v3-vault/ontology/vocabulary.yaml"),
+    );
+    write(
+        &root,
+        "ontology/attribution.yaml",
+        include_str!("../../ontomark-cli/tests/vocab-v3-vault/ontology/attribution.yaml"),
+    );
+    for (name, extra) in [("New", ""), ("Old", ""), ("Hidden", "public: false\n")] {
+        let public = if extra.is_empty() {
+            "public: true\n"
+        } else {
+            extra
+        };
+        write(
+            &root,
+            &format!("knowledge/{name}.md"),
+            &format!("---\ntype: Class\ntitle: {name}\nresource: urn:ngm:class:{}\n{public}status: stable\ngenerated:\n  by: {B4}\n  at: 2026-11-01T00:00:00Z\n---\nBody.\n", name.to_lowercase()),
+        );
+    }
+    write(
+        &root,
+        "knowledge/Subject.md",
+        &format!(
+            "---\ntype: Class\ntitle: Subject\nresource: urn:ngm:class:subject\npublic: true\nstatus: stable\ngenerated:\n  by: {B4}\n  at: 2026-11-01T00:00:00Z\nrequires: ['[[New]]']\nsources:\n- {{ id: iso, resource: 'https://example.org/spec', rel: standard }}\nstatements:\n- {{ key: requires, value: '[[New]]', valid-from: 2022-10-25T00:00:00Z }}\n- {{ key: requires, value: '[[Old]]', valid-from: 2013-10-01T00:00:00Z, valid-to: 2022-10-25T00:00:00Z, reason: world-changed, replaced-by: '[[New]]', at: 2026-11-21T10:00:00Z, by: {B4}, sources: [iso] }}\n- {{ key: requires, value: '[[Hidden]]', valid-from: 2001-01-01T00:00:00Z, valid-to: 2002-01-01T00:00:00Z, reason: world-changed, at: 2026-11-21T10:00:00Z, by: {B4} }}\n---\nBody.\n"
+        ),
+    );
+    write(&root, "working/Note.md", &format!("---\ntype: Note\ntitle: Note\nstatus: draft\nvisibility: shared\npage_resource: urn:visionflow:page:0a0a0a0a0a0a\ngenerated:\n  by: {B4}\n  at: 2026-11-01T00:00:00Z\n---\nx\n"));
+    root
+}
+
+#[test]
+fn open_statements_annotate_the_ontology_and_closed_ones_go_to_history_only() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = statements_repo(dir.path());
+    let out = dir.path().join("out");
+    run_build(&root, &out);
+
+    let ttl = fs::read_to_string(out.join("data/ontology.ttl")).unwrap();
+    assert!(
+        ttl.contains("temporal:validFrom \"2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp"),
+        "{ttl}"
+    );
+    assert!(ttl.contains("owl:annotatedTarget ngm:new"), "{ttl}");
+    assert!(
+        !ttl.contains("2013-10-01")
+            && !ttl
+                .contains("2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp ;\n    temporal:validUntil"),
+        "{ttl}"
+    );
+    assert!(!ttl.contains("temporal:validUntil \"2022"), "{ttl}");
+
+    let history = fs::read_to_string(out.join("data/history.ttl")).unwrap();
+    assert!(history.contains("rdf:object ngm:old"), "{history}");
+    assert!(
+        history.contains("temporal:validUntil \"2022-10-25T00:00:00Z\""),
+        "{history}"
+    );
+    assert!(history.contains("dc:isReplacedBy ngm:new"), "{history}");
+    assert!(
+        history.contains("dc:source <https://example.org/spec>"),
+        "{history}"
+    );
+    assert!(history.contains(B4), "{history}");
+    // The closed statement about a non-public value never reaches any file.
+    let mut all = Vec::new();
+    files(&out, &mut all);
+    for path in all {
+        let text = String::from_utf8_lossy(&fs::read(&path).unwrap()).into_owned();
+        assert!(
+            !text.contains("ngm:hidden") && !text.contains("urn:ngm:class:hidden"),
+            "{}",
+            path.display()
+        );
+    }
+}

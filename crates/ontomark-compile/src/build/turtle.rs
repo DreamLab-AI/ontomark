@@ -144,6 +144,15 @@ impl Graph {
         }
     }
 
+    /// `true` when the graph holds `subject predicate object`.
+    #[must_use]
+    pub fn contains(&self, subject: &Subject, predicate: &str, object: &Term) -> bool {
+        self.triples
+            .get(subject)
+            .and_then(|preds| preds.get(predicate))
+            .is_some_and(|objs| objs.contains(object))
+    }
+
     /// Add a triple with an IRI subject.
     pub fn add_iri(&mut self, subject: &str, predicate: &str, object: Term) {
         self.add(Subject::Iri(subject.to_owned()), predicate, object);
@@ -455,7 +464,9 @@ pub fn build_graph_attributed(
     if vocab.is_v3() {
         for record in &records {
             if let Some(facts) = record.v3.as_deref() {
-                emit_v3_sources(&mut g, profile, &iri_to_uri(profile, &record.iri), facts);
+                let uri = iri_to_uri(profile, &record.iri);
+                emit_v3_sources(&mut g, profile, &uri, facts);
+                emit_v3_open_statements(&mut g, profile, vocab, &uri, facts);
             }
         }
     }
@@ -1000,6 +1011,170 @@ fn emit_v3_sources(g: &mut Graph, profile: &Profile, uri: &str, facts: &crate::i
             g.add(axiom, format!("{vc}sourceAt"), Term::plain(at.clone()));
         }
     }
+}
+
+/// The IRI of the property a `statements` key publishes as, from the
+/// vocabulary's relation table.
+fn statement_property(vocab: &Vocabulary, key: &str) -> Option<String> {
+    vocab.relations.get(key).map(|d| vocab.expand(&d.owl))
+}
+
+/// Publish a page's open statements (ADR-VG-010 §4, §7) as `owl:Axiom`
+/// annotations on the relation triples they qualify, each with
+/// `temporal:validFrom` (the memory-ontology term, per the plan's amendment).
+///
+/// An open statement is already in the relation list, so the triple exists
+/// and is unchanged: the reasoner's input is the same with or without the
+/// annotation. An entry is skipped when it has no strict `valid-from` (there is
+/// nothing to say), when it is closed (closed statements are history, see
+/// [`build_history_graph`]) or when the graph does not hold the triple it
+/// would annotate (a relation this build does not emit, or a value the page
+/// does not list): an annotation never asserts a triple of its own.
+fn emit_v3_open_statements(
+    g: &mut Graph,
+    profile: &Profile,
+    vocab: &Vocabulary,
+    uri: &str,
+    facts: &crate::ir::model::V3Facts,
+) {
+    let stamp = format!("{XSD}dateTimeStamp");
+    for entry in &facts.statements {
+        let (None, Some(from), Some(property)) = (
+            &entry.valid_to,
+            &entry.valid_from,
+            statement_property(vocab, &entry.key),
+        ) else {
+            continue;
+        };
+        let target = Term::Iri(iri_to_uri(profile, &entry.value));
+        if !g.contains(&Subject::Iri(uri.to_owned()), &property, &target) {
+            continue;
+        }
+        let axiom = Subject::Blank(g.fresh_blank());
+        for (p, o) in [
+            (format!("{RDF}type"), Term::Iri(format!("{OWL}Axiom"))),
+            (format!("{OWL}annotatedSource"), Term::Iri(uri.to_owned())),
+            (format!("{OWL}annotatedProperty"), Term::Iri(property)),
+            (format!("{OWL}annotatedTarget"), target),
+            (
+                format!("{TEMPORAL}validFrom"),
+                Term::typed(from.clone(), &stamp),
+            ),
+        ] {
+            g.add(axiom.clone(), p, o);
+        }
+    }
+}
+
+/// The graph of closed statements, written to `data/history.ttl` under
+/// vocabulary 3 (ADR-VG-010 §7: closed statements go to a separate file, never
+/// into `ontology.ttl`, so no reasoner sees a union of versions).
+///
+/// The ADR fixes the file and not its shape, so this is the smallest form that
+/// carries every fact of a closed entry, and it is a ruling for the owner. One
+/// `rdf:Statement` per closed entry: `rdf:subject` the class, `rdf:predicate`
+/// the relation property, `rdf:object` the value, then
+/// `temporal:validFrom` and `temporal:validUntil`, `vc:supersessionReason`
+/// (`reason`), `dcterms:isReplacedBy` (`replaced-by`), `prov:generatedAtTime`
+/// (`at`), `prov:wasAttributedTo` (`by`, the canonical principal) and one
+/// `dcterms:source` per cited source id the page published. `rdf:Statement` is
+/// a reification and so asserts nothing: loading this file beside
+/// `ontology.ttl` does not put a closed triple back. (`owl:Axiom` would: an
+/// OWL parser reads it as the axiom.) An entry whose relation is not in the
+/// vocabulary, or that has no `valid-to`, is not here. Only public records are
+/// written, and a value or replacement naming a non-public page was removed
+/// from the entry when the corpus was cleaned. The graph is empty when no
+/// page has a closed statement, and the file is then a prologue only.
+#[must_use]
+pub fn build_history_graph(profile: &Profile, corpus: &Corpus, vocab: &Vocabulary) -> Graph {
+    let vc = profile.iris.vocabulary_namespace.as_str();
+    let stamp = format!("{XSD}dateTimeStamp");
+    let mut g = Graph::new();
+    for record in corpus
+        .records
+        .iter()
+        .filter(|r| r.public && r.has_ontology && !r.iri.is_empty())
+    {
+        let Some(facts) = record.v3.as_deref() else {
+            continue;
+        };
+        let class = iri_to_uri(profile, &record.iri);
+        for entry in &facts.statements {
+            let (Some(until), Some(property)) =
+                (&entry.valid_to, statement_property(vocab, &entry.key))
+            else {
+                continue;
+            };
+            let node = Subject::Blank(g.fresh_blank());
+            g.add(
+                node.clone(),
+                format!("{RDF}type"),
+                Term::Iri(format!("{RDF}Statement")),
+            );
+            g.add(
+                node.clone(),
+                format!("{RDF}subject"),
+                Term::Iri(class.clone()),
+            );
+            g.add(node.clone(), format!("{RDF}predicate"), Term::Iri(property));
+            g.add(
+                node.clone(),
+                format!("{RDF}object"),
+                Term::Iri(iri_to_uri(profile, &entry.value)),
+            );
+            if let Some(from) = &entry.valid_from {
+                g.add(
+                    node.clone(),
+                    format!("{TEMPORAL}validFrom"),
+                    Term::typed(from.clone(), &stamp),
+                );
+            }
+            g.add(
+                node.clone(),
+                format!("{TEMPORAL}validUntil"),
+                Term::typed(until.clone(), &stamp),
+            );
+            if let Some(reason) = &entry.reason {
+                g.add(
+                    node.clone(),
+                    format!("{vc}supersessionReason"),
+                    Term::plain(reason.clone()),
+                );
+            }
+            if let Some(replacement) = &entry.replaced_by {
+                g.add(
+                    node.clone(),
+                    format!("{DCTERMS}isReplacedBy"),
+                    Term::Iri(iri_to_uri(profile, replacement)),
+                );
+            }
+            if let Some(at) = &entry.at {
+                let term = if crate::input::time::parse_utc_seconds(at).is_some() {
+                    Term::typed(at.clone(), &stamp)
+                } else {
+                    Term::plain(at.clone())
+                };
+                g.add(node.clone(), format!("{PROV}generatedAtTime"), term);
+            }
+            if let Some(by) = &entry.by {
+                g.add(
+                    node.clone(),
+                    format!("{PROV}wasAttributedTo"),
+                    Term::Iri(by.clone()),
+                );
+            }
+            for id in &entry.sources {
+                for source in facts.sources.iter().filter(|s| &s.id == id) {
+                    g.add(
+                        node.clone(),
+                        format!("{DCTERMS}source"),
+                        Term::Iri(source.target.clone()),
+                    );
+                }
+            }
+        }
+    }
+    g
 }
 
 impl Graph {
@@ -1563,6 +1738,131 @@ relations:
                 "{p}\n{ttl}"
             );
         }
+    }
+
+    fn statement(
+        value: &str,
+        from: Option<&str>,
+        to: Option<&str>,
+    ) -> crate::ir::model::StatementFact {
+        crate::ir::model::StatementFact {
+            key: "requires".into(),
+            value: value.into(),
+            valid_from: from.map(Into::into),
+            valid_to: to.map(Into::into),
+            reason: None,
+            replaced_by: None,
+            at: None,
+            by: None,
+            sources: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn version_3_annotates_open_statements_and_writes_closed_ones_to_history() {
+        use crate::ir::model::{Ref, SourceFact, V3Facts};
+        let mut r = record("Standard");
+        r.relations.insert(
+            "requires",
+            vec![Ref {
+                iri: "urn:ngm:class:iso-27001-2022".into(),
+                label: "ISO 27001 2022".into(),
+            }],
+        );
+        let mut closed = statement(
+            "urn:ngm:class:iso-27001-2013",
+            Some("2013-10-01T00:00:00Z"),
+            Some("2022-10-25T00:00:00Z"),
+        );
+        closed.reason = Some("world-changed".into());
+        closed.replaced_by = Some("urn:ngm:class:iso-27001-2022".into());
+        closed.at = Some("2026-11-21T10:00:00Z".into());
+        closed.by = Some(B4.into());
+        closed.sources = vec!["iso".into(), "private-one".into()];
+        r.v3 = Some(Box::new(V3Facts {
+            statements: vec![
+                statement(
+                    "urn:ngm:class:iso-27001-2022",
+                    Some("2022-10-25T00:00:00Z"),
+                    None,
+                ),
+                // Open, but the relation list does not hold it: no annotation, no triple.
+                statement("urn:ngm:class:ghost", Some("2020-01-01T00:00:00Z"), None),
+                // Open with no start says nothing a reader could use.
+                statement("urn:ngm:class:iso-27001-2022", None, None),
+                closed,
+            ],
+            sources: vec![SourceFact {
+                id: "iso".into(),
+                rel: "standard".into(),
+                target: "https://www.iso.org/standard/27001".into(),
+                at: None,
+                locator: None,
+            }],
+            ..V3Facts::default()
+        }));
+        let corpus = corpus_of(vec![r]);
+        let g = build_graph(est(), &corpus, &v3_vocab(), true);
+        let ttl = serialise(est(), &g);
+        assert!(ttl.contains("owl:annotatedProperty vc:requires"), "{ttl}");
+        assert!(
+            ttl.contains("owl:annotatedTarget ngm:iso-27001-2022"),
+            "{ttl}"
+        );
+        assert!(
+            ttl.contains("temporal:validFrom \"2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp"),
+            "{ttl}"
+        );
+        assert_eq!(
+            ttl.matches("owl:annotatedProperty vc:requires").count(),
+            1,
+            "{ttl}"
+        );
+        // Nothing closed, and nothing about a statement that is not in the list, reaches the reasoner's file.
+        assert!(
+            !ttl.contains("iso-27001-2013") && !ttl.contains("ghost"),
+            "{ttl}"
+        );
+        assert!(
+            !ttl.contains("2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp ;\n    temporal:validUntil")
+        );
+
+        let history = serialise(est(), &build_history_graph(est(), &corpus, &v3_vocab()));
+        for want in [
+            "a rdf:Statement",
+            "rdf:subject ngm:standard",
+            "rdf:predicate vc:requires",
+            "rdf:object ngm:iso-27001-2013",
+            "temporal:validFrom \"2013-10-01T00:00:00Z\"^^xsd:dateTimeStamp",
+            "temporal:validUntil \"2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp",
+            "vc:supersessionReason \"world-changed\"",
+            "dc:isReplacedBy ngm:iso-27001-2022",
+            "prov:generatedAtTime \"2026-11-21T10:00:00Z\"^^xsd:dateTimeStamp",
+            "dc:source <https://www.iso.org/standard/27001>",
+        ] {
+            assert!(history.contains(want), "{want}\n{history}");
+        }
+        assert!(history.contains(B4), "{history}");
+        // A source id the page did not publish is not invented.
+        assert!(!history.contains("private-one"), "{history}");
+        // A non-asserting reification: never an axiom, never a class, never the open statement.
+        assert!(
+            !history.contains("owl:Axiom") && !history.contains("owl:Class"),
+            "{history}"
+        );
+        assert!(
+            !history.contains("rdf:object ngm:iso-27001-2022"),
+            "{history}"
+        );
+        assert_eq!(history.matches("a rdf:Statement").count(), 1);
+    }
+
+    #[test]
+    fn history_is_empty_without_closed_statements_and_under_version_2() {
+        let corpus = corpus_of(vec![record("Plain")]);
+        let history = build_history_graph(est(), &corpus, &v3_vocab());
+        assert_eq!(history.iter().count(), 0);
+        assert!(!serialise(est(), &history).contains("temporal"));
     }
 
     #[test]

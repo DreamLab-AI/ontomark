@@ -933,6 +933,19 @@ pub fn run_with(
         }
     }
     staged.add("data/ontology.ttl", turtle::serialise(profile, &graph));
+    // Vocabulary 3: closed statements go to their own file, never into the
+    // ontology the reasoner reads (ADR-VG-010 §7). Always written under
+    // version 3 (a prologue only when no page has one), so the file set does
+    // not depend on the corpus; never written under version 2.
+    if vocab.is_v3() {
+        staged.add(
+            "data/history.ttl",
+            turtle::serialise(
+                profile,
+                &turtle::build_history_graph(profile, &corpus, vocab),
+            ),
+        );
+    }
     staged.add(
         "data/ontology-inferred.ttl",
         reason::inferred_turtle(profile, &reasoning, &generated),
