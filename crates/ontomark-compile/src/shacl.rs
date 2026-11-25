@@ -451,12 +451,24 @@ fn template_regex(template: &str) -> String {
     out
 }
 
+/// The principal grammar of vocabulary 3 (ADR-VG-011 §1): a `did:nostr:` with a
+/// 64-character lower-case hex body, and nothing else. It is the grammar
+/// `validate` enforces on `by` under version 3, where `human:<npub>`,
+/// `agent:` and `process:` are all `INVALID_STAMP` errors (an instrument
+/// belongs in `via`). Whether the key is a person is the roster's `kind`,
+/// which a pattern cannot see; `VERIFIED_NOT_HUMAN` enforces it.
+const V3_PRINCIPAL_PATTERN: &str = "^did:nostr:[0-9a-f]{64}$";
+
 /// The `sh:pattern` for any accepted `generated.by` actor.
 ///
-/// Under vocabulary version 3 a `did:nostr:` principal with a 64-character
-/// lower-case hex body is accepted too, the grammar of `Actor::Did`
-/// (ADR-VG-011 §1). Version 2 shapes are unchanged.
+/// Under vocabulary version 3 only a principal is accepted
+/// ([`V3_PRINCIPAL_PATTERN`]), exactly what `validate` accepts there; the
+/// version 2 actor templates would pass `human:` and instrument spellings
+/// that version 3 rejects. Version 2 shapes are unchanged.
 fn actor_pattern(profile: &Profile, v3: bool) -> String {
+    if v3 {
+        return V3_PRINCIPAL_PATTERN.to_owned();
+    }
     let templates: Vec<&str> = if profile.attribution.actors.is_empty() {
         DEFAULT_ACTORS.to_vec()
     } else {
@@ -467,36 +479,29 @@ fn actor_pattern(profile: &Profile, v3: bool) -> String {
             .map(String::as_str)
             .collect()
     };
-    let mut alternatives: Vec<String> = templates.iter().map(|t| template_regex(t)).collect();
-    if v3 {
-        alternatives.push("did:nostr:[0-9a-f]{64}".to_owned());
-    }
+    let alternatives: Vec<String> = templates.iter().map(|t| template_regex(t)).collect();
     format!("^({})$", alternatives.join("|"))
 }
 
-/// The `sh:pattern` for a human actor. Under version 3 a `did:nostr:`
-/// principal also matches: whether the key is a person is the roster's `kind`,
-/// which a pattern cannot see, and `VERIFIED_NOT_HUMAN` enforces it.
+/// The `sh:pattern` for a human actor. Under version 3 that is a principal
+/// ([`V3_PRINCIPAL_PATTERN`]): `human:` is no longer a stamp spelling there,
+/// and whether the principal is human is the roster's `kind`.
 fn human_pattern(profile: &Profile, v3: bool) -> String {
-    let mut human: Vec<String> = profile
+    if v3 {
+        return V3_PRINCIPAL_PATTERN.to_owned();
+    }
+    let human: Vec<String> = profile
         .attribution
         .actors
         .iter()
         .filter(|t| t.starts_with("human:"))
         .map(|t| template_regex(t))
         .collect();
-    if !v3 {
-        return if human.is_empty() {
-            "^human:.+$".to_owned()
-        } else {
-            format!("^({})$", human.join("|"))
-        };
-    }
     if human.is_empty() {
-        human.push("human:.+".to_owned());
+        "^human:.+$".to_owned()
+    } else {
+        format!("^({})$", human.join("|"))
     }
-    human.push("did:nostr:[0-9a-f]{64}".to_owned());
-    format!("^({})$", human.join("|"))
 }
 
 // ---------------------------------------------------------------------------

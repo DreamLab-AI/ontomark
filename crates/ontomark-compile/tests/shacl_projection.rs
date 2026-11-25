@@ -377,39 +377,107 @@ fn a_generic_profile_yields_shapes_too() {
     assert!(!graph.is_empty());
 }
 
+/// What `validate` says about a stamp's `by` under vocabulary 3: `true` when it
+/// reports `INVALID_STAMP` as an error on `field` (`generated` or `verified`).
+fn validate_rejects_by(by: &str, field: &str) -> bool {
+    use ontomark_compile::check::validate::{validate_with, Severity, Siblings};
+    use ontomark_compile::input::page::Page;
+    use ontomark_compile::ir::model::Corpus;
+
+    let stamp = format!("{{ by: '{by}', at: '2026-11-01T00:00:00Z' }}");
+    let key = if field == "verified" {
+        format!("verified:\n  - {stamp}\n")
+    } else {
+        format!("generated: {stamp}\n")
+    };
+    let text = format!(
+        "---\ntype: Class\ntitle: A\nresource: urn:ngm:class:a\nstatus: draft\npublic: true\n{key}---\nBody.\n"
+    );
+    let page = Page::parse("/v/A.md", "A.md", "A", &text).unwrap();
+    let vault = Vault {
+        root: PathBuf::new(),
+        kind: VaultKind::Knowledge,
+        journals: Vec::new(),
+        skipped: Vec::new(),
+        pages: vec![page],
+    };
+    let mut v3 = vocab();
+    v3.version = 3;
+    let report = validate_with(
+        &estate(),
+        &vault,
+        &Corpus::build(&vault, &v3),
+        &v3,
+        &Siblings::default(),
+    );
+    report
+        .issues
+        .iter()
+        .any(|i| i.code == "INVALID_STAMP" && i.severity == Severity::Error)
+}
+
+/// Like with like (ruling 15): the version 3 `sh:pattern` on a stamp's `by` is
+/// compared with the verdict of `validate` itself on a page carrying that `by`,
+/// not with `Actor::from_str`, which still reads the version 2 spellings. The
+/// two used to diverge (the pattern passed `human:` that `validate` rejects)
+/// and this test compared the pattern with the wrong oracle, so it stayed green.
+///
+/// What the pattern cannot see is the roster's principal `kind`
+/// (`VERIFIED_NOT_HUMAN`), so that rule is outside the comparison.
 #[test]
-fn under_version_3_the_actor_pattern_also_accepts_a_did_nostr_principal() {
+fn under_version_3_the_stamp_patterns_reject_exactly_what_validate_rejects() {
     let profile = estate();
     let mut v3 = vocab();
     v3.version = 3;
-    let pattern_of = |vocab: &Vocabulary| {
+    let patterns = |vocab: &Vocabulary| {
         let graph = shapes(&profile, vocab);
-        let found = graph
+        graph
             .iter()
             .filter(|(_, p, _)| *p == "http://www.w3.org/ns/shacl#pattern")
             .map(|(_, _, o)| plain(o).to_owned())
-            .find(|p| p.contains("agent"));
-        found.expect("actor pattern")
+            .filter(|p| p.contains("did:nostr") || p.contains("agent") || p.contains("human"))
+            .collect::<BTreeSet<_>>()
     };
+    let v3_patterns = patterns(&v3);
+    // The stamp's `by` and the stable-needs-a-human `by` are both the principal grammar.
+    assert_eq!(
+        v3_patterns,
+        BTreeSet::from(["^did:nostr:[0-9a-f]{64}$".to_owned()]),
+        "{v3_patterns:?}"
+    );
+    let re = regex::Regex::new(v3_patterns.first().unwrap()).expect("pattern compiles");
     let hex = "b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a";
-    let did = format!("did:nostr:{hex}");
-    let v3_re = regex::Regex::new(&pattern_of(&v3)).expect("pattern compiles");
-    let v2_re = regex::Regex::new(&pattern_of(&vocab())).expect("pattern compiles");
-    for sample in [
-        did.as_str(),
-        "did:nostr:abc",
-        "did:nostr:B41654017F6850B13857D19D8AE0E3F88F1365600CAB0321E8101C9E92682F7A",
-        "human:npub1abc",
-        "agent:claude/4",
-        "process:vault/1.0",
-        "robot:x",
-    ] {
-        assert_eq!(
-            v3_re.is_match(sample),
-            sample.parse::<Actor>().is_ok(),
-            "v3 pattern vs Actor::from_str on {sample:?}"
-        );
+    let samples = [
+        format!("did:nostr:{hex}"),
+        format!("did:nostr:{}", hex.to_uppercase()),
+        format!("did:nostr:{}", &hex[..63]),
+        format!("did:nostr:{hex}0"),
+        "did:nostr:abc".to_owned(),
+        "human:npub1kst9gqtldpgtzwzh6xwc4c8rlz83xetqpj4sxg0gzqwfayng9aaqlz0mmn".to_owned(),
+        "human:npub1abc".to_owned(),
+        "human:jjohare".to_owned(),
+        "agent:claude/4".to_owned(),
+        "process:vault-migrate/1.0".to_owned(),
+        "robot:x".to_owned(),
+        String::new(),
+    ];
+    for field in ["generated", "verified"] {
+        for sample in &samples {
+            assert_eq!(
+                !re.is_match(sample),
+                validate_rejects_by(sample, field),
+                "v3 pattern vs validate on {field}.by = {sample:?}"
+            );
+        }
     }
-    // Version 2 shapes are byte-for-byte what they were: no did alternative.
-    assert!(!v2_re.is_match(&did));
+    // Version 2 shapes are byte-for-byte what they were: the template alternatives, no did.
+    let v2_re = regex::Regex::new(
+        patterns(&vocab())
+            .iter()
+            .find(|p| p.contains("agent"))
+            .expect("v2 actor pattern"),
+    )
+    .expect("pattern compiles");
+    assert!(!v2_re.is_match(&format!("did:nostr:{hex}")));
+    assert!(v2_re.is_match("human:npub1abc") && v2_re.is_match("agent:claude/4"));
 }
