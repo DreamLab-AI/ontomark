@@ -7,8 +7,8 @@ implementation_status: complete
 activation_status: live
 supersedes: []
 superseded_by: []
-verified_commit: 59e30991886d3d6e808a3ad99281a8a64401d28a
-verified_paths: [crates/ontomark-ingest/src/certification.rs, crates/ontomark-ingest/src/accept.rs, crates/ontomark-ingest/src/judge.rs, crates/ontomark-ingest/src/coverage.rs, crates/ontomark-ingest/tests/certification.rs, crates/ontomark-ingest/tests/coverage.rs, crates/ontomark-cli/src/ground_cmd.rs, crates/ontomark-cli/tests/conformance.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-compile/src/ir/model.rs, crates/ontomark-compile/src/build/page_api.rs, crates/ontomark-compile/src/build/okf.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/write/edit.rs, conformance/fixtures/estate-small.golden/MANIFEST]
+verified_commit: 32b3aacdd9531d06c8c7b256828601364dd34034
+verified_paths: [crates/ontomark-ingest/src/certification.rs, crates/ontomark-ingest/src/accept.rs, crates/ontomark-ingest/src/judge.rs, crates/ontomark-ingest/src/coverage.rs, crates/ontomark-ingest/tests/certification.rs, crates/ontomark-ingest/tests/coverage.rs, crates/ontomark-cli/src/ground_cmd.rs, crates/ontomark-cli/tests/conformance.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-compile/src/ir/model.rs, crates/ontomark-compile/src/build/page_api.rs, crates/ontomark-compile/src/build/okf.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/write/edit.rs, conformance/fixtures/estate-small.golden/MANIFEST, crates/ontomark-compile/src/build/attribution.rs, crates/ontomark-parse/src/certification.rs, crates/ontomark-cli/src/ingest_cmd.rs, crates/ontomark-compile/src/ir/projection.rs]
 owner: jjohare
 review_trigger: the first `verified` stamp written with `keys`; a release that the visionGraph publisher pins; a second actor kind admitted as human; a page API consumer that cannot take the added `certification` field
 repo: ontomark
@@ -54,6 +54,17 @@ different contexts carried one name (visionGraph ADR-VG-009).
    Only `human:<npub>` actors certify, and the stamp must carry `at`.
    `ontomark-ingest`'s `is_human_actor` and `ontomark-compile`'s `Actor::is_human`
    are pinned together by a conformance test over a shared table of actors.
+
+   > **Amended 2026-11-25 by ADR-OM-014; this text is kept as decided.** Under
+   > vocabulary 3 a `verified` stamp by `did:nostr:<64 hex>` also certifies,
+   > provided the attribution roster resolves that key to `kind: human`. A key
+   > resolves to a principal's kind only when it is the principal's own key
+   > (its canonical `did` or one listed under `also`). An instrument, swarm or
+   > process key filed under a human principal keeps its own kind, so it never
+   > certifies. Under vocabulary 2 the roster is not read and this paragraph's
+   > rule stands unchanged. The conformance table now pins only the `human:`
+   > prefix rule. See "Re-verification — 2026-11-25".
+
 2. **Ingest never adds a value to a certified key.**
    - `accept` reads certification from the note itself, never from the host's
      request. It runs the check before the unknown-key check and withholds the
@@ -169,3 +180,65 @@ different contexts carried one name (visionGraph ADR-VG-009).
 ADR-OM-013 adds explicit freshness without changing v2 context meanings. Keyed,
 whole-page, stale and unbound ingest protection pass the certification controls;
 CLI export tests confirm legacy API separation and public projection boundaries.
+
+## Re-verification — 2026-11-25
+
+Re-verified at `32b3aacdd9531d06c8c7b256828601364dd34034` (release/v3, 0.10.0)
+against `git diff 59e3099..32b3aac` over the governed paths, claim by claim.
+
+1. **Who certifies: amended (see the note under Decision 1).** Humanness is
+   now a test the host supplies. `ontomark_parse::certification::assess_with`
+   (`crates/ontomark-parse/src/certification.rs:74`) takes it, and `assess`
+   still passes the `human:` prefix test (`:38`, `:50`). The compiler's
+   `Certification::for_page_with` (`input/okf.rs:456`) accepts the prefix *or*
+   `Roster::is_human_by`. That resolves through `Roster::resolve_principal`
+   (`build/attribution.rs:219`), where a registry principal's own keys carry its
+   `kind` and a generator keeps its own stated `kind` whatever principal it is
+   filed under. The build passes a roster only under vocabulary 3
+   (`build/mod.rs:673-677`), on every projection path
+   (`ir/projection.rs:647-868`). `Roster::human_dids`
+   (`build/attribution.rs:260`) lists every principal of kind human with its
+   `also` keys. It also lists any generator that states `kind: human` itself
+   and that no principal lists.
+   Limits at this revision:
+   - Only the CLI fills ingest's roster keys from the roster
+     (`ingest_cmd.rs:537-543`, vocabulary 3). `Options::human_dids` defaults to
+     empty. The WASM engine accepts it in the options its host passes, but
+     nothing in this repository fills it there. A host that does not pass it
+     gets the prefix rule only, and a `did:nostr:` stamp does not protect its
+     keys. Whether the Obsidian plugin passes it was not checked; that code is
+     in another repository.
+   - Under vocabulary 3 a `human:` stamp is an `INVALID_STAMP` error
+     (`check/v3/stamps.rs:225-235`), but certification still counts it through
+     the prefix rule. A vault with such a stamp fails `validate` and `build`,
+     so nothing publishes it. Ingest still protects the stamp's keys.
+   - `ingest_and_compile_agree_on_human_actors`
+     (`crates/ontomark-cli/tests/conformance.rs:356`) pins only the prefix rule.
+     Roster humanness is pinned by `attribution.rs`'s unit tests and by
+     `vocab_v3.rs::an_instrument_key_does_not_certify_and_an_empty_stamp_is_an_error`.
+2. **Ingest never adds a value to a certified key: holds.** `accept` and the
+   judged path both read certification from the note, now through
+   `Certification::of_with` with `Options::human_dids` (`accept.rs:390`,
+   `judge.rs:665`). The withheld reason is still `certified`.
+3. **The page API reports certification: holds.** The field is unchanged. It
+   is now roster-aware under vocabulary 3 (`ir/model.rs:696`).
+4. **Coverage grading: holds.** `coverage.rs` and `ground_cmd.rs` are unchanged.
+5. **Context v2: holds.** `okf::context_v2` is unchanged. Vocabulary 3 adds
+   `context/v4.jsonld` beside it (ADR-OM-014). The v3-only page keys
+   (`validFrom`, `validUntil`, `recallable`, `sources`, `provenance.via`)
+   appear only in `api/v3/pages` documents (`page_api.rs`, `build_v3_at`), and
+   context v4 maps them. `api/pages` gains no key, and
+   `context_v2_has_a_term_for_every_page_api_key` (`page_api.rs:444`) passes.
+   `context/v1.jsonld` and the estate-small golden `MANIFEST` are unchanged.
+
+Consequences re-read:
+- "The only write path is `ontomark edit --set 'verified+=…'`" still holds for
+  adding a stamp. `verified` is not an engine-owned key in `ontomark-write`, and
+  `edit` now writes through that engine.
+- m0002 rewrites the `by` of existing `verified` entries to the principal's
+  `did:nostr:` form. It adds no binding (`migrate/m0002/mod.rs`, module docs).
+  No bulk certification exists.
+
+Four files are added to `verified_paths` because claim 1 now depends on them:
+`build/attribution.rs`, `ontomark-parse/src/certification.rs`,
+`ingest_cmd.rs` and `ir/projection.rs`.

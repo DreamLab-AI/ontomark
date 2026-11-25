@@ -7,8 +7,8 @@ implementation_status: complete
 activation_status: staged
 supersedes: []
 superseded_by: []
-verified_commit: 59e30991886d3d6e808a3ad99281a8a64401d28a
-verified_paths: [crates/ontomark-compile/src/profile/layout.rs, crates/ontomark-compile/src/profile.rs, crates/ontomark-compile/src/input/page.rs, crates/ontomark-compile/src/input/vocabulary.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/migrate/plan.rs, crates/ontomark-cli/src/main.rs, crates/ontomark-cli/src/migrate_cmd.rs, crates/ontomark-cli/tests/layout_contract.rs, crates/ontomark-compile/src/check/bodies.rs, crates/ontomark-compile/src/check/repair.rs, crates/ontomark-compile/src/migrate/apply.rs, crates/ontomark-compile/src/migrate/journal.rs, crates/ontomark-compile/tests/migrate.rs]
+verified_commit: 32b3aacdd9531d06c8c7b256828601364dd34034
+verified_paths: [crates/ontomark-compile/src/profile/layout.rs, crates/ontomark-compile/src/profile.rs, crates/ontomark-compile/src/input/page.rs, crates/ontomark-compile/src/input/vocabulary.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/migrate/plan.rs, crates/ontomark-cli/src/main.rs, crates/ontomark-cli/src/migrate_cmd.rs, crates/ontomark-cli/tests/layout_contract.rs, crates/ontomark-compile/src/check/bodies.rs, crates/ontomark-compile/src/check/repair.rs, crates/ontomark-compile/src/migrate/apply.rs, crates/ontomark-compile/src/migrate/journal.rs, crates/ontomark-compile/tests/migrate.rs, crates/ontomark-compile/src/migrate/m0002/mod.rs]
 owner: jjohare
 review_trigger: a change to root discovery, role placement, exclusions or a consumer adopting these checks
 repo: ontomark
@@ -100,3 +100,60 @@ changes root discovery, role placement or exclusions. `layout_contract` and the
 The new review-binding CLI dispatch and v3 build outputs preserve filesystem
 root discovery and role separation. The layout, migration and machine-scope
 CLI controls pass with the ADR-2024 implementation.
+
+## Re-verification — 2026-11-25
+
+Re-verified at `32b3aacdd9531d06c8c7b256828601364dd34034` (release/v3, 0.10.0)
+against `git diff 59e3099..32b3aac` over the governed paths. The release
+(ADR-OM-014) touched six of them. The diff leaves root discovery, role placement
+and exclusions as they were. The Decision holds, with one qualification on
+m0002, given below.
+
+- `crates/ontomark-cli/src/main.rs` gains the `memory` subcommand and
+  `V3Context`. Under vocabulary 3, `validate`, `gate`, `create` and `apply`
+  also load the role that was not selected (`main.rs:609-627`), through the same
+  `load`. A load failure of that role is dropped (`.ok()`), not reported: the
+  rules that need the sibling vault then see none. The layout is still checked
+  at dispatch, before any of this. `edit`, `create` and `apply` now make their
+  final write through `ontomark-write`'s `FsStore` (`memory_cmd.rs:395`,
+  `:422`, `:446`). `FsStore` refuses a symlink anywhere below the vault root and
+  a resolved parent outside it (`crates/ontomark-write/src/fs.rs:1-29`). That
+  is stricter than 0.9.0's `edit`, which followed symlinks.
+- `crates/ontomark-compile/src/build/mod.rs` reads the roster and writes
+  `data/history.ttl` and `context/v4.jsonld` under vocabulary 3 only
+  (`build/mod.rs:673-677`, `:936-948`, `:1019-1025`). No path resolution
+  changed.
+- `crates/ontomark-compile/src/input/vocabulary.rs` gains the version switch and
+  the v3 working-type rules. `Vocabulary::discover_path` is unchanged.
+- `crates/ontomark-compile/src/migrate/plan.rs` and `apply.rs` gain
+  `Migration::prepare`, `extra_paths`, the classified diff, whole-tree
+  validation of the result and an external-input digest. `apply` runs
+  `checked_path` and the symlink refusal on every plan entry, so the
+  non-page files m0002 rewrites (`ontology/vocabulary.yaml`,
+  `ontology/attribution.yaml`, templates) get the same target checks as pages
+  (`apply.rs:174-200`). `tests/migrate.rs` changes only to list both shipped
+  migrations.
+
+Qualification (true of the code at this revision, recorded rather than fixed):
+
+- `plan` calls `migration.prepare(repo_root)` *before* `Layout::validate`
+  (`plan.rs:498-502`). For m0002 this reads the roster, the ledgers under
+  `working/podcast-evidence/`, the templates, `transcripts/` and the
+  supersessions input. It reads them at fixed repository-relative paths, not
+  through the profile's roles, using plain `std::fs`, which follows symlinks
+  (`m0002/mod.rs:85-300`). These are reads only. Page enumeration and every
+  write still follow the layout check and the apply-time checks. The Decision's
+  "migration planning check[s] the layout before work" therefore holds for
+  pages and writes, but not for m0002's context read.
+- `plan` reads each `extra_paths` file with `is_file()` and `fs::read`, so a
+  symlinked vocabulary or roster is read through. `apply` then refuses to
+  write it, as a conflict.
+- `ONTOMARK_M0002_SUPERSESSIONS` must canonicalise to a file outside the
+  repository, or the plan errors (`m0002/mod.rs:234-258`). Its SHA-256 is bound
+  into the plan, and `apply` refuses a different or missing input
+  (`apply.rs:140-146`).
+
+`m0002/mod.rs` is added to `verified_paths` because the qualification depends
+on it. At this revision `layout_contract`, `migrate`, `m0002` and
+`m0002_external_input` pass (see the ADR-OM-014 verification section for the
+run).

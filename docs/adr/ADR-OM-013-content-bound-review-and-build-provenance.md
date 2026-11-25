@@ -8,7 +8,7 @@ activation_status: staged
 supersedes: []
 superseded_by: []
 amends: [ADR-OM-012]
-verified_commit: 59e30991886d3d6e808a3ad99281a8a64401d28a
+verified_commit: 32b3aacdd9531d06c8c7b256828601364dd34034
 verified_paths: [crates/ontomark-parse/src/certification.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-ingest/src/certification.rs]
 owner: jjohare
 review_trigger: Digest encoding changes, consumer trust interpretation changes, or a new provenance role is introduced
@@ -51,3 +51,27 @@ is recorded in VisionFlow ADR-2024; implementation, release, adoption and deploy
 are recorded separately.
 
 Verification commands, revisions and results: [ADR-OM-013 receipt](../evidence/ADR-OM-013.md).
+
+## Re-verification — 2026-11-25
+
+Re-verified at `32b3aacdd9531d06c8c7b256828601364dd34034` (release/v3, 0.10.0)
+against `git diff 59e3099..32b3aac` over the three governed paths. The record
+still holds.
+
+- `crates/ontomark-parse/src/certification.rs` moved the "is this `by` a human"
+  test into a parameter. `assess` now calls `assess_with(doc, key,
+  &is_human_prefixed)` (`:38`), and the predicate is the expression the loop
+  used before. For a caller of `assess`, the SHA-256 v1 scope encoding, the
+  scope rules and the current, stale and unbound classification are unchanged.
+- `crates/ontomark-ingest/src/certification.rs` adds `Certification::of_with`.
+  It keeps `of`'s freshness handling and only widens who counts as human
+  (ADR-OM-012 re-verification, ADR-OM-014).
+- `crates/ontomark-compile/src/input/okf.rs` adds the `did:nostr:` actor, `via`
+  on stamps, and `rel`, `at`, `locator` and preserved extensions on `sources`.
+  It also adds `Certification::from_verified_with` and `for_page_with`. The
+  freshness fields (`current`, `stale`, `unbound`) are still copied from the
+  parser's assessment. Source attestations survive parsing better than before:
+  fields the type does not model are now written back.
+
+`certification_freshness` and `review_binding_cli` pass at this revision (see
+the ADR-OM-014 verification section for the run).

@@ -2,7 +2,7 @@
 
 # Architecture Decision Records
 
-_13 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
+_14 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
 
 | ID | Title | Domain | Date | Decision | Impl | Activation | Supersedes | Superseded by | Owner | Repo |
 |----|-------|--------|------|----------|------|------------|------------|---------------|-------|------|
@@ -19,3 +19,4 @@ _13 record(s). Regenerate with_ `bash scripts/adr-ledger.sh write`.
 | [ADR-OM-011](ADR-OM-011-shared-filesystem-layout-checks.md) | Shared filesystem layout checks precede role selection | — | 2026-11-01 | accepted | complete | staged | — | — | jjohare | ontomark |
 | [ADR-OM-012](ADR-OM-012-certification-grounding-and-context-v2.md) | Certified keys are never patched, questions are graded for coverage, and the v2 context is generated and closed over the page API | — | 2026-11-04 | accepted | complete | live | — | — | jjohare | ontomark |
 | [ADR-OM-013](ADR-OM-013-content-bound-review-and-build-provenance.md) | Bind human review to source content and identify the bundle compiler separately | — | 2026-11-15 | accepted | complete | staged | — | — | jjohare | ontomark |
+| [ADR-OM-014](ADR-OM-014-vocabulary-3-the-write-engine-and-estate-temporal-v2.md) | Vocabulary 3 behind a version switch, one validated write path for the CLI, and estate-temporal-v2 | — | 2026-11-25 | accepted | partial | staged | — | — | jjohare | ontomark |
