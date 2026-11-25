@@ -3,7 +3,7 @@
 //!
 //! | code | severity | rule |
 //! |---|---|---|
-//! | `MISSING_WORKING_KEY` | error | a working page without a key `working_required` (default `page_resource`, `visibility`, `generated`) or its type's `required` asks for |
+//! | `MISSING_WORKING_KEY` | error | a working page without a value for a key `working_required` (default `page_resource`, `visibility`, `generated`) or its type's `required` asks for |
 //! | `INVALID_VISIBILITY` | error | `visibility` outside `private`, `shared`, `public` |
 //! | `PRIVATE_UNSUPPORTED` | error | `visibility: private`, which has no store yet (ADR-VG-012 §5) |
 //! | `INVALID_PAGE_RESOURCE` | error | `page_resource` not of the form `urn:visionflow:page:<id>` |
@@ -20,6 +20,25 @@
 //!
 //! The transition table (`ILLEGAL_TRANSITION`) is the write engine's, not
 //! `validate`'s: it needs the previous version of the page.
+//!
+//! # Defaults, decisions and what is not implemented
+//!
+//! A key written with no value (`key:` or `key: ''`) is absent. A present but
+//! empty `generated:` is an `INVALID_STAMP` instead (see `stamps`).
+//!
+//! The per-type `status` sets are **built-in defaults**, not vault decisions,
+//! unless the vault states them under `working_types.<Type>.status` in
+//! `ontology/vocabulary.yaml`: memory kinds default to [`MEMORY_STATUSES`]
+//! (ADR-VG-013 §1); `Brief`, `Proposal` and `Note` default to
+//! `draft | stable | deprecated`. A vault that writes `{}` for a type accepts
+//! the defaults; it should say so rather than imply the set is stated.
+//!
+//! Revalidation intervals (ruling B10: none for `Episode`, 180 days for
+//! `Belief` and `Procedure`) are **not implemented** by `validate` or by the
+//! write engine, which knows only that a revalidation may send an approved
+//! page back to `draft`. The review queue that would carry them lives in
+//! agentbox governance (ADR-VG-013 open item 3); until it exists the interval
+//! is an open decision, not a rule.
 //!
 //! Pages with no frontmatter at all are private scratch (they are never
 //! public) and are skipped. Journals are held to the same required keys.
@@ -40,6 +59,22 @@ use super::Context;
 /// The memory lifecycle of ADR-VG-013 §1.
 pub const MEMORY_STATUSES: [&str; 5] =
     ["draft", "approved", "superseded", "invalidated", "archived"];
+
+/// The deterministic `page_resource` of the working page `id` (its path
+/// without `.md`, `/`-separated): `urn:visionflow:page:` and the SHA-256 of
+/// `visionflow:page:working:<id>`. This is what `m0002-vocabulary-v3` mints
+/// for an existing page, and what a journal gets, because a journal's identity
+/// IS its date (`journals/YYYY-MM-DD`): the same day always names the same
+/// urn, whichever day the note was created on and by whom. Templates and
+/// hosts should call this (through `ontomark memory resource <id>`) rather
+/// than hash anything themselves.
+#[must_use]
+pub fn derived_page_resource(id: &str) -> String {
+    format!(
+        "{PAGE_URN}{}",
+        crate::migrate::sha256_hex(format!("visionflow:page:working:{id}").as_bytes())
+    )
+}
 
 /// The three `visibility` values (ADR-VG-012 §5).
 pub const VISIBILITIES: [&str; 3] = ["private", "shared", "public"];
@@ -98,6 +133,12 @@ fn err(report: &mut Report, path: &str, code: &str, message: impl Into<String>) 
     report.push(path, Severity::Error, code, message);
 }
 
+/// `true` when `key` is present with a value: not null and not blank text.
+pub(crate) fn has_value(fm: &crate::input::frontmatter::Frontmatter, key: &str) -> bool {
+    fm.get(key)
+        .is_some_and(|v| !v.is_null() && v.as_str().is_none_or(|s| !s.trim().is_empty()))
+}
+
 fn has_frontmatter(page: &Page) -> bool {
     page.frontmatter.keys().next().is_some()
 }
@@ -123,7 +164,14 @@ pub(crate) fn check_page(report: &mut Report, page: &Page, vocab: &Vocabulary, c
         .chain(&def.required)
         .filter(|k| seen.insert(k.as_str()))
     {
-        if !fm.has(key) {
+        // A key with no value (`key:`, `key: ''`) is absent. `generated` is the
+        // exception: a present but empty stamp is INVALID_STAMP (stamps.rs).
+        let present = if key == "generated" {
+            fm.has(key)
+        } else {
+            has_value(fm, key)
+        };
+        if !present {
             err(
                 report,
                 path,
@@ -489,6 +537,47 @@ mod tests {
         assert!(!has(&whole, "MISSING_WORKING_KEY"), "{:?}", codes(&whole));
         // A journal with no header at all is still private scratch.
         assert!(!has(&run_journal("- a\n"), "MISSING_WORKING_KEY"));
+    }
+
+    /// S12: a key with no value is absent, and an empty `generated:` is an
+    /// invalid stamp, not silence.
+    #[test]
+    fn an_empty_value_does_not_satisfy_a_required_key() {
+        let head = |generated: &str, extra: &str| {
+            format!("---\ntype: Note\nstatus: draft\npage_resource: urn:visionflow:page:0a1b\nvisibility: shared\n{generated}{extra}---\nbody\n")
+        };
+        let ok = format!("generated: {{ by: {B4}, at: '2026-11-01T00:00:00Z' }}\n");
+        assert!(w(&[("N", &head(&ok, ""))]).errors().is_empty());
+        for empty in ["generated:\n", "generated: ''\n", "generated: {}\n"] {
+            let r = w(&[("N", &head(empty, ""))]);
+            assert!(
+                r.errors().iter().any(|i| i.code == "INVALID_STAMP"),
+                "{empty:?}: {:?}",
+                codes(&r)
+            );
+        }
+        let blank = head(&ok, "").replace("visibility: shared", "visibility:");
+        assert!(has(&w(&[("N", &blank)]), "MISSING_WORKING_KEY"));
+        let ep = "---\ntype: Episode\nstatus: approved\nepisode-url:\nepisode-date: ''\n---\nx\n";
+        let r = w(&[("E", ep)]);
+        let missing = r
+            .issues
+            .iter()
+            .filter(|i| i.code == "MISSING_KIND_KEY")
+            .count();
+        assert_eq!(missing, 2, "{:?}", codes(&r));
+    }
+
+    #[test]
+    fn a_journals_page_resource_is_derived_from_its_own_date() {
+        assert_eq!(
+            super::derived_page_resource("journals/2026-11-02"),
+            "urn:visionflow:page:0a1570b85452e83ef479367c63feb81aa2399f5ec45e25e2f87314ee089fc0f1"
+        );
+        assert_ne!(
+            super::derived_page_resource("journals/2026-11-02"),
+            super::derived_page_resource("journals/2026-11-03")
+        );
     }
 
     #[test]

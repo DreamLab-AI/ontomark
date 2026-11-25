@@ -8,7 +8,7 @@ use ontomark_parse::{Document, FrontmatterState, Patch, Placement, Value};
 
 use super::{Context, Supersession, CANONICAL_PRINCIPAL};
 use crate::input::principal::{did_body, npub_to_hex};
-use crate::migrate::{sha256_hex, Transform};
+use crate::migrate::Transform;
 
 /// The edits one page needs, collected, then applied as two guarded patches
 /// (every set, then every removal), so the engine proves that nothing else in
@@ -331,10 +331,7 @@ pub(crate) fn body_targets(text: &str) -> BTreeSet<String> {
 }
 
 fn page_resource(id: &str) -> String {
-    format!(
-        "urn:visionflow:page:{}",
-        sha256_hex(format!("visionflow:page:working:{id}").as_bytes())
-    )
+    crate::check::v3::state::derived_page_resource(id)
 }
 
 fn ledger_id_of(resource: &str) -> Option<String> {

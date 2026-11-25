@@ -596,6 +596,9 @@ pub fn plan(
             *classes.entry(class).or_insert(0) += 1;
         }
     }
+    if let Some(external) = migration.external_input_digest() {
+        let _ = writeln!(digest_input, "external-input\0{external}");
+    }
     let input_digest = sha256_hex(digest_input.as_bytes());
 
     // The vocabulary and roster the migrated tree is read under: the migrated

@@ -451,6 +451,40 @@ fn templates_are_listed_for_a_human() {
         .expect("listed");
     assert_eq!(t.disposition, Disposition::Refused);
     assert!(t.summary.contains("Templater"));
+    assert!(t.summary.contains("human:"), "{}", t.summary);
+}
+
+/// A template already in the v3 shape is not a standing refusal: only one
+/// that still carries a v2 marker is listed for a human.
+#[test]
+fn a_template_in_the_v3_shape_is_not_listed() {
+    let (_dir, root) = seeded();
+    write(
+        &root,
+        "working/templates/Note.md",
+        &format!("---\ntype: Note\nvisibility: shared\npage_resource: urn:visionflow:page:<% tp.file.title %>\ngenerated: {{ by: {B4}, at: <% tp.date.now(\"x\") %> }}\n---\n"),
+    );
+    write(
+        &root,
+        "working/templates/Old.md",
+        "---\ntype: Note\npublic: false\n---\n",
+    );
+    write(
+        &root,
+        "working/templates/Draft.md",
+        "---\ntype: Draft Concept\n---\n",
+    );
+    let plan = plan_of(&root);
+    assert!(
+        !plan
+            .pages
+            .iter()
+            .any(|p| p.path == "working/templates/Note.md"),
+        "{:?}",
+        plan.pages
+    );
+    assert!(refused_in(&plan, "working/templates/Old.md").contains("public:"));
+    assert!(refused_in(&plan, "working/templates/Draft.md").contains("Draft Concept"));
 }
 
 fn refused_in(plan: &Plan, path: &str) -> String {

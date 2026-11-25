@@ -208,9 +208,13 @@ impl Roster {
 
     /// Resolve a `did:nostr:` DID to its canonical principal and kind
     /// (ADR-VG-011 §3). A registry entry, canonical or listed under `also:`,
-    /// wins. A generator entry is the fallback: its stated `principal:` gives
-    /// the canonical DID, and its `kind: human` makes it a person. `None`
-    /// when the roster knows nothing of the key.
+    /// wins and carries the principal's `kind`: only a principal's own keys do.
+    /// A generator entry is the fallback: its stated `principal:` gives the
+    /// canonical DID it acts for, but its kind is its own stated `kind:`, so a
+    /// swarm, generator or process key is never human whoever it is filed
+    /// under. `None` when the roster knows nothing of the key. Every humanness
+    /// decision (`verified`, certification, the write engine's approver check,
+    /// ingest's key list) goes through this function.
     #[must_use]
     pub fn resolve_principal(&self, did: &str) -> Option<ResolvedPrincipal> {
         if let Some(p) = self
@@ -223,16 +227,12 @@ impl Roster {
                 kind: p.kind,
             });
         }
+        // A generator's `principal:` gives only the canonical DID it acts
+        // for. Its kind is its OWN: an instrument's key never counts as a
+        // person, whoever it is filed under (B1).
         let (kind, principal) = self.generator_facts.get(did)?;
         let canonical = principal.clone().unwrap_or_else(|| did.to_owned());
-        let kind = match (principal, kind) {
-            // A generator filed under a registry principal takes its kind.
-            (Some(p), _) => self.principals.iter().find(|q| &q.did == p).map_or_else(
-                || PrincipalKind::parse(kind.as_deref().unwrap_or("")),
-                |q| q.kind,
-            ),
-            (None, k) => PrincipalKind::parse(k.as_deref().unwrap_or("")),
-        };
+        let kind = PrincipalKind::parse(kind.as_deref().unwrap_or(""));
         Some(ResolvedPrincipal { canonical, kind })
     }
 
@@ -251,16 +251,38 @@ impl Roster {
     }
 
     /// Every `did:nostr:` key that names a person: each principal of
-    /// `kind: human` and its `also` keys, in file order. The ingest crate
+    /// `kind: human` and its `also` keys, in file order, then any generator
+    /// whose own `kind: human` and which no principal lists. Exactly the keys
+    /// for which [`Roster::is_human_by`] holds. The ingest crate
     /// (which cannot depend on this one) takes this list as
     /// `Options::human_dids`.
     #[must_use]
     pub fn human_dids(&self) -> Vec<String> {
-        self.principals
+        let mut out: Vec<String> = self
+            .principals
             .iter()
             .filter(|p| p.kind == PrincipalKind::Human)
             .flat_map(|p| std::iter::once(p.did.clone()).chain(p.also.iter().cloned()))
-            .collect()
+            .collect();
+        let mut own: Vec<&String> = self
+            .generator_facts
+            .iter()
+            .filter(|(did, (kind, _))| {
+                PrincipalKind::parse(kind.as_deref().unwrap_or("")) == PrincipalKind::Human
+                    && self.is_unlisted(did)
+            })
+            .map(|(did, _)| did)
+            .collect();
+        own.sort();
+        out.extend(own.into_iter().cloned());
+        out
+    }
+
+    fn is_unlisted(&self, did: &str) -> bool {
+        !self
+            .principals
+            .iter()
+            .any(|p| p.did == did || p.also.iter().any(|a| a == did))
     }
 
     /// [`Roster::is_human_actor`] for a stamp's `by` text.
@@ -349,7 +371,8 @@ generators:
             )
             .unwrap();
         assert_eq!(org.kind, PrincipalKind::Organisation);
-        // A generator filed under a registry principal takes that principal's kind.
+        // A generator filed under a registry principal canonicalises to it but
+        // keeps its OWN kind: an instrument's key is never human (B1).
         let swarm = r
             .resolve_principal(
                 "did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0",
@@ -357,8 +380,23 @@ generators:
             .unwrap();
         assert_eq!(
             (swarm.canonical.as_str(), swarm.kind),
-            (canonical, PrincipalKind::Human)
+            (canonical, PrincipalKind::Other)
         );
+        let swarm_actor: Actor =
+            "did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0"
+                .parse()
+                .unwrap();
+        assert!(!r.is_human_actor(&swarm_actor));
+        assert!(r.is_human_actor(
+            &"did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246"
+                .parse()
+                .unwrap()
+        ));
+        // `human_dids` agrees with `is_human_actor` on every key it can name.
+        for did in r.human_dids() {
+            assert!(r.is_human_by(&did), "{did}");
+        }
+        assert!(!r.human_dids().iter().any(|d| d.contains("94773a")));
         assert!(r
             .resolve_principal(
                 "did:nostr:0000000000000000000000000000000000000000000000000000000000000000"
@@ -369,6 +407,7 @@ generators:
     #[test]
     fn a_v2_roster_resolves_generators_by_their_stated_kind() {
         let r = Roster::from_yaml_str("generators:\n  - did: did:nostr:aa\n    label: jjohare\n    kind: human\n  - did: did:nostr:bb\n    label: swarm\n    kind: process\n");
+        assert_eq!(r.human_dids(), vec!["did:nostr:aa".to_owned()]);
         assert_eq!(
             r.resolve_principal("did:nostr:aa").unwrap().kind,
             PrincipalKind::Human
