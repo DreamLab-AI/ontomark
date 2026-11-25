@@ -59,6 +59,13 @@ pub fn is_public_under(page: &Page, kind: VaultKind, vocab: &Vocabulary) -> bool
     }
 }
 
+/// [`is_public_under`] where the vocabulary may be unknown: with `None` a page
+/// is public by `public: true`, the version 2 rule.
+#[must_use]
+pub fn is_public_in(page: &Page, kind: VaultKind, vocab: Option<&Vocabulary>) -> bool {
+    vocab.map_or_else(|| page.is_public(), |v| is_public_under(page, kind, v))
+}
+
 /// `true` when current recall may return `page` at `now` (Unix seconds):
 /// an `approved` memory kind (`Episode`, `Belief`, `Procedure`) whose
 /// `valid-from` is not after `now` (absent reads as started, ruling B5) and
@@ -694,6 +701,42 @@ mod tests {
         assert_eq!(r.public_pages, 0);
         let r = run(&[("N", text)], VaultKind::Working, &vocab(2, ""));
         assert_eq!(r.public_pages, 1);
+    }
+
+    /// The record form of the recall flag (`V3Facts::recallable_at`, what the
+    /// page API publishes) agrees with the page form on every case.
+    #[test]
+    fn the_record_recall_flag_agrees_with_the_page_flag() {
+        let v3 = vocab(3, "");
+        let now = 1_795_255_200;
+        for (ty, status, extra) in [
+            ("Belief", "approved", ""),
+            ("Episode", "approved", "valid-from: 2026-01-01T00:00:00Z\n"),
+            ("Belief", "approved", "valid-from: 2030-01-01T00:00:00Z\n"),
+            ("Belief", "approved", "valid-to: 2026-11-21T10:00:00Z\n"),
+            ("Belief", "approved", "valid-to: 2030-01-01T00:00:00Z\n"),
+            ("Belief", "draft", ""),
+            ("Brief", "approved", ""),
+            ("Note", "approved", ""),
+            ("Belief", "superseded", ""),
+        ] {
+            let text = format!("---\ntype: {ty}\nstatus: {status}\n{extra}---\n");
+            let page = crate::input::page::Page::parse("/v/P.md", "P.md", "P", &text).unwrap();
+            let vault = crate::input::page::Vault {
+                root: std::path::PathBuf::from("/v"),
+                kind: VaultKind::Working,
+                pages: vec![page.clone()],
+                journals: Vec::new(),
+                skipped: Vec::new(),
+            };
+            let corpus = crate::ir::model::Corpus::build(&vault, &v3);
+            let facts = corpus.records[0].v3.as_deref().expect("v3 facts");
+            assert_eq!(
+                facts.recallable_at(now),
+                is_recallable(&page, &v3, now),
+                "{ty} {status} {extra}"
+            );
+        }
     }
 
     #[test]

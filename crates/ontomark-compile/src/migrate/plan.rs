@@ -384,8 +384,13 @@ fn identity_of(
         .unwrap_or(under)
         .trim_end_matches(".md");
     let page = Page::parse(rel, under, id, text).ok()?;
+    let kind = if in_vault(layout, VaultKind::Working, rel) {
+        VaultKind::Working
+    } else {
+        VaultKind::Knowledge
+    };
     Some((
-        page.is_public(),
+        crate::check::v3::state::is_public_under(&page, kind, vocab),
         [
             ("resource".to_owned(), page.resource(&vocab.namespace)),
             (

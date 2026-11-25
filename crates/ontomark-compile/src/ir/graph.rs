@@ -169,7 +169,7 @@ impl VaultGraph {
                     title,
                     node_type: page.frontmatter.text("type"),
                     aliases,
-                    public: page.is_public(),
+                    public: crate::check::v3::state::is_public_under(page, vault.kind, vocab),
                 },
             );
         }

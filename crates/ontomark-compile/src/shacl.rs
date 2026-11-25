@@ -452,7 +452,11 @@ fn template_regex(template: &str) -> String {
 }
 
 /// The `sh:pattern` for any accepted `generated.by` actor.
-fn actor_pattern(profile: &Profile) -> String {
+///
+/// Under vocabulary version 3 a `did:nostr:` principal with a 64-character
+/// lower-case hex body is accepted too, the grammar of `Actor::Did`
+/// (ADR-VG-011 §1). Version 2 shapes are unchanged.
+fn actor_pattern(profile: &Profile, v3: bool) -> String {
     let templates: Vec<&str> = if profile.attribution.actors.is_empty() {
         DEFAULT_ACTORS.to_vec()
     } else {
@@ -463,24 +467,36 @@ fn actor_pattern(profile: &Profile) -> String {
             .map(String::as_str)
             .collect()
     };
-    let alternatives: Vec<String> = templates.iter().map(|t| template_regex(t)).collect();
+    let mut alternatives: Vec<String> = templates.iter().map(|t| template_regex(t)).collect();
+    if v3 {
+        alternatives.push("did:nostr:[0-9a-f]{64}".to_owned());
+    }
     format!("^({})$", alternatives.join("|"))
 }
 
-/// The `sh:pattern` for a human actor.
-fn human_pattern(profile: &Profile) -> String {
-    let human: Vec<String> = profile
+/// The `sh:pattern` for a human actor. Under version 3 a `did:nostr:`
+/// principal also matches: whether the key is a person is the roster's `kind`,
+/// which a pattern cannot see, and `VERIFIED_NOT_HUMAN` enforces it.
+fn human_pattern(profile: &Profile, v3: bool) -> String {
+    let mut human: Vec<String> = profile
         .attribution
         .actors
         .iter()
         .filter(|t| t.starts_with("human:"))
         .map(|t| template_regex(t))
         .collect();
-    if human.is_empty() {
-        "^human:.+$".to_owned()
-    } else {
-        format!("^({})$", human.join("|"))
+    if !v3 {
+        return if human.is_empty() {
+            "^human:.+$".to_owned()
+        } else {
+            format!("^({})$", human.join("|"))
+        };
     }
+    if human.is_empty() {
+        human.push("human:.+".to_owned());
+    }
+    human.push("did:nostr:[0-9a-f]{64}".to_owned());
+    format!("^({})$", human.join("|"))
 }
 
 // ---------------------------------------------------------------------------
@@ -752,7 +768,11 @@ pub fn shapes(profile: &Profile, vocab: &Vocabulary) -> Graph {
             b.add_blank(&by, &sh("minCount"), Term::typed("1", &xsd("integer")));
             b.add_blank(&by, &sh("maxCount"), Term::typed("1", &xsd("integer")));
             b.add_blank(&by, &sh("datatype"), Term::Iri(xsd("string")));
-            b.add_blank(&by, &sh("pattern"), Term::plain(actor_pattern(profile)));
+            b.add_blank(
+                &by,
+                &sh("pattern"),
+                Term::plain(actor_pattern(profile, vocab.is_v3())),
+            );
             let at = b.inner_property(&Path::Predicate(fm("at")));
             b.add_blank(&at, &sh("minCount"), Term::typed("1", &xsd("integer")));
             b.add_blank(&at, &sh("maxCount"), Term::typed("1", &xsd("integer")));
@@ -829,7 +849,11 @@ pub fn shapes(profile: &Profile, vocab: &Vocabulary) -> Graph {
         let qualified = b.graph.fresh_blank();
         let by = b.inner_property(&Path::Predicate(fm("by")));
         b.add_blank(&by, &sh("minCount"), Term::typed("1", &xsd("integer")));
-        b.add_blank(&by, &sh("pattern"), Term::plain(human_pattern(profile)));
+        b.add_blank(
+            &by,
+            &sh("pattern"),
+            Term::plain(human_pattern(profile, vocab.is_v3())),
+        );
         b.add_blank(&qualified, &sh("property"), Term::Blank(by));
         b.add_blank(
             &verified,
@@ -1309,7 +1333,7 @@ pub fn frontmatter_graph(
             node,
             class(
                 profile,
-                if page.is_public() {
+                if crate::check::v3::state::is_public_under(page, vault.kind, vocab) {
                     "PublicPage"
                 } else {
                     "PrivatePage"

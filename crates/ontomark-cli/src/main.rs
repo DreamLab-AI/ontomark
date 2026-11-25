@@ -1111,10 +1111,12 @@ fn run() -> anyhow::Result<ExitCode> {
             let changes = changes_of(&args.sets, &args.unsets).map_err(anyhow::Error::msg)?;
             let staged = std::fs::read_to_string(&args.file)
                 .with_context(|| format!("reading {}", args.file.display()))?;
-            let vault = load(&root, &profile, &[VaultKind::Knowledge])?
-                .into_iter()
-                .next()
-                .context("no knowledge vault")?;
+            let selected = load(&root, &profile, &[VaultKind::Knowledge])?;
+            let vault = selected.first().context("no knowledge vault")?;
+            // Under vocabulary 3 the cross-vault and roster rules see the
+            // working vault and the roster, as `validate` does.
+            let v3 = V3Context::load(&root, &profile, &vocab, &selected);
+            let siblings = v3.siblings(vault, &selected);
 
             // Every refusal is exit 2 with nothing written, and under `--json`
             // stdout is still one JSON document naming why.
@@ -1130,8 +1132,9 @@ fn run() -> anyhow::Result<ExitCode> {
                 eprintln!("ontomark: {error}");
                 Ok(ExitCode::from(2))
             };
-            let outcome = match create::prepare(&profile, &vault, &vocab, &staged, &changes, expect)
-            {
+            let outcome = match create::prepare_with(
+                &profile, vault, &vocab, &staged, &changes, expect, &siblings,
+            ) {
                 Ok(outcome) => outcome,
                 Err(error) => return refuse(&error),
             };
@@ -1213,15 +1216,16 @@ fn run() -> anyhow::Result<ExitCode> {
                 Ok(proposal) => proposal,
                 Err(error) => return refuse_with(&error),
             };
-            let vault = load(&root, &profile, &[VaultKind::Knowledge])?
-                .into_iter()
-                .next()
-                .context("no knowledge vault")?;
-            let outcome =
-                match apply::prepare(&profile, &vault, &vocab, &proposal, &changes, expect) {
-                    Ok(outcome) => outcome,
-                    Err(error) => return refuse_with(&error),
-                };
+            let selected = load(&root, &profile, &[VaultKind::Knowledge])?;
+            let vault = selected.first().context("no knowledge vault")?;
+            let v3 = V3Context::load(&root, &profile, &vocab, &selected);
+            let siblings = v3.siblings(vault, &selected);
+            let outcome = match apply::prepare_with(
+                &profile, vault, &vocab, &proposal, &changes, expect, &siblings,
+            ) {
+                Ok(outcome) => outcome,
+                Err(error) => return refuse_with(&error),
+            };
             if let Err(e) = apply::write(&outcome) {
                 return match e.downcast_ref::<apply::ApplyError>() {
                     Some(error) => refuse_with(error),

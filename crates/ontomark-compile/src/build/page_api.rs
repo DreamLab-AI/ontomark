@@ -75,6 +75,23 @@ pub fn build_v3(
     backlinks: &HashMap<String, Vec<String>>,
     roster: &super::attribution::Roster,
 ) -> (Vec<PageDocument>, Value) {
+    build_v3_at(corpus, closure, backlinks, roster, None)
+}
+
+/// [`build_v3`] that also publishes a version 3 page's time and recall state:
+/// `validFrom` and `validUntil` when it has them, and `recallable` (whether
+/// current recall may return it at `now`, Unix seconds) for a durable memory
+/// kind. Only a record built under vocabulary 3 carries those facts, so a
+/// version 2 document is unchanged. `now` of `None` omits `recallable`.
+#[must_use]
+#[allow(clippy::implicit_hasher)]
+pub fn build_v3_at(
+    corpus: &Corpus,
+    closure: &Closure,
+    backlinks: &HashMap<String, Vec<String>>,
+    roster: &super::attribution::Roster,
+    now: Option<i64>,
+) -> (Vec<PageDocument>, Value) {
     let (mut documents, index) = build_attributed(corpus, closure, backlinks, roster);
     let records: HashMap<_, _> = corpus.public().map(|r| (r.page_id.as_str(), r)).collect();
     for doc in &mut documents {
@@ -84,6 +101,17 @@ pub fn build_v3(
                 "stale": record.certification.stale,
                 "unbound": record.certification.unbound,
             });
+            if let Some(facts) = record.v3.as_deref() {
+                if let Some(from) = &facts.valid_from {
+                    doc.value["validFrom"] = json!(from);
+                }
+                if let Some(to) = &facts.valid_to {
+                    doc.value["validUntil"] = json!(to);
+                }
+                if let (true, Some(now)) = (facts.memory, now) {
+                    doc.value["recallable"] = json!(facts.recallable_at(now));
+                }
+            }
         }
     }
     (documents, index)
@@ -254,6 +282,7 @@ mod tests {
             attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
+            v3: None,
             sub_class_of: Vec::new(),
             instance_of: Vec::new(),
             relations: IndexMap::new(),
@@ -407,5 +436,68 @@ mod tests {
         assert_eq!(doc["certification"]["state"], "partial");
         assert_eq!(terms["domain"], "vc:sourceDomain");
         assert_eq!(terms["qualityScore"]["@type"], "xsd:float");
+    }
+
+    /// Version 3: the page document carries its time and recall state, the
+    /// v4 context has a term for each new key, and a version 2 record gains
+    /// nothing.
+    #[test]
+    fn version_3_documents_carry_time_and_recall_and_context_v4_covers_them() {
+        use crate::ir::model::V3Facts;
+        let facts = |status: &str, to: Option<&str>| {
+            Some(Box::new(V3Facts {
+                status: Some(status.into()),
+                valid_from: Some("2026-01-01T00:00:00Z".into()),
+                valid_to: to.map(str::to_owned),
+                memory: true,
+                type_name: Some("Belief".into()),
+                ..V3Facts::default()
+            }))
+        };
+        let mut live = record("Live");
+        live.v3 = facts("approved", None);
+        let mut closed = record("Closed");
+        closed.v3 = facts("approved", Some("2026-11-21T10:00:00Z"));
+        let mut draft = record("Draft");
+        draft.v3 = facts("draft", None);
+        let plain = record("Plain");
+        let now = crate::input::time::parse_utc_seconds("2026-11-25T10:00:00Z");
+        let (docs, _) = build_v3_at(
+            &corpus_of(vec![live, closed, draft, plain]),
+            &Closure::default(),
+            &HashMap::new(),
+            &super::super::attribution::Roster::default(),
+            now,
+        );
+        let by = |slug: &str| docs.iter().find(|d| d.slug == slug).unwrap().value.clone();
+        assert_eq!(by("live")["recallable"], true);
+        assert_eq!(by("closed")["recallable"], false);
+        assert_eq!(by("closed")["validUntil"], "2026-11-21T10:00:00Z");
+        assert_eq!(by("draft")["recallable"], false);
+        assert_eq!(by("live")["validFrom"], "2026-01-01T00:00:00Z");
+        assert!(by("plain").get("recallable").is_none() && by("plain").get("validFrom").is_none());
+        // Without a clock the flag is omitted rather than guessed.
+        let mut again = record("Live");
+        again.v3 = facts("approved", None);
+        let (undated, _) = build_v3(
+            &corpus_of(vec![again]),
+            &Closure::default(),
+            &HashMap::new(),
+            &super::super::attribution::Roster::default(),
+        );
+        assert!(undated[0].value.get("recallable").is_none());
+
+        let vocab = crate::input::vocabulary::Vocabulary::from_yaml_str(
+            "version: 3\nnamespace: \"urn:ngm:class:\"\n",
+        )
+        .unwrap();
+        let ctx = super::super::okf::context_v4(crate::profile::testing::est(), &vocab);
+        let terms = ctx["@context"].as_object().unwrap();
+        for key in by("closed").as_object().unwrap().keys() {
+            assert!(terms.contains_key(key), "page API key {key} has no v4 term");
+        }
+        assert_eq!(terms["validFrom"]["@id"], "temporal:validFrom");
+        assert_eq!(terms["temporal"], "http://nova.dev/temporal#");
+        assert!(terms.contains_key("reviewBinding"), "v4 keeps v3's terms");
     }
 }

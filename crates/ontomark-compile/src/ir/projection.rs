@@ -416,6 +416,7 @@ impl Redactor {
                 .collect(),
             generated_by: r.generated_by.clone(),
             certification: r.certification.clone(),
+            v3: r.v3.clone(),
             sub_class_of: self.clean_refs(&r.sub_class_of),
             instance_of: self.clean_refs(&r.instance_of),
             relations,
@@ -624,7 +625,7 @@ pub fn project_vault_with_links(
     links: &crate::build::redact::PrivateLinks,
 ) -> Result<(Corpus, ProseRedactor), PublicationBlocked> {
     project(profile, &Corpus::build(vault, vocab), extra_private)?;
-    let cleaned = clean_vault(vault, links);
+    let cleaned = clean_vault(vault, links, vocab);
     project_with_redactor(profile, &Corpus::build(&cleaned, vocab), extra_private)
 }
 
@@ -632,13 +633,17 @@ pub fn project_vault_with_links(
 /// every public page's curated links, relation targets, `defines-as` and body
 /// stripped of whatever `links` resolves to a non-public page. Links resolve
 /// from the page's own vault (`vault.kind`), then the other.
-fn clean_vault(vault: &Vault, links: &crate::build::redact::PrivateLinks) -> Vault {
+fn clean_vault(
+    vault: &Vault,
+    links: &crate::build::redact::PrivateLinks,
+    vocab: &Vocabulary,
+) -> Vault {
     let mut cleaned = vault.clone();
     for page in &mut cleaned.pages {
         if crate::build::publish::held_back(&page.rel_path) {
             page.frontmatter.map.insert("public".into(), false.into());
         }
-        if !page.is_public() {
+        if !crate::check::v3::state::is_public_under(page, vault.kind, vocab) {
             continue;
         }
         // Pin the curated set, including an empty set: removing `links` would
@@ -797,8 +802,8 @@ pub fn project_machine(
     );
     Split::checked(&raw, &union_extra)?;
 
-    let cleaned_knowledge = Corpus::build(&clean_vault(knowledge, links), vocab);
-    let cleaned_working = clean_vault(working, links);
+    let cleaned_knowledge = Corpus::build(&clean_vault(knowledge, links, vocab), vocab);
+    let cleaned_working = clean_vault(working, links, vocab);
     let mut working_corpus = Corpus::build(&cleaned_working, vocab);
 
     // A public working page whose identity a public knowledge page already
@@ -955,6 +960,7 @@ mod tests {
             attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
+            v3: None,
             sub_class_of: Vec::new(),
             instance_of: Vec::new(),
             relations: IndexMap::new(),

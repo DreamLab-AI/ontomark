@@ -229,6 +229,33 @@ pub fn prepare(
     changes: &[Change],
     expect: Expectation,
 ) -> Result<Outcome, CreateError> {
+    prepare_with(
+        profile,
+        vault,
+        vocab,
+        staged,
+        changes,
+        expect,
+        &validate::Siblings::default(),
+    )
+}
+
+/// [`prepare`] validating against `siblings`: the other vault and the
+/// attribution roster, which the cross-vault and roster rules of vocabulary
+/// version 3 resolve against. With empty siblings those rules skip, as in
+/// [`prepare`].
+///
+/// # Errors
+/// [`CreateError`], exactly as [`prepare`].
+pub fn prepare_with(
+    profile: &Profile,
+    vault: &Vault,
+    vocab: &Vocabulary,
+    staged: &str,
+    changes: &[Change],
+    expect: Expectation,
+    siblings: &validate::Siblings<'_>,
+) -> Result<Outcome, CreateError> {
     match expect.docs {
         None => return Err(CreateError::UndeclaredBlastRadius),
         Some(1) => {}
@@ -282,7 +309,7 @@ pub fn prepare(
     let after = Corpus::build(&patched, vocab);
 
     let mut blockers = creation_blockers(vault, &before, &after, vocab, &page);
-    for issue in validate::validate(profile, &patched, &after, vocab).errors() {
+    for issue in validate::validate_with(profile, &patched, &after, vocab, siblings).errors() {
         if issue.path == title {
             let blocker = Blocker::new(issue.code.clone(), issue.message.clone());
             if !blockers.contains(&blocker) {
@@ -398,6 +425,51 @@ scalars:
             changes,
             expect,
         )
+    }
+
+    /// Under vocabulary 3 a creation is validated with the roster, so a
+    /// `verified` entry by an organisation is refused; without siblings the
+    /// roster rule has nothing to read and skips (the S4 gap this closes).
+    #[test]
+    fn a_creation_validates_with_the_roster_under_vocabulary_3() {
+        const ORG: &str =
+            "did:nostr:ea3d03d62a8eb3ce6364c0dd02f239a16fa22956a9f31626619f330361be9c00";
+        let dir = tempfile::tempdir().unwrap();
+        let vault = vault_in(dir.path());
+        let mut v3 = vocab();
+        v3.version = 3;
+        let staged = STAGED.replace(
+            "status: draft\n",
+            &format!("status: draft\nverified:\n- {{ by: {ORG}, at: '2026-11-04T00:00:00Z' }}\n"),
+        );
+        let roster = crate::build::attribution::Roster::from_yaml_str(&format!(
+            "principals:\n  - did: {ORG}\n    label: acme\n    kind: organisation\n"
+        ));
+        let go = |siblings: &validate::Siblings<'_>| {
+            prepare_with(
+                &Profile::generic(),
+                &vault,
+                &v3,
+                &staged,
+                &[],
+                docs1(),
+                siblings,
+            )
+        };
+        assert!(go(&validate::Siblings::default()).is_ok());
+        let with = validate::Siblings {
+            vaults: Vec::new(),
+            roster: Some(&roster),
+        };
+        match go(&with) {
+            Err(CreateError::Blocked(blockers)) => {
+                assert!(
+                    blockers.iter().any(|b| b.code == "VERIFIED_NOT_HUMAN"),
+                    "{blockers:?}"
+                );
+            }
+            other => panic!("expected a roster block, got {other:?}"),
+        }
     }
 
     #[test]

@@ -728,9 +728,10 @@ pub fn run_with(
         let mut all: Vec<&Vault> = vec![&vault];
         all.extend(working.as_ref());
         all.extend(other_vault.as_ref());
-        redact::PrivateLinks::new(&all)
+        redact::PrivateLinks::new_with(&all, Some(vocab))
     });
-    let staging = publish::stage_redacted(&publish_vaults, private_links.as_ref())?;
+    let staging =
+        publish::stage_redacted_with(&publish_vaults, private_links.as_ref(), Some(vocab))?;
 
     // Vocabulary-version-3 rules resolve against the other vault and the
     // roster; under version 2 neither is read.
@@ -801,14 +802,19 @@ pub fn run_with(
     // ADR-2124: a definition over a transitive hierarchy is refused here,
     // before the reasoner runs, with the named `WHELK_RELEVANT_CAP` error —
     // never a hang. The error is returned unwrapped so the CLI can downcast it.
-    let reasoning = reason::reason(&graph, classifier)?;
+    // ADR-VG-010 §7: a deprecated class and its axioms leave the reasoner's
+    // input, and the certificate is cut from that same input. None under
+    // version 2, where nothing is deprecated.
+    let reasoner_view = graph.without_deprecated();
+    let reasoned = reasoner_view.as_ref().unwrap_or(&graph);
+    let reasoning = reason::reason(reasoned, classifier)?;
     // ADR-OM-009: the warrant for the closure, from the very graph that is
     // reasoned and published, before anything is written.
     let mut staged = Staged::new();
     let certificate = match &options.certificate_out {
         Some(dir) => {
             let started = std::time::Instant::now();
-            let cert = crate::certificate::certify(&graph);
+            let cert = crate::certificate::certify(reasoned);
             let (certified, classifier_n, same) = crate::certificate::parity(&cert, &reasoning);
             if !same {
                 return Err(CertificateParity {
@@ -943,11 +949,15 @@ pub fn run_with(
             doc.page_id.clone(),
         );
     }
-    let (v3_documents, v3_index) = page_api::build_v3(
+    let (v3_documents, v3_index) = page_api::build_v3_at(
         listed,
         &structural,
         page_backlinks.as_ref().unwrap_or(&backlinks),
         &roster,
+        vocab
+            .is_v3()
+            .then(|| crate::input::time::parse_utc_seconds(&generated))
+            .flatten(),
     );
     for doc in &v3_documents {
         staged.add_for(
@@ -979,6 +989,13 @@ pub fn run_with(
     let context_v3 = to_indented(&okf::context_v3(profile, vocab))?;
     staged.add("context/v3.jsonld", context_v3.clone());
     staged.add("ns/v3.jsonld", context_v3);
+    // Vocabulary 3 adds the time and recall keys; the version 3 context a
+    // version 2 vocabulary serves keeps its bytes (ADR-VG-010 §8).
+    if vocab.is_v3() {
+        let context_v4 = to_indented(&okf::context_v4(profile, vocab))?;
+        staged.add("context/v4.jsonld", context_v4.clone());
+        staged.add("ns/v4.jsonld", context_v4);
+    }
 
     // WebVOWL graph — the explorer's build input.
     staged.add(

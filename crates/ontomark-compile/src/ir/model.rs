@@ -122,6 +122,68 @@ impl EntityType {
     }
 }
 
+/// One `supersedes` entry as the emitters need it (ADR-VG-010 §3).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SupersessionFact {
+    /// The replaced page or folded loser as an IRI: a wikilink resolved to the
+    /// page's resource, or the IRI as written. `None` for a withdrawal entry,
+    /// which names no page.
+    pub target: Option<String>,
+    /// `world-changed`, `corrected`, `merged`, `renamed` or `withdrawn`.
+    pub reason: String,
+}
+
+/// What a page says under vocabulary version 3 that the emitters publish
+/// (ADR-VG-010 §7, ADR-VG-011 §1). Absent under version 2, so a version 2 build
+/// is byte-identical to the releases before it.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct V3Facts {
+    /// The page's `status`, as written.
+    pub status: Option<String>,
+    /// `valid-from`, when it is a strict UTC second-precision instant.
+    pub valid_from: Option<String>,
+    /// `valid-to`, when it is a strict UTC second-precision instant.
+    pub valid_to: Option<String>,
+    /// `superseded-by` links, resolved to IRIs.
+    pub superseded_by: Vec<String>,
+    /// `supersedes` entries.
+    pub supersedes: Vec<SupersessionFact>,
+    /// The canonical principal DID of `generated.by`, through the roster when
+    /// there is one; `None` when `by` is not a person's key.
+    pub principal: Option<String>,
+    /// `generated.via`, the instrument (`agent:<name>/<version>` or
+    /// `process:<name>/<version>`), as written.
+    pub via: Option<String>,
+    /// The page's `type`.
+    pub type_name: Option<String>,
+    /// Whether the page's type is a durable memory kind.
+    pub memory: bool,
+}
+
+impl V3Facts {
+    /// `true` when current recall may return this page at `now` (Unix
+    /// seconds): an `approved` durable memory kind whose `valid-from` is not
+    /// after `now` (absent reads as started, ruling B5) and whose `valid-to` is
+    /// not at or before `now` (ADR-VG-010 §6, ADR-VG-013 §1). It is the record
+    /// form of `check::v3::state::is_recallable`, which reads the page.
+    #[must_use]
+    pub fn recallable_at(&self, now: i64) -> bool {
+        use crate::input::time::parse_utc_seconds;
+        self.memory
+            && self.status.as_deref() == Some("approved")
+            && self
+                .valid_from
+                .as_deref()
+                .and_then(parse_utc_seconds)
+                .is_none_or(|t| t <= now)
+            && self
+                .valid_to
+                .as_deref()
+                .and_then(parse_utc_seconds)
+                .is_none_or(|t| t > now)
+    }
+}
+
 /// One page projected into the ontology model.
 #[derive(Debug, Clone)]
 pub struct ClassRecord {
@@ -184,6 +246,8 @@ pub struct ClassRecord {
     /// but a curated few — and for a value `vault validate` refuses as
     /// `NON_EL_DEFINITION`, so a malformed definition never reaches the OWL.
     pub defines_as: Vec<Conjunct>,
+    /// Version 3 facts; `None` unless the vocabulary is version 3.
+    pub v3: Option<Box<V3Facts>>,
 }
 
 impl ClassRecord {
@@ -327,6 +391,77 @@ fn definition_of(
         .collect()
 }
 
+/// Read a page's version 3 facts (see [`V3Facts`]).
+fn v3_facts(
+    page: &Page,
+    vocab: &Vocabulary,
+    roster: Option<&crate::build::attribution::Roster>,
+    resolve: &dyn Fn(&str, &str) -> Ref,
+) -> V3Facts {
+    use crate::input::frontmatter::Wikilink;
+    use crate::input::time::parse_utc_seconds;
+    use serde_norway::Value as Yaml;
+
+    let fm = &page.frontmatter;
+    let instant = |key: &str| fm.text(key).filter(|s| parse_utc_seconds(s).is_some());
+    let type_name = fm.text("type");
+    let generated = fm.get("generated");
+    let generated_text = |key: &str| {
+        generated
+            .and_then(Yaml::as_mapping)
+            .and_then(|m| m.get(Yaml::String(key.into())))
+            .and_then(Yaml::as_str)
+            .map(|s| s.trim().to_owned())
+    };
+    let principal = generated
+        .and_then(crate::input::okf::Stamp::from_yaml)
+        .and_then(|stamp| stamp.by.principal_did())
+        .map(|did| {
+            roster
+                .and_then(|r| r.resolve_principal(&did))
+                .map_or(did, |p| p.canonical)
+        });
+    let supersedes = match fm.get("supersedes") {
+        Some(Yaml::Sequence(items)) => items
+            .iter()
+            .filter_map(Yaml::as_mapping)
+            .filter_map(|m| {
+                let text = |k: &str| {
+                    m.get(Yaml::String(k.into()))
+                        .and_then(Yaml::as_str)
+                        .map(|s| s.trim().to_owned())
+                };
+                let reason = text("reason")?;
+                let target = text("resource").and_then(|r| {
+                    Wikilink::parse(&r).map_or_else(
+                        || crate::check::v3::temporal::is_iri(&r).then_some(r),
+                        |link| Some(resolve(&link.target, link.label()).iri),
+                    )
+                });
+                Some(SupersessionFact { target, reason })
+            })
+            .collect(),
+        _ => Vec::new(),
+    };
+    V3Facts {
+        status: fm.text("status"),
+        valid_from: instant("valid-from"),
+        valid_to: instant("valid-to"),
+        superseded_by: fm
+            .wikilinks("superseded-by")
+            .into_iter()
+            .map(|w| resolve(&w.target, w.label()).iri)
+            .collect(),
+        supersedes,
+        principal,
+        via: generated_text("via"),
+        memory: type_name
+            .as_deref()
+            .is_some_and(|t| vocab.working_type(t).memory),
+        type_name,
+    }
+}
+
 impl Corpus {
     /// Project a loaded vault through its vocabulary.
     #[must_use]
@@ -435,6 +570,9 @@ impl Corpus {
                     .and_then(crate::input::okf::Stamp::from_yaml)
                     .map(|st| st.by),
                 certification: crate::input::okf::Certification::for_page_with(page, roster),
+                v3: vocab
+                    .is_v3()
+                    .then(|| Box::new(v3_facts(page, vocab, roster, &resolve))),
                 sub_class_of: links_of(page, IS_A_KEY),
                 instance_of: links_of(page, INSTANCE_OF_KEY),
                 relations,

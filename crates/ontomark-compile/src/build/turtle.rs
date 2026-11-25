@@ -40,6 +40,9 @@ const RDFS: &str = "http://www.w3.org/2000/01/rdf-schema#";
 const XSD: &str = "http://www.w3.org/2001/XMLSchema#";
 const SKOS: &str = "http://www.w3.org/2004/02/skos/core#";
 const DCTERMS: &str = "http://purl.org/dc/terms/";
+/// memory-ontology's `temporal` namespace (CC BY 4.0): the start and end of a
+/// page's valid time on the published class (ADR-VG-010 §7).
+pub const TEMPORAL: &str = "http://nova.dev/temporal#";
 
 /// An RDF object term.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -226,6 +229,9 @@ pub fn build_graph_attributed(
 
     declare_object_properties(&mut g, profile, vocab);
     declare_annotation_properties(&mut g, profile);
+    if vocab.is_v3() {
+        declare_v3_annotation_properties(&mut g, profile);
+    }
     declare_maturity(&mut g, profile);
 
     let records: Vec<_> = corpus
@@ -308,6 +314,9 @@ pub fn build_graph_attributed(
                 &format!("{PROV}wasAttributedTo"),
                 Term::Iri(gen.did.clone()),
             );
+        }
+        if let Some(facts) = record.v3.as_deref() {
+            emit_v3(&mut g, profile, roster, &uri, facts);
         }
         g.add_iri(
             &uri,
@@ -809,6 +818,152 @@ fn declare_annotation_properties(g: &mut Graph, profile: &Profile) {
     }
 }
 
+/// The annotation properties a version 3 build uses, declared so the ontology
+/// stays self-contained and EL-profile conformant.
+fn declare_v3_annotation_properties(g: &mut Graph, profile: &Profile) {
+    let vc = profile.iris.vocabulary_namespace.as_str();
+    for property in [
+        format!("{TEMPORAL}validFrom"),
+        format!("{TEMPORAL}validUntil"),
+        format!("{DCTERMS}isReplacedBy"),
+        format!("{PROV}wasRevisionOf"),
+        format!("{vc}supersessionReason"),
+    ] {
+        g.add_iri(
+            &property,
+            &format!("{RDF}type"),
+            Term::Iri(format!("{OWL}AnnotationProperty")),
+        );
+    }
+}
+
+/// Publish a page's version 3 facts on its class (ADR-VG-010 §7, ADR-VG-011 §1).
+///
+/// * attribution: `prov:wasAttributedTo` the principal, and the instrument the
+///   roster resolves `via` to as a second triple (never guessed);
+/// * time: `temporal:validFrom` and `temporal:validUntil`, `xsd:dateTimeStamp`.
+///   An end on the record is acceptable here because the published file is a
+///   static projection with no recorded-time query; the provenance store keeps
+///   closure records;
+/// * `status: deprecated` is `owl:deprecated true`;
+/// * `superseded-by` is `dcterms:isReplacedBy`; each `supersedes` entry that
+///   names a page is `prov:wasRevisionOf`, with its reason as an annotation of
+///   that axiom. Never `temporal:supersedes` and never `memory:closes`
+///   (memory-ontology reserves those for memory records), and a replaced page
+///   is not re-created as a class.
+fn emit_v3(
+    g: &mut Graph,
+    profile: &Profile,
+    roster: &super::attribution::Roster,
+    uri: &str,
+    facts: &crate::ir::model::V3Facts,
+) {
+    let vc = profile.iris.vocabulary_namespace.as_str();
+    if let Some(principal) = &facts.principal {
+        g.add_iri(
+            uri,
+            &format!("{PROV}wasAttributedTo"),
+            Term::Iri(principal.clone()),
+        );
+    }
+    if let Some(instrument) = facts
+        .via
+        .as_deref()
+        .and_then(|v| v.parse::<crate::input::okf::Actor>().ok())
+        .and_then(|a| roster.resolve(&a).map(|generator| generator.did.clone()))
+    {
+        g.add_iri(
+            uri,
+            &format!("{PROV}wasAttributedTo"),
+            Term::Iri(instrument),
+        );
+    }
+    let stamp = format!("{XSD}dateTimeStamp");
+    if let Some(from) = &facts.valid_from {
+        g.add_iri(
+            uri,
+            &format!("{TEMPORAL}validFrom"),
+            Term::typed(from.clone(), &stamp),
+        );
+    }
+    if let Some(to) = &facts.valid_to {
+        g.add_iri(
+            uri,
+            &format!("{TEMPORAL}validUntil"),
+            Term::typed(to.clone(), &stamp),
+        );
+    }
+    if facts.status.as_deref() == Some("deprecated") {
+        g.add_iri(
+            uri,
+            &format!("{OWL}deprecated"),
+            Term::typed("true", &format!("{XSD}boolean")),
+        );
+    }
+    for replaced_by in &facts.superseded_by {
+        g.add_iri(
+            uri,
+            &format!("{DCTERMS}isReplacedBy"),
+            Term::Iri(iri_to_uri(profile, replaced_by)),
+        );
+    }
+    for entry in &facts.supersedes {
+        let Some(target) = &entry.target else {
+            continue;
+        };
+        let revision = format!("{PROV}wasRevisionOf");
+        let target = iri_to_uri(profile, target);
+        g.add_iri(uri, &revision, Term::Iri(target.clone()));
+        let axiom = Subject::Blank(g.fresh_blank());
+        for (predicate, object) in [
+            (format!("{RDF}type"), Term::Iri(format!("{OWL}Axiom"))),
+            (format!("{OWL}annotatedSource"), Term::Iri(uri.to_owned())),
+            (format!("{OWL}annotatedProperty"), Term::Iri(revision)),
+            (format!("{OWL}annotatedTarget"), Term::Iri(target)),
+            (
+                format!("{vc}supersessionReason"),
+                Term::plain(entry.reason.clone()),
+            ),
+        ] {
+            g.add(axiom.clone(), predicate, object);
+        }
+    }
+}
+
+impl Graph {
+    /// This graph without the triples of any class marked `owl:deprecated true`
+    /// (ADR-VG-010 §7: a deprecated class and its axioms leave the reasoner's
+    /// input). `None` when no class is deprecated, so the caller keeps the
+    /// graph it has.
+    #[must_use]
+    pub fn without_deprecated(&self) -> Option<Graph> {
+        let deprecated: BTreeSet<&Subject> = self
+            .triples
+            .iter()
+            .filter(|(_, preds)| {
+                preds.get(&format!("{OWL}deprecated")).is_some_and(|objs| {
+                    objs.iter()
+                        .any(|o| matches!(o, Term::Literal { value, .. } if value == "true"))
+                })
+            })
+            .map(|(s, _)| s)
+            .collect();
+        if deprecated.is_empty() {
+            return None;
+        }
+        let mut out = Graph {
+            next_bnode: self.next_bnode,
+            ..Graph::default()
+        };
+        for (subject, predicate, object) in self.iter() {
+            if !deprecated.contains(subject) {
+                out.add(subject.clone(), predicate, object.clone());
+            }
+        }
+        Some(out)
+    }
+}
+
 fn declare_maturity(g: &mut Graph, profile: &Profile) {
     if profile.lifecycle.maturity_levels.is_empty() {
         return;
@@ -947,6 +1102,11 @@ pub fn serialise(profile: &Profile, g: &Graph) -> String {
         ),
         ("xsd", XSD),
     ];
+    // The `temporal` prefix appears only in a graph that uses it, so a version 2
+    // build keeps its exact prologue.
+    if g.iter().any(|(_, p, _)| p.starts_with(TEMPORAL)) {
+        prefixes.push(("temporal", TEMPORAL));
+    }
     // Turtle prefix declarations are sorted by name, as the estate output always was.
     prefixes.sort_by(|a, b| a.0.cmp(b.0));
     let prefixes = prefixes.as_slice();
@@ -1144,6 +1304,7 @@ relations:
             attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
+            v3: None,
             sub_class_of: Vec::new(),
             instance_of: Vec::new(),
             relations: IndexMap::new(),
@@ -1200,6 +1361,99 @@ relations:
         assert!(ttl.contains("vc:sourceDomain \"spatial-computing\""));
         assert!(ttl.contains("vc:hasMaturity ngmi:maturity-established"));
         assert!(ttl.contains("vc:qualityScore \"0.35\"^^xsd:float"));
+    }
+
+    fn v3_vocab() -> Vocabulary {
+        let mut v = vocab();
+        v.version = 3;
+        v
+    }
+
+    const B4: &str = "did:nostr:b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a";
+
+    #[test]
+    fn version_3_publishes_time_supersession_and_the_principal() {
+        use crate::ir::model::{SupersessionFact, V3Facts};
+        let mut r = record("Decentralised Finance");
+        r.v3 = Some(Box::new(V3Facts {
+            status: Some("deprecated".into()),
+            valid_from: Some("2022-10-25T00:00:00Z".into()),
+            valid_to: Some("2026-11-21T00:00:00Z".into()),
+            superseded_by: vec!["urn:ngm:class:defi-2".into()],
+            supersedes: vec![
+                SupersessionFact {
+                    target: Some("urn:ngm:class:decentralized-finance".into()),
+                    reason: "merged".into(),
+                },
+                SupersessionFact {
+                    target: None,
+                    reason: "corrected".into(),
+                },
+            ],
+            principal: Some(B4.into()),
+            via: Some("agent:enrichment-swarm/6".into()),
+            ..V3Facts::default()
+        }));
+        let roster = crate::build::attribution::Roster::from_yaml_str(
+            "generators:\n  - did: did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0\n    label: enrichment-swarm\n    version: \"6\"\n    kind: process\n",
+        );
+        let g = build_graph_attributed(est(), &corpus_of(vec![r]), &v3_vocab(), true, &roster);
+        let ttl = serialise(est(), &g);
+        assert!(
+            ttl.contains("@prefix temporal: <http://nova.dev/temporal#> ."),
+            "{ttl}"
+        );
+        assert!(ttl.contains("temporal:validFrom \"2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp"));
+        assert!(ttl.contains("temporal:validUntil \"2026-11-21T00:00:00Z\"^^xsd:dateTimeStamp"));
+        assert!(
+            ttl.contains("owl:deprecated true")
+                || ttl.contains("owl:deprecated \"true\"^^xsd:boolean"),
+            "{ttl}"
+        );
+        assert!(ttl.contains("dc:isReplacedBy ngm:defi-2"), "{ttl}");
+        assert!(ttl.contains("prov:wasRevisionOf ngm:decentralized-finance"));
+        // The reason is an annotation on that axiom, and the withdrawal entry (no page) adds nothing.
+        assert!(ttl.contains("owl:annotatedTarget ngm:decentralized-finance"));
+        assert!(ttl.contains("vc:supersessionReason \"merged\""));
+        assert!(!ttl.contains("corrected"));
+        // The principal, then the instrument as a second attribution.
+        assert!(
+            ttl.contains(&format!("<{B4}>")) || ttl.contains(B4),
+            "{ttl}"
+        );
+        assert!(ttl.contains("94773a69"));
+        // The loser is never re-created as a class.
+        assert!(!ttl.contains("ngm:decentralized-finance a owl:Class"));
+        // Nothing of memory-ontology's reserved terms.
+        assert!(!ttl.contains("supersedes") && !ttl.contains("closes"));
+    }
+
+    #[test]
+    fn version_2_emits_none_of_it_and_keeps_its_prologue() {
+        let g = build_graph(est(), &corpus_of(vec![record("Plain")]), &vocab(), true);
+        let ttl = serialise(est(), &g);
+        assert!(!ttl.contains("temporal"), "{ttl}");
+        assert!(!ttl.contains("supersessionReason"));
+        assert!(g.without_deprecated().is_none());
+    }
+
+    #[test]
+    fn a_deprecated_class_leaves_the_reasoner_view_but_not_the_ontology() {
+        use crate::ir::model::V3Facts;
+        let mut keep = record("Keep");
+        keep.v3 = Some(Box::new(V3Facts::default()));
+        let mut old = record("Old");
+        old.v3 = Some(Box::new(V3Facts {
+            status: Some("deprecated".into()),
+            ..V3Facts::default()
+        }));
+        let g = build_graph(est(), &corpus_of(vec![keep, old]), &v3_vocab(), true);
+        let ttl = serialise(est(), &g);
+        assert!(ttl.contains("ngm:old a owl:Class"));
+        let view = g.without_deprecated().expect("one class is deprecated");
+        let reasoned = serialise(est(), &view);
+        assert!(!reasoned.contains("ngm:old "), "{reasoned}");
+        assert!(reasoned.contains("ngm:keep a owl:Class"));
     }
 
     #[test]

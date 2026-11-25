@@ -376,3 +376,40 @@ fn a_generic_profile_yields_shapes_too() {
     let graph = shapes(&profile, &vocab);
     assert!(!graph.is_empty());
 }
+
+#[test]
+fn under_version_3_the_actor_pattern_also_accepts_a_did_nostr_principal() {
+    let profile = estate();
+    let mut v3 = vocab();
+    v3.version = 3;
+    let pattern_of = |vocab: &Vocabulary| {
+        let graph = shapes(&profile, vocab);
+        let found = graph
+            .iter()
+            .filter(|(_, p, _)| *p == "http://www.w3.org/ns/shacl#pattern")
+            .map(|(_, _, o)| plain(o).to_owned())
+            .find(|p| p.contains("agent"));
+        found.expect("actor pattern")
+    };
+    let hex = "b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a";
+    let did = format!("did:nostr:{hex}");
+    let v3_re = regex::Regex::new(&pattern_of(&v3)).expect("pattern compiles");
+    let v2_re = regex::Regex::new(&pattern_of(&vocab())).expect("pattern compiles");
+    for sample in [
+        did.as_str(),
+        "did:nostr:abc",
+        "did:nostr:B41654017F6850B13857D19D8AE0E3F88F1365600CAB0321E8101C9E92682F7A",
+        "human:npub1abc",
+        "agent:claude/4",
+        "process:vault/1.0",
+        "robot:x",
+    ] {
+        assert_eq!(
+            v3_re.is_match(sample),
+            sample.parse::<Actor>().is_ok(),
+            "v3 pattern vs Actor::from_str on {sample:?}"
+        );
+    }
+    // Version 2 shapes are byte-for-byte what they were: no did alternative.
+    assert!(!v2_re.is_match(&did));
+}

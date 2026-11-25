@@ -159,13 +159,26 @@ impl PrivateLinks {
     /// Index every page (and journal) of the given vaults.
     #[must_use]
     pub fn new(vaults: &[&Vault]) -> Self {
+        Self::new_with(vaults, None)
+    }
+
+    /// [`PrivateLinks::new`] deciding publicity by `vocab`: under vocabulary 3
+    /// a working page is public by `visibility: public`, not `public: true`.
+    #[must_use]
+    pub fn new_with(
+        vaults: &[&Vault],
+        vocab: Option<&crate::input::vocabulary::Vocabulary>,
+    ) -> Self {
         let vaults = vaults
             .iter()
             .map(|vault| {
-                let regular = vault
-                    .pages
-                    .iter()
-                    .map(|p| (p, !p.is_public() || held_back(&p.rel_path)));
+                let regular = vault.pages.iter().map(|p| {
+                    (
+                        p,
+                        !crate::check::v3::state::is_public_in(p, vault.kind, vocab)
+                            || held_back(&p.rel_path),
+                    )
+                });
                 // Journals are never published: a link to one is a link to a
                 // non-public page. Regular pages come first so they win a clash.
                 let journals = vault.journals.iter().map(|p| (p, true));
