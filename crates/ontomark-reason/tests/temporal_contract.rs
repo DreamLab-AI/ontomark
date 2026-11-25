@@ -18,7 +18,7 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 const V1_SHA256: &str = "6973aeef35e538412375dd6e4a9d9539f12f88fa7513d237371098da3bc46f75";
-const V2_SHA256: &str = "7b75b8b7f2aa3ec5de19841a1ff27cefd5d08db66490e0c2ad46525da4059d8f";
+const V2_SHA256: &str = "afd2bca7acfadbe455abf5f834e5069133c6f8f7b6229044031be42881b8c134";
 
 fn dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance/temporal")
@@ -33,19 +33,6 @@ fn sha256_hex(text: &str) -> String {
         .iter()
         .map(|b| format!("{b:02x}"))
         .collect()
-}
-
-/// Which rule an evaluation applies. `V2` is the contract; the others exist to
-/// prove the check can fail.
-#[derive(Clone, Copy, PartialEq)]
-enum Rule {
-    /// The contract (README, "The state rule").
-    V2,
-    /// The v1 rule: a closure ends the interval whenever it was recorded, and
-    /// recorded-time closures do not exist.
-    V1,
-    /// V2 with a strict `<` where the contract says `<=` on recorded time.
-    V2StrictRecorded,
 }
 
 struct Version {
@@ -154,12 +141,28 @@ fn load(name: &str) -> Doc {
             let r = r.as_str().expect("replacedBy");
             assert!(versions.iter().any(|v| v.id == r), "{id}: replacedBy {r}");
         }
+        let recorded_at = text(c, "recordedAt");
+        let target = versions
+            .iter()
+            .find(|v| Some(v.id.as_str()) == c["version"].as_str())
+            .unwrap_or_else(|| panic!("{id}: unknown version"));
+        assert!(
+            recorded_at >= target.generated_at,
+            "{id}: recorded before the version it closes"
+        );
+        if let Some(u) = c.get("validUntil") {
+            assert!(
+                u.as_str().unwrap() > target.valid_from.as_str(),
+                "{id}: validUntil must follow validFrom"
+            );
+        }
+        assert!(c["agent"].is_string(), "{id}: a closure names its agent");
         closures.push(Closure {
             version: c["version"].as_str().expect("version").to_string(),
             closes_valid,
             closes_recorded: clocks.contains(&"recorded"),
             valid_until: c.get("validUntil").map(|_| text(c, "validUntil")),
-            recorded_at: text(c, "recordedAt"),
+            recorded_at,
         });
     }
     for c in &closures {
@@ -192,31 +195,25 @@ fn load(name: &str) -> Doc {
     }
 }
 
-/// `state(t, r)`: the ids of the versions in state, by testing each version
-/// against each clause of the rule.
-fn state(doc: &Doc, t: &str, r: Option<&str>, rule: Rule) -> BTreeSet<String> {
+/// The contract: `state(t, r)` as the ids of the versions in state, testing
+/// each version against each clause of README "The state rule".
+fn state(doc: &Doc, t: &str, r: Option<&str>) -> BTreeSet<String> {
     // A closure applies at knowledge cut `r` iff it was recorded by then.
-    let applies = |c: &Closure| match r {
-        None => true,
-        Some(r) if rule == Rule::V2StrictRecorded => c.recorded_at.as_str() < r,
-        Some(r) => c.recorded_at.as_str() <= r,
-    };
+    let applies = |c: &Closure| r.is_none_or(|r| c.recorded_at.as_str() <= r);
     let mut out = BTreeSet::new();
     for v in &doc.versions {
-        if let Some(r) = r {
-            if v.generated_at.as_str() > r {
-                continue; // not yet recorded
-            }
+        if r.is_some_and(|r| v.generated_at.as_str() > r) {
+            continue; // clause 1: not yet recorded
         }
         if v.valid_from.as_str() > t {
-            continue; // not yet valid
+            continue; // clause 2: not yet valid
         }
         let mine: Vec<&Closure> = doc.closures.iter().filter(|c| c.version == v.id).collect();
-        let recorded_out = rule != Rule::V1 && mine.iter().any(|c| c.closes_recorded && applies(c));
+        // clause 3
+        let recorded_out = mine.iter().any(|c| c.closes_recorded && applies(c));
+        // clause 4
         let valid_out = mine.iter().any(|c| {
-            c.closes_valid
-                && (rule == Rule::V1 || applies(c))
-                && c.valid_until.as_deref().is_some_and(|u| u <= t)
+            c.closes_valid && applies(c) && c.valid_until.as_deref().is_some_and(|u| u <= t)
         });
         if !recorded_out && !valid_out {
             out.insert(v.id.clone());
@@ -225,10 +222,48 @@ fn state(doc: &Doc, t: &str, r: Option<&str>, rule: Rule) -> BTreeSet<String> {
     out
 }
 
-fn failures(doc: &Doc, rule: Rule) -> Vec<String> {
+/// Wrong rules, used only to show the check can fail.
+enum Mutant {
+    /// The v1 rule: a closure ends the interval whenever it was recorded, and
+    /// recorded-time closures do not exist.
+    V1,
+    /// The contract with a strict `<` where it says `<=` on recorded time.
+    StrictRecorded,
+}
+
+fn mutant_state(doc: &Doc, t: &str, r: Option<&str>, m: &Mutant) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for v in &doc.versions {
+        if r.is_some_and(|r| v.generated_at.as_str() > r) || v.valid_from.as_str() > t {
+            continue;
+        }
+        let mine: Vec<&Closure> = doc.closures.iter().filter(|c| c.version == v.id).collect();
+        let gone = match m {
+            Mutant::V1 => mine.iter().any(|c| {
+                c.valid_until
+                    .as_deref()
+                    .is_some_and(|u| c.closes_valid && u <= t)
+            }),
+            Mutant::StrictRecorded => {
+                let applies = |c: &Closure| r.is_none_or(|r| c.recorded_at.as_str() < r);
+                mine.iter().any(|c| {
+                    applies(c)
+                        && (c.closes_recorded
+                            || (c.closes_valid && c.valid_until.as_deref().is_some_and(|u| u <= t)))
+                })
+            }
+        };
+        if !gone {
+            out.insert(v.id.clone());
+        }
+    }
+    out
+}
+
+fn failing(doc: &Doc, eval: impl Fn(&str, Option<&str>) -> BTreeSet<String>) -> Vec<String> {
     doc.cases
         .iter()
-        .filter(|c| state(doc, &c.t, c.recorded_as_of.as_deref(), rule) != c.expect)
+        .filter(|c| eval(&c.t, c.recorded_as_of.as_deref()) != c.expect)
         .map(|c| c.name.clone())
         .collect()
 }
@@ -255,7 +290,7 @@ fn pins_match_files_and_readme() {
 fn v2_vectors_hold() {
     let doc = load("vectors-v2.json");
     assert!(doc.cases.len() >= 30);
-    let bad = failures(&doc, Rule::V2);
+    let bad = failing(&doc, |t, r| state(&doc, t, r));
     assert!(bad.is_empty(), "cases failing: {bad:#?}");
 }
 
@@ -263,8 +298,8 @@ fn v2_vectors_hold() {
 fn v1_vectors_hold_under_both_rules() {
     let doc = load("vectors.json");
     assert_eq!(doc.cases.len(), 9);
-    assert!(failures(&doc, Rule::V1).is_empty());
-    assert!(failures(&doc, Rule::V2).is_empty());
+    assert!(failing(&doc, |t, r| mutant_state(&doc, t, r, &Mutant::V1)).is_empty());
+    assert!(failing(&doc, |t, r| state(&doc, t, r)).is_empty());
 }
 
 #[test]
@@ -288,14 +323,16 @@ fn the_check_can_fail() {
     // The v1 rule applied to a v2 case: the backdated close was recorded after
     // this cut, so the old version is still believed; v1 ends it regardless.
     let name = "knowledge cut before the backdated close was recorded still sees the old version";
-    let bad = failures(&doc, Rule::V1);
+    let bad = failing(&doc, |t, r| mutant_state(&doc, t, r, &Mutant::V1));
     assert!(bad.iter().any(|n| n == name), "v1 rule passed {name}");
     // ...and it also cannot express a correction.
     assert!(bad
         .iter()
         .any(|n| n.starts_with("correction with replacement")));
     // A strict recorded-time comparison fails the inclusive-boundary cases.
-    let strict = failures(&doc, Rule::V2StrictRecorded);
+    let strict = failing(&doc, |t, r| {
+        mutant_state(&doc, t, r, &Mutant::StrictRecorded)
+    });
     assert!(
         strict.iter().any(|n| n.contains("(<=)")),
         "no boundary case caught `<` for `<=`"
