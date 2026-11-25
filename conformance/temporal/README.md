@@ -31,13 +31,18 @@ version, which must carry a later `generatedAt` and so has a different identity.
 ## Terms
 
 Namespace `dl:` is `https://narrativegoldmine.com/ns/dl#`; `prov:` is
-`http://www.w3.org/ns/prov#`; `memory:` is `http://nova.dev/memory#`.
+`http://www.w3.org/ns/prov#`; `memory:` is `http://nova.dev/memory#` and
+`temporal:` is `http://nova.dev/temporal#`. The two `temporal:` properties and
+the two `memory:` clock concepts are used by IRI from
+[eljeffeg/memory-ontology](https://github.com/eljeffeg/memory-ontology)
+(CC BY 4.0).
 
 | Term | IRI | Meaning |
 |---|---|---|
 | Version | `prov:Entity` with `rdf:subject`, `rdf:predicate`, `rdf:object` | One fact, as asserted. |
-| Valid-time start | `dl:validFrom` | When the fact became true. Inclusive. On the version. |
-| Recorded time | `prov:generatedAtTime` | When the version, or the closure, was recorded. |
+| Valid-time start | `temporal:validFrom` (`http://nova.dev/temporal#validFrom`) | When the fact became true. Inclusive. On the version. |
+| Recorded time, version | `temporal:recordedFrom` (`http://nova.dev/temporal#recordedFrom`) | When the version was recorded. A version carries no `prov:generatedAtTime`. |
+| Recorded time, closure | `prov:generatedAtTime` | When the closure was recorded. |
 | Closure | `dl:Closure` | A record that ends a version on at least one clock. Not a version: no subject, predicate or object. |
 | Closed version | `dl:closesVersion` | The version a closure ends. |
 | Clock closed | `dl:closes` | `memory:ValidTime` and/or `memory:RecordedTime` (`http://nova.dev/memory#ValidTime`, `http://nova.dev/memory#RecordedTime`). One or both, never neither. |
@@ -47,12 +52,24 @@ Namespace `dl:` is `https://narrativegoldmine.com/ns/dl#`; `prov:` is
 | Reason | `dl:reason` | Optional free text for application policy. No effect on state. |
 | Replacement | none | `replacedBy` in the vector file only: names the version that supersedes a closed one. Informative; no effect on state. |
 
-`dl:validTo` is retired from the provenance graph and appears in no v2 data.
+`dl:validFrom` and `dl:validTo` are retired from versions and appear in no v2
+data. memory-ontology's `temporal:validUntil` and `temporal:recordedUntil` are
+not used: they put an end on the earlier record, and an end with no recorded
+time of its own is the v1 defect this contract removes.
+
+The property IRIs are used without a claim of conformance to memory-ontology's
+shapes. Its records reify with RDF 1.2 `rdf:reifies`; a version here reifies
+with `rdf:subject`, `rdf:predicate` and `rdf:object`, and a closure is not part
+of its model.
+
 In the vector file, v1's three versions keep the v1 form: an inline `validTo`
 is shorthand for a valid-time closure recorded at that version's `generatedAt`,
 and a harness realises it as a closure record. Every other end in the file is
-an explicit closure. Timestamps are `xsd:dateTime` in canonical UTC, second
-precision, `Z` suffix.
+an explicit closure. The three temporal literals (`temporal:validFrom`,
+`temporal:recordedFrom`, `dl:validUntil`) are `xsd:dateTimeStamp`; a closure's
+`prov:generatedAtTime` is `xsd:dateTime`. All are canonical UTC, second
+precision, `Z` suffix. The JSON keys (`validFrom`, `generatedAt`, `validTo`,
+`recordedAt`) are names in the vector file, not RDF terms.
 
 In the JSON, `closes` lists `"valid"` and/or `"recorded"`, standing for the two
 `memory:` clocks.
