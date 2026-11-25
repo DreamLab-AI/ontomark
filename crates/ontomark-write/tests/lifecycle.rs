@@ -467,7 +467,7 @@ fn approval_follows_a_superseded_target_to_its_successor_by_refusing_with_it() {
     let a = belief(
         "a1",
         "superseded",
-        &format!("superseded-by: ['urn:visionflow:page:n9']\nvalid-to: '2026-11-05T00:00:00Z'\n"),
+        "superseded-by: ['urn:visionflow:page:n9']\nvalid-to: '2026-11-05T00:00:00Z'\n",
     );
     let n = belief("n9", "approved", "");
     let e = engine(&[("b/A", &a), ("b/D", &d), ("b/N", &n)]);

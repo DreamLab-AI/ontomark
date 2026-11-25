@@ -77,6 +77,7 @@ mod ingest_cmd;
 mod ingest_profile;
 #[cfg(feature = "jev")]
 mod jev_create;
+mod memory_cmd;
 mod migrate_cmd;
 use migrate_cmd::{vault_kinds, VAULT_VALUES};
 use ontomark_compile::{build, reason};
@@ -134,6 +135,12 @@ enum Command {
     Create(CreateArgs),
     /// Apply a human-approved `kind: amend` proposal to its page.
     Apply(ApplyArgs),
+    /// Working-memory writes through the one write engine: create, review
+    /// transitions, disputes and supersession (ADR-VG-012 section 9).
+    Memory {
+        #[command(subcommand)]
+        command: memory_cmd::MemoryCommand,
+    },
     /// Fix corpus defects in place.
     #[command(subcommand)]
     Repair(RepairCommand),
@@ -316,6 +323,10 @@ struct EditArgs {
     /// Show the result without writing it.
     #[arg(long)]
     dry_run: bool,
+    /// Who writes. Under vocabulary 3 a working-page edit is stamped with it
+    /// (`contributors`, the content clock); elsewhere it is not read.
+    #[command(flatten)]
+    writer: memory_cmd::WriterArgs,
 }
 
 #[derive(Debug, Args)]
@@ -1069,6 +1080,8 @@ fn run() -> anyhow::Result<ExitCode> {
             emit(cli.json, &value, || println!("{digest}"))?;
             Ok(ExitCode::SUCCESS)
         }
+        Command::Memory { command } => memory_cmd::run(command, &root, &profile, &vocab, cli.json),
+
         Command::Edit(args) => {
             let Some(expect_raw) = &args.expect else {
                 anyhow::bail!(
@@ -1086,12 +1099,32 @@ fn run() -> anyhow::Result<ExitCode> {
             let page = vault
                 .get(&args.id)
                 .with_context(|| format!("no page with id `{}`", args.id))?;
+            // `edit::apply` keeps the contract (the declared blast radius, the
+            // error texts, the `changes` report); the bytes themselves come from
+            // the write engine's lossless patch, never from a re-serialisation.
             let outcome = edit::apply(page, &changes, expect).map_err(anyhow::Error::msg)?;
-            if !args.dry_run {
-                std::fs::write(&page.path, &outcome.rendered)
-                    .with_context(|| format!("writing {}", page.path.display()))?;
+            let engine_plan = if outcome.docs == 1 {
+                Some(memory_cmd::patch_page(
+                    &root,
+                    &profile,
+                    &vocab,
+                    vault.kind,
+                    &page.id,
+                    &args.sets,
+                    &args.unsets,
+                    &args.writer,
+                    args.dry_run,
+                )?)
+            } else {
+                None
+            };
+            let mut value = serde_json::to_value(&outcome)?;
+            if let Some(plan) = engine_plan.as_ref().filter(|p| !p.ignored_keys.is_empty()) {
+                value["ignored_keys"] = json!(plan.ignored_keys);
             }
-            let value = serde_json::to_value(&outcome)?;
+            if let Some(plan) = engine_plan.as_ref().filter(|p| !p.events.is_empty()) {
+                value["events"] = serde_json::to_value(&plan.events)?;
+            }
             emit(cli.json, &value, || {
                 println!(
                     "{}: {} document(s), {} key(s){}",

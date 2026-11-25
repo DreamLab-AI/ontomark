@@ -71,7 +71,8 @@ fn entropy_must_be_exactly_32_bytes_of_hex() {
         #[serde(with = "hex32")]
         e: [u8; 32],
     }
-    assert!(serde_json::from_str::<W>(&format!("{{\"e\":\"{}\"}}", "ab".repeat(32))).is_ok());
+    let ok = serde_json::from_str::<W>(&format!("{{\"e\":\"{}\"}}", "ab".repeat(32))).unwrap();
+    assert_eq!(ok.e, [0xab; 32]);
     assert!(serde_json::from_str::<W>("{\"e\":\"abcd\"}").is_err());
     assert!(serde_json::from_str::<W>("{\"e\":\"zz\"}").is_err());
 }

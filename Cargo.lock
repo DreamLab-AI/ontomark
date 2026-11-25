@@ -996,6 +996,7 @@ dependencies = [
  "ontomark-parse",
  "ontomark-profile-estate",
  "ontomark-source",
+ "ontomark-write",
  "serde_json",
  "tempfile",
  "ureq",
