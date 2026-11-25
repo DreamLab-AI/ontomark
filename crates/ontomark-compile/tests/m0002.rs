@@ -466,6 +466,11 @@ fn a_template_in_the_v3_shape_is_not_listed() {
     );
     write(
         &root,
+        "working/templates/Proposal.md",
+        "---\ntype: Proposal\n---\n<!-- formerly `Draft Concept`, ADR-VG-012 -->\n",
+    );
+    write(
+        &root,
         "working/templates/Old.md",
         "---\ntype: Note\npublic: false\n---\n",
     );
@@ -480,6 +485,15 @@ fn a_template_in_the_v3_shape_is_not_listed() {
             .pages
             .iter()
             .any(|p| p.path == "working/templates/Note.md"),
+        "{:?}",
+        plan.pages
+    );
+    // Prose that merely mentions the old type is not a marker.
+    assert!(
+        !plan
+            .pages
+            .iter()
+            .any(|p| p.path == "working/templates/Proposal.md"),
         "{:?}",
         plan.pages
     );
