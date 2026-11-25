@@ -37,7 +37,9 @@
 //! # Not done here, on purpose
 //!
 //! * Templater templates under `templates/` hold `<% %>` placeholders and are
-//!   not parseable YAML: they are listed for a human.
+//!   not parseable YAML: one that still carries a vocabulary 2 marker (a
+//!   `human:` stamp, `Draft Concept`, a working `public:` key) is listed for a
+//!   human, and one already in the v3 shape is left out of the plan.
 //! * `contributors` starts empty (the key is simply absent), and `valid-from`
 //!   is never backfilled (B5).
 //! * The `Large Language Models` merge (B11) is a content decision: the page is
@@ -74,6 +76,13 @@ pub const CANONICAL_PRINCIPAL: &str =
 ///     alias: Decentralized Finance         # optional, the loser's title
 /// ```
 pub const INPUT_FILE: &str = "ontology/m0002-supersessions.yaml";
+
+/// Environment variable naming the same input file kept OUTSIDE the
+/// repository, so nothing about the refit is committed into the data. When it
+/// is set it replaces [`INPUT_FILE`] (which is then neither read nor listed).
+/// The path must exist and lie outside the repository; the file's digest is
+/// part of the plan, so apply must run with the same file.
+pub const INPUT_ENV: &str = "ONTOMARK_M0002_SUPERSESSIONS";
 
 pub(crate) const VOCABULARY: &str = "ontology/vocabulary.yaml";
 pub(crate) const ROSTER: &str = "ontology/attribution.yaml";
@@ -187,6 +196,8 @@ pub(crate) struct Context {
     /// Templater templates (`working/templates/*.md`, `knowledge/templates/*.md`),
     /// listed for a human and never rewritten.
     pub templates: Vec<String>,
+    /// Digest of the external input file, when [`INPUT_ENV`] named one.
+    pub external_digest: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -217,6 +228,33 @@ struct RosterFile {
     generators: Vec<RosterGenerator>,
     #[serde(default)]
     principals: Vec<RosterPrincipal>,
+}
+
+/// The supersessions input: the file named by [`INPUT_ENV`] (outside the
+/// repository, with its digest) or else [`INPUT_FILE`] in the tree.
+fn read_input(repo_root: &Path) -> Result<(Option<String>, Option<String>), MigrateError> {
+    let Some(named) = std::env::var_os(INPUT_ENV).filter(|v| !v.is_empty()) else {
+        return Ok((read_text(&repo_root.join(INPUT_FILE))?, None));
+    };
+    let path = std::path::PathBuf::from(&named);
+    let canonical = std::fs::canonicalize(&path).map_err(|e| {
+        MigrateError::Input(format!(
+            "{INPUT_ENV} names {}, which cannot be read: {e}",
+            path.display()
+        ))
+    })?;
+    let root = std::fs::canonicalize(repo_root).map_err(|e| MigrateError::io(repo_root, e))?;
+    if canonical.starts_with(&root) {
+        return Err(MigrateError::Input(format!(
+            "{INPUT_ENV} must name a file outside the repository ({} is inside it)",
+            canonical.display()
+        )));
+    }
+    let bytes = std::fs::read(&canonical).map_err(|e| MigrateError::io(&canonical, e))?;
+    let text = String::from_utf8(bytes.clone()).map_err(|_| {
+        MigrateError::Input(format!("{INPUT_ENV}: {} is not UTF-8", canonical.display()))
+    })?;
+    Ok((Some(text), Some(crate::migrate::sha256_hex(&bytes))))
 }
 
 fn read_text(path: &Path) -> Result<Option<String>, MigrateError> {
@@ -318,7 +356,9 @@ impl Context {
             }
             ctx.ledgers.insert(id, LedgerInfo { pin });
         }
-        match read_text(&repo_root.join(INPUT_FILE))? {
+        let (input_text, external) = read_input(repo_root)?;
+        ctx.external_digest = external;
+        match input_text {
             None => {}
             Some(text) => match serde_norway::from_str::<SupersessionFile>(&text) {
                 Err(e) => ctx.input_problem = Some(format!("{INPUT_FILE}: {e}")),
@@ -340,6 +380,20 @@ impl Context {
                     }
                 }
             },
+        }
+        // An in-tree input is listed (and refused) as a file of the plan; an
+        // external one is not in the tree, so its problems stop the plan here.
+        if ctx.external_digest.is_some() {
+            if let Some(problem) = &ctx.input_problem {
+                return Err(MigrateError::Input(format!("{INPUT_ENV}: {problem}")));
+            }
+            if !ctx.orphans.is_empty() {
+                return Err(MigrateError::Input(format!(
+                    "{INPUT_ENV}: {} supersession(s) name a winner that is not a knowledge page: {}",
+                    ctx.orphans.len(),
+                    ctx.orphans.iter().take(10).cloned().collect::<Vec<_>>().join("; ")
+                )));
+            }
         }
         Ok(ctx)
     }
@@ -379,9 +433,7 @@ impl Migration for Prepared {
             return self.input_file();
         }
         if rel.contains("/templates/") {
-            return Transform::Refused(
-                "a Templater template (placeholders, not YAML): update its stamp, Episode and Draft Concept shapes by hand".to_owned(),
-            );
+            return template(rel, source);
         }
         if rel.starts_with("knowledge/") {
             return page::knowledge(&self.ctx, rel, source);
@@ -394,7 +446,9 @@ impl Migration for Prepared {
 
     fn extra_paths(&self) -> Vec<String> {
         let mut out = VocabularyV3.extra_paths();
-        out.push(INPUT_FILE.to_owned());
+        if self.ctx.external_digest.is_none() {
+            out.push(INPUT_FILE.to_owned());
+        }
         out.extend(self.ctx.templates.iter().cloned());
         out
     }
@@ -406,6 +460,38 @@ impl Migration for Prepared {
     fn validates_result(&self) -> bool {
         true
     }
+
+    fn external_input_digest(&self) -> Option<String> {
+        self.ctx.external_digest.clone()
+    }
+}
+
+/// A Templater template holds placeholders, not YAML, so it is never
+/// rewritten. One that still carries a vocabulary 2 marker is listed for a
+/// human; one already in the v3 shape is left alone, so the plan's refusals
+/// are only the ones still to do.
+fn template(rel: &str, source: &str) -> Transform {
+    let mut markers: Vec<&str> = Vec::new();
+    if source.contains("human:") {
+        markers.push("a `human:` stamp");
+    }
+    if source.contains("Draft Concept") {
+        markers.push("`Draft Concept`");
+    }
+    if rel.starts_with("working/")
+        && source
+            .lines()
+            .any(|l| l.starts_with("public:") || l.starts_with("public "))
+    {
+        markers.push("a `public:` key");
+    }
+    if markers.is_empty() {
+        return Transform::Unchanged;
+    }
+    let names = markers.join(", ");
+    Transform::Refused(format!(
+        "a Templater template (placeholders, not YAML) still carries {names}: update it by hand"
+    ))
 }
 
 impl Prepared {

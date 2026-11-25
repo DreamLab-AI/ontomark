@@ -149,6 +149,13 @@ pub trait Migration {
         Vec::new()
     }
 
+    /// A digest of any input the migration reads from outside the repository,
+    /// mixed into the plan's `input_digest` so a plan is bound to it. `None`
+    /// (the default) means there is none.
+    fn external_input_digest(&self) -> Option<String> {
+        None
+    }
+
     /// The change classes a [`Transform::Changed`] summary names, for the
     /// plan's classified diff. The default names none.
     fn classify(&self, _summary: &str) -> Vec<String> {

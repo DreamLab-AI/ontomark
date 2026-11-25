@@ -60,6 +60,22 @@ use super::Context;
 pub const MEMORY_STATUSES: [&str; 5] =
     ["draft", "approved", "superseded", "invalidated", "archived"];
 
+/// The deterministic `page_resource` of the working page `id` (its path
+/// without `.md`, `/`-separated): `urn:visionflow:page:` and the SHA-256 of
+/// `visionflow:page:working:<id>`. This is what `m0002-vocabulary-v3` mints
+/// for an existing page, and what a journal gets, because a journal's identity
+/// IS its date (`journals/YYYY-MM-DD`): the same day always names the same
+/// urn, whichever day the note was created on and by whom. Templates and
+/// hosts should call this (through `ontomark memory resource <id>`) rather
+/// than hash anything themselves.
+#[must_use]
+pub fn derived_page_resource(id: &str) -> String {
+    format!(
+        "{PAGE_URN}{}",
+        crate::migrate::sha256_hex(format!("visionflow:page:working:{id}").as_bytes())
+    )
+}
+
 /// The three `visibility` values (ADR-VG-012 §5).
 pub const VISIBILITIES: [&str; 3] = ["private", "shared", "public"];
 
@@ -547,6 +563,18 @@ mod tests {
             .filter(|i| i.code == "MISSING_KIND_KEY")
             .count();
         assert_eq!(missing, 2, "{:?}", codes(&r));
+    }
+
+    #[test]
+    fn a_journals_page_resource_is_derived_from_its_own_date() {
+        assert_eq!(
+            super::derived_page_resource("journals/2026-11-02"),
+            "urn:visionflow:page:0a1570b85452e83ef479367c63feb81aa2399f5ec45e25e2f87314ee089fc0f1"
+        );
+        assert_ne!(
+            super::derived_page_resource("journals/2026-11-02"),
+            super::derived_page_resource("journals/2026-11-03")
+        );
     }
 
     #[test]
