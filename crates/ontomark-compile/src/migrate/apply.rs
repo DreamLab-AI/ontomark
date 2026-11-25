@@ -121,6 +121,9 @@ pub fn apply_with(
     migration: &dyn Migration,
     opts: &ApplyOptions,
 ) -> Result<ApplyReport, MigrateError> {
+    // The same context the plan was made with, read from the tree as it is now.
+    let prepared = migration.prepare(repo_root)?;
+    let migration: &dyn Migration = prepared.as_deref().unwrap_or(migration);
     let current = MigrationRef::of(migration);
     if current.id != plan.migration.id
         || current.version != plan.migration.version

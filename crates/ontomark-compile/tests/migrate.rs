@@ -605,13 +605,14 @@ fn a_hostile_plan_path_cannot_escape_the_repository() {
 }
 
 #[test]
-fn the_registry_lists_m0001() {
+fn the_registry_lists_the_shipped_migrations_in_order() {
     let ids: Vec<String> = migrate::registry()
         .iter()
         .map(|m| m.id().to_owned())
         .collect();
-    assert_eq!(ids, ["m0001-obsidian-bodies"]);
+    assert_eq!(ids, ["m0001-obsidian-bodies", "m0002-vocabulary-v3"]);
     assert!(migrate::lookup("m0001-obsidian-bodies").is_some());
+    assert!(migrate::lookup("m0002-vocabulary-v3").is_some());
 }
 
 #[cfg(unix)]

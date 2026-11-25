@@ -44,13 +44,18 @@
 //!
 //! [`registry`] lists the shipped migrations; [`lookup`] finds one by id.
 //! Today that is [`m0001::ObsidianBodies`], the Logseq-outline to Obsidian
-//! markdown conversion of [`crate::check::bodies`].
+//! markdown conversion of [`crate::check::bodies`], and
+//! [`m0002::VocabularyV3`], the vocabulary version 2 to 3 upgrade of the
+//! visionGraph estate (ADR-VG-010 to ADR-VG-013).
 
 mod apply;
 mod compile;
 mod journal;
 pub mod m0001;
+pub mod m0002;
 mod plan;
+
+use std::path::Path;
 
 use sha2::{Digest, Sha256};
 
@@ -121,12 +126,50 @@ pub trait Migration {
     /// Rewrite one page. `page_rel_path` is repository-relative with `/`
     /// separators, for example `knowledge/ETSI/Domain.md`.
     fn transform(&self, page_rel_path: &str, source: &str) -> Transform;
+
+    /// Build the migration that will actually run, from the repository it
+    /// runs on, when its rewrites need context a single page cannot give (a
+    /// roster, an index of other pages, an input file). [`plan`] and [`apply`]
+    /// both call this, on the tree as it is at that moment, so the context
+    /// must come out the same from an unmigrated, a part-migrated and a
+    /// migrated tree (that is what makes an interrupted run restartable).
+    /// `None` (the default) means the migration is context-free.
+    ///
+    /// # Errors
+    /// The context could not be read.
+    fn prepare(&self, _repo_root: &Path) -> Result<Option<Box<dyn Migration>>, MigrateError> {
+        Ok(None)
+    }
+
+    /// Repository-relative files that are not pages but are rewritten by this
+    /// migration, such as `ontology/vocabulary.yaml`. They are planned,
+    /// journalled, applied and rolled back exactly like pages. Absent files
+    /// are skipped.
+    fn extra_paths(&self) -> Vec<String> {
+        Vec::new()
+    }
+
+    /// The change classes a [`Transform::Changed`] summary names, for the
+    /// plan's classified diff. The default names none.
+    fn classify(&self, _summary: &str) -> Vec<String> {
+        Vec::new()
+    }
+
+    /// `true` when [`plan`] must also validate the whole migrated tree, under
+    /// the migrated vocabulary and roster, and refuse the plan if that yields
+    /// an error. A migration that changes the grammar needs this.
+    fn validates_result(&self) -> bool {
+        false
+    }
 }
 
 /// Every shipped migration, in application order.
 #[must_use]
 pub fn registry() -> Vec<Box<dyn Migration>> {
-    vec![Box::new(m0001::ObsidianBodies)]
+    vec![
+        Box::new(m0001::ObsidianBodies),
+        Box::new(m0002::VocabularyV3),
+    ]
 }
 
 /// The registered migration with this id.
