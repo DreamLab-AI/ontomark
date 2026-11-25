@@ -276,3 +276,113 @@ fn open_statements_annotate_the_ontology_and_closed_ones_go_to_history_only() {
         );
     }
 }
+
+const JOURNAL_DATE: &str = "2031-02-17";
+const JOURNAL_TITLE: &str = "Walrus Hush Diary";
+const JOURNAL_URN: &str =
+    "urn:visionflow:page:8aa930221c5f944df437f72efd164b1665111a62c7ae2e4c7446bd323abdc8a1";
+
+/// A public class that cites a journal by every route a source can: `origin`
+/// by urn, `evidence` and `derived-from` by wikilink (with `at` and `locator`),
+/// a statement that cites it, and a body link. The journal carries a title and
+/// a date found nowhere else.
+fn journal_repo(dir: &Path, with_working: bool) -> PathBuf {
+    let root = dir.join("repo");
+    // With the journal in the build its links are links to a private page; with
+    // no working vault they would be the author's own words, not the journal's.
+    let body = if with_working {
+        format!("See [[{JOURNAL_DATE}]] and [[{JOURNAL_TITLE}]].")
+    } else {
+        "Body.".to_owned()
+    };
+    write(
+        &root,
+        "ontology/vocabulary.yaml",
+        include_str!("../../ontomark-cli/tests/vocab-v3-vault/ontology/vocabulary.yaml"),
+    );
+    write(
+        &root,
+        "ontology/attribution.yaml",
+        include_str!("../../ontomark-cli/tests/vocab-v3-vault/ontology/attribution.yaml"),
+    );
+    write(
+        &root,
+        "knowledge/Cites Journal.md",
+        &format!(
+            "---\ntype: Class\ntitle: Cites Journal\nresource: urn:ngm:class:cites-journal\npublic: true\nstatus: stable\ngenerated:\n  by: {B4}\n  at: 2026-11-01T00:00:00Z\nsources:\n- {{ id: a, resource: '{JOURNAL_URN}', rel: origin, at: '{JOURNAL_DATE}T09:00:00Z', locator: 'line 3' }}\n- {{ id: b, resource: '[[{JOURNAL_DATE}]]', rel: evidence, at: '{JOURNAL_DATE}', locator: 'line 4' }}\n- {{ id: c, resource: '[[{JOURNAL_DATE}]]', rel: derived-from }}\n- {{ id: d, resource: 'https://example.org/spec', rel: standard }}\nstatements:\n- {{ key: requires, value: '[[Old Thing]]', valid-from: 2001-01-01T00:00:00Z, valid-to: 2002-01-01T00:00:00Z, reason: world-changed, at: 2026-11-21T10:00:00Z, by: {B4}, sources: [a, d] }}\n---\n{body}\n"
+        ),
+    );
+    write(
+        &root,
+        "knowledge/Old Thing.md",
+        &format!("---\ntype: Class\ntitle: Old Thing\nresource: urn:ngm:class:old-thing\npublic: true\nstatus: stable\ngenerated:\n  by: {B4}\n  at: 2026-11-01T00:00:00Z\n---\nBody.\n"),
+    );
+    if with_working {
+        write(
+            &root,
+            &format!("working/journals/{JOURNAL_DATE}.md"),
+            &format!(
+                "---\ntype: Journal\ntitle: {JOURNAL_TITLE}\nstatus: draft\nvisibility: public\npage_resource: {JOURNAL_URN}\ngenerated:\n  by: {B4}\n  at: 2026-11-01T00:00:00Z\n---\n- a private thought\n"
+            ),
+        );
+    }
+    root
+}
+
+/// Item 2, privacy: a journal is never public, even one that says
+/// `visibility: public`, so a public page's sources that cite it are withheld
+/// from every published output, with their `at` and `locator`; and the build
+/// that cannot see the journal at all publishes none of it either.
+#[test]
+fn a_public_page_citing_a_journal_publishes_none_of_it() {
+    for with_working in [true, false] {
+        let dir = tempfile::tempdir().unwrap();
+        let root = journal_repo(dir.path(), with_working);
+        let out = dir.path().join("out");
+        run_build(&root, &out);
+
+        let page: serde_json::Value =
+            serde_json::from_slice(&fs::read(out.join("api/v3/pages/cites-journal.json")).unwrap())
+                .unwrap();
+        let ids: Vec<&str> = page["sources"]
+            .as_array()
+            .map(|a| a.iter().map(|s| s["id"].as_str().unwrap()).collect())
+            .unwrap_or_default();
+        assert_eq!(ids, ["d"], "only the external standard survives: {page}");
+        let ttl = fs::read_to_string(out.join("data/ontology.ttl")).unwrap();
+        assert!(
+            ttl.contains("dc:source <https://example.org/spec>"),
+            "{ttl}"
+        );
+
+        // The closed statement reached history.ttl with its external source only.
+        let history = fs::read_to_string(out.join("data/history.ttl")).unwrap();
+        assert!(
+            history.contains("dc:source <https://example.org/spec>"),
+            "{history}"
+        );
+
+        let mut all = Vec::new();
+        files(&out, &mut all);
+        assert!(all.len() > 20, "{} files", all.len());
+        for path in all {
+            let text = String::from_utf8_lossy(&fs::read(&path).unwrap()).into_owned();
+            for needle in [
+                JOURNAL_URN,
+                "8aa930221c5f944d",
+                JOURNAL_TITLE,
+                JOURNAL_DATE,
+                "line 3",
+                "line 4",
+            ] {
+                // The body's own `[[...]]` link text is redacted to plain text
+                // by the link rules, so even the title and the date are gone.
+                assert!(
+                    !text.contains(needle),
+                    "working={with_working}: {} leaks {needle}",
+                    path.display()
+                );
+            }
+        }
+    }
+}

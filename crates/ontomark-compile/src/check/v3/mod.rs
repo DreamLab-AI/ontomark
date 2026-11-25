@@ -82,7 +82,10 @@ impl<'a> Context<'a> {
     pub fn build(vault: &'a Vault, _vocab: &Vocabulary, siblings: &'a Siblings<'a>) -> Self {
         let targets: Vec<Target<'a>> = std::iter::once(vault)
             .chain(siblings.vaults.iter().copied())
-            .flat_map(|v| v.pages.iter().map(|page| Target { page, kind: v.kind }))
+            // Pages, then the vault's journals: a journal is a page of the
+            // working vault and a legal target of a citation, by its
+            // `page_resource` and by its date.
+            .flat_map(|v| v.all_pages().map(|page| Target { page, kind: v.kind }))
             .collect();
         let mut by_name: HashMap<String, Vec<usize>> = HashMap::new();
         let mut by_resource: HashMap<String, Vec<usize>> = HashMap::new();
@@ -90,7 +93,15 @@ impl<'a> Context<'a> {
             let names = std::iter::once(t.page.id.clone())
                 .chain(std::iter::once(t.page.title()))
                 .chain(t.page.frontmatter.strings("aliases"));
-            for name in names {
+            // A journal's identity is its date; the engine holds it as
+            // `journals/<date>`. Both spellings name it.
+            let journal = t.page.id.strip_prefix("journals/").unwrap_or(&t.page.id);
+            let is_journal = t.page.rel_path.starts_with("journals");
+            let extra = is_journal
+                .then(|| [journal.to_owned(), format!("journals/{journal}")])
+                .into_iter()
+                .flatten();
+            for name in names.chain(extra) {
                 by_name.entry(name.to_lowercase()).or_default().push(i);
             }
             for key in ["resource", "page_resource"] {

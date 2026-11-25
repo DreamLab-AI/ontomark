@@ -191,3 +191,33 @@ fn the_old_human_spelling_does_not_certify_under_version_3() {
         "under version 2 the human: prefix still certifies"
     );
 }
+
+/// Item 2 on the fixture: a Proposal whose `rel: origin` is a journal (by its
+/// urn) and whose `rel: evidence` is the same journal by wikilink resolves
+/// both, with no error of any kind on the page.
+#[test]
+fn a_journal_is_a_source_target() {
+    let out = Command::new(env!("CARGO_BIN_EXE_ontomark"))
+        .arg("--repo")
+        .arg(fixture())
+        .args(["validate", "--vault", "working", "--json"])
+        .output()
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    let on_page: Vec<(String, String)> = json["working"]["issues"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|i| i["path"] == "JournalProposal")
+        .map(|i| {
+            (
+                i["severity"].as_str().unwrap().to_owned(),
+                i["code"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect();
+    assert!(
+        on_page.iter().all(|(sev, _)| sev != "error"),
+        "JournalProposal: {on_page:?}"
+    );
+}

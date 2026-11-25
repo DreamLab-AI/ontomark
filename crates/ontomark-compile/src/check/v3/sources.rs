@@ -693,4 +693,98 @@ mod tests {
         );
         assert!(!has(&r, "INVALID_SOURCE") && !has(&r, "INVALID_SOURCE_RESOURCE"));
     }
+
+    const JOURNAL: &str = "---\ntype: Journal\nstatus: draft\nvisibility: shared\npage_resource: urn:visionflow:page:0a1570b85452e83ef479367c63feb81aa2399f5ec45e25e2f87314ee089fc0f1\ngenerated: { by: did:nostr:b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a, at: '2026-11-25T00:00:00Z' }\n---\n- a thought\n";
+
+    /// Validate working `pages` (journals under `journals/`) beside a knowledge
+    /// vault, so a dangling source is judged.
+    fn with_journal(pages: &[(&str, &str)], journal_id: &str) -> Report {
+        use crate::input::page::{Page, Vault};
+        let know = vault_of(&[("K", "---\ntype: Class\n---\n")], VaultKind::Knowledge);
+        let mut work = vault_of(pages, VaultKind::Working);
+        work.journals.push(
+            Page::parse(
+                format!("/v/{journal_id}.md"),
+                format!("{journal_id}.md"),
+                journal_id,
+                JOURNAL,
+            )
+            .unwrap(),
+        );
+        let _: &Vault = &work;
+        run_with(
+            &work,
+            &vocab(3, ""),
+            &super::super::Siblings {
+                vaults: vec![&know],
+                roster: None,
+            },
+        )
+    }
+
+    /// A journal is a resolvable source target by `page_resource` and by
+    /// wikilink (its date), for every `rel`, and gets every check a page
+    /// citation gets. ADR-VG-010 §5 forbids no `rel` against a journal: its
+    /// only target-type rule is Brief, and `EVIDENCE_NOT_APPROVED` is for
+    /// memory kinds.
+    #[test]
+    fn a_journal_is_a_source_target_by_urn_and_by_wikilink() {
+        const URN: &str =
+            "urn:visionflow:page:0a1570b85452e83ef479367c63feb81aa2399f5ec45e25e2f87314ee089fc0f1";
+        for id in ["2026-11-25", "journals/2026-11-25"] {
+            for target in [URN, "[[2026-11-25]]"] {
+                for rel in [
+                    "origin",
+                    "episode",
+                    "evidence",
+                    "derived-from",
+                    "standard",
+                    "reference",
+                ] {
+                    let src = format!(
+                        "  - {{ id: a, resource: '{target}', rel: {rel}, locator: 'p1' }}\n"
+                    );
+                    let r = with_journal(&[("B", &belief(&src))], id);
+                    assert!(
+                        !has(&r, "DANGLING_SOURCE"),
+                        "{id} {target} {rel}: {:?}",
+                        codes(&r)
+                    );
+                    assert!(
+                        !has(&r, "BRIEF_AS_EVIDENCE") && !has(&r, "MISSING_LOCATOR"),
+                        "{id} {target} {rel}: {:?}",
+                        codes(&r)
+                    );
+                }
+            }
+        }
+        // The motivating case: a journal as the origin of a Proposal is clean.
+        let proposal = "---\ntype: Proposal\nstatus: draft\nvisibility: shared\npage_resource: urn:visionflow:page:p1\ngenerated: { by: did:nostr:b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a, at: '2026-11-25T00:00:00Z' }\nproposes: Thing\ntopic: thing\nsources:\n  - { id: o, resource: 'urn:visionflow:page:0a1570b85452e83ef479367c63feb81aa2399f5ec45e25e2f87314ee089fc0f1', rel: origin }\n  - { id: e, resource: '[[2026-11-25]]', rel: evidence, locator: 'p1' }\n---\nx\n";
+        let r = with_journal(&[("P", proposal)], "2026-11-25");
+        assert!(r.errors().is_empty(), "{:?}", r.errors());
+        // A derived-from pin on a journal is checked like any page's: a stale
+        // one warns, a malformed one is an error.
+        let pinned = |pin: &str| {
+            belief(&format!(
+                "  - {{ id: a, resource: '[[2026-11-25]]', rel: derived-from, locator: '{pin}' }}\n"
+            ))
+        };
+        let stale = with_journal(
+            &[("B", &pinned(&format!("sha256-v1:{}", "0".repeat(64))))],
+            "2026-11-25",
+        );
+        assert!(has(&stale, "STALE_PIN"), "{:?}", codes(&stale));
+        let bad = with_journal(&[("B", &pinned("sha256:abc"))], "2026-11-25");
+        assert!(has(&bad, "INVALID_PIN"), "{:?}", codes(&bad));
+        // Negative: a date no journal holds still dangles, by urn and by link.
+        for target in ["urn:visionflow:page:ffff", "[[2026-11-26]]"] {
+            let src = format!("  - {{ id: a, resource: '{target}', rel: origin }}\n");
+            let r = with_journal(&[("B", &belief(&src))], "2026-11-25");
+            assert!(
+                r.errors().iter().any(|i| i.code == "DANGLING_SOURCE"),
+                "{target}: {:?}",
+                codes(&r)
+            );
+        }
+    }
 }

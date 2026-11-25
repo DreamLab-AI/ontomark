@@ -183,6 +183,10 @@ pub struct PrivateLinks {
     /// supersession entry names a working page by its `page_resource`, so the
     /// IRI is as much a link as the wikilink is. Empty under version 2.
     private_iris: HashSet<String>,
+    /// Vocabulary 3: a `sources` entry that names a page this build cannot
+    /// publish is withheld whole from the staged frontmatter (its `id`, `rel`,
+    /// `at` and `locator` as well as its `resource`).
+    v3: bool,
 }
 
 impl PrivateLinks {
@@ -265,6 +269,7 @@ impl PrivateLinks {
         Self {
             vaults,
             private_iris,
+            v3: vocab.is_some_and(crate::input::vocabulary::Vocabulary::is_v3),
         }
     }
 
@@ -613,8 +618,12 @@ impl PrivateLinks {
             }
         }
 
+        let is_sources = self.v3
+            && key_content
+                .split_once(':')
+                .is_some_and(|(k, _)| k.trim() == "sources");
         if after_key.is_empty() && block.len() > 1 {
-            if let Some(kept) = self.prune_list(home, block, tally) {
+            if let Some(kept) = self.prune_list(home, block, tally, is_sources) {
                 if kept.is_empty() {
                     tally.frontmatter_keys_removed += 1;
                 } else {
@@ -646,6 +655,7 @@ impl PrivateLinks {
         home: VaultKind,
         block: &[&str],
         tally: &mut Tally,
+        sources: bool,
     ) -> Option<Vec<String>> {
         let indent = indent_of(block[1]);
         if !block[1][indent..].starts_with('-') {
@@ -668,11 +678,15 @@ impl PrivateLinks {
         for item in &items {
             let first = split_eol(item[0]).0;
             let value = first[indent..].trim_start_matches('-').trim();
-            let private = item.len() == 1
-                && matches!(
-                    serde_norway::from_str::<Yaml>(strip_comment(value)),
-                    Ok(Yaml::String(ref s)) if self.whole_private_link(home, s)
-                );
+            let private = if sources {
+                self.source_withheld(home, item, indent)
+            } else {
+                item.len() == 1
+                    && matches!(
+                        serde_norway::from_str::<Yaml>(strip_comment(value)),
+                        Ok(Yaml::String(ref s)) if self.whole_private_link(home, s)
+                    )
+            };
             if private {
                 removed += 1;
                 continue;
@@ -684,6 +698,38 @@ impl PrivateLinks {
         tally.add(&local);
         tally.frontmatter_entries_removed += removed;
         Some(kept)
+    }
+
+    /// `true` when a staged `sources` item (its lines, listed at `indent`)
+    /// cites a page this build must not publish: a private page by wikilink,
+    /// `resource` or `page_resource`, or a page reference that names no page it
+    /// can see. The whole entry goes, so neither its `id`, its `at` nor its
+    /// `locator` outlives the target (a journal, a shared ledger).
+    fn source_withheld(&self, home: VaultKind, item: &[&str], indent: usize) -> bool {
+        let dedented: String = item
+            .iter()
+            .map(|line| line.get(indent..).unwrap_or(line))
+            .collect();
+        let Ok(Yaml::Sequence(entries)) = serde_norway::from_str::<Yaml>(&dedented) else {
+            return false;
+        };
+        entries.iter().any(|entry| {
+            let Some(resource) = entry
+                .as_mapping()
+                .and_then(|m| m.get(Yaml::String("resource".into())))
+                .and_then(Yaml::as_str)
+            else {
+                return false;
+            };
+            match self.source_target(home, resource) {
+                SourceTarget::Private => true,
+                SourceTarget::Unresolved => {
+                    Wikilink::parse(resource).is_some()
+                        || resource.trim().starts_with("urn:visionflow:page:")
+                }
+                SourceTarget::Public { .. } => false,
+            }
+        })
     }
 
     fn whole_private_link(&self, home: VaultKind, value: &str) -> bool {
@@ -1085,9 +1131,13 @@ mod tests {
             text,
             &mut t,
         );
-        assert!(!out.contains("aaa111\n") && out.contains(MARKER), "{out}");
-        assert!(out.contains("bbb222") && out.contains("aaa1112"), "{out}");
-        assert_eq!(t.frontmatter_inline_rewrites, 1);
+        // The whole entry citing a private page goes (its `id` too), and so
+        // does one naming a page this build cannot see; a public page's stays.
+        assert!(!out.contains("aaa111") && !out.contains("id: a"), "{out}");
+        assert!(!out.contains("id: c"), "{out}");
+        assert!(out.contains("bbb222") && out.contains("id: b"), "{out}");
+        assert_eq!(t.frontmatter_entries_removed, 2);
+        assert_eq!(t.frontmatter_inline_rewrites, 0);
         // Version 2 (no vocabulary, or an older one) leaves the text as written.
         let mut t = Tally::default();
         let plain = PrivateLinks::new(&[&w]).frontmatter(VaultKind::Knowledge, text, &mut t);
