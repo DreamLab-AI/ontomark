@@ -251,12 +251,15 @@ fn review_state(report: &mut Report, page: &Page, vocab: &Vocabulary, ctx: &Cont
             .text("visibility")
             .unwrap_or_else(|| "shared".into());
         let mut seen = HashSet::new();
-        for reference in d
-            .as_sequence()
-            .into_iter()
-            .flatten()
-            .filter_map(Yaml::as_str)
-        {
+        // ADR-VG-013 section 3 writes each dispute as `{page, detected,
+        // reason}`; a bare reference is read too.
+        for reference in d.as_sequence().into_iter().flatten().filter_map(|item| {
+            item.as_str().or_else(|| {
+                item.as_mapping()
+                    .and_then(|m| m.get(Yaml::String("page".into())))
+                    .and_then(Yaml::as_str)
+            })
+        }) {
             let target = ctx.resolve(reference);
             let ok = target.is_some_and(|t| {
                 let ty = t.page.frontmatter.text("type").unwrap_or_default();
