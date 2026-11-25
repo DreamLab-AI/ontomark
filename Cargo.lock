@@ -991,6 +991,7 @@ dependencies = [
  "ontomark-profile-estate",
  "ontomark-source",
  "serde_json",
+ "sha2 0.11.0",
  "tempfile",
  "ureq",
 ]
