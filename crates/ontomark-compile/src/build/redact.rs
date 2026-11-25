@@ -574,6 +574,7 @@ impl PrivateLinks {
     pub fn frontmatter(&self, home: VaultKind, text: &str, tally: &mut Tally) -> String {
         let lines: Vec<&str> = text.split_inclusive('\n').collect();
         let mut out = String::with_capacity(text.len());
+        let withheld = self.withheld_source_ids(home, text);
         let mut i = 0;
         while i < lines.len() {
             if !is_key_line(lines[i]) {
@@ -585,7 +586,7 @@ impl PrivateLinks {
             while j < lines.len() && !is_key_line(lines[j]) && !is_fence_line(lines[j]) {
                 j += 1;
             }
-            self.block(home, &lines[i..j], &mut out, tally);
+            self.block(home, &lines[i..j], &mut out, tally, &withheld);
             i = j;
         }
         out
@@ -599,7 +600,14 @@ impl PrivateLinks {
     }
 
     /// One top-level key and everything indented or listed under it.
-    fn block(&self, home: VaultKind, block: &[&str], out: &mut String, tally: &mut Tally) {
+    fn block(
+        &self,
+        home: VaultKind,
+        block: &[&str],
+        out: &mut String,
+        tally: &mut Tally,
+        withheld: &HashSet<String>,
+    ) {
         let (key_content, _) = split_eol(block[0]);
         let after_key = key_content.split_once(':').map_or("", |(_, v)| v).trim();
 
@@ -618,6 +626,18 @@ impl PrivateLinks {
             }
         }
 
+        if !withheld.is_empty()
+            && key_content
+                .split_once(':')
+                .is_some_and(|(k, _)| k.trim() == "statements")
+        {
+            if let Some(text) = prune_statement_sources(&block.concat(), withheld) {
+                for line in text.split_inclusive('\n') {
+                    out.push_str(&self.inline_keep_eol(home, line, tally));
+                }
+                return;
+            }
+        }
         let is_sources = self.v3
             && key_content
                 .split_once(':')
@@ -713,23 +733,54 @@ impl PrivateLinks {
         let Ok(Yaml::Sequence(entries)) = serde_norway::from_str::<Yaml>(&dedented) else {
             return false;
         };
-        entries.iter().any(|entry| {
-            let Some(resource) = entry
-                .as_mapping()
-                .and_then(|m| m.get(Yaml::String("resource".into())))
-                .and_then(Yaml::as_str)
-            else {
-                return false;
-            };
-            match self.source_target(home, resource) {
-                SourceTarget::Private => true,
-                SourceTarget::Unresolved => {
-                    Wikilink::parse(resource).is_some()
-                        || resource.trim().starts_with("urn:visionflow:page:")
-                }
-                SourceTarget::Public { .. } => false,
+        entries.iter().any(|entry| self.entry_withheld(home, entry))
+    }
+
+    fn entry_withheld(&self, home: VaultKind, entry: &Yaml) -> bool {
+        let Some(resource) = entry
+            .as_mapping()
+            .and_then(|m| m.get(Yaml::String("resource".into())))
+            .and_then(Yaml::as_str)
+        else {
+            return false;
+        };
+        match self.source_target(home, resource) {
+            SourceTarget::Private => true,
+            SourceTarget::Unresolved => {
+                Wikilink::parse(resource).is_some()
+                    || resource.trim().starts_with("urn:visionflow:page:")
             }
-        })
+            SourceTarget::Public { .. } => false,
+        }
+    }
+
+    /// The local `id`s of the `sources` entries [`PrivateLinks::source_withheld`]
+    /// drops from this frontmatter, so a `statements[].sources` list does not
+    /// keep naming a citation that is gone. Empty outside vocabulary 3.
+    fn withheld_source_ids(&self, home: VaultKind, frontmatter: &str) -> HashSet<String> {
+        let mut ids = HashSet::new();
+        if !self.v3 {
+            return ids;
+        }
+        let inner: String = frontmatter
+            .split_inclusive('\n')
+            .filter(|l| !is_fence_line(l))
+            .collect();
+        let Ok(Yaml::Mapping(map)) = serde_norway::from_str::<Yaml>(&inner) else {
+            return ids;
+        };
+        if let Some(Yaml::Sequence(entries)) = map.get(Yaml::String("sources".into())) {
+            for entry in entries.iter().filter(|e| self.entry_withheld(home, e)) {
+                if let Some(id) = entry
+                    .as_mapping()
+                    .and_then(|m| m.get(Yaml::String("id".into())))
+                    .and_then(Yaml::as_str)
+                {
+                    ids.insert(id.trim().to_owned());
+                }
+            }
+        }
+        ids
     }
 
     fn whole_private_link(&self, home: VaultKind, value: &str) -> bool {
@@ -739,6 +790,37 @@ impl PrivateLinks {
 }
 
 // ------------------------------------------------------------------ helpers
+
+/// A `statements` block with the withheld `ids` removed from every entry's
+/// `sources` list (and the list dropped when it empties), re-rendered; `None`
+/// when the block is not the list of mappings it should be or nothing changes.
+fn prune_statement_sources(block: &str, withheld: &HashSet<String>) -> Option<String> {
+    let Ok(Yaml::Mapping(mut map)) = serde_norway::from_str::<Yaml>(block) else {
+        return None;
+    };
+    let key = Yaml::String("statements".into());
+    let Some(Yaml::Sequence(entries)) = map.get_mut(&key) else {
+        return None;
+    };
+    let mut changed = false;
+    for entry in entries.iter_mut().filter_map(Yaml::as_mapping_mut) {
+        let sources = Yaml::String("sources".into());
+        let Some(Yaml::Sequence(ids)) = entry.get_mut(&sources) else {
+            continue;
+        };
+        let before = ids.len();
+        ids.retain(|id| id.as_str().is_none_or(|id| !withheld.contains(id.trim())));
+        if ids.len() != before {
+            changed = true;
+            if ids.is_empty() {
+                entry.remove(&sources);
+            }
+        }
+    }
+    changed
+        .then(|| serde_norway::to_string(&map).ok())
+        .flatten()
+}
 
 fn split_eol(line: &str) -> (&str, &str) {
     if let Some(c) = line.strip_suffix("\r\n") {

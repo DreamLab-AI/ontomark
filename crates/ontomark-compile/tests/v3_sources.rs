@@ -309,7 +309,7 @@ fn journal_repo(dir: &Path, with_working: bool) -> PathBuf {
         &root,
         "knowledge/Cites Journal.md",
         &format!(
-            "---\ntype: Class\ntitle: Cites Journal\nresource: urn:ngm:class:cites-journal\npublic: true\nstatus: stable\ngenerated:\n  by: {B4}\n  at: 2026-11-01T00:00:00Z\nsources:\n- {{ id: a, resource: '{JOURNAL_URN}', rel: origin, at: '{JOURNAL_DATE}T09:00:00Z', locator: 'line 3' }}\n- {{ id: b, resource: '[[{JOURNAL_DATE}]]', rel: evidence, at: '{JOURNAL_DATE}', locator: 'line 4' }}\n- {{ id: c, resource: '[[{JOURNAL_DATE}]]', rel: derived-from }}\n- {{ id: d, resource: 'https://example.org/spec', rel: standard }}\nstatements:\n- {{ key: requires, value: '[[Old Thing]]', valid-from: 2001-01-01T00:00:00Z, valid-to: 2002-01-01T00:00:00Z, reason: world-changed, at: 2026-11-21T10:00:00Z, by: {B4}, sources: [a, d] }}\n---\n{body}\n"
+            "---\ntype: Class\ntitle: Cites Journal\nresource: urn:ngm:class:cites-journal\npublic: true\nstatus: stable\ngenerated:\n  by: {B4}\n  at: 2026-11-01T00:00:00Z\nsources:\n- {{ id: day-{JOURNAL_DATE}, resource: '{JOURNAL_URN}', rel: origin, at: '{JOURNAL_DATE}T09:00:00Z', locator: 'line 3' }}\n- {{ id: b, resource: '[[{JOURNAL_DATE}]]', rel: evidence, at: '{JOURNAL_DATE}', locator: 'line 4' }}\n- {{ id: c, resource: '[[{JOURNAL_DATE}]]', rel: derived-from }}\n- {{ id: d, resource: 'https://example.org/spec', rel: standard }}\nstatements:\n- {{ key: requires, value: '[[Old Thing]]', valid-from: 2001-01-01T00:00:00Z, valid-to: 2002-01-01T00:00:00Z, reason: world-changed, at: 2026-11-21T10:00:00Z, by: {B4}, sources: [day-{JOURNAL_DATE}, d] }}\n---\n{body}\n"
         ),
     );
     write(
@@ -355,6 +355,11 @@ fn a_public_page_citing_a_journal_publishes_none_of_it() {
             "{ttl}"
         );
 
+        // The staged page names no withheld id, not even in a statement's
+        // `sources` list, which keeps the external one.
+        let staged = fs::read_to_string(out.join("publish/pages/Cites Journal.md")).unwrap();
+        assert!(!staged.contains("day-"), "{staged}");
+        assert!(staged.contains("sources:\n  - d\n"), "{staged}");
         // The closed statement reached history.ttl with its external source only.
         let history = fs::read_to_string(out.join("data/history.ttl")).unwrap();
         assert!(
