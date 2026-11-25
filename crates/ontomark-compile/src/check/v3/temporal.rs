@@ -67,7 +67,7 @@ fn superseded_by(page: &Page) -> Vec<String> {
     page.frontmatter.strings("superseded-by")
 }
 
-fn is_iri(s: &str) -> bool {
+pub(crate) fn is_iri(s: &str) -> bool {
     let s = s.trim();
     s.split_once(':').is_some_and(|(scheme, rest)| {
         !rest.is_empty()

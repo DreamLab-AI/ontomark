@@ -2,7 +2,7 @@
 //! key), what did the work (`via`), and when (`at`).
 //!
 //! The same shape is read on `generated`, `verified[]` and `contributors[]`
-//! here, and on `supersedes[]` and `statements[]` entries by [`check_entry`].
+//! here, and on `supersedes[]` and `statements[]` entries by `check_entry`.
 //!
 //! Both grammars parse under either vocabulary version. Strictness does not:
 //!

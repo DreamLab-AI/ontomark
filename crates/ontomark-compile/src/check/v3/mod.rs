@@ -11,12 +11,14 @@
 //! | this one | S0 | the version switch, validation context, closed working enums |
 //! | [`stamps`] | S1 | principal `by`, instrument `via`, human-only `verified` |
 //! | [`temporal`] | S2 | `valid-from`/`valid-to`, supersession, statements |
+//! | [`sources`] | S3 | typed sources, locators, pins, the memory kinds' own keys |
 //!
-//! Each rule reports through [`Report::push`] under a stable code; the codes
+//! Each rule reports through `Report::push` under a stable code; the codes
 //! the four ADRs name are used verbatim.
 
 use std::collections::HashMap;
 
+pub mod sources;
 pub mod stamps;
 pub mod temporal;
 
@@ -134,6 +136,7 @@ pub fn page_checks(report: &mut Report, page: &Page, vocab: &Vocabulary, ctx: &C
     working_extension_enums(report, page, vocab, ctx);
     stamps::check_page(report, page, ctx);
     temporal::check_page(report, page, vocab, ctx);
+    sources::check_page(report, page, vocab, ctx);
 }
 
 /// Rules that need the whole vault (cycles, targets): run after every page.
