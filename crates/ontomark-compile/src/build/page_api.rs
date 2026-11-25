@@ -112,6 +112,27 @@ pub fn build_v3_at(
                 ) {
                     provenance.insert("via".into(), json!(via));
                 }
+                if !facts.sources.is_empty() {
+                    doc.value["sources"] = Value::Array(
+                        facts
+                            .sources
+                            .iter()
+                            .map(|s| {
+                                let mut entry = Map::new();
+                                entry.insert("id".into(), json!(s.id));
+                                entry.insert("rel".into(), json!(s.rel));
+                                entry.insert("resource".into(), json!(s.target));
+                                if let Some(at) = &s.at {
+                                    entry.insert("at".into(), json!(at));
+                                }
+                                if let Some(locator) = &s.locator {
+                                    entry.insert("locator".into(), json!(locator));
+                                }
+                                Value::Object(entry)
+                            })
+                            .collect(),
+                    );
+                }
                 if let Some(from) = &facts.valid_from {
                     doc.value["validFrom"] = json!(from);
                 }
@@ -527,5 +548,50 @@ mod tests {
         assert_eq!(terms["validFrom"]["@id"], "temporal:validFrom");
         assert_eq!(terms["temporal"], "http://nova.dev/temporal#");
         assert!(terms.contains_key("reviewBinding"), "v4 keeps v3's terms");
+    }
+
+    #[test]
+    fn version_3_documents_list_the_sources_that_may_be_published() {
+        use crate::ir::model::{SourceFact, V3Facts};
+        let mut cited = record("cited");
+        cited.v3 = Some(Box::new(V3Facts {
+            sources: vec![SourceFact {
+                id: "a".into(),
+                rel: "evidence".into(),
+                target: "urn:visionflow:page:pub1".into(),
+                at: Some("2026-11-01".into()),
+                locator: Some("fp:32ebb74ef2751e32".into()),
+            }],
+            ..V3Facts::default()
+        }));
+        let plain = record("plain");
+        let corpus = Corpus {
+            records: vec![cited, plain],
+            by_class_slug: indexmap::IndexMap::new(),
+        };
+        let closure = Closure::default();
+        let roster = crate::build::attribution::Roster::default();
+        let (v3, _) = build_v3(&corpus, &closure, &HashMap::new(), &roster);
+        let by = |slug: &str| {
+            v3.iter()
+                .find(|d| d.value["slug"] == slug)
+                .unwrap()
+                .value
+                .clone()
+        };
+        assert_eq!(
+            by("cited")["sources"],
+            json!([{"id": "a", "rel": "evidence", "resource": "urn:visionflow:page:pub1",
+                    "at": "2026-11-01", "locator": "fp:32ebb74ef2751e32"}])
+        );
+        assert!(by("plain").get("sources").is_none());
+        let (legacy, _) = build(&corpus, &closure, &HashMap::new());
+        assert!(legacy.iter().all(|d| d.value.get("sources").is_none()));
+        let vocab = crate::input::vocabulary::Vocabulary::from_yaml_str(
+            "version: 3\nnamespace: \"urn:ngm:class:\"\n",
+        )
+        .unwrap();
+        let ctx = super::super::okf::context_v4(crate::profile::testing::est(), &vocab);
+        assert!(ctx["@context"].as_object().unwrap().contains_key("sources"));
     }
 }

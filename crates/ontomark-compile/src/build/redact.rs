@@ -46,7 +46,7 @@
 //! of a private title in prose (the projection's marker redactor masks those in
 //! the mirror; the staged `publish/` prose is the author's).
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use serde::Serialize;
 use serde_norway::Value as Yaml;
@@ -131,6 +131,11 @@ struct Entry {
     title: String,
     slug: String,
     aliases: Vec<String>,
+    /// The page's identity IRI: `page_resource` on a working page when it has
+    /// one, else `resource`, else the namespace and slug.
+    iri: String,
+    /// The page's `type`.
+    type_name: Option<String>,
 }
 
 #[derive(Debug)]
@@ -138,6 +143,26 @@ struct VaultIndex {
     kind: VaultKind,
     names: NameIndex,
     entries: Vec<Entry>,
+    /// `resource` and `page_resource` values to positions in `entries`.
+    by_iri: HashMap<String, usize>,
+}
+
+/// What a `sources` reference names, judged by the same rule that redacts
+/// links (ADR-VG-010 §7: a source that points at a non-public page is not
+/// emitted in a public build).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SourceTarget {
+    /// A public page: its identity IRI and `type`.
+    Public {
+        /// The page's identity IRI.
+        iri: String,
+        /// The page's `type`, when it has one.
+        type_name: Option<String>,
+    },
+    /// A page that is not public. Nothing about it may be published.
+    Private,
+    /// Not a page of any loaded vault.
+    Unresolved,
 }
 
 /// The outcome of resolving a link target.
@@ -153,6 +178,11 @@ enum Resolution<'a> {
 #[derive(Debug)]
 pub struct PrivateLinks {
     vaults: Vec<VaultIndex>,
+    /// Under vocabulary 3: the `resource` and `page_resource` IRIs of pages
+    /// that are not public (and that no public page also holds). A source or
+    /// supersession entry names a working page by its `page_resource`, so the
+    /// IRI is as much a link as the wikilink is. Empty under version 2.
+    private_iris: HashSet<String>,
 }
 
 impl PrivateLinks {
@@ -169,7 +199,7 @@ impl PrivateLinks {
         vaults: &[&Vault],
         vocab: Option<&crate::input::vocabulary::Vocabulary>,
     ) -> Self {
-        let vaults = vaults
+        let vaults: Vec<VaultIndex> = vaults
             .iter()
             .map(|vault| {
                 let regular = vault.pages.iter().map(|p| {
@@ -183,23 +213,59 @@ impl PrivateLinks {
                 // non-public page. Regular pages come first so they win a clash.
                 let journals = vault.journals.iter().map(|p| (p, true));
                 let all: Vec<(&Page, bool)> = regular.chain(journals).collect();
+                let namespace = vocab.map_or("", |v| v.namespace.as_str());
+                let entries: Vec<Entry> = all
+                    .iter()
+                    .map(|(p, private)| Entry {
+                        private: *private,
+                        id: p.id.clone(),
+                        title: p.title(),
+                        slug: p.slug(),
+                        aliases: p.frontmatter.strings("aliases"),
+                        iri: if vault.kind == VaultKind::Working {
+                            p.frontmatter
+                                .text("page_resource")
+                                .unwrap_or_else(|| p.resource(namespace))
+                        } else {
+                            p.resource(namespace)
+                        },
+                        type_name: p.frontmatter.text("type"),
+                    })
+                    .collect();
+                let mut by_iri = HashMap::new();
+                for (i, (p, _)) in all.iter().enumerate() {
+                    for key in ["resource", "page_resource"] {
+                        if let Some(value) = p.frontmatter.text(key) {
+                            by_iri.entry(value).or_insert(i);
+                        }
+                    }
+                }
                 VaultIndex {
                     kind: vault.kind,
                     names: NameIndex::build_iter(all.iter().map(|(p, _)| *p)),
-                    entries: all
-                        .iter()
-                        .map(|(p, private)| Entry {
-                            private: *private,
-                            id: p.id.clone(),
-                            title: p.title(),
-                            slug: p.slug(),
-                            aliases: p.frontmatter.strings("aliases"),
-                        })
-                        .collect(),
+                    entries,
+                    by_iri,
                 }
             })
             .collect();
-        Self { vaults }
+        let mut private_iris = HashSet::new();
+        if vocab.is_some_and(crate::input::vocabulary::Vocabulary::is_v3) {
+            let mut public_iris = HashSet::new();
+            for v in &vaults {
+                for (iri, &i) in &v.by_iri {
+                    if v.entries[i].private {
+                        private_iris.insert(iri.clone());
+                    } else {
+                        public_iris.insert(iri.clone());
+                    }
+                }
+            }
+            private_iris.retain(|iri| !public_iris.contains(iri));
+        }
+        Self {
+            vaults,
+            private_iris,
+        }
     }
 
     fn lookup(&self, home: VaultKind, name: &str) -> Resolution<'_> {
@@ -264,6 +330,45 @@ impl PrivateLinks {
     #[must_use]
     pub fn is_private(&self, home: VaultKind, target: &str) -> bool {
         matches!(self.resolve(home, target), Resolution::Private(_))
+    }
+
+    /// What a `sources` reference names, written as a wikilink or as the IRI
+    /// of a page's `resource` or `page_resource`. A page is judged by the rule
+    /// that redacts links, so a source and a link can never disagree about
+    /// which page is private. Any other string is [`SourceTarget::Unresolved`]
+    /// and the caller decides whether it is an external IRI.
+    #[must_use]
+    pub fn source_target(&self, home: VaultKind, reference: &str) -> SourceTarget {
+        let reference = reference.trim();
+        if let Some(link) = Wikilink::parse(reference) {
+            return match self.resolve(home, &link.target) {
+                Resolution::Public(kind, i) => self.public_target(kind, i),
+                Resolution::Private(_) => SourceTarget::Private,
+                Resolution::Unresolved => SourceTarget::Unresolved,
+            };
+        }
+        for v in &self.vaults {
+            if let Some(&i) = v.by_iri.get(reference) {
+                return if v.entries[i].private {
+                    SourceTarget::Private
+                } else {
+                    self.public_target(v.kind, i)
+                };
+            }
+        }
+        SourceTarget::Unresolved
+    }
+
+    fn public_target(&self, kind: VaultKind, index: usize) -> SourceTarget {
+        let entry = self
+            .vaults
+            .iter()
+            .find(|v| v.kind == kind)
+            .map(|v| &v.entries[index]);
+        entry.map_or(SourceTarget::Unresolved, |e| SourceTarget::Public {
+            iri: e.iri.clone(),
+            type_name: e.type_name.clone(),
+        })
     }
 
     /// Whether a structured frontmatter value contains a private link target.
@@ -343,6 +448,45 @@ impl PrivateLinks {
     /// Rewrite the links on one line, leaving inline code spans alone.
     /// `frontmatter` selects the counter the rewrites are credited to.
     fn inline(&self, home: VaultKind, line: &str, tally: &mut Tally, frontmatter: bool) -> String {
+        if frontmatter && !self.private_iris.is_empty() {
+            let masked = self.mask_private_iris(line, tally);
+            if masked != line {
+                return self.inline_links(home, &masked, tally, frontmatter);
+            }
+        }
+        self.inline_links(home, line, tally, frontmatter)
+    }
+
+    /// `line` with each private page IRI (see `private_iris`) replaced by
+    /// [`MARKER`]. An IRI is a whole token: it is not matched inside a longer one.
+    fn mask_private_iris(&self, line: &str, tally: &mut Tally) -> String {
+        let token = |c: char| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | ':' | '.' | '/');
+        let mut out = String::with_capacity(line.len());
+        let mut rest = line;
+        while !rest.is_empty() {
+            let start = rest.find(|c: char| token(c)).unwrap_or(rest.len());
+            out.push_str(&rest[..start]);
+            rest = &rest[start..];
+            let end = rest.find(|c: char| !token(c)).unwrap_or(rest.len());
+            let word = &rest[..end];
+            if self.private_iris.contains(word) {
+                out.push_str(MARKER);
+                tally.frontmatter_inline_rewrites += 1;
+            } else {
+                out.push_str(word);
+            }
+            rest = &rest[end..];
+        }
+        out
+    }
+
+    fn inline_links(
+        &self,
+        home: VaultKind,
+        line: &str,
+        tally: &mut Tally,
+        frontmatter: bool,
+    ) -> String {
         if !line.contains("[[") {
             return line.to_owned();
         }
@@ -544,6 +688,7 @@ impl PrivateLinks {
 
     fn whole_private_link(&self, home: VaultKind, value: &str) -> bool {
         Wikilink::parse(value).is_some_and(|w| self.is_private(home, &w.target))
+            || self.private_iris.contains(value.trim())
     }
 }
 
@@ -912,6 +1057,41 @@ mod tests {
             out,
             "---\ngenerated:\n  by: human:npub1x\n  at: 2026-10-11T00:00:00Z\nis-a:\n- '[[Bob''s Page]]'\n---\n"
         );
+    }
+
+    #[test]
+    fn a_private_page_iri_is_a_link_under_vocabulary_3_only() {
+        let w = vault(
+            VaultKind::Working,
+            &[
+                (
+                    "Hush",
+                    "---\ntype: Note\nvisibility: shared\npage_resource: urn:visionflow:page:aaa111\n---\nx\n",
+                ),
+                (
+                    "Open",
+                    "---\ntype: Note\nvisibility: public\npage_resource: urn:visionflow:page:bbb222\n---\nx\n",
+                ),
+            ],
+        );
+        let v3 = crate::input::vocabulary::Vocabulary::from_yaml_str(
+            "version: 3\nnamespace: \"urn:ngm:class:\"\n",
+        )
+        .unwrap();
+        let text = "---\nsources:\n- id: a\n  resource: urn:visionflow:page:aaa111\n- id: b\n  resource: 'urn:visionflow:page:bbb222'\n- id: c\n  resource: urn:visionflow:page:aaa1112\n---\n";
+        let mut t = Tally::default();
+        let out = PrivateLinks::new_with(&[&w], Some(&v3)).frontmatter(
+            VaultKind::Knowledge,
+            text,
+            &mut t,
+        );
+        assert!(!out.contains("aaa111\n") && out.contains(MARKER), "{out}");
+        assert!(out.contains("bbb222") && out.contains("aaa1112"), "{out}");
+        assert_eq!(t.frontmatter_inline_rewrites, 1);
+        // Version 2 (no vocabulary, or an older one) leaves the text as written.
+        let mut t = Tally::default();
+        let plain = PrivateLinks::new(&[&w]).frontmatter(VaultKind::Knowledge, text, &mut t);
+        assert_eq!(plain, text);
     }
 
     #[test]

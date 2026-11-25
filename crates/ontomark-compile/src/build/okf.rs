@@ -211,6 +211,17 @@ pub fn context_v4(profile: &Profile, vocab: &Vocabulary) -> Value {
     context["@context"]["provenance"]["@context"]["via"] = json!(format!("{vc}:via"));
     context["@context"]["recallable"] =
         json!({ "@id": format!("{vc}:recallable"), "@type": "xsd:boolean" });
+    context["@context"]["sources"] = json!({
+        "@id": format!("{vc}:source"),
+        "@container": "@set",
+        "@context": {
+            "id": format!("{vc}:sourceId"),
+            "rel": format!("{vc}:sourceRel"),
+            "resource": { "@id": format!("{vc}:sourceTarget"), "@type": "@id" },
+            "at": format!("{vc}:sourceAt"),
+            "locator": format!("{vc}:sourceLocator"),
+        },
+    });
     context
 }
 

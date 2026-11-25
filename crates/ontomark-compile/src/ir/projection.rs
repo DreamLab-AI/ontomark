@@ -648,11 +648,12 @@ pub fn project_vault_with_links_attributed(
         extra_private,
     )?;
     let cleaned = clean_vault(vault, links, vocab);
-    project_with_redactor(
-        profile,
-        &Corpus::build_with(&cleaned, vocab, roster),
-        extra_private,
-    )
+    let mut corpus = Corpus::build_with(&cleaned, vocab, roster);
+    // Typed sources are read from the vault as authored and judged by the same
+    // `links` that cleaned it: a source naming a non-public page never reaches
+    // a record (version 3 only; a no-op under version 2).
+    corpus.attach_sources(vault, links);
+    project_with_redactor(profile, &corpus, extra_private)
 }
 
 /// `vault` as the public surfaces may see it: held pages forced private, and

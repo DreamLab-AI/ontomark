@@ -450,6 +450,16 @@ pub fn build_graph_attributed(
         }
     }
 
+    // Version 3 annotation axioms (typed sources), minted after every other
+    // blank node so a corpus without them keeps its blank-node labels.
+    if vocab.is_v3() {
+        for record in &records {
+            if let Some(facts) = record.v3.as_deref() {
+                emit_v3_sources(&mut g, profile, &iri_to_uri(profile, &record.iri), facts);
+            }
+        }
+    }
+
     // Single-ref tail policy: an ngm: IRI that is only ever an object property
     // target becomes a declared skos:Concept stub rather than a dangling class.
     let object_props: BTreeSet<String> = [
@@ -828,6 +838,12 @@ fn declare_v3_annotation_properties(g: &mut Graph, profile: &Profile) {
         format!("{DCTERMS}isReplacedBy"),
         format!("{PROV}wasRevisionOf"),
         format!("{vc}supersessionReason"),
+        format!("{PROV}wasDerivedFrom"),
+        format!("{PROV}hadPrimarySource"),
+        format!("{DCTERMS}source"),
+        format!("{vc}sourceRel"),
+        format!("{vc}sourceLocator"),
+        format!("{vc}sourceAt"),
     ] {
         g.add_iri(
             &property,
@@ -926,6 +942,62 @@ fn emit_v3(
             ),
         ] {
             g.add(axiom.clone(), predicate, object);
+        }
+    }
+}
+
+/// The predicate a typed source publishes as (ADR-VG-010 §7). The ADR names
+/// three predicates for six relations and gives no mapping; this one is a
+/// reading, listed as a ruling: `derived-from` is `prov:wasDerivedFrom`,
+/// `origin` is `prov:hadPrimarySource` (the PROV subproperty), and every other
+/// relation is `dcterms:source`.
+fn source_predicate(rel: &str) -> String {
+    match rel {
+        "derived-from" => format!("{PROV}wasDerivedFrom"),
+        "origin" => format!("{PROV}hadPrimarySource"),
+        _ => format!("{DCTERMS}source"),
+    }
+}
+
+/// Publish a page's typed `sources` as annotations on its class: the triple
+/// `<class> <predicate> <target>` with `owl:Axiom` annotations (`vc:sourceRel`,
+/// `vc:sourceLocator`, `vc:sourceAt`) when the predicate alone loses
+/// something (`episode`, `evidence` and `standard` all read `dcterms:source`)
+/// or the entry has a locator or a date. All three predicates are annotation
+/// properties, so the reasoner never sees them. Only entries the corpus kept
+/// are here: a source that points at a non-public page was withheld when the
+/// corpus was built and is not in `facts`.
+fn emit_v3_sources(g: &mut Graph, profile: &Profile, uri: &str, facts: &crate::ir::model::V3Facts) {
+    let vc = profile.iris.vocabulary_namespace.as_str();
+    for source in &facts.sources {
+        let predicate = source_predicate(&source.rel);
+        g.add_iri(uri, &predicate, Term::Iri(source.target.clone()));
+        let lossy = !matches!(source.rel.as_str(), "origin" | "derived-from" | "reference");
+        if !lossy && source.locator.is_none() && source.at.is_none() {
+            continue;
+        }
+        let axiom = Subject::Blank(g.fresh_blank());
+        for (p, o) in [
+            (format!("{RDF}type"), Term::Iri(format!("{OWL}Axiom"))),
+            (format!("{OWL}annotatedSource"), Term::Iri(uri.to_owned())),
+            (format!("{OWL}annotatedProperty"), Term::Iri(predicate)),
+            (
+                format!("{OWL}annotatedTarget"),
+                Term::Iri(source.target.clone()),
+            ),
+            (format!("{vc}sourceRel"), Term::plain(source.rel.clone())),
+        ] {
+            g.add(axiom.clone(), p, o);
+        }
+        if let Some(locator) = &source.locator {
+            g.add(
+                axiom.clone(),
+                format!("{vc}sourceLocator"),
+                Term::plain(locator.clone()),
+            );
+        }
+        if let Some(at) = &source.at {
+            g.add(axiom, format!("{vc}sourceAt"), Term::plain(at.clone()));
         }
     }
 }
@@ -1426,6 +1498,71 @@ relations:
         assert!(!ttl.contains("ngm:decentralized-finance a owl:Class"));
         // Nothing of memory-ontology's reserved terms.
         assert!(!ttl.contains("supersedes") && !ttl.contains("closes"));
+    }
+
+    #[test]
+    fn version_3_publishes_typed_sources_as_annotations_by_relation() {
+        use crate::ir::model::{SourceFact, V3Facts};
+        let src = |id: &str, rel: &str, target: &str, locator: Option<&str>| SourceFact {
+            id: id.into(),
+            rel: rel.into(),
+            target: target.into(),
+            at: None,
+            locator: locator.map(Into::into),
+        };
+        let mut r = record("Cited");
+        r.v3 = Some(Box::new(V3Facts {
+            sources: vec![
+                src("a", "origin", "urn:visionflow:page:pub1", None),
+                src(
+                    "b",
+                    "derived-from",
+                    "urn:visionflow:page:brief1",
+                    Some("sha256-v1:ab"),
+                ),
+                src(
+                    "c",
+                    "evidence",
+                    "urn:visionflow:page:pub2",
+                    Some("fp:32ebb74ef2751e32"),
+                ),
+                src("d", "reference", "https://example.org/r", None),
+            ],
+            ..V3Facts::default()
+        }));
+        let g = build_graph(est(), &corpus_of(vec![r]), &v3_vocab(), true);
+        let ttl = serialise(est(), &g);
+        assert!(
+            ttl.contains("prov:hadPrimarySource <urn:visionflow:page:pub1>"),
+            "{ttl}"
+        );
+        assert!(
+            ttl.contains("prov:wasDerivedFrom <urn:visionflow:page:brief1>"),
+            "{ttl}"
+        );
+        assert!(
+            ttl.contains("dc:source <urn:visionflow:page:pub2>"),
+            "{ttl}"
+        );
+        assert!(ttl.contains("dc:source <https://example.org/r>"), "{ttl}");
+        // Evidence is told apart from a plain reference by its axiom annotation, with the locator.
+        assert!(ttl.contains("vc:sourceRel \"evidence\""), "{ttl}");
+        assert!(
+            ttl.contains("vc:sourceLocator \"fp:32ebb74ef2751e32\""),
+            "{ttl}"
+        );
+        assert!(ttl.contains("vc:sourceLocator \"sha256-v1:ab\""), "{ttl}");
+        // Origin and a bare reference need no annotation: the predicate says it.
+        assert!(
+            !ttl.contains("vc:sourceRel \"origin\"") && !ttl.contains("vc:sourceRel \"reference\"")
+        );
+        // They are annotation properties: nothing for the reasoner.
+        for p in ["prov:wasDerivedFrom", "prov:hadPrimarySource", "dc:source"] {
+            assert!(
+                ttl.contains(&format!("{p} a owl:AnnotationProperty")),
+                "{p}\n{ttl}"
+            );
+        }
     }
 
     #[test]

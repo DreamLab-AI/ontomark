@@ -133,6 +133,24 @@ pub struct SupersessionFact {
     pub reason: String,
 }
 
+/// One typed `sources` entry that may be published (ADR-VG-010 §5, §7): its
+/// target is a public page's identity IRI or an external IRI, never a page the
+/// build withholds.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceFact {
+    /// The local citation handle (`id`).
+    pub id: String,
+    /// The relation: `origin`, `episode`, `evidence`, `derived-from`,
+    /// `standard` or `reference` (an absent `rel` is `reference`).
+    pub rel: String,
+    /// The target's IRI.
+    pub target: String,
+    /// The claim or publication date, as written.
+    pub at: Option<String>,
+    /// What inside the target is cited, as written.
+    pub locator: Option<String>,
+}
+
 /// What a page says under vocabulary version 3 that the emitters publish
 /// (ADR-VG-010 §7, ADR-VG-011 §1). Absent under version 2, so a version 2 build
 /// is byte-identical to the releases before it.
@@ -158,6 +176,13 @@ pub struct V3Facts {
     pub type_name: Option<String>,
     /// Whether the page's type is a durable memory kind.
     pub memory: bool,
+    /// Typed `sources` that may be published, in the author's order. Filled by
+    /// [`Corpus::attach_sources`]; empty until then.
+    pub sources: Vec<SourceFact>,
+    /// How many `sources` entries [`Corpus::attach_sources`] withheld: the
+    /// target is not public, or the entry makes a `Brief` evidence or origin.
+    /// Only the count is kept; nothing about the target.
+    pub sources_withheld: usize,
 }
 
 impl V3Facts {
@@ -459,7 +484,18 @@ fn v3_facts(
             .as_deref()
             .is_some_and(|t| vocab.working_type(t).memory),
         type_name,
+        sources: Vec::new(),
+        sources_withheld: 0,
     }
+}
+
+/// An IRI that can be written between `<` and `>` in Turtle unescaped: a
+/// scheme, then no whitespace, control character or delimiter.
+fn is_safe_iri(s: &str) -> bool {
+    crate::check::v3::temporal::is_iri(s)
+        && !s
+            .chars()
+            .any(|c| c.is_whitespace() || c.is_control() || "<>\"{}|\\^`".contains(c))
 }
 
 impl Corpus {
@@ -610,6 +646,92 @@ impl Corpus {
         }
     }
 
+    /// Read each version 3 record's typed `sources` from `vault` (the vault
+    /// this corpus was built from, as authored: not the redacted copy) and keep
+    /// the entries that may be published (ADR-VG-010 §5, §7).
+    ///
+    /// A target is judged by `links`, the rule that redacts links, so a source
+    /// and a link never disagree about which page is private. An entry is kept
+    /// when it names a public page (by wikilink, `resource` or `page_resource`)
+    /// or an external IRI. It is **withheld** and only counted when it names a
+    /// page that is not public, or when it makes a `Brief` the `origin` or
+    /// `evidence` of a claim (`BRIEF_AS_EVIDENCE` is a validation error, and
+    /// emission never turns a brief into evidence). Free text, an id-only
+    /// entry, a dangling wikilink, an unknown `rel` and a `urn:visionflow:page:`
+    /// IRI no vault holds are skipped without a count: there is nothing to
+    /// publish and nothing to leak.
+    ///
+    /// Only public records are read; other records keep no sources. A record
+    /// with no version 3 facts is untouched, so a version 2 build is unchanged.
+    pub fn attach_sources(&mut self, vault: &Vault, links: &crate::build::redact::PrivateLinks) {
+        use crate::build::redact::SourceTarget;
+        use serde_norway::Value as Yaml;
+
+        const RELS: [&str; 6] = [
+            "origin",
+            "episode",
+            "evidence",
+            "derived-from",
+            "standard",
+            "reference",
+        ];
+        for (record, page) in self.records.iter_mut().zip(&vault.pages) {
+            let (true, Some(facts)) = (record.public, record.v3.as_deref_mut()) else {
+                continue;
+            };
+            let Some(Yaml::Sequence(items)) = page.frontmatter.get("sources") else {
+                continue;
+            };
+            facts.sources.clear();
+            facts.sources_withheld = 0;
+            for item in items.iter().filter_map(Yaml::as_mapping) {
+                let text = |k: &str| {
+                    item.get(Yaml::String(k.into()))
+                        .and_then(Yaml::as_str)
+                        .map(|s| s.trim().to_owned())
+                        .filter(|s| !s.is_empty())
+                };
+                let (Some(id), Some(resource)) = (text("id"), text("resource")) else {
+                    continue;
+                };
+                let rel = text("rel").unwrap_or_else(|| "reference".to_owned());
+                if !RELS.contains(&rel.as_str()) {
+                    continue;
+                }
+                let evidential = matches!(rel.as_str(), "origin" | "evidence");
+                let target = match links.source_target(vault.kind, &resource) {
+                    SourceTarget::Private => {
+                        facts.sources_withheld += 1;
+                        continue;
+                    }
+                    SourceTarget::Public { iri, type_name } => {
+                        if evidential && type_name.as_deref() == Some("Brief") {
+                            facts.sources_withheld += 1;
+                            continue;
+                        }
+                        iri
+                    }
+                    SourceTarget::Unresolved => {
+                        if crate::input::frontmatter::Wikilink::parse(&resource).is_some()
+                            || resource.starts_with("urn:visionflow:page:")
+                            || !is_safe_iri(&resource)
+                        {
+                            continue;
+                        }
+                        resource
+                    }
+                };
+                facts.sources.push(SourceFact {
+                    id,
+                    rel,
+                    target,
+                    at: text("at"),
+                    locator: text("locator"),
+                });
+            }
+        }
+    }
+
     /// The records with `public: true`, in page order.
     pub fn public(&self) -> impl Iterator<Item = &ClassRecord> {
         self.records.iter().filter(|r| r.public)
@@ -715,6 +837,118 @@ tail_iris:
             pages,
         };
         Corpus::build(&vault, &vocab())
+    }
+
+    fn v3_vocab() -> Vocabulary {
+        Vocabulary::from_yaml_str(
+            "version: 3\nnamespace: \"urn:ngm:class:\"\nworking_types:\n  Brief: {}\n  Episode: { memory: true }\n  Note: {}\nrelations:\n  is-a: { owl: \"rdfs:subClassOf\" }\n",
+        )
+        .unwrap()
+    }
+
+    fn vault_of(kind: VaultKind, pages: Vec<Page>) -> Vault {
+        Vault {
+            root: std::path::PathBuf::new(),
+            kind,
+            journals: Vec::new(),
+            skipped: Vec::new(),
+            pages,
+        }
+    }
+
+    /// A public knowledge page citing every kind of target.
+    fn sources_fixture() -> (Vault, Vault) {
+        let knowledge = vault_of(
+            VaultKind::Knowledge,
+            vec![page(
+                "Cites",
+                "type: Class\npublic: true\nresource: urn:ngm:class:cites\nsources:\n\
+                 - { id: a, resource: '[[Public Ledger]]', rel: origin }\n\
+                 - { id: b, resource: '[[Secret Ledger]]', rel: origin }\n\
+                 - { id: c, resource: '[[Public Brief]]', rel: evidence }\n\
+                 - { id: d, resource: '[[Public Brief]]', rel: derived-from, locator: 'sha256-v1:ab' }\n\
+                 - { id: e, resource: 'https://example.org/spec', rel: standard, at: '2022-10-25' }\n\
+                 - { id: f, resource: 'urn:visionflow:page:secret1', rel: reference }\n\
+                 - { id: g, resource: free text here, rel: reference }\n\
+                 - { id: origin }\n\
+                 - { id: h, resource: '[[No Such Page]]', rel: origin }\n\
+                 - { id: i, resource: 'https://example.org/plain' }\n",
+                "",
+            )],
+        );
+        let working = vault_of(
+            VaultKind::Working,
+            vec![
+                page(
+                    "Public Ledger",
+                    "type: Episode\nvisibility: public\npage_resource: urn:visionflow:page:pub1\n",
+                    "",
+                ),
+                page(
+                    "Secret Ledger",
+                    "type: Episode\nvisibility: shared\npage_resource: urn:visionflow:page:secret1\n",
+                    "",
+                ),
+                page(
+                    "Public Brief",
+                    "type: Brief\nvisibility: public\npage_resource: urn:visionflow:page:brief1\n",
+                    "",
+                ),
+            ],
+        );
+        (knowledge, working)
+    }
+
+    #[test]
+    fn typed_sources_keep_public_and_external_targets_and_withhold_the_rest() {
+        let (knowledge, working) = sources_fixture();
+        let vocab = v3_vocab();
+        let links =
+            crate::build::redact::PrivateLinks::new_with(&[&knowledge, &working], Some(&vocab));
+        let mut c = Corpus::build_with(&knowledge, &vocab, None);
+        c.attach_sources(&knowledge, &links);
+        let facts = c.records[0].v3.as_deref().unwrap();
+        let got: Vec<(&str, &str, &str)> = facts
+            .sources
+            .iter()
+            .map(|s| (s.id.as_str(), s.rel.as_str(), s.target.as_str()))
+            .collect();
+        assert_eq!(
+            got,
+            vec![
+                ("a", "origin", "urn:visionflow:page:pub1"),
+                ("d", "derived-from", "urn:visionflow:page:brief1"),
+                ("e", "standard", "https://example.org/spec"),
+                ("i", "reference", "https://example.org/plain"),
+            ]
+        );
+        // b and f name a non-public page (by wikilink and by page_resource); c makes a Brief evidence.
+        assert_eq!(facts.sources_withheld, 3);
+        assert_eq!(facts.sources[1].locator.as_deref(), Some("sha256-v1:ab"));
+        assert_eq!(facts.sources[2].at.as_deref(), Some("2022-10-25"));
+    }
+
+    #[test]
+    fn sources_are_read_only_under_version_3_and_only_for_public_records() {
+        let (knowledge, working) = sources_fixture();
+        let links = crate::build::redact::PrivateLinks::new_with(&[&knowledge, &working], None);
+        let mut v2 = Corpus::build_with(&knowledge, &vocab(), None);
+        v2.attach_sources(&knowledge, &links);
+        assert!(v2.records[0].v3.is_none());
+
+        let private = vault_of(
+            VaultKind::Knowledge,
+            vec![page(
+                "Hidden",
+                "type: Class\nresource: urn:ngm:class:hidden\nsources:\n- { id: a, resource: 'https://example.org/x', rel: origin }\n",
+                "",
+            )],
+        );
+        let vocab = v3_vocab();
+        let links = crate::build::redact::PrivateLinks::new_with(&[&private], Some(&vocab));
+        let mut c = Corpus::build_with(&private, &vocab, None);
+        c.attach_sources(&private, &links);
+        assert!(c.records[0].v3.as_deref().unwrap().sources.is_empty());
     }
 
     #[test]
