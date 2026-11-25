@@ -117,12 +117,14 @@ leaves.
     own stated `kind`, so a swarm, generator or process key filed under a human
     is never human.
 - The roster rule feeds `VERIFIED_NOT_HUMAN`, certification (`is_human_actor`,
-  `is_human_by`, `:243` and `:290`), ingest's key list (`human_dids`, `:260`)
+  `is_human_by`, `:247` and `:294`), ingest's key list (`human_dids`, `:264`)
   and the write engine's approver check. m0002 builds its own list of human
   keys from the roster file. It is consistent with the rule but separate code.
 - Certification under version 3 therefore counts a `verified` stamp by such a
-  key as human. This amends ADR-OM-012 Decision 1; that record carries the note
-  and the details.
+  key as human, and counts nothing else: the old `human:<npub or label>`
+  spelling does not certify (it is an `INVALID_STAMP` error), with a roster or
+  without one. Under version 2 the `human:` prefix rule is as released. This
+  amends ADR-OM-012 Decision 1; that record carries the note and the details.
 
 ### 3. Supersession and the two clocks
 
@@ -155,6 +157,19 @@ leaves.
 - The four resolving rels need a `resource` that resolves. A wikilink and a
   page `urn:visionflow:page:` id get the same checks (`DANGLING_SOURCE` is an
   error when both vaults are loaded).
+- A journal is a page for this purpose. The sibling index holds journals, so
+  one resolves by its `page_resource` urn and by wikilink (`[[2026-11-25]]`,
+  or `journals/2026-11-25`), for every `rel`. ADR-VG-010 section 5 has one
+  target-type rule, which is the Brief rule below, so a journal may be the
+  `origin`, `evidence` or any other `rel` of a source; a Proposal's `origin` is
+  the motivating case. The locator checks apply to `Episode` ledgers only and
+  `EVIDENCE_NOT_APPROVED` to memory kinds, so a journal gets neither.
+- A journal is never public. Under version 3 the staged copy of a public page
+  drops a whole `sources` entry (its `id`, `rel`, `at` and `locator` as well as
+  the `resource`) when the target is private or names no page the build can
+  see, and `ontology.ttl`, the page API, `history.ttl` and the context omit it
+  (`build/redact.rs`, `PrivateLinks::source_withheld`;
+  `v3_sources.rs::a_public_page_citing_a_journal_publishes_none_of_it`).
 - `BRIEF_AS_EVIDENCE` is an error for `rel: evidence` or `origin` pointing at a
   `Brief` (`check/v3/sources.rs:196-200`): a brief summarises evidence and is
   not itself evidence.
@@ -348,9 +363,11 @@ Negative tests show the evaluator can fail (`the_check_can_fail`,
 - A `repair` of a working memory page bypasses `contributors` and
   `content-updated`.
 - Who writes is asserted, not proved. With no roster, anyone may approve.
-- Under version 3 a `human:` verified stamp is a validation error, yet still
-  certifies through the prefix rule (ADR-OM-012 re-verification).
-- Ingest's roster keys are filled only by the CLI.
+- Ingest's vocabulary 3 inputs (`human_dids`, `legacy_human_prefix`) are set
+  only by the CLI. A host that embeds `ontomark-ingest` or the WASM engine and
+  does not pass them keeps the vocabulary 2 rule (ADR-OM-012 re-verification).
+  Ingest's public `is_human_actor(&str)`, the WASM `review_binding` counts and
+  `input/promotion.rs` take no vocabulary and keep the prefix rule too.
 - The source IRIs differ between surfaces: `context/v4.jsonld` maps `sources`
   to `vc:source*`, while `ontology.ttl` uses `dcterms:source`,
   `prov:wasDerivedFrom` and `prov:hadPrimarySource`.

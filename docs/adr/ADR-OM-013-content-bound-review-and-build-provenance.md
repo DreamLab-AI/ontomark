@@ -63,12 +63,14 @@ still holds.
   &is_human_prefixed)` (`:38`), and the predicate is the expression the loop
   used before. For a caller of `assess`, the SHA-256 v1 scope encoding, the
   scope rules and the current, stale and unbound classification are unchanged.
-- `crates/ontomark-ingest/src/certification.rs` adds `Certification::of_with`.
-  It keeps `of`'s freshness handling and only widens who counts as human
+- `crates/ontomark-ingest/src/certification.rs` adds `Certification::of_with`
+  and `of_under`. They keep `of`'s freshness handling and only change who
+  counts as human
   (ADR-OM-012 re-verification, ADR-OM-014).
 - `crates/ontomark-compile/src/input/okf.rs` adds the `did:nostr:` actor, `via`
   on stamps, and `rel`, `at`, `locator` and preserved extensions on `sources`.
-  It also adds `Certification::from_verified_with` and `for_page_with`. The
+  It also adds `Certification::from_verified_with`, `for_page_with` and
+  `for_page_under`. The
   freshness fields (`current`, `stale`, `unbound`) are still copied from the
   parser's assessment. Source attestations survive parsing better than before:
   fields the type does not model are now written back.
