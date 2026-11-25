@@ -10,14 +10,19 @@
 //! |---|---|---|
 //! | this one | S0 | the version switch, validation context, closed working enums |
 //! | [`stamps`] | S1 | principal `by`, instrument `via`, human-only `verified` |
+//! | [`temporal`] | S2 | `valid-from`/`valid-to`, supersession, statements |
 //!
 //! Each rule reports through [`Report::push`] under a stable code; the codes
 //! the four ADRs name are used verbatim.
 
+use std::collections::HashMap;
+
 pub mod stamps;
+pub mod temporal;
 
 use crate::build::attribution::Roster;
 use crate::check::validate::{Report, Severity};
+use crate::input::frontmatter::Wikilink;
 use crate::input::page::{Page, Vault, VaultKind};
 use crate::input::vocabulary::Vocabulary;
 
@@ -37,6 +42,15 @@ pub struct Siblings<'a> {
     pub roster: Option<&'a Roster>,
 }
 
+/// A page reachable by reference, with the vault role it lives in.
+#[derive(Debug, Clone, Copy)]
+pub struct Target<'a> {
+    /// The page.
+    pub page: &'a Page,
+    /// The vault role it belongs to.
+    pub kind: VaultKind,
+}
+
 /// Indexes built once per validated vault, shared by every version-3 rule.
 #[derive(Debug)]
 pub struct Context<'a> {
@@ -44,6 +58,12 @@ pub struct Context<'a> {
     pub vault: &'a Vault,
     /// The other vaults supplied by the caller.
     pub siblings: &'a Siblings<'a>,
+    /// Every page of the vault and its siblings, this vault first.
+    targets: Vec<Target<'a>>,
+    /// Lower-cased id, title and alias to `targets` positions.
+    by_name: HashMap<String, Vec<usize>>,
+    /// `resource` and `page_resource` values to `targets` positions.
+    by_resource: HashMap<String, Vec<usize>>,
 }
 
 impl<'a> Context<'a> {
@@ -56,7 +76,56 @@ impl<'a> Context<'a> {
     /// Index `vault` and its `siblings`.
     #[must_use]
     pub fn build(vault: &'a Vault, _vocab: &Vocabulary, siblings: &'a Siblings<'a>) -> Self {
-        Self { vault, siblings }
+        let targets: Vec<Target<'a>> = std::iter::once(vault)
+            .chain(siblings.vaults.iter().copied())
+            .flat_map(|v| v.pages.iter().map(|page| Target { page, kind: v.kind }))
+            .collect();
+        let mut by_name: HashMap<String, Vec<usize>> = HashMap::new();
+        let mut by_resource: HashMap<String, Vec<usize>> = HashMap::new();
+        for (i, t) in targets.iter().enumerate() {
+            let names = std::iter::once(t.page.id.clone())
+                .chain(std::iter::once(t.page.title()))
+                .chain(t.page.frontmatter.strings("aliases"));
+            for name in names {
+                by_name.entry(name.to_lowercase()).or_default().push(i);
+            }
+            for key in ["resource", "page_resource"] {
+                if let Some(value) = t.page.frontmatter.text(key) {
+                    by_resource.entry(value).or_default().push(i);
+                }
+            }
+        }
+        Self {
+            vault,
+            siblings,
+            targets,
+            by_name,
+            by_resource,
+        }
+    }
+
+    /// `true` when pages of `kind` were loaded, so a reference into that
+    /// vault can be judged dangling. A rule that cannot see the vault skips.
+    #[must_use]
+    pub fn sees(&self, kind: VaultKind) -> bool {
+        self.vault.kind == kind || self.siblings.vaults.iter().any(|v| v.kind == kind)
+    }
+
+    /// Resolve a reference as written in frontmatter: a `[[wikilink]]` (page
+    /// id, title or alias), or an IRI naming a page's `resource` or
+    /// `page_resource`. `None` when nothing loaded matches.
+    #[must_use]
+    pub fn resolve(&self, reference: &str) -> Option<Target<'a>> {
+        let index = if let Some(link) = Wikilink::parse(reference) {
+            self.by_name
+                .get(&link.target.to_lowercase())
+                .and_then(|v| v.first())
+        } else {
+            self.by_resource
+                .get(reference.trim())
+                .and_then(|v| v.first())
+        };
+        index.map(|i| self.targets[*i])
     }
 }
 
@@ -64,15 +133,12 @@ impl<'a> Context<'a> {
 pub fn page_checks(report: &mut Report, page: &Page, vocab: &Vocabulary, ctx: &Context<'_>) {
     working_extension_enums(report, page, vocab, ctx);
     stamps::check_page(report, page, ctx);
+    temporal::check_page(report, page, vocab, ctx);
 }
 
 /// Rules that need the whole vault (cycles, targets): run after every page.
-pub fn corpus_checks(
-    _report: &mut Report,
-    _vault: &Vault,
-    _vocab: &Vocabulary,
-    _ctx: &Context<'_>,
-) {
+pub fn corpus_checks(report: &mut Report, vault: &Vault, vocab: &Vocabulary, ctx: &Context<'_>) {
+    temporal::check_corpus(report, vault, vocab, ctx);
 }
 
 /// `working_extensions` enums are closed under version 3 (ADR-VG-010 §6

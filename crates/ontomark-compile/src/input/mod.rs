@@ -18,4 +18,5 @@ pub mod principal;
 pub mod promotion;
 pub mod secrets;
 pub mod slug;
+pub mod time;
 pub mod vocabulary;
