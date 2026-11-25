@@ -451,8 +451,24 @@ fn template_regex(template: &str) -> String {
     out
 }
 
+/// The principal grammar of vocabulary 3 (ADR-VG-011 §1): a `did:nostr:` with a
+/// 64-character lower-case hex body, and nothing else. It is the grammar
+/// `validate` enforces on `by` under version 3, where `human:<npub>`,
+/// `agent:` and `process:` are all `INVALID_STAMP` errors (an instrument
+/// belongs in `via`). Whether the key is a person is the roster's `kind`,
+/// which a pattern cannot see; `VERIFIED_NOT_HUMAN` enforces it.
+const V3_PRINCIPAL_PATTERN: &str = "^did:nostr:[0-9a-f]{64}$";
+
 /// The `sh:pattern` for any accepted `generated.by` actor.
-fn actor_pattern(profile: &Profile) -> String {
+///
+/// Under vocabulary version 3 only a principal is accepted
+/// ([`V3_PRINCIPAL_PATTERN`]), exactly what `validate` accepts there; the
+/// version 2 actor templates would pass `human:` and instrument spellings
+/// that version 3 rejects. Version 2 shapes are unchanged.
+fn actor_pattern(profile: &Profile, v3: bool) -> String {
+    if v3 {
+        return V3_PRINCIPAL_PATTERN.to_owned();
+    }
     let templates: Vec<&str> = if profile.attribution.actors.is_empty() {
         DEFAULT_ACTORS.to_vec()
     } else {
@@ -467,8 +483,13 @@ fn actor_pattern(profile: &Profile) -> String {
     format!("^({})$", alternatives.join("|"))
 }
 
-/// The `sh:pattern` for a human actor.
-fn human_pattern(profile: &Profile) -> String {
+/// The `sh:pattern` for a human actor. Under version 3 that is a principal
+/// ([`V3_PRINCIPAL_PATTERN`]): `human:` is no longer a stamp spelling there,
+/// and whether the principal is human is the roster's `kind`.
+fn human_pattern(profile: &Profile, v3: bool) -> String {
+    if v3 {
+        return V3_PRINCIPAL_PATTERN.to_owned();
+    }
     let human: Vec<String> = profile
         .attribution
         .actors
@@ -752,7 +773,11 @@ pub fn shapes(profile: &Profile, vocab: &Vocabulary) -> Graph {
             b.add_blank(&by, &sh("minCount"), Term::typed("1", &xsd("integer")));
             b.add_blank(&by, &sh("maxCount"), Term::typed("1", &xsd("integer")));
             b.add_blank(&by, &sh("datatype"), Term::Iri(xsd("string")));
-            b.add_blank(&by, &sh("pattern"), Term::plain(actor_pattern(profile)));
+            b.add_blank(
+                &by,
+                &sh("pattern"),
+                Term::plain(actor_pattern(profile, vocab.is_v3())),
+            );
             let at = b.inner_property(&Path::Predicate(fm("at")));
             b.add_blank(&at, &sh("minCount"), Term::typed("1", &xsd("integer")));
             b.add_blank(&at, &sh("maxCount"), Term::typed("1", &xsd("integer")));
@@ -829,7 +854,11 @@ pub fn shapes(profile: &Profile, vocab: &Vocabulary) -> Graph {
         let qualified = b.graph.fresh_blank();
         let by = b.inner_property(&Path::Predicate(fm("by")));
         b.add_blank(&by, &sh("minCount"), Term::typed("1", &xsd("integer")));
-        b.add_blank(&by, &sh("pattern"), Term::plain(human_pattern(profile)));
+        b.add_blank(
+            &by,
+            &sh("pattern"),
+            Term::plain(human_pattern(profile, vocab.is_v3())),
+        );
         b.add_blank(&qualified, &sh("property"), Term::Blank(by));
         b.add_blank(
             &verified,
@@ -1309,7 +1338,7 @@ pub fn frontmatter_graph(
             node,
             class(
                 profile,
-                if page.is_public() {
+                if crate::check::v3::state::is_public_under(page, vault.kind, vocab) {
                     "PublicPage"
                 } else {
                     "PrivatePage"

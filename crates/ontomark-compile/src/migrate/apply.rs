@@ -121,6 +121,9 @@ pub fn apply_with(
     migration: &dyn Migration,
     opts: &ApplyOptions,
 ) -> Result<ApplyReport, MigrateError> {
+    // The same context the plan was made with, read from the tree as it is now.
+    let prepared = migration.prepare(repo_root)?;
+    let migration: &dyn Migration = prepared.as_deref().unwrap_or(migration);
     let current = MigrationRef::of(migration);
     if current.id != plan.migration.id
         || current.version != plan.migration.version
@@ -133,6 +136,13 @@ pub fn apply_with(
     }
     if plan.status == PlanStatus::Refused {
         return Err(MigrateError::PlanRefused(plan.reasons.clone()));
+    }
+    // An input kept outside the tree is not among the files apply re-checks,
+    // so its digest is: a different (or missing) input would write other pages.
+    if migration.external_input_digest() != plan.external_input {
+        return Err(MigrateError::Input(
+            "the migration's external input is not the one the plan was made with: set the same file (m0002: ONTOMARK_M0002_SUPERSESSIONS) or re-plan".to_owned(),
+        ));
     }
     if migration.kind() == Kind::Semantic && !opts.accept_semantic {
         return Err(MigrateError::SemanticNotAccepted(migration.id().to_owned()));

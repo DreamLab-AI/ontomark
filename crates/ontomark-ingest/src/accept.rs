@@ -387,7 +387,8 @@ pub(crate) fn accept(
     // is withheld rather than the whole batch failing at the proof.
     let locked = doc.frontmatter().is_some_and(|f| !f.is_parsed());
     // Read from the note, never the request: a request cannot drop it.
-    let certification = crate::Certification::of(doc, &options.verified_key);
+    let certification =
+        crate::Certification::of_with(doc, &options.verified_key, &options.human_dids);
     let mut diagnostics = Vec::new();
     let mut withheld = Vec::new();
     // key -> identity -> candidate, in first-seen order. A name's identity

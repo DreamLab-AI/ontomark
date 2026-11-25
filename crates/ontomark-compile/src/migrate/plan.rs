@@ -6,7 +6,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use super::compile::{compile_knowledge, SnapshotPage};
+use super::compile::{compile_knowledge, vault_from, SnapshotPage};
 use super::{sha256_hex, Kind, MigrateError, Migration, Transform};
 use crate::build::attribution::Roster;
 use crate::input::page::{walk_pages, Page, VaultKind};
@@ -180,6 +180,16 @@ pub struct Plan {
     pub status: PlanStatus,
     /// Why the plan is refused.
     pub reasons: Vec<String>,
+    /// SHA-256 of an input the migration reads from outside the repository,
+    /// when it has one ([`Migration::external_input_digest`]). Apply refuses
+    /// to run with a different one. Absent from the JSON otherwise.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub external_input: Option<String>,
+    /// The classified diff: how many files each change class touches, for a
+    /// migration that names its classes ([`Migration::classify`]). Empty,
+    /// and absent from the JSON, otherwise.
+    #[serde(skip_serializing_if = "BTreeMap::is_empty", default)]
+    pub classes: BTreeMap<String, usize>,
     /// Every `Change` and `Refused` page, sorted by path.
     pub pages: Vec<PagePlan>,
     /// The semantic deltas.
@@ -275,6 +285,27 @@ impl Plan {
         );
         for c in &d.identity {
             let _ = writeln!(s, "    {}: {} {} -> {}", c.path, c.field, c.before, c.after);
+        }
+        if !self.classes.is_empty() {
+            let _ = writeln!(s, "classified diff (files per change class):");
+            for (class, n) in &self.classes {
+                let _ = writeln!(s, "  {class}: {n}");
+            }
+        }
+        let refused: Vec<&PagePlan> = self
+            .pages
+            .iter()
+            .filter(|p| p.disposition == Disposition::Refused)
+            .collect();
+        if !refused.is_empty() {
+            let _ = writeln!(
+                s,
+                "not migrated mechanically ({}), listed for a human:",
+                refused.len()
+            );
+            for p in &refused {
+                let _ = writeln!(s, "  {}: {}", p.path, p.summary);
+            }
         }
         let _ = writeln!(s, "pages:");
         for p in &self.pages {
@@ -384,8 +415,13 @@ fn identity_of(
         .unwrap_or(under)
         .trim_end_matches(".md");
     let page = Page::parse(rel, under, id, text).ok()?;
+    let kind = if in_vault(layout, VaultKind::Working, rel) {
+        VaultKind::Working
+    } else {
+        VaultKind::Knowledge
+    };
     Some((
-        page.is_public(),
+        crate::check::v3::state::is_public_under(&page, kind, vocab),
         [
             ("resource".to_owned(), page.resource(&vocab.namespace)),
             (
@@ -459,6 +495,8 @@ pub fn plan(
     migration: &dyn Migration,
     profile: &Profile,
 ) -> Result<Plan, MigrateError> {
+    let prepared = migration.prepare(repo_root)?;
+    let migration: &dyn Migration = prepared.as_deref().unwrap_or(migration);
     profile
         .layout
         .validate(repo_root)
@@ -478,7 +516,21 @@ pub fn plan(
         Vocabulary::generic()
     };
     let roster = Roster::discover(repo_root);
-    let considered = read_considered(repo_root, &profile.layout, vaults)?;
+    let mut considered = read_considered(repo_root, &profile.layout, vaults)?;
+    // Files that are not pages but are rewritten with them (a vocabulary, a
+    // roster): planned like pages, never compiled as pages.
+    let extra: BTreeSet<String> = migration.extra_paths().into_iter().collect();
+    for rel in &extra {
+        let path = repo_root.join(rel);
+        if path.is_file() {
+            let bytes = std::fs::read(&path).map_err(|e| MigrateError::io(&path, e))?;
+            considered.push(Considered {
+                rel: rel.clone(),
+                bytes,
+            });
+        }
+    }
+    considered.sort_by(|a, b| a.rel.cmp(&b.rel));
 
     let mut digest_input = String::new();
     let mut pages: Vec<PagePlan> = Vec::new();
@@ -499,13 +551,17 @@ pub fn plan(
                 after: None,
                 summary: "not valid UTF-8".to_owned(),
             });
-            texts.push((
-                c.rel.clone(),
-                String::from_utf8_lossy(&c.bytes).into_owned(),
-            ));
+            if !extra.contains(&c.rel) {
+                texts.push((
+                    c.rel.clone(),
+                    String::from_utf8_lossy(&c.bytes).into_owned(),
+                ));
+            }
             continue;
         };
-        texts.push((c.rel.clone(), text.to_owned()));
+        if !extra.contains(&c.rel) {
+            texts.push((c.rel.clone(), text.to_owned()));
+        }
         match migration.transform(&c.rel, text) {
             Transform::Unchanged => unchanged += 1,
             Transform::Changed { source, summary } => {
@@ -536,11 +592,53 @@ pub fn plan(
         }
     }
     pages.sort_by(|a, b| a.path.cmp(&b.path));
+    let mut classes: BTreeMap<String, usize> = BTreeMap::new();
+    for p in pages
+        .iter()
+        .filter(|p| p.disposition == Disposition::Change)
+    {
+        for class in migration.classify(&p.summary) {
+            *classes.entry(class).or_insert(0) += 1;
+        }
+    }
+    let external_input = migration.external_input_digest();
+    if let Some(external) = &external_input {
+        let _ = writeln!(digest_input, "external-input\0{external}");
+    }
     let input_digest = sha256_hex(digest_input.as_bytes());
 
-    let deltas = semantic_delta(repo_root, &vocab, &roster, profile, &texts, &after_text);
+    // The vocabulary and roster the migrated tree is read under: the migrated
+    // text of the two files when the migration rewrites them.
+    let migrated_vocab = after_text
+        .get("ontology/vocabulary.yaml")
+        .map(|t| Vocabulary::from_yaml_str(t))
+        .transpose()
+        .map_err(|e| MigrateError::Input(format!("migrated ontology/vocabulary.yaml: {e}")))?;
+    let migrated_roster = after_text
+        .get("ontology/attribution.yaml")
+        .map(|t| Roster::from_yaml_str(t));
+    let after_vocab = migrated_vocab.as_ref().unwrap_or(&vocab);
+    let after_roster = migrated_roster.as_ref().unwrap_or(&roster);
+    let deltas = semantic_delta(
+        repo_root,
+        (&vocab, &roster),
+        (after_vocab, after_roster),
+        profile,
+        &texts,
+        &after_text,
+    );
 
     let mut reasons = Vec::new();
+    if migration.validates_result() {
+        reasons.extend(validate_result(
+            repo_root,
+            profile,
+            vaults,
+            (after_vocab, after_roster),
+            &texts,
+            &after_text,
+        ));
+    }
     if migration.kind() == Kind::Syntax && !after_text.is_empty() {
         if !deltas.identity.is_empty()
             || !deltas.resources_added.is_empty()
@@ -595,9 +693,82 @@ pub fn plan(
             PlanStatus::Refused
         },
         reasons,
+        external_input,
+        classes,
         pages,
         deltas,
     })
+}
+
+/// Validate the migrated tree: every page of the selected vaults with its
+/// migrated text where it changes, under the migrated vocabulary and roster,
+/// each vault seeing the other as its sibling. Returns one refusal reason per
+/// vault with an error, naming the codes and the first few errors, and one
+/// when a vault cannot be built at all.
+fn validate_result(
+    repo_root: &Path,
+    profile: &Profile,
+    vaults: &[VaultKind],
+    (vocab, roster): (&Vocabulary, &Roster),
+    texts: &[(String, String)],
+    after_text: &BTreeMap<String, String>,
+) -> Vec<String> {
+    use crate::check::validate::{validate_with, Siblings};
+    use crate::ir::model::Corpus;
+
+    let mut reasons = Vec::new();
+    let mut kinds: Vec<VaultKind> = vaults.to_vec();
+    kinds.sort_by_key(|k| k.role_name());
+    kinds.dedup();
+    let mut built = Vec::new();
+    for kind in &kinds {
+        let pages: Vec<SnapshotPage> = texts
+            .iter()
+            .filter(|(rel, _)| in_vault(&profile.layout, *kind, rel))
+            .map(|(rel, text)| SnapshotPage {
+                rel: rel.clone(),
+                text: after_text.get(rel).unwrap_or(text).clone(),
+            })
+            .collect();
+        match vault_from(repo_root, &profile.layout, *kind, &pages) {
+            Ok(v) => built.push(v),
+            Err(e) => reasons.push(format!(
+                "the migrated {} vault does not load: {e}",
+                kind.role_name()
+            )),
+        }
+    }
+    let roster_ref = (!(roster.is_empty() && roster.principals().is_empty())).then_some(roster);
+    for vault in &built {
+        let corpus = Corpus::build_with(vault, vocab, roster_ref);
+        let siblings = Siblings {
+            vaults: built.iter().filter(|v| v.kind != vault.kind).collect(),
+            roster: roster_ref,
+        };
+        let report = validate_with(profile, vault, &corpus, vocab, &siblings);
+        let errors = report.errors();
+        if errors.is_empty() {
+            continue;
+        }
+        let mut by_code: BTreeMap<&str, usize> = BTreeMap::new();
+        for e in &errors {
+            *by_code.entry(e.code.as_str()).or_insert(0) += 1;
+        }
+        let codes: Vec<String> = by_code.iter().map(|(c, n)| format!("{c} x{n}")).collect();
+        let first: Vec<String> = errors
+            .iter()
+            .take(EXAMPLES)
+            .map(|e| format!("{}: {} {}", e.path, e.code, e.message))
+            .collect();
+        reasons.push(format!(
+            "the migrated {} vault would not validate: {} error(s) ({}); first: {}",
+            vault.kind.role_name(),
+            errors.len(),
+            codes.join(", "),
+            first.join(" | ")
+        ));
+    }
+    reasons
 }
 
 /// A zero inferred delta, when a classifier is built in.
@@ -607,8 +778,8 @@ fn zero_inferred() -> Option<InferredDelta> {
 
 fn semantic_delta(
     repo_root: &Path,
-    vocab: &Vocabulary,
-    roster: &Roster,
+    (vocab, roster): (&Vocabulary, &Roster),
+    (after_vocab, after_roster): (&Vocabulary, &Roster),
     profile: &Profile,
     texts: &[(String, String)],
     after_text: &BTreeMap<String, String>,
@@ -636,7 +807,7 @@ fn semantic_delta(
         };
         let (Some((pb, ib)), Some((pa, ia))) = (
             identity_of(&profile.layout, vocab, rel, before),
-            identity_of(&profile.layout, vocab, rel, new),
+            identity_of(&profile.layout, after_vocab, rel, new),
         ) else {
             d.notes.push(format!(
                 "after-compile failed: {rel} does not parse before or after"
@@ -696,7 +867,7 @@ fn semantic_delta(
         })
         .collect();
     let before = compile_knowledge(repo_root, &knowledge, profile, vocab, roster);
-    let after = compile_knowledge(repo_root, &migrated, profile, vocab, roster);
+    let after = compile_knowledge(repo_root, &migrated, profile, after_vocab, after_roster);
     match (before, after) {
         (Ok(b), Ok(a)) => {
             d.compiled = true;

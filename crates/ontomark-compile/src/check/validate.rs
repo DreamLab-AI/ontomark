@@ -15,6 +15,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 
+pub use crate::check::v3::Siblings;
 use crate::input::code::CodeMap;
 use crate::input::okf::{OkfBlock, Status};
 use crate::input::page::{Page, Vault, VaultKind};
@@ -175,7 +176,13 @@ impl Report {
         s
     }
 
-    fn push(&mut self, path: &str, severity: Severity, code: &str, message: impl Into<String>) {
+    pub(crate) fn push(
+        &mut self,
+        path: &str,
+        severity: Severity,
+        code: &str,
+        message: impl Into<String>,
+    ) {
         self.issues.push(Issue {
             path: path.to_owned(),
             severity,
@@ -369,9 +376,27 @@ fn page_level_checks(
 }
 
 /// Validate a loaded vault against its vocabulary.
+///
+/// Cross-vault and roster rules of vocabulary version 3 need to see beyond
+/// `vault`; this entry point gives them nothing to see, so they skip. Use
+/// [`validate_with`] to supply the sibling vault and the roster.
+#[must_use]
+pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocabulary) -> Report {
+    validate_with(profile, vault, corpus, vocab, &Siblings::default())
+}
+
+/// [`validate`] with the context vocabulary-version-3 rules resolve against:
+/// the other loaded vaults and the attribution roster. Under a version 2
+/// vocabulary `siblings` is never read and the result equals [`validate`]'s.
 #[must_use]
 #[allow(clippy::too_many_lines)] // One check per rule; splitting hides the list.
-pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocabulary) -> Report {
+pub fn validate_with(
+    profile: &Profile,
+    vault: &Vault,
+    corpus: &Corpus,
+    vocab: &Vocabulary,
+    siblings: &Siblings<'_>,
+) -> Report {
     let mut report = Report {
         total_pages: vault.pages.len(),
         total_journals: vault.journals.len(),
@@ -431,6 +456,12 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
         }
     };
 
+    // Version 3 rules: nothing below is built, and nothing runs, under a
+    // version 2 vocabulary.
+    let v3 = vocab
+        .is_v3()
+        .then(|| crate::check::v3::Context::build(vault, vocab, siblings));
+
     let page_ids: HashSet<&str> = vault.pages.iter().map(|p| p.id.as_str()).collect();
     let alias_targets: HashSet<String> = vault
         .pages
@@ -450,7 +481,7 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
     let private_ids: HashSet<&str> = vault
         .pages
         .iter()
-        .filter(|p| !p.is_public())
+        .filter(|p| !crate::check::v3::state::is_public_under(p, vault.kind, vocab))
         .map(|p| p.id.as_str())
         .collect();
 
@@ -517,7 +548,19 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
 
         // --- OKF conformance -------------------------------------------------
         let okf = OkfBlock::from_frontmatter(&page.frontmatter);
-        validate_okf(&mut report, path, &okf, rules, vocab, record);
+        validate_okf(
+            &mut report,
+            path,
+            &okf,
+            rules,
+            vocab,
+            record,
+            siblings.roster.filter(|_| vocab.is_v3()),
+        );
+        match &v3 {
+            Some(ctx) => crate::check::v3::page_checks(&mut report, page, vocab, ctx),
+            None => crate::check::v3::stamps::legacy_warnings(&mut report, page),
+        }
 
         if !record.has_ontology {
             continue;
@@ -624,6 +667,10 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
         }
     }
 
+    if let Some(ctx) = &v3 {
+        crate::check::v3::corpus_checks(&mut report, vault, vocab, ctx);
+    }
+
     let mut duplicates: Vec<(&&str, &Vec<&str>)> =
         iri_owners.iter().filter(|(_, v)| v.len() > 1).collect();
     duplicates.sort_by_key(|(iri, _)| **iri);
@@ -652,6 +699,14 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
     // a daily note is exactly where a pasted API key ends up.
     for journal in &vault.journals {
         page_level_checks(&mut report, &journal.id, journal, vocab, false);
+        match &v3 {
+            Some(ctx) => {
+                crate::check::v3::stamps::check_page(&mut report, journal, ctx);
+                // Ruling 8: a journal carries the same required working keys.
+                crate::check::v3::state::check_page(&mut report, journal, vocab, ctx);
+            }
+            None => crate::check::v3::stamps::legacy_warnings(&mut report, journal),
+        }
         // The identity of a journal page is its date. A stem that is not one is
         // a page misfiled into `journals/`, which is worth saying out loud.
         if crate::input::page::journal_date(&journal.id).is_none() {
@@ -800,6 +855,7 @@ fn validate_okf(
     rules: RoleRules,
     vocab: &Vocabulary,
     record: &ClassRecord,
+    roster: Option<&crate::build::attribution::Roster>,
 ) {
     let knowledge = rules.knowledge;
 
@@ -845,7 +901,16 @@ fn validate_okf(
         None => {}
     }
 
+    // Under version 3 a memory kind has its own lifecycle, checked by
+    // `check::v3::state`; the draft/stable/deprecated rules do not apply.
+    let own_status = !knowledge
+        && vocab.is_v3()
+        && okf.type_name.as_deref().is_some_and(|t| {
+            let def = vocab.working_type(t);
+            def.memory || !def.status.is_empty()
+        });
     match (&okf.status_raw, okf.status) {
+        _ if own_status => {}
         (Some(raw), None) => report.push(
             path,
             Severity::Error,
@@ -861,7 +926,7 @@ fn validate_okf(
         _ => {}
     }
 
-    if okf.status == Some(Status::Stable) && !okf.is_human_verified() {
+    if !own_status && okf.status == Some(Status::Stable) && !okf.is_human_verified_with(roster) {
         report.push(
             path,
             Severity::Warning,

@@ -1,0 +1,39 @@
+[package]
+name = "ontomark-write"
+description = "The headless write engine for ontomark working-memory pages: one validated, lossless, atomic write path for create, patch, review transitions and supersession (vocabulary 3, ADR-VG-012 section 9 and ADR-VG-013)"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+keywords = ["obsidian", "ontology", "frontmatter", "write", "wasm"]
+categories = ["text-processing"]
+publish = false
+
+[features]
+default = ["fs", "system"]
+# Atomic, root-confined file store (std::fs). Off for wasm hosts, which apply a
+# Plan themselves.
+fs = ["dep:tempfile"]
+# Wall clock and OS randomness for hosts that have them. Off for wasm hosts,
+# which pass `now` and entropy in.
+system = ["dep:getrandom", "dep:time"]
+
+[dependencies]
+ontomark-compile = { path = "../ontomark-compile", version = "0.9.0", default-features = false }
+ontomark-parse = { workspace = true, features = ["serde"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+indexmap.workspace = true
+hex = "0.4"
+tempfile = { version = "3", optional = true }
+getrandom = { version = "0.3", optional = true }
+time = { version = "0.3", features = ["formatting"], optional = true }
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true

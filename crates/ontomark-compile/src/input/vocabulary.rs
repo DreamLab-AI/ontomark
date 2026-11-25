@@ -368,6 +368,71 @@ impl ScalarDef {
     }
 }
 
+/// The first vocabulary version whose rules ontomark enforces as v3
+/// (ADR-VG-010 to ADR-VG-013). Under a lower version the tool's behaviour and
+/// output are exactly those of the v2 releases.
+pub const V3: u32 = 3;
+
+/// Per-type rules for a `working/` page type, from the map form of
+/// `working_types` (version 3).
+///
+/// ```
+/// use ontomark_compile::input::vocabulary::Vocabulary;
+///
+/// let v = Vocabulary::from_yaml_str(
+///     "version: 3\nworking_types:\n  Belief: { memory: true, required: [about] }\n  Note: {}\n",
+/// ).unwrap();
+/// assert!(v.working_types.contains("Belief"));
+/// assert_eq!(v.working_type_defs["Belief"].required, ["about"]);
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WorkingTypeDef {
+    /// Keys a page of this type must carry, over the working-wide ones.
+    #[serde(default)]
+    pub required: Vec<String>,
+    /// The closed `status` set for this type. Empty means the built-in set for
+    /// the type (ADR-VG-013 §1 for memory kinds, `draft | stable | deprecated`
+    /// otherwise).
+    #[serde(default)]
+    pub status: Vec<String>,
+    /// A durable memory kind (`Episode`, `Belief`, `Procedure`): ADR-VG-013's
+    /// lifecycle applies and current recall may return it.
+    #[serde(default)]
+    pub memory: bool,
+}
+
+/// The `working_types` key in either spelling: a list of names, or a map of
+/// name to rules. Only the names are kept here; [`Vocabulary::from_yaml_str`]
+/// reads the rules.
+fn de_working_type_names<'de, D>(d: D) -> std::result::Result<IndexSet<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+    match serde_norway::Value::deserialize(d)? {
+        serde_norway::Value::Null => Ok(IndexSet::new()),
+        serde_norway::Value::Sequence(items) => items
+            .into_iter()
+            .map(|v| {
+                v.as_str()
+                    .map(str::to_owned)
+                    .ok_or_else(|| D::Error::custom("working_types entries must be strings"))
+            })
+            .collect(),
+        serde_norway::Value::Mapping(map) => map
+            .keys()
+            .map(|k| {
+                k.as_str()
+                    .map(str::to_owned)
+                    .ok_or_else(|| D::Error::custom("working_types keys must be strings"))
+            })
+            .collect(),
+        _ => Err(D::Error::custom(
+            "working_types must be a list of names or a map of name to rules",
+        )),
+    }
+}
+
 /// The parsed `ontology/vocabulary.yaml`.
 ///
 /// Informational keys the census carries (`count_2026_09_22`, `note`,
@@ -395,9 +460,19 @@ pub struct Vocabulary {
     /// OKF types permitted in `knowledge/`.
     #[serde(default)]
     pub types: IndexMap<String, TypeDef>,
-    /// OKF types permitted in `working/`.
-    #[serde(default)]
+    /// OKF types permitted in `working/`. Accepts a list of names or, from
+    /// vocabulary version 3, a map of name to [`WorkingTypeDef`]; either way
+    /// this is the set of names.
+    #[serde(default, deserialize_with = "de_working_type_names")]
     pub working_types: IndexSet<String>,
+    /// Per-type rules read from the map form of `working_types`
+    /// (empty entries for the list form). Version 3 only.
+    #[serde(skip)]
+    pub working_type_defs: IndexMap<String, WorkingTypeDef>,
+    /// Keys every `working/` page must carry under version 3. Absent means
+    /// the ADR-VG-012 contract: `page_resource`, `visibility`, `generated`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub working_required: Option<Vec<String>>,
     /// Documented episodic extensions of `working/`.
     #[serde(default)]
     pub working_extensions: IndexMap<String, ScalarDef>,
@@ -448,7 +523,72 @@ fn default_reserved() -> IndexSet<String> {
     .collect()
 }
 
+/// Read the per-type rules out of the map form of `working_types`.
+fn working_type_defs_of(
+    yaml: &str,
+) -> std::result::Result<IndexMap<String, WorkingTypeDef>, String> {
+    let root: serde_norway::Value = serde_norway::from_str(yaml).map_err(|e| e.to_string())?;
+    let Some(serde_norway::Value::Mapping(map)) = root.get("working_types") else {
+        return Ok(IndexMap::new());
+    };
+    map.iter()
+        .map(|(k, v)| {
+            let name = k.as_str().unwrap_or_default().to_owned();
+            let def = if v.is_null() {
+                WorkingTypeDef::default()
+            } else {
+                serde_norway::from_value(v.clone())
+                    .map_err(|e| format!("working_types.{name}: {e}"))?
+            };
+            Ok((name, def))
+        })
+        .collect()
+}
+
+/// Memory kinds ADR-VG-013 §1 makes durable, used when the vocabulary lists
+/// working types by name only.
+const BUILTIN_MEMORY_KINDS: &[&str] = &["Episode", "Belief", "Procedure"];
+
+/// Keys a vocabulary of version 3 or later adds to the knowledge grammar
+/// (ADR-VG-010 §2-§4). Under version 2 they are undeclared, hence `UNKNOWN_KEY`.
+const V3_KNOWLEDGE_KEYS: &[&str] = &[
+    "valid-from",
+    "valid-to",
+    "supersedes",
+    "superseded-by",
+    "statements",
+];
+
 impl Vocabulary {
+    /// `true` when this vocabulary declares version 3 or later, the switch for
+    /// every v3 rule. Under version 2 the tool behaves exactly as the v2
+    /// releases do.
+    ///
+    /// ```
+    /// use ontomark_compile::input::vocabulary::Vocabulary;
+    /// assert!(!Vocabulary::from_yaml_str("version: 2\n").unwrap().is_v3());
+    /// assert!(Vocabulary::from_yaml_str("version: 3\n").unwrap().is_v3());
+    /// ```
+    #[must_use]
+    pub fn is_v3(&self) -> bool {
+        self.version >= V3
+    }
+
+    /// The rules for working type `name`, with the built-in memory kinds
+    /// filled in when the vocabulary names them without rules.
+    #[must_use]
+    pub fn working_type(&self, name: &str) -> WorkingTypeDef {
+        let mut def = self
+            .working_type_defs
+            .get(name)
+            .cloned()
+            .unwrap_or_default();
+        if BUILTIN_MEMORY_KINDS.contains(&name) {
+            def.memory = true;
+        }
+        def
+    }
+
     /// The vocabulary a repository without `ontology/vocabulary.yaml` compiles
     /// under (a plain Obsidian vault, ADR-OM-008): schema version 1, the
     /// built-in prefixes (`owl`, `rdf`, `rdfs`, `xsd`, `skos`, `dc`,
@@ -531,8 +671,9 @@ impl Vocabulary {
     /// OWL 2 EL (a message starting [`NON_EL_VOCABULARY`]; see
     /// [`NON_EL_OWL_TERMS`]).
     pub fn from_yaml_str(yaml: &str) -> std::result::Result<Self, String> {
-        let vocab: Self = serde_norway::from_str(yaml).map_err(|e| e.to_string())?;
+        let mut vocab: Self = serde_norway::from_str(yaml).map_err(|e| e.to_string())?;
         vocab.check()?;
+        vocab.working_type_defs = working_type_defs_of(yaml)?;
         Ok(vocab)
     }
 
@@ -700,6 +841,7 @@ impl Vocabulary {
         self.relations.contains_key(key)
             || self.scalars.contains_key(key)
             || self.reserved.contains(key)
+            || (self.is_v3() && V3_KNOWLEDGE_KEYS.contains(&key))
     }
 
     /// `true` when `key` is legal in `working/` frontmatter.

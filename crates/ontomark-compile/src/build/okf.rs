@@ -193,6 +193,38 @@ pub fn context_v3(profile: &Profile, vocab: &Vocabulary) -> Value {
     context
 }
 
+/// The version 4 context (vocabulary 3, ADR-VG-010 §8): version 3's terms plus
+/// the page API's time and recall keys. Written by `build` only for a
+/// vocabulary of version 3 or later.
+///
+/// `validFrom` and `validUntil` are memory-ontology's `temporal:` terms
+/// (CC BY 4.0, `http://nova.dev/temporal#`), `xsd:dateTimeStamp`.
+#[must_use]
+pub fn context_v4(profile: &Profile, vocab: &Vocabulary) -> Value {
+    let mut context = context_v3(profile, vocab);
+    let vc = &profile.iris.vocabulary_prefix;
+    context["@context"]["temporal"] = json!(crate::build::turtle::TEMPORAL);
+    context["@context"]["validFrom"] =
+        json!({ "@id": "temporal:validFrom", "@type": "xsd:dateTimeStamp" });
+    context["@context"]["validUntil"] =
+        json!({ "@id": "temporal:validUntil", "@type": "xsd:dateTimeStamp" });
+    context["@context"]["provenance"]["@context"]["via"] = json!(format!("{vc}:via"));
+    context["@context"]["recallable"] =
+        json!({ "@id": format!("{vc}:recallable"), "@type": "xsd:boolean" });
+    context["@context"]["sources"] = json!({
+        "@id": format!("{vc}:source"),
+        "@container": "@set",
+        "@context": {
+            "id": format!("{vc}:sourceId"),
+            "rel": format!("{vc}:sourceRel"),
+            "resource": { "@id": format!("{vc}:sourceTarget"), "@type": "@id" },
+            "at": format!("{vc}:sourceAt"),
+            "locator": format!("{vc}:sourceLocator"),
+        },
+    });
+    context
+}
+
 /// Build the OKF bundle: `index.md` plus `concepts/<slug>.md` per public class.
 #[must_use]
 pub fn bundle(
@@ -369,6 +401,7 @@ scalars:
             attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
+            v3: None,
             sub_class_of: Vec::new(),
             instance_of: Vec::new(),
             relations: IndexMap::new(),

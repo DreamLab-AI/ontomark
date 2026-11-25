@@ -40,6 +40,9 @@ const RDFS: &str = "http://www.w3.org/2000/01/rdf-schema#";
 const XSD: &str = "http://www.w3.org/2001/XMLSchema#";
 const SKOS: &str = "http://www.w3.org/2004/02/skos/core#";
 const DCTERMS: &str = "http://purl.org/dc/terms/";
+/// memory-ontology's `temporal` namespace (CC BY 4.0): the start and end of a
+/// page's valid time on the published class (ADR-VG-010 §7).
+pub const TEMPORAL: &str = "http://nova.dev/temporal#";
 
 /// An RDF object term.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -141,6 +144,15 @@ impl Graph {
         }
     }
 
+    /// `true` when the graph holds `subject predicate object`.
+    #[must_use]
+    pub fn contains(&self, subject: &Subject, predicate: &str, object: &Term) -> bool {
+        self.triples
+            .get(subject)
+            .and_then(|preds| preds.get(predicate))
+            .is_some_and(|objs| objs.contains(object))
+    }
+
     /// Add a triple with an IRI subject.
     pub fn add_iri(&mut self, subject: &str, predicate: &str, object: Term) {
         self.add(Subject::Iri(subject.to_owned()), predicate, object);
@@ -226,6 +238,9 @@ pub fn build_graph_attributed(
 
     declare_object_properties(&mut g, profile, vocab);
     declare_annotation_properties(&mut g, profile);
+    if vocab.is_v3() {
+        declare_v3_annotation_properties(&mut g, profile);
+    }
     declare_maturity(&mut g, profile);
 
     let records: Vec<_> = corpus
@@ -308,6 +323,9 @@ pub fn build_graph_attributed(
                 &format!("{PROV}wasAttributedTo"),
                 Term::Iri(gen.did.clone()),
             );
+        }
+        if let Some(facts) = record.v3.as_deref() {
+            emit_v3(&mut g, profile, roster, &uri, facts);
         }
         g.add_iri(
             &uri,
@@ -437,6 +455,36 @@ pub fn build_graph_attributed(
                 &iri_to_uri(profile, &record.iri),
                 crate::input::definition::OWL_EQUIVALENT_CLASS,
                 expression,
+            );
+        }
+    }
+
+    // Version 3 annotation axioms (typed sources), minted after every other
+    // blank node so a corpus without them keeps its blank-node labels.
+    if vocab.is_v3() {
+        let mut delegations: BTreeSet<(String, String)> = BTreeSet::new();
+        for record in &records {
+            if let Some(facts) = record.v3.as_deref() {
+                if let (Some(principal), Some(instrument)) =
+                    (&facts.principal, instrument_did(facts, roster))
+                {
+                    delegations.insert((instrument, principal.clone()));
+                }
+                let uri = iri_to_uri(profile, &record.iri);
+                emit_v3_sources(&mut g, profile, &uri, facts);
+                emit_v3_open_statements(&mut g, profile, vocab, &uri, facts);
+            }
+        }
+        // `prov:wasAttributedTo` names the principal and the instrument alike,
+        // so on its own a consumer cannot tell which is which (reading 2). The
+        // instrument acted on behalf of the principal: said once per pair the
+        // pages name, not for the whole roster. Nothing is typed, so the
+        // corpus stays pure TBox.
+        for (instrument, principal) in delegations {
+            g.add_iri(
+                &instrument,
+                &format!("{PROV}actedOnBehalfOf"),
+                Term::Iri(principal),
             );
         }
     }
@@ -809,6 +857,387 @@ fn declare_annotation_properties(g: &mut Graph, profile: &Profile) {
     }
 }
 
+/// The annotation properties a version 3 build uses, declared so the ontology
+/// stays self-contained and EL-profile conformant.
+fn declare_v3_annotation_properties(g: &mut Graph, profile: &Profile) {
+    let vc = profile.iris.vocabulary_namespace.as_str();
+    for property in [
+        format!("{TEMPORAL}validFrom"),
+        format!("{TEMPORAL}validUntil"),
+        format!("{DCTERMS}isReplacedBy"),
+        format!("{PROV}wasRevisionOf"),
+        format!("{vc}supersessionReason"),
+        format!("{PROV}actedOnBehalfOf"),
+        format!("{PROV}wasDerivedFrom"),
+        format!("{PROV}hadPrimarySource"),
+        format!("{DCTERMS}source"),
+        format!("{vc}sourceRel"),
+        format!("{vc}sourceLocator"),
+        format!("{vc}sourceAt"),
+    ] {
+        g.add_iri(
+            &property,
+            &format!("{RDF}type"),
+            Term::Iri(format!("{OWL}AnnotationProperty")),
+        );
+    }
+}
+
+/// Publish a page's version 3 facts on its class (ADR-VG-010 §7, ADR-VG-011 §1).
+///
+/// * attribution: `prov:wasAttributedTo` the principal, and the instrument the
+///   roster resolves `via` to as a second triple (never guessed);
+/// * time: `temporal:validFrom` and `temporal:validUntil`, `xsd:dateTimeStamp`.
+///   An end on the record is acceptable here because the published file is a
+///   static projection with no recorded-time query; the provenance store keeps
+///   closure records;
+/// * `status: deprecated` is `owl:deprecated true`;
+/// * `superseded-by` is `dcterms:isReplacedBy`; each `supersedes` entry that
+///   names a page is `prov:wasRevisionOf`, with its reason as an annotation of
+///   that axiom. Never `temporal:supersedes` and never `memory:closes`
+///   (memory-ontology reserves those for memory records), and a replaced page
+///   is not re-created as a class.
+fn emit_v3(
+    g: &mut Graph,
+    profile: &Profile,
+    roster: &super::attribution::Roster,
+    uri: &str,
+    facts: &crate::ir::model::V3Facts,
+) {
+    let vc = profile.iris.vocabulary_namespace.as_str();
+    if let Some(principal) = &facts.principal {
+        g.add_iri(
+            uri,
+            &format!("{PROV}wasAttributedTo"),
+            Term::Iri(principal.clone()),
+        );
+    }
+    if let Some(instrument) = instrument_did(facts, roster) {
+        g.add_iri(
+            uri,
+            &format!("{PROV}wasAttributedTo"),
+            Term::Iri(instrument),
+        );
+    }
+    let stamp = format!("{XSD}dateTimeStamp");
+    if let Some(from) = &facts.valid_from {
+        g.add_iri(
+            uri,
+            &format!("{TEMPORAL}validFrom"),
+            Term::typed(from.clone(), &stamp),
+        );
+    }
+    if let Some(to) = &facts.valid_to {
+        g.add_iri(
+            uri,
+            &format!("{TEMPORAL}validUntil"),
+            Term::typed(to.clone(), &stamp),
+        );
+    }
+    if facts.status.as_deref() == Some("deprecated") {
+        g.add_iri(
+            uri,
+            &format!("{OWL}deprecated"),
+            Term::typed("true", &format!("{XSD}boolean")),
+        );
+    }
+    for replaced_by in &facts.superseded_by {
+        g.add_iri(
+            uri,
+            &format!("{DCTERMS}isReplacedBy"),
+            Term::Iri(iri_to_uri(profile, replaced_by)),
+        );
+    }
+    for entry in &facts.supersedes {
+        let Some(target) = &entry.target else {
+            continue;
+        };
+        let revision = format!("{PROV}wasRevisionOf");
+        let target = iri_to_uri(profile, target);
+        g.add_iri(uri, &revision, Term::Iri(target.clone()));
+        let axiom = Subject::Blank(g.fresh_blank());
+        for (predicate, object) in [
+            (format!("{RDF}type"), Term::Iri(format!("{OWL}Axiom"))),
+            (format!("{OWL}annotatedSource"), Term::Iri(uri.to_owned())),
+            (format!("{OWL}annotatedProperty"), Term::Iri(revision)),
+            (format!("{OWL}annotatedTarget"), Term::Iri(target)),
+            (
+                format!("{vc}supersessionReason"),
+                Term::plain(entry.reason.clone()),
+            ),
+        ] {
+            g.add(axiom.clone(), predicate, object);
+        }
+    }
+}
+
+/// The DID of the instrument a page's `via` names, through the roster. `None`
+/// when there is no `via` or the roster cannot resolve it: never guessed.
+fn instrument_did(
+    facts: &crate::ir::model::V3Facts,
+    roster: &super::attribution::Roster,
+) -> Option<String> {
+    facts
+        .via
+        .as_deref()
+        .and_then(|v| v.parse::<crate::input::okf::Actor>().ok())
+        .and_then(|a| roster.resolve(&a).map(|generator| generator.did.clone()))
+}
+
+/// The predicate a typed source publishes as (ADR-VG-010 §7). The ADR names
+/// three predicates for six relations and gives no mapping; this one is a
+/// reading, listed as a ruling: `derived-from` is `prov:wasDerivedFrom`,
+/// `origin` is `prov:hadPrimarySource` (the PROV subproperty), and every other
+/// relation is `dcterms:source`.
+fn source_predicate(rel: &str) -> String {
+    match rel {
+        "derived-from" => format!("{PROV}wasDerivedFrom"),
+        "origin" => format!("{PROV}hadPrimarySource"),
+        _ => format!("{DCTERMS}source"),
+    }
+}
+
+/// Publish a page's typed `sources` as annotations on its class: the triple
+/// `<class> <predicate> <target>` with `owl:Axiom` annotations (`vc:sourceRel`,
+/// `vc:sourceLocator`, `vc:sourceAt`) when the predicate alone loses
+/// something (`episode`, `evidence` and `standard` all read `dcterms:source`)
+/// or the entry has a locator or a date. All three predicates are annotation
+/// properties, so the reasoner never sees them. Only entries the corpus kept
+/// are here: a source that points at a non-public page was withheld when the
+/// corpus was built and is not in `facts`.
+fn emit_v3_sources(g: &mut Graph, profile: &Profile, uri: &str, facts: &crate::ir::model::V3Facts) {
+    let vc = profile.iris.vocabulary_namespace.as_str();
+    for source in &facts.sources {
+        let predicate = source_predicate(&source.rel);
+        g.add_iri(uri, &predicate, Term::Iri(source.target.clone()));
+        let lossy = !matches!(source.rel.as_str(), "origin" | "derived-from" | "reference");
+        if !lossy && source.locator.is_none() && source.at.is_none() {
+            continue;
+        }
+        let axiom = Subject::Blank(g.fresh_blank());
+        for (p, o) in [
+            (format!("{RDF}type"), Term::Iri(format!("{OWL}Axiom"))),
+            (format!("{OWL}annotatedSource"), Term::Iri(uri.to_owned())),
+            (format!("{OWL}annotatedProperty"), Term::Iri(predicate)),
+            (
+                format!("{OWL}annotatedTarget"),
+                Term::Iri(source.target.clone()),
+            ),
+            (format!("{vc}sourceRel"), Term::plain(source.rel.clone())),
+        ] {
+            g.add(axiom.clone(), p, o);
+        }
+        if let Some(locator) = &source.locator {
+            g.add(
+                axiom.clone(),
+                format!("{vc}sourceLocator"),
+                Term::plain(locator.clone()),
+            );
+        }
+        if let Some(at) = &source.at {
+            g.add(axiom, format!("{vc}sourceAt"), Term::plain(at.clone()));
+        }
+    }
+}
+
+/// The IRI of the property a `statements` key publishes as, from the
+/// vocabulary's relation table.
+fn statement_property(vocab: &Vocabulary, key: &str) -> Option<String> {
+    vocab.relations.get(key).map(|d| vocab.expand(&d.owl))
+}
+
+/// Publish a page's open statements (ADR-VG-010 §4, §7) as `owl:Axiom`
+/// annotations on the relation triples they qualify, each with
+/// `temporal:validFrom` (the memory-ontology term, per the plan's amendment).
+///
+/// An open statement is already in the relation list, so the triple exists
+/// and is unchanged: the reasoner's input is the same with or without the
+/// annotation. An entry is skipped when it has no strict `valid-from` (there is
+/// nothing to say), when it is closed (closed statements are history, see
+/// [`build_history_graph`]) or when the graph does not hold the triple it
+/// would annotate (a relation this build does not emit, or a value the page
+/// does not list): an annotation never asserts a triple of its own.
+fn emit_v3_open_statements(
+    g: &mut Graph,
+    profile: &Profile,
+    vocab: &Vocabulary,
+    uri: &str,
+    facts: &crate::ir::model::V3Facts,
+) {
+    let stamp = format!("{XSD}dateTimeStamp");
+    for entry in &facts.statements {
+        let (None, Some(from), Some(property)) = (
+            &entry.valid_to,
+            &entry.valid_from,
+            statement_property(vocab, &entry.key),
+        ) else {
+            continue;
+        };
+        let target = Term::Iri(iri_to_uri(profile, &entry.value));
+        if !g.contains(&Subject::Iri(uri.to_owned()), &property, &target) {
+            continue;
+        }
+        let axiom = Subject::Blank(g.fresh_blank());
+        for (p, o) in [
+            (format!("{RDF}type"), Term::Iri(format!("{OWL}Axiom"))),
+            (format!("{OWL}annotatedSource"), Term::Iri(uri.to_owned())),
+            (format!("{OWL}annotatedProperty"), Term::Iri(property)),
+            (format!("{OWL}annotatedTarget"), target),
+            (
+                format!("{TEMPORAL}validFrom"),
+                Term::typed(from.clone(), &stamp),
+            ),
+        ] {
+            g.add(axiom.clone(), p, o);
+        }
+    }
+}
+
+/// The graph of closed statements, written to `data/history.ttl` under
+/// vocabulary 3 (ADR-VG-010 §7: closed statements go to a separate file, never
+/// into `ontology.ttl`, so no reasoner sees a union of versions).
+///
+/// The ADR fixes the file and not its shape, so this is the smallest form that
+/// carries every fact of a closed entry, and it is a ruling for the owner. One
+/// `rdf:Statement` per closed entry: `rdf:subject` the class, `rdf:predicate`
+/// the relation property, `rdf:object` the value, then
+/// `temporal:validFrom` and `temporal:validUntil`, `vc:supersessionReason`
+/// (`reason`), `dcterms:isReplacedBy` (`replaced-by`), `prov:generatedAtTime`
+/// (`at`), `prov:wasAttributedTo` (`by`, the canonical principal) and one
+/// `dcterms:source` per cited source id the page published. `rdf:Statement` is
+/// a reification and so asserts nothing: loading this file beside
+/// `ontology.ttl` does not put a closed triple back. (`owl:Axiom` would: an
+/// OWL parser reads it as the axiom.) An entry whose relation is not in the
+/// vocabulary, or that has no `valid-to`, is not here. Only public records are
+/// written, and a value or replacement naming a non-public page was removed
+/// from the entry when the corpus was cleaned. The graph is empty when no
+/// page has a closed statement, and the file is then a prologue only.
+#[must_use]
+pub fn build_history_graph(profile: &Profile, corpus: &Corpus, vocab: &Vocabulary) -> Graph {
+    let vc = profile.iris.vocabulary_namespace.as_str();
+    let stamp = format!("{XSD}dateTimeStamp");
+    let mut g = Graph::new();
+    for record in corpus
+        .records
+        .iter()
+        .filter(|r| r.public && r.has_ontology && !r.iri.is_empty())
+    {
+        let Some(facts) = record.v3.as_deref() else {
+            continue;
+        };
+        let class = iri_to_uri(profile, &record.iri);
+        for entry in &facts.statements {
+            let (Some(until), Some(property)) =
+                (&entry.valid_to, statement_property(vocab, &entry.key))
+            else {
+                continue;
+            };
+            let node = Subject::Blank(g.fresh_blank());
+            g.add(
+                node.clone(),
+                format!("{RDF}type"),
+                Term::Iri(format!("{RDF}Statement")),
+            );
+            g.add(
+                node.clone(),
+                format!("{RDF}subject"),
+                Term::Iri(class.clone()),
+            );
+            g.add(node.clone(), format!("{RDF}predicate"), Term::Iri(property));
+            g.add(
+                node.clone(),
+                format!("{RDF}object"),
+                Term::Iri(iri_to_uri(profile, &entry.value)),
+            );
+            if let Some(from) = &entry.valid_from {
+                g.add(
+                    node.clone(),
+                    format!("{TEMPORAL}validFrom"),
+                    Term::typed(from.clone(), &stamp),
+                );
+            }
+            g.add(
+                node.clone(),
+                format!("{TEMPORAL}validUntil"),
+                Term::typed(until.clone(), &stamp),
+            );
+            if let Some(reason) = &entry.reason {
+                g.add(
+                    node.clone(),
+                    format!("{vc}supersessionReason"),
+                    Term::plain(reason.clone()),
+                );
+            }
+            if let Some(replacement) = &entry.replaced_by {
+                g.add(
+                    node.clone(),
+                    format!("{DCTERMS}isReplacedBy"),
+                    Term::Iri(iri_to_uri(profile, replacement)),
+                );
+            }
+            if let Some(at) = &entry.at {
+                let term = if crate::input::time::parse_utc_seconds(at).is_some() {
+                    Term::typed(at.clone(), &stamp)
+                } else {
+                    Term::plain(at.clone())
+                };
+                g.add(node.clone(), format!("{PROV}generatedAtTime"), term);
+            }
+            if let Some(by) = &entry.by {
+                g.add(
+                    node.clone(),
+                    format!("{PROV}wasAttributedTo"),
+                    Term::Iri(by.clone()),
+                );
+            }
+            for id in &entry.sources {
+                for source in facts.sources.iter().filter(|s| &s.id == id) {
+                    g.add(
+                        node.clone(),
+                        format!("{DCTERMS}source"),
+                        Term::Iri(source.target.clone()),
+                    );
+                }
+            }
+        }
+    }
+    g
+}
+
+impl Graph {
+    /// This graph without the triples of any class marked `owl:deprecated true`
+    /// (ADR-VG-010 §7: a deprecated class and its axioms leave the reasoner's
+    /// input). `None` when no class is deprecated, so the caller keeps the
+    /// graph it has.
+    #[must_use]
+    pub fn without_deprecated(&self) -> Option<Graph> {
+        let deprecated: BTreeSet<&Subject> = self
+            .triples
+            .iter()
+            .filter(|(_, preds)| {
+                preds.get(&format!("{OWL}deprecated")).is_some_and(|objs| {
+                    objs.iter()
+                        .any(|o| matches!(o, Term::Literal { value, .. } if value == "true"))
+                })
+            })
+            .map(|(s, _)| s)
+            .collect();
+        if deprecated.is_empty() {
+            return None;
+        }
+        let mut out = Graph {
+            next_bnode: self.next_bnode,
+            ..Graph::default()
+        };
+        for (subject, predicate, object) in self.iter() {
+            if !deprecated.contains(subject) {
+                out.add(subject.clone(), predicate, object.clone());
+            }
+        }
+        Some(out)
+    }
+}
+
 fn declare_maturity(g: &mut Graph, profile: &Profile) {
     if profile.lifecycle.maturity_levels.is_empty() {
         return;
@@ -947,6 +1376,11 @@ pub fn serialise(profile: &Profile, g: &Graph) -> String {
         ),
         ("xsd", XSD),
     ];
+    // The `temporal` prefix appears only in a graph that uses it, so a version 2
+    // build keeps its exact prologue.
+    if g.iter().any(|(_, p, _)| p.starts_with(TEMPORAL)) {
+        prefixes.push(("temporal", TEMPORAL));
+    }
     // Turtle prefix declarations are sorted by name, as the estate output always was.
     prefixes.sort_by(|a, b| a.0.cmp(b.0));
     let prefixes = prefixes.as_slice();
@@ -1144,6 +1578,7 @@ relations:
             attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
+            v3: None,
             sub_class_of: Vec::new(),
             instance_of: Vec::new(),
             relations: IndexMap::new(),
@@ -1200,6 +1635,340 @@ relations:
         assert!(ttl.contains("vc:sourceDomain \"spatial-computing\""));
         assert!(ttl.contains("vc:hasMaturity ngmi:maturity-established"));
         assert!(ttl.contains("vc:qualityScore \"0.35\"^^xsd:float"));
+    }
+
+    fn v3_vocab() -> Vocabulary {
+        let mut v = vocab();
+        v.version = 3;
+        v
+    }
+
+    const B4: &str = "did:nostr:b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a";
+
+    #[test]
+    fn version_3_publishes_time_supersession_and_the_principal() {
+        use crate::ir::model::{SupersessionFact, V3Facts};
+        let mut r = record("Decentralised Finance");
+        r.v3 = Some(Box::new(V3Facts {
+            status: Some("deprecated".into()),
+            valid_from: Some("2022-10-25T00:00:00Z".into()),
+            valid_to: Some("2026-11-21T00:00:00Z".into()),
+            superseded_by: vec!["urn:ngm:class:defi-2".into()],
+            supersedes: vec![
+                SupersessionFact {
+                    target: Some("urn:ngm:class:decentralized-finance".into()),
+                    reason: "merged".into(),
+                },
+                SupersessionFact {
+                    target: None,
+                    reason: "corrected".into(),
+                },
+            ],
+            principal: Some(B4.into()),
+            via: Some("agent:enrichment-swarm/6".into()),
+            ..V3Facts::default()
+        }));
+        let roster = crate::build::attribution::Roster::from_yaml_str(
+            "generators:\n  - did: did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0\n    label: enrichment-swarm\n    version: \"6\"\n    kind: process\n",
+        );
+        let g = build_graph_attributed(est(), &corpus_of(vec![r]), &v3_vocab(), true, &roster);
+        let ttl = serialise(est(), &g);
+        assert!(
+            ttl.contains("@prefix temporal: <http://nova.dev/temporal#> ."),
+            "{ttl}"
+        );
+        assert!(ttl.contains("temporal:validFrom \"2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp"));
+        assert!(ttl.contains("temporal:validUntil \"2026-11-21T00:00:00Z\"^^xsd:dateTimeStamp"));
+        assert!(
+            ttl.contains("owl:deprecated true")
+                || ttl.contains("owl:deprecated \"true\"^^xsd:boolean"),
+            "{ttl}"
+        );
+        assert!(ttl.contains("dc:isReplacedBy ngm:defi-2"), "{ttl}");
+        assert!(ttl.contains("prov:wasRevisionOf ngm:decentralized-finance"));
+        // The reason is an annotation on that axiom, and the withdrawal entry (no page) adds nothing.
+        assert!(ttl.contains("owl:annotatedTarget ngm:decentralized-finance"));
+        assert!(ttl.contains("vc:supersessionReason \"merged\""));
+        assert!(!ttl.contains("corrected"));
+        // The principal, then the instrument as a second attribution.
+        assert!(
+            ttl.contains(&format!("<{B4}>")) || ttl.contains(B4),
+            "{ttl}"
+        );
+        assert!(ttl.contains("94773a69"));
+        // The loser is never re-created as a class.
+        assert!(!ttl.contains("ngm:decentralized-finance a owl:Class"));
+        // Nothing of memory-ontology's reserved terms.
+        assert!(!ttl.contains("supersedes") && !ttl.contains("closes"));
+    }
+
+    #[test]
+    fn version_3_publishes_typed_sources_as_annotations_by_relation() {
+        use crate::ir::model::{SourceFact, V3Facts};
+        let src = |id: &str, rel: &str, target: &str, locator: Option<&str>| SourceFact {
+            id: id.into(),
+            rel: rel.into(),
+            target: target.into(),
+            at: None,
+            locator: locator.map(Into::into),
+        };
+        let mut r = record("Cited");
+        r.v3 = Some(Box::new(V3Facts {
+            sources: vec![
+                src("a", "origin", "urn:visionflow:page:pub1", None),
+                src(
+                    "b",
+                    "derived-from",
+                    "urn:visionflow:page:brief1",
+                    Some("sha256-v1:ab"),
+                ),
+                src(
+                    "c",
+                    "evidence",
+                    "urn:visionflow:page:pub2",
+                    Some("fp:32ebb74ef2751e32"),
+                ),
+                src("d", "reference", "https://example.org/r", None),
+            ],
+            ..V3Facts::default()
+        }));
+        let g = build_graph(est(), &corpus_of(vec![r]), &v3_vocab(), true);
+        let ttl = serialise(est(), &g);
+        assert!(
+            ttl.contains("prov:hadPrimarySource <urn:visionflow:page:pub1>"),
+            "{ttl}"
+        );
+        assert!(
+            ttl.contains("prov:wasDerivedFrom <urn:visionflow:page:brief1>"),
+            "{ttl}"
+        );
+        assert!(
+            ttl.contains("dc:source <urn:visionflow:page:pub2>"),
+            "{ttl}"
+        );
+        assert!(ttl.contains("dc:source <https://example.org/r>"), "{ttl}");
+        // Evidence is told apart from a plain reference by its axiom annotation, with the locator.
+        assert!(ttl.contains("vc:sourceRel \"evidence\""), "{ttl}");
+        assert!(
+            ttl.contains("vc:sourceLocator \"fp:32ebb74ef2751e32\""),
+            "{ttl}"
+        );
+        assert!(ttl.contains("vc:sourceLocator \"sha256-v1:ab\""), "{ttl}");
+        // Origin and a bare reference need no annotation: the predicate says it.
+        assert!(
+            !ttl.contains("vc:sourceRel \"origin\"") && !ttl.contains("vc:sourceRel \"reference\"")
+        );
+        // They are annotation properties: nothing for the reasoner.
+        for p in ["prov:wasDerivedFrom", "prov:hadPrimarySource", "dc:source"] {
+            assert!(
+                ttl.contains(&format!("{p} a owl:AnnotationProperty")),
+                "{p}\n{ttl}"
+            );
+        }
+    }
+
+    fn statement(
+        value: &str,
+        from: Option<&str>,
+        to: Option<&str>,
+    ) -> crate::ir::model::StatementFact {
+        crate::ir::model::StatementFact {
+            key: "requires".into(),
+            value: value.into(),
+            valid_from: from.map(Into::into),
+            valid_to: to.map(Into::into),
+            reason: None,
+            replaced_by: None,
+            at: None,
+            by: None,
+            sources: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn version_3_annotates_open_statements_and_writes_closed_ones_to_history() {
+        use crate::ir::model::{Ref, SourceFact, V3Facts};
+        let mut r = record("Standard");
+        r.relations.insert(
+            "requires",
+            vec![Ref {
+                iri: "urn:ngm:class:iso-27001-2022".into(),
+                label: "ISO 27001 2022".into(),
+            }],
+        );
+        let mut closed = statement(
+            "urn:ngm:class:iso-27001-2013",
+            Some("2013-10-01T00:00:00Z"),
+            Some("2022-10-25T00:00:00Z"),
+        );
+        closed.reason = Some("world-changed".into());
+        closed.replaced_by = Some("urn:ngm:class:iso-27001-2022".into());
+        closed.at = Some("2026-11-21T10:00:00Z".into());
+        closed.by = Some(B4.into());
+        closed.sources = vec!["iso".into(), "private-one".into()];
+        r.v3 = Some(Box::new(V3Facts {
+            statements: vec![
+                statement(
+                    "urn:ngm:class:iso-27001-2022",
+                    Some("2022-10-25T00:00:00Z"),
+                    None,
+                ),
+                // Open, but the relation list does not hold it: no annotation, no triple.
+                statement("urn:ngm:class:ghost", Some("2020-01-01T00:00:00Z"), None),
+                // Open with no start says nothing a reader could use.
+                statement("urn:ngm:class:iso-27001-2022", None, None),
+                closed,
+            ],
+            sources: vec![SourceFact {
+                id: "iso".into(),
+                rel: "standard".into(),
+                target: "https://www.iso.org/standard/27001".into(),
+                at: None,
+                locator: None,
+            }],
+            ..V3Facts::default()
+        }));
+        let corpus = corpus_of(vec![r]);
+        let g = build_graph(est(), &corpus, &v3_vocab(), true);
+        let ttl = serialise(est(), &g);
+        assert!(ttl.contains("owl:annotatedProperty vc:requires"), "{ttl}");
+        assert!(
+            ttl.contains("owl:annotatedTarget ngm:iso-27001-2022"),
+            "{ttl}"
+        );
+        assert!(
+            ttl.contains("temporal:validFrom \"2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp"),
+            "{ttl}"
+        );
+        assert_eq!(
+            ttl.matches("owl:annotatedProperty vc:requires").count(),
+            1,
+            "{ttl}"
+        );
+        // Nothing closed, and nothing about a statement that is not in the list, reaches the reasoner's file.
+        assert!(
+            !ttl.contains("iso-27001-2013") && !ttl.contains("ghost"),
+            "{ttl}"
+        );
+        assert!(
+            !ttl.contains("2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp ;\n    temporal:validUntil")
+        );
+
+        let history = serialise(est(), &build_history_graph(est(), &corpus, &v3_vocab()));
+        for want in [
+            "a rdf:Statement",
+            "rdf:subject ngm:standard",
+            "rdf:predicate vc:requires",
+            "rdf:object ngm:iso-27001-2013",
+            "temporal:validFrom \"2013-10-01T00:00:00Z\"^^xsd:dateTimeStamp",
+            "temporal:validUntil \"2022-10-25T00:00:00Z\"^^xsd:dateTimeStamp",
+            "vc:supersessionReason \"world-changed\"",
+            "dc:isReplacedBy ngm:iso-27001-2022",
+            "prov:generatedAtTime \"2026-11-21T10:00:00Z\"^^xsd:dateTimeStamp",
+            "dc:source <https://www.iso.org/standard/27001>",
+        ] {
+            assert!(history.contains(want), "{want}\n{history}");
+        }
+        assert!(history.contains(B4), "{history}");
+        // A source id the page did not publish is not invented.
+        assert!(!history.contains("private-one"), "{history}");
+        // A non-asserting reification: never an axiom, never a class, never the open statement.
+        assert!(
+            !history.contains("owl:Axiom") && !history.contains("owl:Class"),
+            "{history}"
+        );
+        assert!(
+            !history.contains("rdf:object ngm:iso-27001-2022"),
+            "{history}"
+        );
+        assert_eq!(history.matches("a rdf:Statement").count(), 1);
+    }
+
+    #[test]
+    fn history_is_empty_without_closed_statements_and_under_version_2() {
+        let corpus = corpus_of(vec![record("Plain")]);
+        let history = build_history_graph(est(), &corpus, &v3_vocab());
+        assert_eq!(history.iter().count(), 0);
+        assert!(!serialise(est(), &history).contains("temporal"));
+    }
+
+    /// Reading 2: a consumer must be able to tell the principal from the
+    /// instrument. Two `prov:wasAttributedTo` objects cannot say which is which,
+    /// so the instrument is tied to its principal by `prov:actedOnBehalfOf`,
+    /// once per pair the pages actually name.
+    #[test]
+    fn version_3_ties_each_instrument_to_the_principal_it_directed() {
+        use crate::ir::model::V3Facts;
+        const SWARM: &str =
+            "did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0";
+        let facts = |via: Option<&str>| {
+            Some(Box::new(V3Facts {
+                principal: Some(B4.into()),
+                via: via.map(Into::into),
+                ..V3Facts::default()
+            }))
+        };
+        let (mut a, mut b, mut c, mut d) = (
+            record("Alpha"),
+            record("Beta"),
+            record("Gamma"),
+            record("Delta"),
+        );
+        a.v3 = facts(Some("agent:enrichment-swarm/6"));
+        b.v3 = facts(Some("agent:enrichment-swarm/6"));
+        c.v3 = facts(Some("agent:not-in-the-roster/1")); // cannot be resolved: never guessed
+        d.v3 = facts(None); // no instrument
+        let roster = crate::build::attribution::Roster::from_yaml_str(&format!(
+            "generators:\n  - did: {SWARM}\n    label: enrichment-swarm\n    version: \"6\"\n    kind: process\n  - did: did:nostr:{}\n    label: unused-swarm\n    version: \"1\"\n    kind: process\n",
+            "ab".repeat(32)
+        ));
+        let corpus = corpus_of(vec![a, b, c, d]);
+        let g = build_graph_attributed(est(), &corpus, &v3_vocab(), true, &roster);
+        let ttl = serialise(est(), &g);
+        let pair = format!("<{SWARM}> prov:actedOnBehalfOf <{B4}>");
+        assert_eq!(ttl.matches(&pair).count(), 1, "{ttl}");
+        // Only the pair the pages name: the roster's other generator makes no claim.
+        assert_eq!(ttl.matches("prov:actedOnBehalfOf <").count(), 1, "{ttl}");
+        assert!(
+            ttl.contains("prov:actedOnBehalfOf a owl:AnnotationProperty"),
+            "{ttl}"
+        );
+        // Nothing is typed: the corpus stays pure TBox (an agent class assertion would make an individual).
+        assert!(
+            !ttl.contains("prov:Person") && !ttl.contains("prov:SoftwareAgent"),
+            "{ttl}"
+        );
+        // Version 2 says nothing of it.
+        let g2 = build_graph_attributed(est(), &corpus, &vocab(), true, &roster);
+        assert!(!serialise(est(), &g2).contains("actedOnBehalfOf"));
+    }
+
+    #[test]
+    fn version_2_emits_none_of_it_and_keeps_its_prologue() {
+        let g = build_graph(est(), &corpus_of(vec![record("Plain")]), &vocab(), true);
+        let ttl = serialise(est(), &g);
+        assert!(!ttl.contains("temporal"), "{ttl}");
+        assert!(!ttl.contains("supersessionReason"));
+        assert!(g.without_deprecated().is_none());
+    }
+
+    #[test]
+    fn a_deprecated_class_leaves_the_reasoner_view_but_not_the_ontology() {
+        use crate::ir::model::V3Facts;
+        let mut keep = record("Keep");
+        keep.v3 = Some(Box::new(V3Facts::default()));
+        let mut old = record("Old");
+        old.v3 = Some(Box::new(V3Facts {
+            status: Some("deprecated".into()),
+            ..V3Facts::default()
+        }));
+        let g = build_graph(est(), &corpus_of(vec![keep, old]), &v3_vocab(), true);
+        let ttl = serialise(est(), &g);
+        assert!(ttl.contains("ngm:old a owl:Class"));
+        let view = g.without_deprecated().expect("one class is deprecated");
+        let reasoned = serialise(est(), &view);
+        assert!(!reasoned.contains("ngm:old "), "{reasoned}");
+        assert!(reasoned.contains("ngm:keep a owl:Class"));
     }
 
     #[test]

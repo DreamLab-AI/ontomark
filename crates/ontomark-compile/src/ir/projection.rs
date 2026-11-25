@@ -416,6 +416,7 @@ impl Redactor {
                 .collect(),
             generated_by: r.generated_by.clone(),
             certification: r.certification.clone(),
+            v3: r.v3.clone(),
             sub_class_of: self.clean_refs(&r.sub_class_of),
             instance_of: self.clean_refs(&r.instance_of),
             relations,
@@ -623,22 +624,53 @@ pub fn project_vault_with_links(
     extra_private: &HashSet<String>,
     links: &crate::build::redact::PrivateLinks,
 ) -> Result<(Corpus, ProseRedactor), PublicationBlocked> {
-    project(profile, &Corpus::build(vault, vocab), extra_private)?;
-    let cleaned = clean_vault(vault, links);
-    project_with_redactor(profile, &Corpus::build(&cleaned, vocab), extra_private)
+    project_vault_with_links_attributed(profile, vault, vocab, extra_private, links, None)
+}
+
+/// [`project_vault_with_links`] reading certification against `roster`, so a
+/// `verified` stamp by a human principal's `did:nostr:` key still reads
+/// `certified` in the published page API (vocabulary 3). `None` is
+/// [`project_vault_with_links`].
+///
+/// # Errors
+/// [`PublicationBlocked::Collision`] for conflicting publication identities.
+pub fn project_vault_with_links_attributed(
+    profile: &Profile,
+    vault: &Vault,
+    vocab: &Vocabulary,
+    extra_private: &HashSet<String>,
+    links: &crate::build::redact::PrivateLinks,
+    roster: Option<&crate::build::attribution::Roster>,
+) -> Result<(Corpus, ProseRedactor), PublicationBlocked> {
+    project(
+        profile,
+        &Corpus::build_with(vault, vocab, roster),
+        extra_private,
+    )?;
+    let cleaned = clean_vault(vault, links, vocab);
+    let mut corpus = Corpus::build_with(&cleaned, vocab, roster);
+    // Typed sources are read from the vault as authored and judged by the same
+    // `links` that cleaned it: a source naming a non-public page never reaches
+    // a record (version 3 only; a no-op under version 2).
+    corpus.attach_sources(vault, links);
+    project_with_redactor(profile, &corpus, extra_private)
 }
 
 /// `vault` as the public surfaces may see it: held pages forced private, and
 /// every public page's curated links, relation targets, `defines-as` and body
 /// stripped of whatever `links` resolves to a non-public page. Links resolve
 /// from the page's own vault (`vault.kind`), then the other.
-fn clean_vault(vault: &Vault, links: &crate::build::redact::PrivateLinks) -> Vault {
+fn clean_vault(
+    vault: &Vault,
+    links: &crate::build::redact::PrivateLinks,
+    vocab: &Vocabulary,
+) -> Vault {
     let mut cleaned = vault.clone();
     for page in &mut cleaned.pages {
         if crate::build::publish::held_back(&page.rel_path) {
             page.frontmatter.map.insert("public".into(), false.into());
         }
-        if !page.is_public() {
+        if !crate::check::v3::state::is_public_under(page, vault.kind, vocab) {
             continue;
         }
         // Pin the curated set, including an empty set: removing `links` would
@@ -767,10 +799,43 @@ pub fn project_machine(
     extra_private: &HashSet<String>,
     links: &crate::build::redact::PrivateLinks,
 ) -> Result<MachineProjection, PublicationBlocked> {
+    project_machine_attributed(
+        profile,
+        knowledge,
+        working,
+        vocab,
+        extra_private,
+        links,
+        None,
+    )
+}
+
+/// [`project_machine`] reading certification against `roster`; see
+/// [`project_vault_with_links_attributed`].
+///
+/// # Errors
+/// [`PublicationBlocked::Collision`] or [`PublicationBlocked::Redactor`], as
+/// [`project_vault_with_links`].
+#[allow(clippy::too_many_arguments)]
+pub fn project_machine_attributed(
+    profile: &Profile,
+    knowledge: &Vault,
+    working: &Vault,
+    vocab: &Vocabulary,
+    extra_private: &HashSet<String>,
+    links: &crate::build::redact::PrivateLinks,
+    roster: Option<&crate::build::attribution::Roster>,
+) -> Result<MachineProjection, PublicationBlocked> {
     use crate::input::page::VaultKind;
 
-    let (knowledge_corpus, redactor) =
-        project_vault_with_links(profile, knowledge, vocab, extra_private, links)?;
+    let (knowledge_corpus, redactor) = project_vault_with_links_attributed(
+        profile,
+        knowledge,
+        vocab,
+        extra_private,
+        links,
+        roster,
+    )?;
 
     // The union's extra identities: the held pages of both vaults.
     let mut union_extra = extra_private.clone();
@@ -782,7 +847,7 @@ pub fn project_machine(
     // is published) and yields silently; a PUBLIC working page beside a
     // PRIVATE page of either vault would expose the private identity through
     // its own, and is refused.
-    let knowledge_raw = Corpus::build(knowledge, vocab).records;
+    let knowledge_raw = Corpus::build_with(knowledge, vocab, roster).records;
     let public_knowledge: HashSet<String> = knowledge_raw
         .iter()
         .filter(|r| r.public)
@@ -790,16 +855,17 @@ pub fn project_machine(
         .collect();
     let mut raw = knowledge_raw;
     raw.extend(
-        Corpus::build(&hold_back(working), vocab)
+        Corpus::build_with(&hold_back(working), vocab, roster)
             .records
             .into_iter()
             .map(|r| strip_shared_public_identity(r, &public_knowledge)),
     );
     Split::checked(&raw, &union_extra)?;
 
-    let cleaned_knowledge = Corpus::build(&clean_vault(knowledge, links), vocab);
-    let cleaned_working = clean_vault(working, links);
-    let mut working_corpus = Corpus::build(&cleaned_working, vocab);
+    let cleaned_knowledge =
+        Corpus::build_with(&clean_vault(knowledge, links, vocab), vocab, roster);
+    let cleaned_working = clean_vault(working, links, vocab);
+    let mut working_corpus = Corpus::build_with(&cleaned_working, vocab, roster);
 
     // A public working page whose identity a public knowledge page already
     // holds yields to it (knowledge wins, as in `VisionClaw`'s merge). Decided
@@ -955,6 +1021,7 @@ mod tests {
             attestations: Default::default(),
             generated_by: None,
             certification: crate::input::okf::Certification::default(),
+            v3: None,
             sub_class_of: Vec::new(),
             instance_of: Vec::new(),
             relations: IndexMap::new(),

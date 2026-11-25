@@ -1,0 +1,12 @@
+# Attribution roster.
+generators:
+  - did: did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246
+    label: jjohare
+    npub: npub16kv2h3hdalphuyzj8tkycq8cm9n54ymer23558ds80afkc9e7frqwrawzj
+    kind: human
+    note: Human direction of the whole corpus.
+  - did: did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0
+    label: enrichment-swarm
+    version: "6"
+    kind: process
+    note: Phase 6 enrichment.

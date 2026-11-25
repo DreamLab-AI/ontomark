@@ -12,7 +12,8 @@
 //!
 //! An [`Actor`] is always prefix-qualified, so a human signature can never be
 //! confused with a process stamp: `human:<npub>`, `process:<name>/<version>`,
-//! `agent:<producer>/<version>`.
+//! `agent:<producer>/<version>`, and, from vocabulary version 3 (ADR-VG-011),
+//! `did:nostr:<64 lowercase hex>` — the principal a stamp's `by` names.
 
 use std::fmt;
 use std::str::FromStr;
@@ -67,12 +68,17 @@ impl FromStr for Status {
     }
 }
 
-/// Who did something: a human, a deterministic process, or an agent.
+/// Who did something: a person, a principal key, a deterministic process, or
+/// an agent.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
 pub enum Actor {
     /// A person, identified by their Nostr `npub`.
     Human(String),
+    /// A principal key: the 64 lowercase hex characters of a `did:nostr:` DID
+    /// (ADR-VG-011 §1). Whether the principal is a person is a roster fact,
+    /// not a spelling one, so [`Actor::is_human`] is `false` for it.
+    Did(String),
     /// A deterministic program: name and version.
     Process {
         /// The program's name, e.g. `vault`.
@@ -95,6 +101,7 @@ impl Actor {
     pub fn as_string(&self) -> String {
         match self {
             Self::Human(npub) => format!("human:{npub}"),
+            Self::Did(hex) => format!("{}{hex}", crate::input::principal::DID_NOSTR),
             Self::Process { name, version } => format!("process:{name}/{version}"),
             Self::Agent { producer, version } => format!("agent:{producer}/{version}"),
         }
@@ -105,6 +112,29 @@ impl Actor {
     #[must_use]
     pub fn is_human(&self) -> bool {
         matches!(self, Self::Human(_))
+    }
+
+    /// The principal key this actor names as `did:nostr:<hex>`, when it names
+    /// one: a [`Actor::Did`] directly, a [`Actor::Human`] whose `npub` decodes
+    /// (the conversion is lossless, ADR-VG-011 §1). `None` for agents,
+    /// processes and a `human:` value that is not an `npub`.
+    ///
+    /// ```
+    /// use ontomark_compile::input::okf::Actor;
+    /// let npub: Actor = "human:npub16kv2h3hdalphuyzj8tkycq8cm9n54ymer23558ds80afkc9e7frqwrawzj".parse().unwrap();
+    /// let did: Actor = "did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246".parse().unwrap();
+    /// assert_eq!(npub.principal_did(), did.principal_did());
+    /// assert_eq!("human:jjohare".parse::<Actor>().unwrap().principal_did(), None);
+    /// ```
+    #[must_use]
+    pub fn principal_did(&self) -> Option<String> {
+        match self {
+            Self::Did(hex) => Some(format!("{}{hex}", crate::input::principal::DID_NOSTR)),
+            Self::Human(npub) => crate::input::principal::npub_to_hex(npub)
+                .ok()
+                .map(|hex| format!("{}{hex}", crate::input::principal::DID_NOSTR)),
+            Self::Process { .. } | Self::Agent { .. } => None,
+        }
     }
 }
 
@@ -145,6 +175,17 @@ impl FromStr for Actor {
                 .map(|(n, v)| (n.to_owned(), v.to_owned()))
                 .ok_or_else(|| format!("{kind} actor {rest:?} must be <name>/<version>"))
         };
+        if let Some(rest) = s.strip_prefix("did:") {
+            let Some(body) = rest.strip_prefix("nostr:") else {
+                return Err(format!("DID method of {s:?} is not nostr"));
+            };
+            if !crate::input::principal::is_hex64(body) {
+                return Err(format!(
+                    "{s:?} must be did:nostr: followed by 64 lowercase hex characters"
+                ));
+            }
+            return Ok(Self::Did(body.to_owned()));
+        }
         if let Some(rest) = s.strip_prefix("process:") {
             let (name, version) = split_versioned(rest, "process")?;
             return Ok(Self::Process { name, version });
@@ -154,7 +195,7 @@ impl FromStr for Actor {
             return Ok(Self::Agent { producer, version });
         }
         Err(format!(
-            "actor {s:?} must start with human:, process: or agent:"
+            "actor {s:?} must start with human:, did:nostr:, process: or agent:"
         ))
     }
 }
@@ -181,6 +222,16 @@ impl Stamp {
             at: at.into(),
             extensions: Default::default(),
         }
+    }
+
+    /// The instrument that did the work (`via`, ADR-VG-011 §1), when the stamp
+    /// names one and it parses as an `agent:` or `process:` actor.
+    #[must_use]
+    pub fn via(&self) -> Option<Actor> {
+        self.extensions
+            .get("via")
+            .and_then(Yaml::as_str)
+            .and_then(|s| s.parse().ok())
     }
 
     /// Render as an inline YAML mapping value.
@@ -216,41 +267,112 @@ impl Stamp {
 }
 
 /// A `sources:` entry — the provenance link that absorbed `elevatedFrom`.
+///
+/// Version 3 (ADR-VG-010 §5) adds the optional [`rel`](Self::rel),
+/// [`at`](Self::at) and [`locator`](Self::locator). Any other field is kept in
+/// [`extensions`](Self::extensions) and written back by
+/// [`to_yaml`](Self::to_yaml), so a read-modify-write never drops a field this
+/// type does not model.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Source {
     /// A short local identifier, e.g. `origin`.
     pub id: String,
     /// The source, usually a wikilink into `working/`.
     pub resource: String,
+    /// The relation type (`origin`, `episode`, `evidence`, `derived-from`,
+    /// `standard`, `reference`), as written. Absent reads as `reference`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rel: Option<String>,
+    /// The claim or publication date, as written.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub at: Option<String>,
+    /// What inside the target is cited, as written.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub locator: Option<String>,
+    /// Every other field, preserved verbatim.
+    #[serde(flatten)]
+    pub extensions: std::collections::BTreeMap<String, Yaml>,
 }
 
 impl Source {
+    /// Build a source with the two original fields and nothing else.
+    #[must_use]
+    pub fn new(id: impl Into<String>, resource: impl Into<String>) -> Self {
+        Self {
+            id: id.into(),
+            resource: resource.into(),
+            rel: None,
+            at: None,
+            locator: None,
+            extensions: Default::default(),
+        }
+    }
+
     /// The wikilink target, when `resource` is a `[[…]]` reference.
     #[must_use]
     pub fn link(&self) -> Option<Wikilink> {
         Wikilink::parse(&self.resource)
     }
 
-    /// Render as a YAML mapping.
+    /// Render as a YAML mapping: `id`, `resource`, then `rel`, `at`,
+    /// `locator` when present, then every preserved extension.
     #[must_use]
     pub fn to_yaml(&self) -> Yaml {
         let mut m = serde_norway::Mapping::new();
-        m.insert(Yaml::String("id".into()), Yaml::String(self.id.clone()));
-        m.insert(
-            Yaml::String("resource".into()),
-            Yaml::String(self.resource.clone()),
-        );
+        let mut put = |key: &str, value: &str| {
+            m.insert(Yaml::String(key.into()), Yaml::String(value.to_owned()));
+        };
+        put("id", &self.id);
+        put("resource", &self.resource);
+        for (key, value) in [
+            ("rel", &self.rel),
+            ("at", &self.at),
+            ("locator", &self.locator),
+        ] {
+            if let Some(value) = value {
+                put(key, value);
+            }
+        }
+        for (key, value) in &self.extensions {
+            if !matches!(key.as_str(), "id" | "resource" | "rel" | "at" | "locator") {
+                m.insert(Yaml::String(key.clone()), value.clone());
+            }
+        }
         Yaml::Mapping(m)
     }
 
-    /// Read a source from a YAML mapping.
+    /// Read a source from a YAML mapping. Needs `id` and `resource` as
+    /// strings; every other field is kept.
     #[must_use]
     pub fn from_yaml(v: &Yaml) -> Option<Self> {
         let m = v.as_mapping()?;
+        let text = |key: &str| m.get(Yaml::String(key.into())).and_then(scalar_text);
+        let extensions = m
+            .iter()
+            .filter_map(|(key, value)| {
+                let key = key.as_str()?;
+                (!matches!(key, "id" | "resource" | "rel" | "at" | "locator"))
+                    .then(|| (key.to_owned(), value.clone()))
+            })
+            .collect();
         Some(Self {
             id: m.get(Yaml::String("id".into()))?.as_str()?.to_owned(),
             resource: m.get(Yaml::String("resource".into()))?.as_str()?.to_owned(),
+            rel: text("rel"),
+            at: text("at"),
+            locator: text("locator"),
+            extensions,
         })
+    }
+}
+
+/// A YAML scalar rendered as text (strings, numbers and booleans).
+fn scalar_text(v: &Yaml) -> Option<String> {
+    match v {
+        Yaml::String(s) => Some(s.clone()),
+        Yaml::Number(n) => Some(n.to_string()),
+        Yaml::Bool(b) => Some(b.to_string()),
+        _ => None,
     }
 }
 
@@ -281,6 +403,16 @@ impl Certification {
     /// Read the certification out of a frontmatter `verified` value.
     #[must_use]
     pub fn from_verified(verified: Option<&Yaml>) -> Self {
+        Self::from_verified_with(verified, &|a| a.is_human())
+    }
+
+    /// [`Certification::from_verified`] with the caller's test for "this
+    /// actor is a human". With an attribution roster the test also accepts a
+    /// `did:nostr:` principal the roster lists as `kind: human`
+    /// ([`crate::build::attribution::Roster::is_human_actor`]); `is_human` alone is a prefix test and
+    /// cannot see that a DID is a person (ADR-VG-011 §4).
+    #[must_use]
+    pub fn from_verified_with(verified: Option<&Yaml>, is_human: &dyn Fn(&Actor) -> bool) -> Self {
         let mut out = Self::default();
         let Some(stamps) = verified.and_then(Yaml::as_sequence) else {
             return out;
@@ -290,7 +422,7 @@ impl Certification {
             let Some(stamp) = Stamp::from_yaml(v) else {
                 continue;
             };
-            if !stamp.by.is_human() || stamp.at.trim().is_empty() {
+            if !is_human(&stamp.by) || stamp.at.trim().is_empty() {
                 continue;
             }
             match v
@@ -315,8 +447,21 @@ impl Certification {
     /// Evaluate binding freshness against the current page (ADR-2024).
     #[must_use]
     pub fn for_page(page: &crate::input::page::Page) -> Self {
+        Self::for_page_with(page, None)
+    }
+
+    /// [`Certification::for_page`] reading humanness from `roster` as well as
+    /// from the `human:` prefix.
+    #[must_use]
+    pub fn for_page_with(
+        page: &crate::input::page::Page,
+        roster: Option<&crate::build::attribution::Roster>,
+    ) -> Self {
         let doc = ontomark_parse::Document::parse(&page.source);
-        let assessment = ontomark_parse::certification::assess(&doc, "verified");
+        let assessment = ontomark_parse::certification::assess_with(&doc, "verified", &|by| {
+            ontomark_parse::certification::is_human_prefixed(by)
+                || roster.is_some_and(|r| r.is_human_by(by))
+        });
         Self {
             whole_page: assessment.whole_page,
             keys: assessment.keys.into_iter().collect(),
@@ -396,7 +541,19 @@ impl OkfBlock {
     /// predicate the promotion state machine calls `human-reviewed`.
     #[must_use]
     pub fn is_human_verified(&self) -> bool {
-        self.verified.iter().any(|s| s.by.is_human())
+        self.is_human_verified_with(None)
+    }
+
+    /// [`OkfBlock::is_human_verified`], also counting a `did:nostr:` entry the
+    /// roster lists as a human principal.
+    #[must_use]
+    pub fn is_human_verified_with(
+        &self,
+        roster: Option<&crate::build::attribution::Roster>,
+    ) -> bool {
+        self.verified
+            .iter()
+            .any(|s| s.by.is_human() || roster.is_some_and(|r| r.is_human_actor(&s.by)))
     }
 }
 
@@ -414,6 +571,42 @@ mod tests {
             let a: Actor = s.parse().unwrap();
             assert_eq!(a.as_string(), s);
         }
+    }
+
+    #[test]
+    fn a_did_nostr_actor_needs_a_64_hex_body() {
+        let hex = "b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a";
+        let a: Actor = format!("did:nostr:{hex}").parse().unwrap();
+        assert_eq!(a, Actor::Did(hex.into()));
+        assert_eq!(a.as_string(), format!("did:nostr:{hex}"));
+        assert!(!a.is_human(), "humanness of a DID is a roster fact");
+        for bad in [
+            "did:nostr:not-hex",
+            "did:nostr:",
+            "did:nostr:B41654017F6850B13857D19D8AE0E3F88F1365600CAB0321E8101C9E92682F7A",
+            "did:nostr:b416",
+            "did:web:example.org",
+            "did:nostr:ontology-mesh",
+        ] {
+            assert!(bad.parse::<Actor>().is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn a_stamp_carries_via_and_keeps_unknown_fields() {
+        let y = serde_norway::from_str::<Yaml>(
+            "{ by: 'did:nostr:b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a', via: 'agent:enrichment-swarm/6', at: '2026-09-22T12:41:39Z', process: 'process:vault-migrate/1.0', receipt: abc }",
+        )
+        .unwrap();
+        let stamp = Stamp::from_yaml(&y).unwrap();
+        assert_eq!(stamp.via().unwrap().as_string(), "agent:enrichment-swarm/6");
+        let back = stamp.to_yaml();
+        assert_eq!(
+            back.get("process").and_then(Yaml::as_str),
+            Some("process:vault-migrate/1.0")
+        );
+        assert_eq!(back.get("receipt").and_then(Yaml::as_str), Some("abc"));
+        assert_eq!(Stamp::from_yaml(&back).unwrap(), stamp);
     }
 
     #[test]

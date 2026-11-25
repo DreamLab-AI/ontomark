@@ -534,7 +534,13 @@ fn execute(
     let notes = load_notes(root, profile, &kinds)?;
     let model_profile = ingest_profile::build(vocab)?;
     let model = Model::build(&model_profile, notes.iter().map(|n| (n.id.clone(), &n.doc)));
-    let options = Options::default();
+    let mut options = Options::default();
+    if vocab.is_v3() {
+        // A `verified` stamp by a human principal's did:nostr key certifies
+        // like a `human:` stamp, so the ingest guard keeps protecting it.
+        options.human_dids =
+            ontomark_compile::build::attribution::Roster::discover(root).human_dids();
+    }
     let ingest = Ingest::new(&model_profile, &model, options.clone());
 
     let ledger_path = args

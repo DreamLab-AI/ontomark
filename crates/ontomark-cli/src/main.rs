@@ -77,6 +77,7 @@ mod ingest_cmd;
 mod ingest_profile;
 #[cfg(feature = "jev")]
 mod jev_create;
+mod memory_cmd;
 mod migrate_cmd;
 use migrate_cmd::{vault_kinds, VAULT_VALUES};
 use ontomark_compile::{build, reason};
@@ -134,6 +135,12 @@ enum Command {
     Create(CreateArgs),
     /// Apply a human-approved `kind: amend` proposal to its page.
     Apply(ApplyArgs),
+    /// Working-memory writes through the one write engine: create, review
+    /// transitions, disputes and supersession (ADR-VG-012 section 9).
+    Memory {
+        #[command(subcommand)]
+        command: memory_cmd::MemoryCommand,
+    },
     /// Fix corpus defects in place.
     #[command(subcommand)]
     Repair(RepairCommand),
@@ -316,6 +323,10 @@ struct EditArgs {
     /// Show the result without writing it.
     #[arg(long)]
     dry_run: bool,
+    /// Who writes. Under vocabulary 3 a working-page edit is stamped with it
+    /// (`contributors`, the content clock); elsewhere it is not read.
+    #[command(flatten)]
+    writer: memory_cmd::WriterArgs,
 }
 
 #[derive(Debug, Args)]
@@ -586,6 +597,48 @@ fn load(root: &Path, profile: &Profile, kinds: &[VaultKind]) -> anyhow::Result<V
         .collect()
 }
 
+/// What a vocabulary-version-3 validation resolves against beyond the vault
+/// itself: the roster, and the vault roles that were not selected. Both are
+/// empty under version 2, where nothing reads them.
+struct V3Context {
+    roster: Option<ontomark_compile::build::attribution::Roster>,
+    extra: Vec<Vault>,
+}
+
+impl V3Context {
+    fn load(root: &Path, profile: &Profile, vocab: &Vocabulary, selected: &[Vault]) -> Self {
+        if !vocab.is_v3() {
+            return Self {
+                roster: None,
+                extra: Vec::new(),
+            };
+        }
+        let roster = ontomark_compile::build::attribution::Roster::discover(root);
+        let extra = [VaultKind::Knowledge, VaultKind::Working]
+            .into_iter()
+            .filter(|kind| !selected.iter().any(|v| v.kind == *kind))
+            .filter_map(|kind| load(root, profile, &[kind]).ok())
+            .flatten()
+            .collect();
+        Self {
+            roster: (!(roster.is_empty() && roster.principals().is_empty())).then_some(roster),
+            extra,
+        }
+    }
+
+    /// The siblings of `vault`: every loaded vault of the other role.
+    fn siblings<'a>(&'a self, vault: &Vault, selected: &'a [Vault]) -> validate::Siblings<'a> {
+        validate::Siblings {
+            vaults: selected
+                .iter()
+                .chain(&self.extra)
+                .filter(|v| v.kind != vault.kind)
+                .collect(),
+            roster: self.roster.as_ref(),
+        }
+    }
+}
+
 /// The repair scopes for the selected vault roles, each placed by the layout.
 fn repair_scopes(
     root: &Path,
@@ -679,9 +732,17 @@ fn run() -> anyhow::Result<ExitCode> {
         Command::Validate(args) => {
             let mut failed = false;
             let mut reports = serde_json::Map::new();
-            for vault in load(&root, &profile, &args.selector.kinds())? {
-                let corpus = Corpus::build(&vault, &vocab);
-                let report = validate::validate(&profile, &vault, &corpus, &vocab);
+            let selected = load(&root, &profile, &args.selector.kinds())?;
+            let v3 = V3Context::load(&root, &profile, &vocab, &selected);
+            for vault in &selected {
+                let corpus = Corpus::build(vault, &vocab);
+                let report = validate::validate_with(
+                    &profile,
+                    vault,
+                    &corpus,
+                    &vocab,
+                    &v3.siblings(vault, &selected),
+                );
                 failed |=
                     !report.errors().is_empty() || (args.strict && !report.warnings().is_empty());
                 if !cli.json {
@@ -715,9 +776,17 @@ fn run() -> anyhow::Result<ExitCode> {
             let tier = gate::Tier::parse(&args.tier);
             let classifier = ontomark_compile::whelk::WhelkEl;
             let mut verdicts: Vec<(&'static str, gate::Verdict)> = Vec::new();
-            for vault in load(&root, &profile, &args.selector.kinds())? {
-                let corpus = Corpus::build(&vault, &vocab);
-                let report = validate::validate(&profile, &vault, &corpus, &vocab);
+            let selected = load(&root, &profile, &args.selector.kinds())?;
+            let v3 = V3Context::load(&root, &profile, &vocab, &selected);
+            for vault in &selected {
+                let corpus = Corpus::build(vault, &vocab);
+                let report = validate::validate_with(
+                    &profile,
+                    vault,
+                    &corpus,
+                    &vocab,
+                    &v3.siblings(vault, &selected),
+                );
                 let graph = (tier == gate::Tier::Full && report.errors().is_empty())
                     .then(|| build::turtle::build_graph(&profile, &corpus, &vocab, false));
                 let verdict = gate::run(
@@ -1011,6 +1080,8 @@ fn run() -> anyhow::Result<ExitCode> {
             emit(cli.json, &value, || println!("{digest}"))?;
             Ok(ExitCode::SUCCESS)
         }
+        Command::Memory { command } => memory_cmd::run(command, &root, &profile, &vocab, cli.json),
+
         Command::Edit(args) => {
             let Some(expect_raw) = &args.expect else {
                 anyhow::bail!(
@@ -1028,12 +1099,34 @@ fn run() -> anyhow::Result<ExitCode> {
             let page = vault
                 .get(&args.id)
                 .with_context(|| format!("no page with id `{}`", args.id))?;
+            // `edit::apply` keeps the contract (the declared blast radius, the
+            // error texts, the `changes` report); the bytes themselves come from
+            // the write engine's lossless patch, never from a re-serialisation.
             let outcome = edit::apply(page, &changes, expect).map_err(anyhow::Error::msg)?;
-            if !args.dry_run {
-                std::fs::write(&page.path, &outcome.rendered)
-                    .with_context(|| format!("writing {}", page.path.display()))?;
+            let engine_plan = if outcome.docs == 1 {
+                Some(memory_cmd::patch_page(
+                    &root,
+                    &profile,
+                    &vocab,
+                    vault.kind,
+                    &page.id,
+                    &args.sets,
+                    &args.unsets,
+                    &args.writer,
+                    &page.source,
+                    outcome.blocks,
+                    args.dry_run,
+                )?)
+            } else {
+                None
+            };
+            let mut value = serde_json::to_value(&outcome)?;
+            if let Some(plan) = engine_plan.as_ref().filter(|p| !p.ignored_keys.is_empty()) {
+                value["ignored_keys"] = json!(plan.ignored_keys);
             }
-            let value = serde_json::to_value(&outcome)?;
+            if let Some(plan) = engine_plan.as_ref().filter(|p| !p.events.is_empty()) {
+                value["events"] = serde_json::to_value(&plan.events)?;
+            }
             emit(cli.json, &value, || {
                 println!(
                     "{}: {} document(s), {} key(s){}",
@@ -1053,10 +1146,12 @@ fn run() -> anyhow::Result<ExitCode> {
             let changes = changes_of(&args.sets, &args.unsets).map_err(anyhow::Error::msg)?;
             let staged = std::fs::read_to_string(&args.file)
                 .with_context(|| format!("reading {}", args.file.display()))?;
-            let vault = load(&root, &profile, &[VaultKind::Knowledge])?
-                .into_iter()
-                .next()
-                .context("no knowledge vault")?;
+            let selected = load(&root, &profile, &[VaultKind::Knowledge])?;
+            let vault = selected.first().context("no knowledge vault")?;
+            // Under vocabulary 3 the cross-vault and roster rules see the
+            // working vault and the roster, as `validate` does.
+            let v3 = V3Context::load(&root, &profile, &vocab, &selected);
+            let siblings = v3.siblings(vault, &selected);
 
             // Every refusal is exit 2 with nothing written, and under `--json`
             // stdout is still one JSON document naming why.
@@ -1072,13 +1167,14 @@ fn run() -> anyhow::Result<ExitCode> {
                 eprintln!("ontomark: {error}");
                 Ok(ExitCode::from(2))
             };
-            let outcome = match create::prepare(&profile, &vault, &vocab, &staged, &changes, expect)
-            {
+            let outcome = match create::prepare_with(
+                &profile, vault, &vocab, &staged, &changes, expect, &siblings,
+            ) {
                 Ok(outcome) => outcome,
                 Err(error) => return refuse(&error),
             };
             if !args.dry_run {
-                if let Err(e) = create::write(&outcome) {
+                if let Err(e) = memory_cmd::write_created(&outcome, &vault.root) {
                     return match e.downcast_ref::<create::CreateError>() {
                         Some(error) => refuse(error),
                         None => Err(e),
@@ -1155,16 +1251,17 @@ fn run() -> anyhow::Result<ExitCode> {
                 Ok(proposal) => proposal,
                 Err(error) => return refuse_with(&error),
             };
-            let vault = load(&root, &profile, &[VaultKind::Knowledge])?
-                .into_iter()
-                .next()
-                .context("no knowledge vault")?;
-            let outcome =
-                match apply::prepare(&profile, &vault, &vocab, &proposal, &changes, expect) {
-                    Ok(outcome) => outcome,
-                    Err(error) => return refuse_with(&error),
-                };
-            if let Err(e) = apply::write(&outcome) {
+            let selected = load(&root, &profile, &[VaultKind::Knowledge])?;
+            let vault = selected.first().context("no knowledge vault")?;
+            let v3 = V3Context::load(&root, &profile, &vocab, &selected);
+            let siblings = v3.siblings(vault, &selected);
+            let outcome = match apply::prepare_with(
+                &profile, vault, &vocab, &proposal, &changes, expect, &siblings,
+            ) {
+                Ok(outcome) => outcome,
+                Err(error) => return refuse_with(&error),
+            };
+            if let Err(e) = memory_cmd::write_applied(&outcome, &vault.root) {
                 return match e.downcast_ref::<apply::ApplyError>() {
                     Some(error) => refuse_with(error),
                     None => Err(e),

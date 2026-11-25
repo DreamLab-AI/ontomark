@@ -65,7 +65,30 @@ impl Certification {
     /// ```
     #[must_use]
     pub fn of(doc: &Document, verified_key: &str) -> Self {
-        let assessment = ontomark_parse::certification::assess(doc, verified_key);
+        Self::of_with(doc, verified_key, &[])
+    }
+
+    /// [`Certification::of`], also counting a stamp whose `by` is one of
+    /// `human_dids` (the `did:nostr:` keys an attribution roster lists for a
+    /// principal of `kind: human`, vocabulary 3) as human.
+    ///
+    /// ```
+    /// use ontomark_ingest::Certification;
+    /// use ontomark_parse::Document;
+    ///
+    /// let doc = Document::parse(
+    ///     "---\nverified:\n  - by: did:nostr:ab\n    at: 2026-11-04T00:00:00Z\n    keys: [is-a]\n---\n",
+    /// );
+    /// assert!(!Certification::of(&doc, "verified").covers("is-a"));
+    /// let humans = ["did:nostr:ab".to_owned()];
+    /// assert!(Certification::of_with(&doc, "verified", &humans).covers("is-a"));
+    /// ```
+    #[must_use]
+    pub fn of_with(doc: &Document, verified_key: &str, human_dids: &[String]) -> Self {
+        let assessment = ontomark_parse::certification::assess_with(doc, verified_key, &|by| {
+            ontomark_parse::certification::is_human_prefixed(by)
+                || human_dids.iter().any(|d| d == by)
+        });
         Self {
             whole_page: assessment.whole_page,
             keys: assessment.keys,

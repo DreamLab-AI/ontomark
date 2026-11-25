@@ -8,4 +8,5 @@ pub mod bodies;
 pub mod conflicts;
 pub mod gate;
 pub mod repair;
+pub mod v3;
 pub mod validate;

@@ -122,6 +122,119 @@ impl EntityType {
     }
 }
 
+/// One `supersedes` entry as the emitters need it (ADR-VG-010 §3).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SupersessionFact {
+    /// The replaced page or folded loser as an IRI: a wikilink resolved to the
+    /// page's resource, or the IRI as written. `None` for a withdrawal entry,
+    /// which names no page.
+    pub target: Option<String>,
+    /// `world-changed`, `corrected`, `merged`, `renamed` or `withdrawn`.
+    pub reason: String,
+}
+
+/// One typed `sources` entry that may be published (ADR-VG-010 §5, §7): its
+/// target is a public page's identity IRI or an external IRI, never a page the
+/// build withholds.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourceFact {
+    /// The local citation handle (`id`).
+    pub id: String,
+    /// The relation: `origin`, `episode`, `evidence`, `derived-from`,
+    /// `standard` or `reference` (an absent `rel` is `reference`).
+    pub rel: String,
+    /// The target's IRI.
+    pub target: String,
+    /// The claim or publication date, as written.
+    pub at: Option<String>,
+    /// What inside the target is cited, as written.
+    pub locator: Option<String>,
+}
+
+/// One `statements` entry (ADR-VG-010 §4): a time-qualified value of one
+/// relation. It is open when it has no `valid_to` and closed when it has one.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StatementFact {
+    /// The relation key as written (`requires`, `standardized-by`, …).
+    pub key: String,
+    /// The value: a wikilink resolved to its IRI, or an IRI as written.
+    pub value: String,
+    /// `valid-from`, when it is a strict UTC second-precision instant.
+    pub valid_from: Option<String>,
+    /// `valid-to`, when it is a strict UTC second-precision instant.
+    pub valid_to: Option<String>,
+    /// `reason`: `world-changed`, `corrected`, `merged`, `renamed` or `withdrawn`.
+    pub reason: Option<String>,
+    /// `replaced-by`, resolved to an IRI.
+    pub replaced_by: Option<String>,
+    /// `at`: when the close was recorded, as written.
+    pub at: Option<String>,
+    /// `by`: the canonical principal DID of whoever recorded it.
+    pub by: Option<String>,
+    /// `sources`: ids of the page's own `sources` entries.
+    pub sources: Vec<String>,
+}
+
+/// What a page says under vocabulary version 3 that the emitters publish
+/// (ADR-VG-010 §7, ADR-VG-011 §1). Absent under version 2, so a version 2 build
+/// is byte-identical to the releases before it.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct V3Facts {
+    /// The page's `status`, as written.
+    pub status: Option<String>,
+    /// `valid-from`, when it is a strict UTC second-precision instant.
+    pub valid_from: Option<String>,
+    /// `valid-to`, when it is a strict UTC second-precision instant.
+    pub valid_to: Option<String>,
+    /// `superseded-by` links, resolved to IRIs.
+    pub superseded_by: Vec<String>,
+    /// `supersedes` entries.
+    pub supersedes: Vec<SupersessionFact>,
+    /// The canonical principal DID of `generated.by`, through the roster when
+    /// there is one; `None` when `by` is not a person's key.
+    pub principal: Option<String>,
+    /// `generated.via`, the instrument (`agent:<name>/<version>` or
+    /// `process:<name>/<version>`), as written.
+    pub via: Option<String>,
+    /// The page's `type`.
+    pub type_name: Option<String>,
+    /// Whether the page's type is a durable memory kind.
+    pub memory: bool,
+    /// `statements` entries (ADR-VG-010 §4), values resolved to IRIs.
+    pub statements: Vec<StatementFact>,
+    /// Typed `sources` that may be published, in the author's order. Filled by
+    /// [`Corpus::attach_sources`]; empty until then.
+    pub sources: Vec<SourceFact>,
+    /// How many `sources` entries [`Corpus::attach_sources`] withheld: the
+    /// target is not public, or the entry makes a `Brief` evidence or origin.
+    /// Only the count is kept; nothing about the target.
+    pub sources_withheld: usize,
+}
+
+impl V3Facts {
+    /// `true` when current recall may return this page at `now` (Unix
+    /// seconds): an `approved` durable memory kind whose `valid-from` is not
+    /// after `now` (absent reads as started, ruling B5) and whose `valid-to` is
+    /// not at or before `now` (ADR-VG-010 §6, ADR-VG-013 §1). It is the record
+    /// form of `check::v3::state::is_recallable`, which reads the page.
+    #[must_use]
+    pub fn recallable_at(&self, now: i64) -> bool {
+        use crate::input::time::parse_utc_seconds;
+        self.memory
+            && self.status.as_deref() == Some("approved")
+            && self
+                .valid_from
+                .as_deref()
+                .and_then(parse_utc_seconds)
+                .is_none_or(|t| t <= now)
+            && self
+                .valid_to
+                .as_deref()
+                .and_then(parse_utc_seconds)
+                .is_none_or(|t| t > now)
+    }
+}
+
 /// One page projected into the ontology model.
 #[derive(Debug, Clone)]
 pub struct ClassRecord {
@@ -184,6 +297,8 @@ pub struct ClassRecord {
     /// but a curated few — and for a value `vault validate` refuses as
     /// `NON_EL_DEFINITION`, so a malformed definition never reaches the OWL.
     pub defines_as: Vec<Conjunct>,
+    /// Version 3 facts; `None` unless the vocabulary is version 3.
+    pub v3: Option<Box<V3Facts>>,
 }
 
 impl ClassRecord {
@@ -327,10 +442,166 @@ fn definition_of(
         .collect()
 }
 
+/// Read a page's version 3 facts (see [`V3Facts`]).
+fn v3_facts(
+    page: &Page,
+    vocab: &Vocabulary,
+    roster: Option<&crate::build::attribution::Roster>,
+    resolve: &dyn Fn(&str, &str) -> Ref,
+) -> V3Facts {
+    use crate::input::frontmatter::Wikilink;
+    use crate::input::time::parse_utc_seconds;
+    use serde_norway::Value as Yaml;
+
+    let fm = &page.frontmatter;
+    let instant = |key: &str| fm.text(key).filter(|s| parse_utc_seconds(s).is_some());
+    let type_name = fm.text("type");
+    let generated = fm.get("generated");
+    let generated_text = |key: &str| {
+        generated
+            .and_then(Yaml::as_mapping)
+            .and_then(|m| m.get(Yaml::String(key.into())))
+            .and_then(Yaml::as_str)
+            .map(|s| s.trim().to_owned())
+    };
+    let principal = generated
+        .and_then(crate::input::okf::Stamp::from_yaml)
+        .and_then(|stamp| stamp.by.principal_did())
+        .map(|did| {
+            roster
+                .and_then(|r| r.resolve_principal(&did))
+                .map_or(did, |p| p.canonical)
+        });
+    let supersedes = match fm.get("supersedes") {
+        Some(Yaml::Sequence(items)) => items
+            .iter()
+            .filter_map(Yaml::as_mapping)
+            .filter_map(|m| {
+                let text = |k: &str| {
+                    m.get(Yaml::String(k.into()))
+                        .and_then(Yaml::as_str)
+                        .map(|s| s.trim().to_owned())
+                };
+                let reason = text("reason")?;
+                let target = text("resource").and_then(|r| {
+                    Wikilink::parse(&r).map_or_else(
+                        || crate::check::v3::temporal::is_iri(&r).then_some(r),
+                        |link| Some(resolve(&link.target, link.label()).iri),
+                    )
+                });
+                Some(SupersessionFact { target, reason })
+            })
+            .collect(),
+        _ => Vec::new(),
+    };
+    V3Facts {
+        status: fm.text("status"),
+        valid_from: instant("valid-from"),
+        valid_to: instant("valid-to"),
+        superseded_by: fm
+            .wikilinks("superseded-by")
+            .into_iter()
+            .map(|w| resolve(&w.target, w.label()).iri)
+            .collect(),
+        supersedes,
+        principal,
+        via: generated_text("via"),
+        memory: type_name
+            .as_deref()
+            .is_some_and(|t| vocab.working_type(t).memory),
+        type_name,
+        statements: statements_of(fm, roster, resolve),
+        sources: Vec::new(),
+        sources_withheld: 0,
+    }
+}
+
+/// The page's `statements`, in the author's order. An entry with no usable
+/// `key` or `value` is skipped (`INVALID_STATEMENT` reports it); the value is
+/// resolved like any relation value.
+fn statements_of(
+    fm: &crate::input::frontmatter::Frontmatter,
+    roster: Option<&crate::build::attribution::Roster>,
+    resolve: &dyn Fn(&str, &str) -> Ref,
+) -> Vec<StatementFact> {
+    use crate::input::frontmatter::Wikilink;
+    use crate::input::time::parse_utc_seconds;
+    use serde_norway::Value as Yaml;
+
+    let Some(Yaml::Sequence(items)) = fm.get("statements") else {
+        return Vec::new();
+    };
+    let iri_of = |text: &str| -> Option<String> {
+        Wikilink::parse(text).map_or_else(
+            || is_safe_iri(text).then(|| text.to_owned()),
+            |link| Some(resolve(&link.target, link.label()).iri),
+        )
+    };
+    items
+        .iter()
+        .filter_map(Yaml::as_mapping)
+        .filter_map(|m| {
+            let text = |k: &str| {
+                m.get(Yaml::String(k.into()))
+                    .and_then(Yaml::as_str)
+                    .map(|s| s.trim().to_owned())
+                    .filter(|s| !s.is_empty())
+            };
+            let instant = |k: &str| text(k).filter(|s| parse_utc_seconds(s).is_some());
+            let key = text("key")?;
+            let value = iri_of(&text("value")?)?;
+            let by = text("by")
+                .and_then(|b| b.parse::<crate::input::okf::Actor>().ok())
+                .and_then(|a| a.principal_did())
+                .map(|did| {
+                    roster
+                        .and_then(|r| r.resolve_principal(&did))
+                        .map_or(did, |p| p.canonical)
+                });
+            let sources = match m.get(Yaml::String("sources".into())) {
+                Some(Yaml::Sequence(ids)) => ids
+                    .iter()
+                    .filter_map(Yaml::as_str)
+                    .map(|s| s.trim().to_owned())
+                    .collect(),
+                _ => Vec::new(),
+            };
+            Some(StatementFact {
+                key,
+                value,
+                valid_from: instant("valid-from"),
+                valid_to: instant("valid-to"),
+                reason: text("reason"),
+                replaced_by: text("replaced-by").and_then(|r| iri_of(&r)),
+                at: text("at"),
+                by,
+                sources,
+            })
+        })
+        .collect()
+}
+
+/// An IRI that can be written between `<` and `>` in Turtle unescaped.
+fn is_safe_iri(s: &str) -> bool {
+    crate::check::v3::temporal::is_iri(s)
+}
+
 impl Corpus {
     /// Project a loaded vault through its vocabulary.
     #[must_use]
     pub fn build(vault: &Vault, vocab: &Vocabulary) -> Self {
+        Self::build_with(vault, vocab, None)
+    }
+
+    /// [`Corpus::build`] reading certification against an attribution roster,
+    /// so a `verified` stamp by a `did:nostr:` principal of `kind: human`
+    /// certifies like a `human:` stamp (vocabulary 3). `None` is [`Corpus::build`].
+    #[must_use]
+    pub fn build_with(
+        vault: &Vault,
+        vocab: &Vocabulary,
+        roster: Option<&crate::build::attribution::Roster>,
+    ) -> Self {
         let names = NameIndex::build(&vault.pages);
         let resources: Vec<String> = vault
             .pages
@@ -389,7 +660,7 @@ impl Corpus {
                     .filter(|l| !l.trim().is_empty())
                     .unwrap_or_else(|| title.clone()),
                 title,
-                public: page.is_public(),
+                public: crate::check::v3::state::is_public_under(page, vault.kind, vocab),
                 page_iri: fm
                     .text("page_resource")
                     .unwrap_or_else(|| resources[i].clone()),
@@ -422,7 +693,10 @@ impl Corpus {
                     .get("generated")
                     .and_then(crate::input::okf::Stamp::from_yaml)
                     .map(|st| st.by),
-                certification: crate::input::okf::Certification::for_page(page),
+                certification: crate::input::okf::Certification::for_page_with(page, roster),
+                v3: vocab
+                    .is_v3()
+                    .then(|| Box::new(v3_facts(page, vocab, roster, &resolve))),
                 sub_class_of: links_of(page, IS_A_KEY),
                 instance_of: links_of(page, INSTANCE_OF_KEY),
                 relations,
@@ -457,6 +731,92 @@ impl Corpus {
         Self {
             records,
             by_class_slug,
+        }
+    }
+
+    /// Read each version 3 record's typed `sources` from `vault` (the vault
+    /// this corpus was built from, as authored: not the redacted copy) and keep
+    /// the entries that may be published (ADR-VG-010 §5, §7).
+    ///
+    /// A target is judged by `links`, the rule that redacts links, so a source
+    /// and a link never disagree about which page is private. An entry is kept
+    /// when it names a public page (by wikilink, `resource` or `page_resource`)
+    /// or an external IRI. It is **withheld** and only counted when it names a
+    /// page that is not public, or when it makes a `Brief` the `origin` or
+    /// `evidence` of a claim (`BRIEF_AS_EVIDENCE` is a validation error, and
+    /// emission never turns a brief into evidence). Free text, an id-only
+    /// entry, a dangling wikilink, an unknown `rel` and a `urn:visionflow:page:`
+    /// IRI no vault holds are skipped without a count: there is nothing to
+    /// publish and nothing to leak.
+    ///
+    /// Only public records are read; other records keep no sources. A record
+    /// with no version 3 facts is untouched, so a version 2 build is unchanged.
+    pub fn attach_sources(&mut self, vault: &Vault, links: &crate::build::redact::PrivateLinks) {
+        use crate::build::redact::SourceTarget;
+        use serde_norway::Value as Yaml;
+
+        const RELS: [&str; 6] = [
+            "origin",
+            "episode",
+            "evidence",
+            "derived-from",
+            "standard",
+            "reference",
+        ];
+        for (record, page) in self.records.iter_mut().zip(&vault.pages) {
+            let (true, Some(facts)) = (record.public, record.v3.as_deref_mut()) else {
+                continue;
+            };
+            let Some(Yaml::Sequence(items)) = page.frontmatter.get("sources") else {
+                continue;
+            };
+            facts.sources.clear();
+            facts.sources_withheld = 0;
+            for item in items.iter().filter_map(Yaml::as_mapping) {
+                let text = |k: &str| {
+                    item.get(Yaml::String(k.into()))
+                        .and_then(Yaml::as_str)
+                        .map(|s| s.trim().to_owned())
+                        .filter(|s| !s.is_empty())
+                };
+                let (Some(id), Some(resource)) = (text("id"), text("resource")) else {
+                    continue;
+                };
+                let rel = text("rel").unwrap_or_else(|| "reference".to_owned());
+                if !RELS.contains(&rel.as_str()) {
+                    continue;
+                }
+                let evidential = matches!(rel.as_str(), "origin" | "evidence");
+                let target = match links.source_target(vault.kind, &resource) {
+                    SourceTarget::Private => {
+                        facts.sources_withheld += 1;
+                        continue;
+                    }
+                    SourceTarget::Public { iri, type_name } => {
+                        if evidential && type_name.as_deref() == Some("Brief") {
+                            facts.sources_withheld += 1;
+                            continue;
+                        }
+                        iri
+                    }
+                    SourceTarget::Unresolved => {
+                        if crate::input::frontmatter::Wikilink::parse(&resource).is_some()
+                            || resource.starts_with("urn:visionflow:page:")
+                            || !is_safe_iri(&resource)
+                        {
+                            continue;
+                        }
+                        resource
+                    }
+                };
+                facts.sources.push(SourceFact {
+                    id,
+                    rel,
+                    target,
+                    at: text("at"),
+                    locator: text("locator"),
+                });
+            }
         }
     }
 
@@ -565,6 +925,118 @@ tail_iris:
             pages,
         };
         Corpus::build(&vault, &vocab())
+    }
+
+    fn v3_vocab() -> Vocabulary {
+        Vocabulary::from_yaml_str(
+            "version: 3\nnamespace: \"urn:ngm:class:\"\nworking_types:\n  Brief: {}\n  Episode: { memory: true }\n  Note: {}\nrelations:\n  is-a: { owl: \"rdfs:subClassOf\" }\n",
+        )
+        .unwrap()
+    }
+
+    fn vault_of(kind: VaultKind, pages: Vec<Page>) -> Vault {
+        Vault {
+            root: std::path::PathBuf::new(),
+            kind,
+            journals: Vec::new(),
+            skipped: Vec::new(),
+            pages,
+        }
+    }
+
+    /// A public knowledge page citing every kind of target.
+    fn sources_fixture() -> (Vault, Vault) {
+        let knowledge = vault_of(
+            VaultKind::Knowledge,
+            vec![page(
+                "Cites",
+                "type: Class\npublic: true\nresource: urn:ngm:class:cites\nsources:\n\
+                 - { id: a, resource: '[[Public Ledger]]', rel: origin }\n\
+                 - { id: b, resource: '[[Secret Ledger]]', rel: origin }\n\
+                 - { id: c, resource: '[[Public Brief]]', rel: evidence }\n\
+                 - { id: d, resource: '[[Public Brief]]', rel: derived-from, locator: 'sha256-v1:ab' }\n\
+                 - { id: e, resource: 'https://example.org/spec', rel: standard, at: '2022-10-25' }\n\
+                 - { id: f, resource: 'urn:visionflow:page:secret1', rel: reference }\n\
+                 - { id: g, resource: free text here, rel: reference }\n\
+                 - { id: origin }\n\
+                 - { id: h, resource: '[[No Such Page]]', rel: origin }\n\
+                 - { id: i, resource: 'https://example.org/plain' }\n",
+                "",
+            )],
+        );
+        let working = vault_of(
+            VaultKind::Working,
+            vec![
+                page(
+                    "Public Ledger",
+                    "type: Episode\nvisibility: public\npage_resource: urn:visionflow:page:pub1\n",
+                    "",
+                ),
+                page(
+                    "Secret Ledger",
+                    "type: Episode\nvisibility: shared\npage_resource: urn:visionflow:page:secret1\n",
+                    "",
+                ),
+                page(
+                    "Public Brief",
+                    "type: Brief\nvisibility: public\npage_resource: urn:visionflow:page:brief1\n",
+                    "",
+                ),
+            ],
+        );
+        (knowledge, working)
+    }
+
+    #[test]
+    fn typed_sources_keep_public_and_external_targets_and_withhold_the_rest() {
+        let (knowledge, working) = sources_fixture();
+        let vocab = v3_vocab();
+        let links =
+            crate::build::redact::PrivateLinks::new_with(&[&knowledge, &working], Some(&vocab));
+        let mut c = Corpus::build_with(&knowledge, &vocab, None);
+        c.attach_sources(&knowledge, &links);
+        let facts = c.records[0].v3.as_deref().unwrap();
+        let got: Vec<(&str, &str, &str)> = facts
+            .sources
+            .iter()
+            .map(|s| (s.id.as_str(), s.rel.as_str(), s.target.as_str()))
+            .collect();
+        assert_eq!(
+            got,
+            vec![
+                ("a", "origin", "urn:visionflow:page:pub1"),
+                ("d", "derived-from", "urn:visionflow:page:brief1"),
+                ("e", "standard", "https://example.org/spec"),
+                ("i", "reference", "https://example.org/plain"),
+            ]
+        );
+        // b and f name a non-public page (by wikilink and by page_resource); c makes a Brief evidence.
+        assert_eq!(facts.sources_withheld, 3);
+        assert_eq!(facts.sources[1].locator.as_deref(), Some("sha256-v1:ab"));
+        assert_eq!(facts.sources[2].at.as_deref(), Some("2022-10-25"));
+    }
+
+    #[test]
+    fn sources_are_read_only_under_version_3_and_only_for_public_records() {
+        let (knowledge, working) = sources_fixture();
+        let links = crate::build::redact::PrivateLinks::new_with(&[&knowledge, &working], None);
+        let mut v2 = Corpus::build_with(&knowledge, &vocab(), None);
+        v2.attach_sources(&knowledge, &links);
+        assert!(v2.records[0].v3.is_none());
+
+        let private = vault_of(
+            VaultKind::Knowledge,
+            vec![page(
+                "Hidden",
+                "type: Class\nresource: urn:ngm:class:hidden\nsources:\n- { id: a, resource: 'https://example.org/x', rel: origin }\n",
+                "",
+            )],
+        );
+        let vocab = v3_vocab();
+        let links = crate::build::redact::PrivateLinks::new_with(&[&private], Some(&vocab));
+        let mut c = Corpus::build_with(&private, &vocab, None);
+        c.attach_sources(&private, &links);
+        assert!(c.records[0].v3.as_deref().unwrap().sources.is_empty());
     }
 
     #[test]

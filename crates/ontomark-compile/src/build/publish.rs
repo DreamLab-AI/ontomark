@@ -201,6 +201,20 @@ pub fn stage_redacted(
     vaults: &[&Vault],
     links: Option<&PrivateLinks>,
 ) -> Result<Staging, SecretsFound> {
+    stage_redacted_with(vaults, links, None)
+}
+
+/// [`stage_redacted`] deciding publicity by `vocab`: under vocabulary 3 a
+/// working page is published by `visibility: public` (ruling B9), not by
+/// `public: true`. `None` is the version 2 rule.
+///
+/// # Errors
+/// [`SecretsFound`], exactly as [`stage`].
+pub fn stage_redacted_with(
+    vaults: &[&Vault],
+    links: Option<&PrivateLinks>,
+    vocab: Option<&crate::input::vocabulary::Vocabulary>,
+) -> Result<Staging, SecretsFound> {
     let mut staging = Staging::default();
     if links.is_some() {
         staging.redaction = Some(BTreeMap::new());
@@ -221,7 +235,7 @@ pub fn stage_redacted(
                 continue;
             }
             counts.considered += 1;
-            if !page.is_public() {
+            if !crate::check::v3::state::is_public_in(page, vault.kind, vocab) {
                 continue;
             }
             counts.published += 1;
@@ -400,6 +414,7 @@ mod tests {
 
     use super::*;
     use crate::input::page::VaultKind;
+    use crate::input::vocabulary::Vocabulary;
 
     fn vault(kind: VaultKind, pages: Vec<(&str, &str)>) -> Vault {
         Vault {
@@ -414,6 +429,37 @@ mod tests {
             journals: Vec::new(),
             skipped: Vec::new(),
         }
+    }
+
+    #[test]
+    fn under_vocabulary_3_a_working_page_is_staged_by_visibility_not_public() {
+        let working = vault(
+            VaultKind::Working,
+            vec![
+                (
+                    "Visible",
+                    "---\ntype: Note\nvisibility: public\n---\nProse.\n",
+                ),
+                (
+                    "Legacy Flag",
+                    "---\ntype: Note\npublic: true\nvisibility: shared\n---\nProse.\n",
+                ),
+            ],
+        );
+        let names = |vocab: Option<&Vocabulary>| -> Vec<String> {
+            stage_redacted_with(&[&working], None, vocab)
+                .unwrap()
+                .files
+                .iter()
+                .map(|f| f.path.clone())
+                .filter(|p| p != "publish/index.md")
+                .collect()
+        };
+        let v3 = Vocabulary::from_yaml_str("version: 3\n").unwrap();
+        let v2 = Vocabulary::from_yaml_str("version: 2\n").unwrap();
+        assert_eq!(names(Some(&v3)), ["publish/working/Visible.md"]);
+        assert_eq!(names(Some(&v2)), ["publish/working/Legacy Flag.md"]);
+        assert_eq!(names(None), ["publish/working/Legacy Flag.md"]);
     }
 
     #[test]

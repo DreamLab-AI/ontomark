@@ -213,6 +213,33 @@ pub fn prepare(
     changes: &[Change],
     expect: Expectation,
 ) -> Result<Outcome, ApplyError> {
+    prepare_with(
+        profile,
+        vault,
+        vocab,
+        proposal,
+        changes,
+        expect,
+        &validate::Siblings::default(),
+    )
+}
+
+/// [`prepare`] validating against `siblings`: the other vault and the
+/// attribution roster, which the cross-vault and roster rules of vocabulary
+/// version 3 resolve against. With empty siblings those rules skip, as in
+/// [`prepare`].
+///
+/// # Errors
+/// [`ApplyError`], exactly as [`prepare`].
+pub fn prepare_with(
+    profile: &Profile,
+    vault: &Vault,
+    vocab: &Vocabulary,
+    proposal: &PatchProposal,
+    changes: &[Change],
+    expect: Expectation,
+    siblings: &validate::Siblings<'_>,
+) -> Result<Outcome, ApplyError> {
     let patch = single_page_patch(proposal, expect)?;
     let id = proposal.page.as_str();
     let loaded = vault
@@ -288,7 +315,7 @@ pub fn prepare(
         });
     }
 
-    let introduced = introduced_errors(profile, vault, vocab, &current, page);
+    let introduced = introduced_errors(profile, vault, vocab, siblings, &current, page);
     if !introduced.is_empty() {
         return Err(ApplyError::Invalid(introduced));
     }
@@ -361,12 +388,13 @@ fn introduced_errors(
     profile: &Profile,
     vault: &Vault,
     vocab: &Vocabulary,
+    siblings: &validate::Siblings<'_>,
     current: &Page,
     after: Page,
 ) -> Vec<Blocker> {
     let page_errors = |v: &Vault| -> Vec<Blocker> {
         let corpus = Corpus::build(v, vocab);
-        validate::validate(profile, v, &corpus, vocab)
+        validate::validate_with(profile, v, &corpus, vocab, siblings)
             .errors()
             .into_iter()
             .filter(|issue| issue.path == current.id)
