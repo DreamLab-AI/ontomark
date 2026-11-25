@@ -255,7 +255,7 @@ output does.
 
 ### 8. The write engine
 
-- `crates/ontomark-write` is a new crate (`publish = false`). Its core does no
+- `crates/ontomark-write` is a new, publishable crate (0.1.0). Its core does no
   I/O, reads no clock and draws no randomness, and it builds for `wasm32` with
   `--no-default-features`.
 - Under vocabulary 3 a write goes through these steps:
@@ -358,9 +358,8 @@ Negative tests show the evaluator can fail (`the_check_can_fail`,
   public and unused by the CLI.
 - `Engine::patch`'s doc comment misdescribes knowledge-page validation under
   vocabulary 3 (§8).
-- `ontomark` (the CLI) depends on `ontomark-write = { path, version = "0.1.0" }`
-  (`crates/ontomark-cli/Cargo.toml:31`), while `ontomark-write` is
-  `publish = false`. The CLI cannot be published to crates.io as it stands.
+- The CLI depends on `ontomark-write`, so publishing the CLI to crates.io
+  needs `ontomark-write` 0.1.0 published first, after `ontomark-compile` 0.10.0.
 - A `repair` of a working memory page bypasses `contributors` and
   `content-updated`.
 - Who writes is asserted, not proved. With no roster, anyone may approve.

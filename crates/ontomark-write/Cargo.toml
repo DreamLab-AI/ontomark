@@ -9,7 +9,7 @@ repository.workspace = true
 authors.workspace = true
 keywords = ["obsidian", "ontology", "frontmatter", "write", "wasm"]
 categories = ["text-processing"]
-publish = false
+readme = "README.md"
 
 [features]
 default = ["fs", "system"]
