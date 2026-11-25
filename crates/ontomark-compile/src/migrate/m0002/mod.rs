@@ -475,8 +475,11 @@ fn template(rel: &str, source: &str) -> Transform {
     if source.contains("human:") {
         markers.push("a `human:` stamp");
     }
-    if source.contains("Draft Concept") {
-        markers.push("`Draft Concept`");
+    if source
+        .lines()
+        .any(|l| l.trim_start().starts_with("type:") && l.contains("Draft Concept"))
+    {
+        markers.push("`type: Draft Concept`");
     }
     if rel.starts_with("working/")
         && source
