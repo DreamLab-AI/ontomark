@@ -52,6 +52,12 @@ the two `memory:` clock concepts are used by IRI from
 | Reason | `dl:reason` | Optional free text for application policy. No effect on state. |
 | Replacement | none | `replacedBy` in the vector file only: names the version that supersedes a closed one. Informative; no effect on state. |
 
+memory-ontology also has `memory:closes`, with the same two clock values, but
+on the *superseding* record. `dl:closes` is deliberately not that term: it sits
+on a closure record, which names the version it ends (`dl:closesVersion`) and is
+never a version itself. It is a near miss, recorded here so the two are not
+conflated.
+
 `dl:validFrom` and `dl:validTo` are retired from versions and appear in no v2
 data. memory-ontology's `temporal:validUntil` and `temporal:recordedUntil` are
 not used: they put an end on the earlier record, and an end with no recorded
@@ -145,10 +151,33 @@ version; a wrongly corrected fact reinstated by a new version with the same
 subject, predicate, object and `validFrom` but a later `generatedAt`; an absent
 `recordedAsOf`; and the boundary instants.
 
+Three further groups pin readings that the first cases left open:
+
+- **Versions are not keyed.** Two concurrently valid versions with the same
+  subject and predicate (`rdfs:subClassOf` is multi-valued) are both in state;
+  an implementation that keeps the latest version per subject and predicate
+  fails. A re-assertion of the same subject, predicate and object is a second
+  version, and both are in state; an implementation that deduplicates by triple
+  and keeps the latest `generatedAt` fails.
+- **The reported end.** A case may carry `expectValidTo`, a map from version id
+  to the `validTo` the rule above reports (`null` for none); only the ids it
+  lists are pinned. The end is the earliest `validUntil` among the valid-time
+  closures that apply at the cut, so an implementation that reports the
+  first-recorded or the last-recorded closure's end fails one case each. Files
+  and harnesses that predate `expectValidTo` may ignore it, but then do not pin
+  the reported end.
+- **Both clocks need no vector of their own.** A closure on both clocks
+  removes the version at every cut that sees it (`recordedAt <= r`), and at
+  every other cut neither part applies, so the version is out of `state(t, r)`
+  either way and the valid part's `validUntil` is never reported for it. An
+  implementation that treats a both-clocks closure as recorded-only is
+  therefore indistinguishable in this contract, and none is required to
+  differ; the executable check proves this over every instant the file names.
+
 Consumers vendor the file and pin its SHA-256:
 
 ```
-afd2bca7acfadbe455abf5f834e5069133c6f8f7b6229044031be42881b8c134  vectors-v2.json
+334425f34523d63224fff92cde1c4268c18cdb989b479c731d271516c905a873  vectors-v2.json
 ```
 
 Changing the file is a contract change: bump `contract`, record why, and update
@@ -160,8 +189,10 @@ every consumer's pin in the same release.
 `.github/workflows/ci.yml` through `cargo test --workspace`) loads both vector
 files, verifies both pins and that this README quotes them, validates the closure
 records, and asserts every case against a short reference evaluator of the rule
-above. A negative test shows the check can fail: the v1 rule, and a rule with a
-strict `<` on recorded time, are each rejected by the v2 vectors. The test is
+above. Negative tests show the check can fail: the v1 rule, a rule with a
+strict `<` on recorded time, "latest version per subject and predicate wins",
+"deduplicate by triple", and a first- or last-closure reported end are each
+rejected by named v2 cases. The test is
 in `ontomark-reason`'s test directory because that crate already has both
 `serde_json` and `sha2` as dev-dependencies, so it adds no dependency and edits
 no manifest. Closure records are also validated: at least one clock, `validUntil`
