@@ -35,6 +35,47 @@ pub struct Assessment {
 /// ingest protection, even when their digest is malformed or stale.
 #[must_use]
 pub fn assess(doc: &Document, verified_key: &str) -> Assessment {
+    assess_with(doc, verified_key, &is_human_prefixed)
+}
+
+/// `true` for a `human:<id>` actor with a non-empty id, the spelling that
+/// certifies without consulting any roster.
+///
+/// ```
+/// use ontomark_parse::certification::is_human_prefixed;
+/// assert!(is_human_prefixed("human:npub1abc"));
+/// assert!(!is_human_prefixed("did:nostr:00"));
+/// ```
+#[must_use]
+pub fn is_human_prefixed(actor: &str) -> bool {
+    actor
+        .trim()
+        .strip_prefix("human:")
+        .is_some_and(|id| !id.trim().is_empty())
+}
+
+/// [`assess`] with the host's own test for "this `by` names a human".
+///
+/// `is_human` receives the stamp's `by` text. A host with an attribution
+/// roster passes a test that also accepts a `did:nostr:` principal the roster
+/// lists with `kind: human` (vocabulary 3, ADR-VG-011 §4); [`assess`] uses
+/// [`is_human_prefixed`].
+///
+/// ```
+/// use ontomark_parse::{certification::assess_with, Document};
+/// let doc = Document::parse(
+///     "---\nverified:\n  - by: did:nostr:ab\n    at: 2026-11-04\n---\n",
+/// );
+/// assert!(!ontomark_parse::certification::assess(&doc, "verified").whole_page);
+/// let a = assess_with(&doc, "verified", &|by| by == "did:nostr:ab");
+/// assert!(a.whole_page);
+/// ```
+#[must_use]
+pub fn assess_with(
+    doc: &Document,
+    verified_key: &str,
+    is_human: &dyn Fn(&str) -> bool,
+) -> Assessment {
     let mut out = Assessment::default();
     let Some(Value::Seq(stamps)) = doc.value(verified_key) else {
         return out;
@@ -43,11 +84,10 @@ pub fn assess(doc: &Document, verified_key: &str) -> Assessment {
         let Value::Map(m) = stamp else {
             continue;
         };
-        let human = m.get("by").and_then(Value::as_str).is_some_and(|s| {
-            s.trim()
-                .strip_prefix("human:")
-                .is_some_and(|id| !id.trim().is_empty())
-        });
+        let human = m
+            .get("by")
+            .and_then(Value::as_str)
+            .is_some_and(|s| is_human(s.trim()));
         let dated = m
             .get("at")
             .and_then(Value::as_str)

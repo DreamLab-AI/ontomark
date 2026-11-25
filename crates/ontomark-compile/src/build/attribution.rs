@@ -236,6 +236,41 @@ impl Roster {
         Some(ResolvedPrincipal { canonical, kind })
     }
 
+    /// Whether `actor` is a person: a `human:` actor, or a `did:nostr:` key the
+    /// roster resolves to a principal of `kind: human` (canonical or listed
+    /// under `also`). An organisation, an unknown key and an agent are not.
+    #[must_use]
+    pub fn is_human_actor(&self, actor: &Actor) -> bool {
+        match actor {
+            Actor::Human(_) => actor.is_human(),
+            Actor::Did(_) => self
+                .resolve_principal(&actor.as_string())
+                .is_some_and(|p| p.kind == PrincipalKind::Human),
+            _ => false,
+        }
+    }
+
+    /// Every `did:nostr:` key that names a person: each principal of
+    /// `kind: human` and its `also` keys, in file order. The ingest crate
+    /// (which cannot depend on this one) takes this list as
+    /// `Options::human_dids`.
+    #[must_use]
+    pub fn human_dids(&self) -> Vec<String> {
+        self.principals
+            .iter()
+            .filter(|p| p.kind == PrincipalKind::Human)
+            .flat_map(|p| std::iter::once(p.did.clone()).chain(p.also.iter().cloned()))
+            .collect()
+    }
+
+    /// [`Roster::is_human_actor`] for a stamp's `by` text.
+    #[must_use]
+    pub fn is_human_by(&self, by: &str) -> bool {
+        by.trim()
+            .parse::<Actor>()
+            .is_ok_and(|a| self.is_human_actor(&a))
+    }
+
     /// The generator an actor resolves to. `agent:<label>/<any-version>` matches on label;
     /// `human:<npub>` on the npub; `process:<name>/<version>` on an explicit `process:` line.
     #[must_use]

@@ -668,7 +668,13 @@ pub fn run_with(
         walk,
     )?;
     let aliases = alias_map(&vault);
-    let raw = Corpus::build(&vault, vocab);
+    // Vocabulary-version-3 rules (and certification by a human principal's
+    // DID) read the roster; under version 2 it is not read.
+    let v3_roster = vocab
+        .is_v3()
+        .then(|| attribution::Roster::discover(&options.repo_root))
+        .filter(|r| !(r.is_empty() && r.principals().is_empty()));
+    let raw = Corpus::build_with(&vault, vocab, v3_roster.as_ref());
 
     // --- the credential gate, before validation -------------------------------
     //
@@ -728,10 +734,6 @@ pub fn run_with(
 
     // Vocabulary-version-3 rules resolve against the other vault and the
     // roster; under version 2 neither is read.
-    let v3_roster = vocab
-        .is_v3()
-        .then(|| attribution::Roster::discover(&options.repo_root))
-        .filter(|r| !(r.is_empty() && r.principals().is_empty()));
     let v3_siblings = validate::Siblings {
         vaults: working.iter().chain(other_vault.iter()).collect(),
         roster: v3_roster.as_ref(),
@@ -755,7 +757,7 @@ pub fn run_with(
             let working_report = validate::validate_with(
                 profile,
                 working,
-                &Corpus::build(working, vocab),
+                &Corpus::build_with(working, vocab, v3_roster.as_ref()),
                 vocab,
                 &working_siblings,
             );

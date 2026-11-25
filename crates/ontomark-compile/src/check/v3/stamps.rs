@@ -493,20 +493,71 @@ mod tests {
         assert_eq!(count(&bad, "INVALID_STAMP"), 2);
     }
 
-    /// Documents a known gap, to be closed before migration m0002: certification
-    /// still counts only `human:` stamps, so a `verified` entry rewritten to the
-    /// `did:nostr:` form (ruling B8) would read as pending. Ignored on purpose:
-    /// this task does not change certification's human test.
+    /// A `verified` stamp by a roster principal of `kind: human` certifies,
+    /// `did:nostr:` included, and the canonical key and its `also` keys alike;
+    /// an organisation, an unknown key and no roster certify nothing.
     #[test]
-    #[ignore = "known gap: Certification::from_verified ignores did:nostr stamps (needed before m0002)"]
-    fn certification_should_count_a_verified_did_stamp_by_a_human_principal() {
-        let yaml: serde_norway::Value =
-            serde_norway::from_str(&format!("[{{ by: {B4}, at: '2026-11-04T00:00:00Z' }}]"))
-                .unwrap();
-        let cert = crate::input::okf::Certification::from_verified(Some(&yaml));
+    fn certification_counts_a_verified_did_stamp_by_a_human_principal() {
+        use crate::input::okf::Certification;
+        let roster = roster();
+        let stamp = |by: &str| -> serde_norway::Value {
+            serde_norway::from_str(&format!("[{{ by: {by}, at: '2026-11-04T00:00:00Z' }}]"))
+                .unwrap()
+        };
+        let cert = |by: &str, r: &Roster| {
+            Certification::from_verified_with(Some(&stamp(by)), &|a| r.is_human_actor(a))
+        };
+        assert!(cert(B4, &roster).whole_page);
+        assert_eq!(cert(B4, &roster).state(), "certified");
         assert!(
-            cert.whole_page,
-            "a did:nostr verified stamp should certify the page"
+            cert(D5, &roster).whole_page,
+            "an `also` key resolves to the human"
         );
+        assert!(
+            !cert(ORG, &roster).whole_page,
+            "an organisation never certifies"
+        );
+        assert!(
+            !cert(B4, &Roster::default()).whole_page,
+            "no roster: unknown key"
+        );
+        // Without a roster the legacy entry point is unchanged.
+        assert!(!Certification::from_verified(Some(&stamp(B4))).whole_page);
+        // Keys-scoped stamps stay scoped.
+        let scoped: serde_norway::Value = serde_norway::from_str(&format!(
+            "[{{ by: {B4}, at: '2026-11-04T00:00:00Z', keys: [is-a] }}]"
+        ))
+        .unwrap();
+        let c = Certification::from_verified_with(Some(&scoped), &|a| roster.is_human_actor(a));
+        assert_eq!(c.state(), "partial");
+        assert_eq!(c.keys, ["is-a"]);
+    }
+
+    /// The page API's certification (`for_page_with`, the parse crate's
+    /// `assess_with`) agrees, and UNVERIFIED_STABLE follows the roster under v3.
+    #[test]
+    fn page_certification_and_human_verified_follow_the_roster() {
+        let src = format!(
+            "---\ntype: Class\nresource: urn:ngm:class:a\nstatus: stable\npublic: true\nverified:\n  - by: {B4}\n    at: '2026-11-04T00:00:00Z'\n---\n"
+        );
+        let page = crate::input::page::Page::parse(
+            std::path::Path::new("/v/A.md"),
+            "A.md",
+            "A".to_owned(),
+            &src,
+        )
+        .unwrap();
+        let roster = roster();
+        assert_eq!(
+            crate::input::okf::Certification::for_page_with(&page, Some(&roster)).state(),
+            "certified"
+        );
+        assert_eq!(
+            crate::input::okf::Certification::for_page(&page).state(),
+            "pending"
+        );
+        let okf = crate::input::okf::OkfBlock::from_frontmatter(&page.frontmatter);
+        assert!(okf.is_human_verified_with(Some(&roster)));
+        assert!(!okf.is_human_verified());
     }
 }

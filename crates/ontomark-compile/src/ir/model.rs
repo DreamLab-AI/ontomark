@@ -331,6 +331,18 @@ impl Corpus {
     /// Project a loaded vault through its vocabulary.
     #[must_use]
     pub fn build(vault: &Vault, vocab: &Vocabulary) -> Self {
+        Self::build_with(vault, vocab, None)
+    }
+
+    /// [`Corpus::build`] reading certification against an attribution roster,
+    /// so a `verified` stamp by a `did:nostr:` principal of `kind: human`
+    /// certifies like a `human:` stamp (vocabulary 3). `None` is [`Corpus::build`].
+    #[must_use]
+    pub fn build_with(
+        vault: &Vault,
+        vocab: &Vocabulary,
+        roster: Option<&crate::build::attribution::Roster>,
+    ) -> Self {
         let names = NameIndex::build(&vault.pages);
         let resources: Vec<String> = vault
             .pages
@@ -422,7 +434,7 @@ impl Corpus {
                     .get("generated")
                     .and_then(crate::input::okf::Stamp::from_yaml)
                     .map(|st| st.by),
-                certification: crate::input::okf::Certification::for_page(page),
+                certification: crate::input::okf::Certification::for_page_with(page, roster),
                 sub_class_of: links_of(page, IS_A_KEY),
                 instance_of: links_of(page, INSTANCE_OF_KEY),
                 relations,

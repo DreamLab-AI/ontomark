@@ -548,7 +548,15 @@ pub fn validate_with(
 
         // --- OKF conformance -------------------------------------------------
         let okf = OkfBlock::from_frontmatter(&page.frontmatter);
-        validate_okf(&mut report, path, &okf, rules, vocab, record);
+        validate_okf(
+            &mut report,
+            path,
+            &okf,
+            rules,
+            vocab,
+            record,
+            siblings.roster.filter(|_| vocab.is_v3()),
+        );
         match &v3 {
             Some(ctx) => crate::check::v3::page_checks(&mut report, page, vocab, ctx),
             None => crate::check::v3::stamps::legacy_warnings(&mut report, page),
@@ -843,6 +851,7 @@ fn validate_okf(
     rules: RoleRules,
     vocab: &Vocabulary,
     record: &ClassRecord,
+    roster: Option<&crate::build::attribution::Roster>,
 ) {
     let knowledge = rules.knowledge;
 
@@ -913,7 +922,7 @@ fn validate_okf(
         _ => {}
     }
 
-    if !own_status && okf.status == Some(Status::Stable) && !okf.is_human_verified() {
+    if !own_status && okf.status == Some(Status::Stable) && !okf.is_human_verified_with(roster) {
         report.push(
             path,
             Severity::Warning,

@@ -662,7 +662,11 @@ impl Ingest<'_> {
             outcome: skipped(why),
         };
         let terms = self.mentioned_terms(id, doc);
-        let certification = crate::Certification::of(doc, &self.options().verified_key);
+        let certification = crate::Certification::of_with(
+            doc,
+            &self.options().verified_key,
+            &self.options().human_dids,
+        );
         let keys: Vec<KeySpec> = request
             .keys
             .iter()

@@ -171,6 +171,11 @@ pub struct Options {
     /// The frontmatter key holding the note's human-review stamps; keys a
     /// human stamp covers are never patched (see [`Certification`]).
     pub verified_key: String,
+    /// `did:nostr:` keys that name a human principal (the attribution roster's
+    /// `kind: human` principals and their `also` keys, vocabulary 3). A
+    /// `verified` stamp by one of them certifies like a `human:` stamp. Empty
+    /// by default, which leaves only `human:` stamps certifying.
+    pub human_dids: Vec<String>,
 }
 
 impl Default for Options {
@@ -181,6 +186,7 @@ impl Default for Options {
             lexical: LexicalThresholds::default(),
             suggestions: 3,
             verified_key: "verified".to_owned(),
+            human_dids: Vec::new(),
         }
     }
 }

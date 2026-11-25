@@ -403,6 +403,16 @@ impl Certification {
     /// Read the certification out of a frontmatter `verified` value.
     #[must_use]
     pub fn from_verified(verified: Option<&Yaml>) -> Self {
+        Self::from_verified_with(verified, &|a| a.is_human())
+    }
+
+    /// [`Certification::from_verified`] with the caller's test for "this
+    /// actor is a human". With an attribution roster the test also accepts a
+    /// `did:nostr:` principal the roster lists as `kind: human`
+    /// ([`Roster::is_human_actor`]); `is_human` alone is a prefix test and
+    /// cannot see that a DID is a person (ADR-VG-011 §4).
+    #[must_use]
+    pub fn from_verified_with(verified: Option<&Yaml>, is_human: &dyn Fn(&Actor) -> bool) -> Self {
         let mut out = Self::default();
         let Some(stamps) = verified.and_then(Yaml::as_sequence) else {
             return out;
@@ -412,7 +422,7 @@ impl Certification {
             let Some(stamp) = Stamp::from_yaml(v) else {
                 continue;
             };
-            if !stamp.by.is_human() || stamp.at.trim().is_empty() {
+            if !is_human(&stamp.by) || stamp.at.trim().is_empty() {
                 continue;
             }
             match v
@@ -437,8 +447,21 @@ impl Certification {
     /// Evaluate binding freshness against the current page (ADR-2024).
     #[must_use]
     pub fn for_page(page: &crate::input::page::Page) -> Self {
+        Self::for_page_with(page, None)
+    }
+
+    /// [`Certification::for_page`] reading humanness from `roster` as well as
+    /// from the `human:` prefix.
+    #[must_use]
+    pub fn for_page_with(
+        page: &crate::input::page::Page,
+        roster: Option<&crate::build::attribution::Roster>,
+    ) -> Self {
         let doc = ontomark_parse::Document::parse(&page.source);
-        let assessment = ontomark_parse::certification::assess(&doc, "verified");
+        let assessment = ontomark_parse::certification::assess_with(&doc, "verified", &|by| {
+            ontomark_parse::certification::is_human_prefixed(by)
+                || roster.is_some_and(|r| r.is_human_by(by))
+        });
         Self {
             whole_page: assessment.whole_page,
             keys: assessment.keys.into_iter().collect(),
@@ -518,7 +541,19 @@ impl OkfBlock {
     /// predicate the promotion state machine calls `human-reviewed`.
     #[must_use]
     pub fn is_human_verified(&self) -> bool {
-        self.verified.iter().any(|s| s.by.is_human())
+        self.is_human_verified_with(None)
+    }
+
+    /// [`OkfBlock::is_human_verified`], also counting a `did:nostr:` entry the
+    /// roster lists as a human principal.
+    #[must_use]
+    pub fn is_human_verified_with(
+        &self,
+        roster: Option<&crate::build::attribution::Roster>,
+    ) -> bool {
+        self.verified
+            .iter()
+            .any(|s| s.by.is_human() || roster.is_some_and(|r| r.is_human_actor(&s.by)))
     }
 }
 
