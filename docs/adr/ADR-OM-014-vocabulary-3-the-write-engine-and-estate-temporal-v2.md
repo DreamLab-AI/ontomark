@@ -50,9 +50,10 @@ The forces:
   person's review. The final review found exactly this, and it was fixed
   before merge.
 - **Writes were scattered.** Before this release `edit` re-serialised
-  frontmatter, and `create` and `apply` each wrote files their own way. None of
-  these writes stamped who wrote or validated the result, and v3's review
-  lifecycle needs both.
+  frontmatter and validated nothing. `create` and `apply` validated in their
+  own preparation, but without the other vault or the roster, and each wrote
+  files its own way. None of these writes stamped who wrote, and v3's review
+  lifecycle needs both stamping and full validation.
 - **memory-ontology (eljeffeg, CC BY 4.0) already names the two clocks.** The
   operator chose to use its IRIs where the meaning is the same.
 
@@ -71,7 +72,8 @@ above, ontomark enforces ADR-VG-010 to ADR-VG-013 as ruled:
 It emits the new facts with memory-ontology's time terms. Migration m0002
 rewrites a vocabulary 2 vault to version 3 losslessly, or refuses. The CLI's
 page writes (`edit`, `create`, `apply` and the new `memory` verbs) go through
-one validated engine, `ontomark-write`. ontomark carries estate-temporal-v2 as
+one engine, `ontomark-write`. Under vocabulary 3 that engine validates every
+write and stamps working-page writes. ontomark carries estate-temporal-v2 as
 its executable contract, and keeps v1 byte-identical until its last consumer
 leaves.
 
@@ -89,8 +91,9 @@ leaves.
   and `verbs_print_the_same_bytes_and_exit_codes`. The fixture and the test are
   unchanged since 59e3099 and pass at 32b3aac. `vocab_v3.rs` has two tests:
   `the_fixture_vault_exercises_every_v3_code` asserts the 43 v3 codes fire, and
-  `the_same_vault_under_version_2_reports_none_of_them` asserts that only
-  `INVALID_STAMP` fires under version 2.
+  `the_same_vault_under_version_2_reports_none_of_them` asserts that no v3 code
+  except `INVALID_STAMP` fires under version 2. It allows `INVALID_STAMP` but
+  does not require it.
 
 ### 2. Stamps and the roster rule
 
@@ -239,18 +242,26 @@ output does.
 - `crates/ontomark-write` is a new crate (`publish = false`). Its core does no
   I/O, reads no clock and draws no randomness, and it builds for `wasm32` with
   `--no-default-features`.
-- Every operation follows the same pipeline:
+- Under vocabulary 3 a write goes through these steps:
   1. refuse engine-owned keys and illegal transitions;
   2. build the new text through a lossless patch;
-  3. stamp `contributors` (one entry per write) and the clocks;
+  3. on working pages only, stamp `contributors` (one entry per write) and the
+     clocks;
   4. validate before and after with siblings and roster;
   5. refuse any error the page did not already carry.
+  A knowledge-page `patch` under vocabulary 3 is therefore validated, and
+  `generated` and `page_resource` cannot be changed once present, but it is not
+  stamped. The gate in `ops/patch.rs:237-242` is keyed on `is_v3()` alone. The
+  method's doc comment (`ops/patch.rs:95-101`) still says a knowledge page gets
+  "no new validation". The code wins; the comment is stale.
 - `Plan::commit` writes through a root-confined `FsStore`. Each file is written
   atomically; a plan is ordered, not crash-atomic.
 - **CLI.** `edit` takes its bytes from the engine (`main.rs`, `Command::Edit`),
   and under version 3 a working-page edit needs `--by` or `ONTOMARK_PRINCIPAL`.
-  `create` and `apply` keep their preparation and errors, and commit their
-  final write through the engine's store (`memory_cmd.rs:422`, `:446`). The
+  `create` and `apply` keep their own preparation, validation
+  (`prepare_with`, now given the other vault and the roster under version 3)
+  and errors. Only their final write is committed through the engine's store
+  (`memory_cmd.rs:422`, `:446`); they are not stamped. The
   `memory` verbs (`create`, `adopt`, `approve`, `reject`, `confirm`,
   `send-back`, `withdraw`, `archive`, `dispute`, `complete`, `resource`) call
   the engine directly.
@@ -329,6 +340,11 @@ Negative tests show the evaluator can fail (`the_check_can_fail`,
 - The plugin is not wired to `ontomark-write` (§8).
 - `create::write`, `apply::write` and `edit::apply`'s rendered output remain
   public and unused by the CLI.
+- `Engine::patch`'s doc comment misdescribes knowledge-page validation under
+  vocabulary 3 (§8).
+- `ontomark` (the CLI) depends on `ontomark-write = { path, version = "0.1.0" }`
+  (`crates/ontomark-cli/Cargo.toml:31`), while `ontomark-write` is
+  `publish = false`. The CLI cannot be published to crates.io as it stands.
 - A `repair` of a working memory page bypasses `contributors` and
   `content-updated`.
 - Who writes is asserted, not proved. With no roster, anyone may approve.
@@ -359,9 +375,6 @@ Negative tests show the evaluator can fail (`the_check_can_fail`,
 
 ## Rejected alternatives
 
-- **A CLI flag or a new tool instead of the vocabulary version.** Rejected: the
-  vault, not the invocation, decides its grammar. Otherwise two runs of the same
-  tool would judge one vault differently.
 - **Leaving certification prefix-only and treating any `Did` as human.**
   Rejected: an organisation's or a swarm's key would certify.
 - **Taking the principal's kind for a generator filed under it.** This was the

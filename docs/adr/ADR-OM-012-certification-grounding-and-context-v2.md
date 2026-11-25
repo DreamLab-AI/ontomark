@@ -234,7 +234,10 @@ against `git diff 59e3099..32b3aac` over the governed paths, claim by claim.
 Consequences re-read:
 - "The only write path is `ontomark edit --set 'verified+=…'`" still holds for
   adding a stamp. `verified` is not an engine-owned key in `ontomark-write`, and
-  `edit` now writes through that engine.
+  `edit` now writes through that engine. Under vocabulary 3 the command as
+  recorded, `verified+={by: human:…}`, writes a stamp that fails `validate` as
+  `INVALID_STAMP`. The engine's v3 gate refuses that write, because it would add
+  an error, so the stamp must name the `did:nostr:` key instead.
 - m0002 rewrites the `by` of existing `verified` entries to the principal's
   `did:nostr:` form. It adds no binding (`migrate/m0002/mod.rs`, module docs).
   No bulk certification exists.
