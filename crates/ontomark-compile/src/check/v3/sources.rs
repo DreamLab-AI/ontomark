@@ -3,7 +3,7 @@
 //!
 //! | code | severity | rule |
 //! |---|---|---|
-//! | `INVALID_SOURCE` | error | a `sources` entry without `id` and `resource`, or with an unknown `rel` |
+//! | `INVALID_SOURCE` | error | a `sources` entry without `id`, a resolving `rel` without `resource`, or an unknown `rel` |
 //! | `INVALID_SOURCE_RESOURCE` | error | `origin`, `episode`, `evidence` or `derived-from` whose `resource` is free text |
 //! | `DANGLING_SOURCE` | warning | such a wikilink names no page, when both vaults are loaded |
 //! | `BRIEF_AS_EVIDENCE` | error | `rel: evidence` or `origin` pointing at a `Brief` |
@@ -113,15 +113,15 @@ pub(crate) fn check_page(report: &mut Report, page: &Page, vocab: &Vocabulary, c
                     .and_then(Yaml::as_str)
                     .map(str::to_owned)
             };
-            let (Some(_id), Some(resource)) = (text("id"), text("resource")) else {
+            if text("id").is_none() {
                 err(
                     report,
                     path,
                     "INVALID_SOURCE",
-                    format!("`{field}` needs text `id` and `resource`"),
+                    format!("`{field}` needs a text `id`"),
                 );
                 continue;
-            };
+            }
             let rel = text("rel").unwrap_or_else(|| "reference".into());
             if !RELS.contains(&rel.as_str()) {
                 err(
@@ -132,6 +132,20 @@ pub(crate) fn check_page(report: &mut Report, page: &Page, vocab: &Vocabulary, c
                 );
                 continue;
             }
+            // ADR-VG-010 §5: `resource` must resolve for the four resolving
+            // relations; a plain reference (the default) may be an id alone,
+            // as 6 knowledge pages have carried since v2.
+            let Some(resource) = text("resource") else {
+                if RESOLVING.contains(&rel.as_str()) {
+                    err(
+                        report,
+                        path,
+                        "INVALID_SOURCE",
+                        format!("`{field}`: `rel: {rel}` needs a `resource`"),
+                    );
+                }
+                continue;
+            };
             if let Some(at) = m.and_then(|m| m.get(Yaml::String("at".into()))) {
                 if at.as_str().is_none_or(|s| s.trim().is_empty()) {
                     err(
@@ -403,6 +417,11 @@ mod tests {
         );
         let no_id = w(&[("B", &belief("  - { resource: 'https://x.example' }\n"))]);
         assert!(has(&no_id, "INVALID_SOURCE"));
+        // An id-only plain reference is legal (ADR-VG-010 §5); a resolving rel needs a resource.
+        let id_only = w(&[("B", &belief("  - { id: origin }\n"))]);
+        assert!(!has(&id_only, "INVALID_SOURCE"), "{:?}", codes(&id_only));
+        let origin_bare = w(&[("B", &belief("  - { id: origin, rel: origin }\n"))]);
+        assert!(has(&origin_bare, "INVALID_SOURCE"));
     }
 
     #[test]
