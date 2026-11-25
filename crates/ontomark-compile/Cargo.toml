@@ -43,6 +43,8 @@ ontomark-parse = { workspace = true, features = ["serde"] }
 walkdir = "2"
 sha2 = "0.10"
 hex = "0.4"
+# npub <-> hex key conversion (NIP-19 bech32); exact pin, never hand-rolled.
+bech32 = "=0.11.1"
 time = { version = "0.3", features = ["formatting", "parsing", "macros", "serde"] }
 
 [dev-dependencies]

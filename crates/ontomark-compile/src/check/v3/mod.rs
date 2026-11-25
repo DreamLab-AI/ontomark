@@ -9,10 +9,14 @@
 //! | module | stage | subject |
 //! |---|---|---|
 //! | this one | S0 | the version switch, validation context, closed working enums |
+//! | [`stamps`] | S1 | principal `by`, instrument `via`, human-only `verified` |
 //!
 //! Each rule reports through [`Report::push`] under a stable code; the codes
 //! the four ADRs name are used verbatim.
 
+pub mod stamps;
+
+use crate::build::attribution::Roster;
 use crate::check::validate::{Report, Severity};
 use crate::input::page::{Page, Vault, VaultKind};
 use crate::input::vocabulary::Vocabulary;
@@ -27,6 +31,10 @@ pub struct Siblings<'a> {
     /// The other loaded vaults (for example `knowledge/` while validating
     /// `working/`), used to resolve links and fingerprints across vaults.
     pub vaults: Vec<&'a Vault>,
+    /// The attribution roster (`ontology/attribution.yaml`): which principal
+    /// is human, which keys resolve to which. Absent means rules that need it
+    /// say nothing.
+    pub roster: Option<&'a Roster>,
 }
 
 /// Indexes built once per validated vault, shared by every version-3 rule.
@@ -39,6 +47,12 @@ pub struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
+    /// The roster, when one was supplied.
+    #[must_use]
+    pub fn roster(&self) -> Option<&'a Roster> {
+        self.siblings.roster
+    }
+
     /// Index `vault` and its `siblings`.
     #[must_use]
     pub fn build(vault: &'a Vault, _vocab: &Vocabulary, siblings: &'a Siblings<'a>) -> Self {
@@ -49,6 +63,7 @@ impl<'a> Context<'a> {
 /// Per-page version-3 rules.
 pub fn page_checks(report: &mut Report, page: &Page, vocab: &Vocabulary, ctx: &Context<'_>) {
     working_extension_enums(report, page, vocab, ctx);
+    stamps::check_page(report, page, ctx);
 }
 
 /// Rules that need the whole vault (cycles, targets): run after every page.

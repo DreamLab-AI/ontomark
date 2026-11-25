@@ -726,7 +726,17 @@ pub fn run_with(
     });
     let staging = publish::stage_redacted(&publish_vaults, private_links.as_ref())?;
 
-    let report = validate::validate(profile, &vault, &raw, vocab);
+    // Vocabulary-version-3 rules resolve against the other vault and the
+    // roster; under version 2 neither is read.
+    let v3_roster = vocab
+        .is_v3()
+        .then(|| attribution::Roster::discover(&options.repo_root))
+        .filter(|r| !r.is_empty());
+    let v3_siblings = validate::Siblings {
+        vaults: working.iter().chain(other_vault.iter()).collect(),
+        roster: v3_roster.as_ref(),
+    };
+    let report = validate::validate_with(profile, &vault, &raw, vocab, &v3_siblings);
     anyhow::ensure!(
         report.errors().is_empty(),
         "validation rejected {} error(s); no bundle written. First: {}",
@@ -738,8 +748,17 @@ pub fn run_with(
     // so `working/` is checked on its own, under its own role.
     if machine {
         if let Some(working) = &working {
-            let working_report =
-                validate::validate(profile, working, &Corpus::build(working, vocab), vocab);
+            let working_siblings = validate::Siblings {
+                vaults: vec![&vault],
+                roster: v3_roster.as_ref(),
+            };
+            let working_report = validate::validate_with(
+                profile,
+                working,
+                &Corpus::build(working, vocab),
+                vocab,
+                &working_siblings,
+            );
             anyhow::ensure!(
                 working_report.errors().is_empty(),
                 "validation rejected {} error(s) in working/; no bundle written. First: {}",

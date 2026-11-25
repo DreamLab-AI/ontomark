@@ -586,6 +586,48 @@ fn load(root: &Path, profile: &Profile, kinds: &[VaultKind]) -> anyhow::Result<V
         .collect()
 }
 
+/// What a vocabulary-version-3 validation resolves against beyond the vault
+/// itself: the roster, and the vault roles that were not selected. Both are
+/// empty under version 2, where nothing reads them.
+struct V3Context {
+    roster: Option<ontomark_compile::build::attribution::Roster>,
+    extra: Vec<Vault>,
+}
+
+impl V3Context {
+    fn load(root: &Path, profile: &Profile, vocab: &Vocabulary, selected: &[Vault]) -> Self {
+        if !vocab.is_v3() {
+            return Self {
+                roster: None,
+                extra: Vec::new(),
+            };
+        }
+        let roster = ontomark_compile::build::attribution::Roster::discover(root);
+        let extra = [VaultKind::Knowledge, VaultKind::Working]
+            .into_iter()
+            .filter(|kind| !selected.iter().any(|v| v.kind == *kind))
+            .filter_map(|kind| load(root, profile, &[kind]).ok())
+            .flatten()
+            .collect();
+        Self {
+            roster: (!roster.is_empty()).then_some(roster),
+            extra,
+        }
+    }
+
+    /// The siblings of `vault`: every loaded vault of the other role.
+    fn siblings<'a>(&'a self, vault: &Vault, selected: &'a [Vault]) -> validate::Siblings<'a> {
+        validate::Siblings {
+            vaults: selected
+                .iter()
+                .chain(&self.extra)
+                .filter(|v| v.kind != vault.kind)
+                .collect(),
+            roster: self.roster.as_ref(),
+        }
+    }
+}
+
 /// The repair scopes for the selected vault roles, each placed by the layout.
 fn repair_scopes(
     root: &Path,
@@ -679,9 +721,17 @@ fn run() -> anyhow::Result<ExitCode> {
         Command::Validate(args) => {
             let mut failed = false;
             let mut reports = serde_json::Map::new();
-            for vault in load(&root, &profile, &args.selector.kinds())? {
-                let corpus = Corpus::build(&vault, &vocab);
-                let report = validate::validate(&profile, &vault, &corpus, &vocab);
+            let selected = load(&root, &profile, &args.selector.kinds())?;
+            let v3 = V3Context::load(&root, &profile, &vocab, &selected);
+            for vault in &selected {
+                let corpus = Corpus::build(vault, &vocab);
+                let report = validate::validate_with(
+                    &profile,
+                    vault,
+                    &corpus,
+                    &vocab,
+                    &v3.siblings(vault, &selected),
+                );
                 failed |=
                     !report.errors().is_empty() || (args.strict && !report.warnings().is_empty());
                 if !cli.json {
@@ -715,9 +765,17 @@ fn run() -> anyhow::Result<ExitCode> {
             let tier = gate::Tier::parse(&args.tier);
             let classifier = ontomark_compile::whelk::WhelkEl;
             let mut verdicts: Vec<(&'static str, gate::Verdict)> = Vec::new();
-            for vault in load(&root, &profile, &args.selector.kinds())? {
-                let corpus = Corpus::build(&vault, &vocab);
-                let report = validate::validate(&profile, &vault, &corpus, &vocab);
+            let selected = load(&root, &profile, &args.selector.kinds())?;
+            let v3 = V3Context::load(&root, &profile, &vocab, &selected);
+            for vault in &selected {
+                let corpus = Corpus::build(vault, &vocab);
+                let report = validate::validate_with(
+                    &profile,
+                    vault,
+                    &corpus,
+                    &vocab,
+                    &v3.siblings(vault, &selected),
+                );
                 let graph = (tier == gate::Tier::Full && report.errors().is_empty())
                     .then(|| build::turtle::build_graph(&profile, &corpus, &vocab, false));
                 let verdict = gate::run(

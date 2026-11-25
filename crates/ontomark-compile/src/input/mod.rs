@@ -14,6 +14,7 @@ pub mod error;
 pub mod frontmatter;
 pub mod okf;
 pub mod page;
+pub mod principal;
 pub mod promotion;
 pub mod secrets;
 pub mod slug;

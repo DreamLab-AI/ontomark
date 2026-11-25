@@ -549,8 +549,9 @@ pub fn validate_with(
         // --- OKF conformance -------------------------------------------------
         let okf = OkfBlock::from_frontmatter(&page.frontmatter);
         validate_okf(&mut report, path, &okf, rules, vocab, record);
-        if let Some(ctx) = &v3 {
-            crate::check::v3::page_checks(&mut report, page, vocab, ctx);
+        match &v3 {
+            Some(ctx) => crate::check::v3::page_checks(&mut report, page, vocab, ctx),
+            None => crate::check::v3::stamps::legacy_warnings(&mut report, page),
         }
 
         if !record.has_ontology {
@@ -690,6 +691,10 @@ pub fn validate_with(
     // a daily note is exactly where a pasted API key ends up.
     for journal in &vault.journals {
         page_level_checks(&mut report, &journal.id, journal, vocab, false);
+        match &v3 {
+            Some(ctx) => crate::check::v3::stamps::check_page(&mut report, journal, ctx),
+            None => crate::check::v3::stamps::legacy_warnings(&mut report, journal),
+        }
         // The identity of a journal page is its date. A stem that is not one is
         // a page misfiled into `journals/`, which is worth saying out loud.
         if crate::input::page::journal_date(&journal.id).is_none() {

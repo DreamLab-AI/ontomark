@@ -12,7 +12,8 @@
 //!
 //! An [`Actor`] is always prefix-qualified, so a human signature can never be
 //! confused with a process stamp: `human:<npub>`, `process:<name>/<version>`,
-//! `agent:<producer>/<version>`.
+//! `agent:<producer>/<version>`, and, from vocabulary version 3 (ADR-VG-011),
+//! `did:nostr:<64 lowercase hex>` — the principal a stamp's `by` names.
 
 use std::fmt;
 use std::str::FromStr;
@@ -67,12 +68,17 @@ impl FromStr for Status {
     }
 }
 
-/// Who did something: a human, a deterministic process, or an agent.
+/// Who did something: a person, a principal key, a deterministic process, or
+/// an agent.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
 pub enum Actor {
     /// A person, identified by their Nostr `npub`.
     Human(String),
+    /// A principal key: the 64 lowercase hex characters of a `did:nostr:` DID
+    /// (ADR-VG-011 §1). Whether the principal is a person is a roster fact,
+    /// not a spelling one, so [`Actor::is_human`] is `false` for it.
+    Did(String),
     /// A deterministic program: name and version.
     Process {
         /// The program's name, e.g. `vault`.
@@ -95,6 +101,7 @@ impl Actor {
     pub fn as_string(&self) -> String {
         match self {
             Self::Human(npub) => format!("human:{npub}"),
+            Self::Did(hex) => format!("{}{hex}", crate::input::principal::DID_NOSTR),
             Self::Process { name, version } => format!("process:{name}/{version}"),
             Self::Agent { producer, version } => format!("agent:{producer}/{version}"),
         }
@@ -105,6 +112,29 @@ impl Actor {
     #[must_use]
     pub fn is_human(&self) -> bool {
         matches!(self, Self::Human(_))
+    }
+
+    /// The principal key this actor names as `did:nostr:<hex>`, when it names
+    /// one: a [`Actor::Did`] directly, a [`Actor::Human`] whose `npub` decodes
+    /// (the conversion is lossless, ADR-VG-011 §1). `None` for agents,
+    /// processes and a `human:` value that is not an `npub`.
+    ///
+    /// ```
+    /// use ontomark_compile::input::okf::Actor;
+    /// let npub: Actor = "human:npub16kv2h3hdalphuyzj8tkycq8cm9n54ymer23558ds80afkc9e7frqwrawzj".parse().unwrap();
+    /// let did: Actor = "did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246".parse().unwrap();
+    /// assert_eq!(npub.principal_did(), did.principal_did());
+    /// assert_eq!("human:jjohare".parse::<Actor>().unwrap().principal_did(), None);
+    /// ```
+    #[must_use]
+    pub fn principal_did(&self) -> Option<String> {
+        match self {
+            Self::Did(hex) => Some(format!("{}{hex}", crate::input::principal::DID_NOSTR)),
+            Self::Human(npub) => crate::input::principal::npub_to_hex(npub)
+                .ok()
+                .map(|hex| format!("{}{hex}", crate::input::principal::DID_NOSTR)),
+            Self::Process { .. } | Self::Agent { .. } => None,
+        }
     }
 }
 
@@ -145,6 +175,17 @@ impl FromStr for Actor {
                 .map(|(n, v)| (n.to_owned(), v.to_owned()))
                 .ok_or_else(|| format!("{kind} actor {rest:?} must be <name>/<version>"))
         };
+        if let Some(rest) = s.strip_prefix("did:") {
+            let Some(body) = rest.strip_prefix("nostr:") else {
+                return Err(format!("DID method of {s:?} is not nostr"));
+            };
+            if !crate::input::principal::is_hex64(body) {
+                return Err(format!(
+                    "{s:?} must be did:nostr: followed by 64 lowercase hex characters"
+                ));
+            }
+            return Ok(Self::Did(body.to_owned()));
+        }
         if let Some(rest) = s.strip_prefix("process:") {
             let (name, version) = split_versioned(rest, "process")?;
             return Ok(Self::Process { name, version });
@@ -154,7 +195,7 @@ impl FromStr for Actor {
             return Ok(Self::Agent { producer, version });
         }
         Err(format!(
-            "actor {s:?} must start with human:, process: or agent:"
+            "actor {s:?} must start with human:, did:nostr:, process: or agent:"
         ))
     }
 }
@@ -181,6 +222,16 @@ impl Stamp {
             at: at.into(),
             extensions: Default::default(),
         }
+    }
+
+    /// The instrument that did the work (`via`, ADR-VG-011 §1), when the stamp
+    /// names one and it parses as an `agent:` or `process:` actor.
+    #[must_use]
+    pub fn via(&self) -> Option<Actor> {
+        self.extensions
+            .get("via")
+            .and_then(Yaml::as_str)
+            .and_then(|s| s.parse().ok())
     }
 
     /// Render as an inline YAML mapping value.
@@ -485,6 +536,42 @@ mod tests {
             let a: Actor = s.parse().unwrap();
             assert_eq!(a.as_string(), s);
         }
+    }
+
+    #[test]
+    fn a_did_nostr_actor_needs_a_64_hex_body() {
+        let hex = "b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a";
+        let a: Actor = format!("did:nostr:{hex}").parse().unwrap();
+        assert_eq!(a, Actor::Did(hex.into()));
+        assert_eq!(a.as_string(), format!("did:nostr:{hex}"));
+        assert!(!a.is_human(), "humanness of a DID is a roster fact");
+        for bad in [
+            "did:nostr:not-hex",
+            "did:nostr:",
+            "did:nostr:B41654017F6850B13857D19D8AE0E3F88F1365600CAB0321E8101C9E92682F7A",
+            "did:nostr:b416",
+            "did:web:example.org",
+            "did:nostr:ontology-mesh",
+        ] {
+            assert!(bad.parse::<Actor>().is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn a_stamp_carries_via_and_keeps_unknown_fields() {
+        let y = serde_norway::from_str::<Yaml>(
+            "{ by: 'did:nostr:b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a', via: 'agent:enrichment-swarm/6', at: '2026-09-22T12:41:39Z', process: 'process:vault-migrate/1.0', receipt: abc }",
+        )
+        .unwrap();
+        let stamp = Stamp::from_yaml(&y).unwrap();
+        assert_eq!(stamp.via().unwrap().as_string(), "agent:enrichment-swarm/6");
+        let back = stamp.to_yaml();
+        assert_eq!(
+            back.get("process").and_then(Yaml::as_str),
+            Some("process:vault-migrate/1.0")
+        );
+        assert_eq!(back.get("receipt").and_then(Yaml::as_str), Some("abc"));
+        assert_eq!(Stamp::from_yaml(&back).unwrap(), stamp);
     }
 
     #[test]
