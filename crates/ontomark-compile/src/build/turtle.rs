@@ -462,12 +462,30 @@ pub fn build_graph_attributed(
     // Version 3 annotation axioms (typed sources), minted after every other
     // blank node so a corpus without them keeps its blank-node labels.
     if vocab.is_v3() {
+        let mut delegations: BTreeSet<(String, String)> = BTreeSet::new();
         for record in &records {
             if let Some(facts) = record.v3.as_deref() {
+                if let (Some(principal), Some(instrument)) =
+                    (&facts.principal, instrument_did(facts, roster))
+                {
+                    delegations.insert((instrument, principal.clone()));
+                }
                 let uri = iri_to_uri(profile, &record.iri);
                 emit_v3_sources(&mut g, profile, &uri, facts);
                 emit_v3_open_statements(&mut g, profile, vocab, &uri, facts);
             }
+        }
+        // `prov:wasAttributedTo` names the principal and the instrument alike,
+        // so on its own a consumer cannot tell which is which (reading 2). The
+        // instrument acted on behalf of the principal: said once per pair the
+        // pages name, not for the whole roster. Nothing is typed, so the
+        // corpus stays pure TBox.
+        for (instrument, principal) in delegations {
+            g.add_iri(
+                &instrument,
+                &format!("{PROV}actedOnBehalfOf"),
+                Term::Iri(principal),
+            );
         }
     }
 
@@ -849,6 +867,7 @@ fn declare_v3_annotation_properties(g: &mut Graph, profile: &Profile) {
         format!("{DCTERMS}isReplacedBy"),
         format!("{PROV}wasRevisionOf"),
         format!("{vc}supersessionReason"),
+        format!("{PROV}actedOnBehalfOf"),
         format!("{PROV}wasDerivedFrom"),
         format!("{PROV}hadPrimarySource"),
         format!("{DCTERMS}source"),
@@ -893,12 +912,7 @@ fn emit_v3(
             Term::Iri(principal.clone()),
         );
     }
-    if let Some(instrument) = facts
-        .via
-        .as_deref()
-        .and_then(|v| v.parse::<crate::input::okf::Actor>().ok())
-        .and_then(|a| roster.resolve(&a).map(|generator| generator.did.clone()))
-    {
+    if let Some(instrument) = instrument_did(facts, roster) {
         g.add_iri(
             uri,
             &format!("{PROV}wasAttributedTo"),
@@ -955,6 +969,19 @@ fn emit_v3(
             g.add(axiom.clone(), predicate, object);
         }
     }
+}
+
+/// The DID of the instrument a page's `via` names, through the roster. `None`
+/// when there is no `via` or the roster cannot resolve it: never guessed.
+fn instrument_did(
+    facts: &crate::ir::model::V3Facts,
+    roster: &super::attribution::Roster,
+) -> Option<String> {
+    facts
+        .via
+        .as_deref()
+        .and_then(|v| v.parse::<crate::input::okf::Actor>().ok())
+        .and_then(|a| roster.resolve(&a).map(|generator| generator.did.clone()))
 }
 
 /// The predicate a typed source publishes as (ADR-VG-010 §7). The ADR names
@@ -1863,6 +1890,57 @@ relations:
         let history = build_history_graph(est(), &corpus, &v3_vocab());
         assert_eq!(history.iter().count(), 0);
         assert!(!serialise(est(), &history).contains("temporal"));
+    }
+
+    /// Reading 2: a consumer must be able to tell the principal from the
+    /// instrument. Two `prov:wasAttributedTo` objects cannot say which is which,
+    /// so the instrument is tied to its principal by `prov:actedOnBehalfOf`,
+    /// once per pair the pages actually name.
+    #[test]
+    fn version_3_ties_each_instrument_to_the_principal_it_directed() {
+        use crate::ir::model::V3Facts;
+        const SWARM: &str =
+            "did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0";
+        let facts = |via: Option<&str>| {
+            Some(Box::new(V3Facts {
+                principal: Some(B4.into()),
+                via: via.map(Into::into),
+                ..V3Facts::default()
+            }))
+        };
+        let (mut a, mut b, mut c, mut d) = (
+            record("Alpha"),
+            record("Beta"),
+            record("Gamma"),
+            record("Delta"),
+        );
+        a.v3 = facts(Some("agent:enrichment-swarm/6"));
+        b.v3 = facts(Some("agent:enrichment-swarm/6"));
+        c.v3 = facts(Some("agent:not-in-the-roster/1")); // cannot be resolved: never guessed
+        d.v3 = facts(None); // no instrument
+        let roster = crate::build::attribution::Roster::from_yaml_str(&format!(
+            "generators:\n  - did: {SWARM}\n    label: enrichment-swarm\n    version: \"6\"\n    kind: process\n  - did: did:nostr:{}\n    label: unused-swarm\n    version: \"1\"\n    kind: process\n",
+            "ab".repeat(32)
+        ));
+        let corpus = corpus_of(vec![a, b, c, d]);
+        let g = build_graph_attributed(est(), &corpus, &v3_vocab(), true, &roster);
+        let ttl = serialise(est(), &g);
+        let pair = format!("<{SWARM}> prov:actedOnBehalfOf <{B4}>");
+        assert_eq!(ttl.matches(&pair).count(), 1, "{ttl}");
+        // Only the pair the pages name: the roster's other generator makes no claim.
+        assert_eq!(ttl.matches("prov:actedOnBehalfOf <").count(), 1, "{ttl}");
+        assert!(
+            ttl.contains("prov:actedOnBehalfOf a owl:AnnotationProperty"),
+            "{ttl}"
+        );
+        // Nothing is typed: the corpus stays pure TBox (an agent class assertion would make an individual).
+        assert!(
+            !ttl.contains("prov:Person") && !ttl.contains("prov:SoftwareAgent"),
+            "{ttl}"
+        );
+        // Version 2 says nothing of it.
+        let g2 = build_graph_attributed(est(), &corpus, &vocab(), true, &roster);
+        assert!(!serialise(est(), &g2).contains("actedOnBehalfOf"));
     }
 
     #[test]
