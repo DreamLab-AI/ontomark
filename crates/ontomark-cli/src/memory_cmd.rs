@@ -14,11 +14,12 @@ use ontomark_compile::build::attribution::Roster;
 use ontomark_compile::input::page::{Vault, VaultKind};
 use ontomark_compile::input::vocabulary::Vocabulary;
 use ontomark_compile::profile::Profile;
+use ontomark_compile::write::{apply, create};
 use ontomark_parse::{Document, Value};
 use ontomark_write::{
-    system, AdoptRequest, Change, CompleteRequest, CreateRequest, DisputeInput, Engine, FsStore,
-    Move, PatchRequest, Plan, RecordDisputesRequest, Refusal, Resolution, Role, SupersedeReason,
-    TransitionRequest, Withdrawal, Writer,
+    system, AdoptRequest, Change, CommitError, CompleteRequest, CreateRequest, DisputeInput,
+    Engine, FsStore, Move, PatchRequest, Plan, PlannedWrite, RecordDisputesRequest, Refusal,
+    Resolution, Role, SupersedeReason, TransitionRequest, Withdrawal, Writer,
 };
 use serde_json::json;
 
@@ -35,7 +36,10 @@ pub struct WriterArgs {
     /// An approval or confirmation never carries one.
     #[arg(long, env = "ONTOMARK_INSTRUMENT", value_name = "AGENT")]
     pub via: Option<String>,
-    /// Override the clock (UTC, `YYYY-MM-DDTHH:MM:SSZ`). For tests and replays.
+    /// Override the clock (UTC, `YYYY-MM-DDTHH:MM:SSZ`). Debug builds only: the
+    /// engine stamps both review clocks itself and ignores a client's values
+    /// (ADR-VG-013 section 7), so a release binary has no way to backdate one.
+    #[cfg(debug_assertions)]
     #[arg(long, hide = true, value_name = "TIMESTAMP")]
     pub now: Option<String>,
 }
@@ -51,8 +55,15 @@ impl WriterArgs {
         })
     }
 
+    #[cfg(debug_assertions)]
     fn at(&self) -> String {
         self.now.clone().unwrap_or_else(system::now)
+    }
+
+    #[cfg(not(debug_assertions))]
+    #[allow(clippy::unused_self)]
+    fn at(&self) -> String {
+        system::now()
     }
 }
 
@@ -288,7 +299,12 @@ fn build(root: &Path, profile: &Profile, vocab: &Vocabulary) -> anyhow::Result<(
 
 /// Patch one page through the engine (the lossless half of `ontomark edit`).
 ///
-/// `sets` and `unsets` are the CLI's `--set` and `--unset` arguments.
+/// `sets` and `unsets` are the CLI's `--set` and `--unset` arguments. `base`
+/// is the page text the caller's `--expect` guard counted over, and
+/// `guard_blocks` the number of keys that guard counted: the engine plans
+/// against exactly that text (a stale base is refused), and a plan that
+/// changes a different number of requested keys than the guard saw is
+/// refused rather than written, because the two parsers then disagree.
 /// Returns the plan; commits it unless `dry_run`.
 ///
 /// # Errors
@@ -304,6 +320,8 @@ pub fn patch_page(
     sets: &[String],
     unsets: &[String],
     writer: &WriterArgs,
+    base: &str,
+    guard_blocks: usize,
     dry_run: bool,
 ) -> anyhow::Result<Plan> {
     let mut changes = Vec::new();
@@ -327,7 +345,7 @@ pub fn patch_page(
             id: id.to_owned(),
             changes,
             body: Vec::new(),
-            expect: None,
+            expect: Some(ontomark_parse::SourceDigest::of(base)),
             writer: writer.by.as_ref().map(|by| Writer {
                 by: by.clone(),
                 via: writer.via.clone(),
@@ -335,10 +353,99 @@ pub fn patch_page(
             now: Some(writer.at()),
         })
         .map_err(|r| anyhow::anyhow!("refused: {r}"))?;
+    anyhow::ensure!(
+        plan.requested_keys.len() == guard_blocks,
+        "refused: the write engine would change {} key(s) ({}) but the --expect guard counted {guard_blocks}; \
+         the two readings of the page disagree, so nothing was written",
+        plan.requested_keys.len(),
+        plan.requested_keys.join(", ")
+    );
     if !dry_run {
         plan.commit(&mut store)?;
     }
     Ok(plan)
+}
+
+/// Land one already-validated page write through the engine's store: the same
+/// temp-file-and-rename (or exclusive create) and root confinement as every
+/// other write. `before` is the text the caller validated against (`None` for
+/// a creation).
+fn commit_one(
+    vault_root: &Path,
+    target: &Path,
+    id: &str,
+    before: Option<&str>,
+    text: &str,
+) -> Result<(), CommitError> {
+    let rel = target
+        .strip_prefix(vault_root)
+        .map_or_else(|_| target.to_path_buf(), Path::to_path_buf);
+    let mut store = FsStore::new(None, Some(vault_root)).map_err(|source| CommitError::Read {
+        path: rel.clone(),
+        source,
+    })?;
+    let plan = Plan {
+        operation: "write",
+        writes: vec![PlannedWrite {
+            vault: VaultKind::Knowledge,
+            id: id.to_owned(),
+            rel_path: rel,
+            before_text: before.map(str::to_owned),
+            text: text.to_owned(),
+            receipt: None,
+        }],
+        requested_keys: Vec::new(),
+        ignored_keys: Vec::new(),
+        events: Vec::new(),
+    };
+    plan.commit(&mut store).map(|_| ())
+}
+
+/// `create`'s final write, through the engine's store. Errors are the ones
+/// `create::write` returned, so the handler's refusal mapping is unchanged.
+///
+/// # Errors
+/// [`create::CreateError::Exists`] when the page appeared meanwhile; otherwise
+/// the I/O failure.
+pub fn write_created(outcome: &create::Outcome, vault_root: &Path) -> anyhow::Result<()> {
+    commit_one(
+        vault_root,
+        &outcome.target,
+        &outcome.page,
+        None,
+        &outcome.rendered,
+    )
+    .map_err(|e| match &e {
+        CommitError::Exists(_) => {
+            anyhow::Error::new(create::CreateError::Exists(outcome.page.clone()))
+        }
+        CommitError::Write { source, .. } if source.kind() == std::io::ErrorKind::AlreadyExists => {
+            anyhow::Error::new(create::CreateError::Exists(outcome.page.clone()))
+        }
+        _ => anyhow::Error::new(e).context(format!("writing {}", outcome.target.display())),
+    })
+}
+
+/// `apply`'s final write, through the engine's store. A page that changed
+/// since [`apply::prepare`] read it is refused as [`apply::ApplyError::Stale`].
+///
+/// # Errors
+/// [`apply::ApplyError::Stale`], or the I/O failure.
+pub fn write_applied(outcome: &apply::Outcome, vault_root: &Path) -> anyhow::Result<()> {
+    commit_one(
+        vault_root,
+        &outcome.target,
+        &outcome.page,
+        Some(&outcome.original),
+        &outcome.rendered,
+    )
+    .map_err(|e| match &e {
+        CommitError::Stale(_) => anyhow::Error::new(apply::ApplyError::Stale {
+            page: outcome.page.clone(),
+            detail: "the file changed while the apply was being prepared".into(),
+        }),
+        _ => anyhow::Error::new(e).context(format!("writing {}", outcome.target.display())),
+    })
 }
 
 fn finish(

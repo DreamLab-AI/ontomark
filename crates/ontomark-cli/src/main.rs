@@ -1113,6 +1113,8 @@ fn run() -> anyhow::Result<ExitCode> {
                     &args.sets,
                     &args.unsets,
                     &args.writer,
+                    &page.source,
+                    outcome.blocks,
                     args.dry_run,
                 )?)
             } else {
@@ -1172,7 +1174,7 @@ fn run() -> anyhow::Result<ExitCode> {
                 Err(error) => return refuse(&error),
             };
             if !args.dry_run {
-                if let Err(e) = create::write(&outcome) {
+                if let Err(e) = memory_cmd::write_created(&outcome, &vault.root) {
                     return match e.downcast_ref::<create::CreateError>() {
                         Some(error) => refuse(error),
                         None => Err(e),
@@ -1259,7 +1261,7 @@ fn run() -> anyhow::Result<ExitCode> {
                 Ok(outcome) => outcome,
                 Err(error) => return refuse_with(&error),
             };
-            if let Err(e) = apply::write(&outcome) {
+            if let Err(e) = memory_cmd::write_applied(&outcome, &vault.root) {
                 return match e.downcast_ref::<apply::ApplyError>() {
                     Some(error) => refuse_with(error),
                     None => Err(e),

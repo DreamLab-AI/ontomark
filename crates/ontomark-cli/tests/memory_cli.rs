@@ -5,7 +5,15 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 const HUMAN: &str = "did:nostr:b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a";
-const NOW: &str = "2026-11-20T12:00:00Z";
+/// `--now` exists in debug builds only; a release run uses the real clock,
+/// which is later than every fixture time.
+fn now_args() -> Vec<&'static str> {
+    if cfg!(debug_assertions) {
+        vec!["--now", "2026-11-20T12:00:00Z"]
+    } else {
+        Vec::new()
+    }
+}
 
 const VOCAB_V2: &str = "version: 2\nnamespace: \"urn:ngm:class:\"\ntypes:\n  Class: { owl: \"owl:Class\", required: [resource, status] }\nrelations:\n  is-a: { owl: \"rdfs:subClassOf\" }\n";
 const VOCAB_V3: &str = "version: 3\nnamespace: \"urn:ngm:class:\"\ntypes:\n  Class: { owl: \"owl:Class\", required: [resource, status] }\nworking_types:\n  Note: {}\n  Belief: { memory: true }\nrelations:\n  is-a: { owl: \"rdfs:subClassOf\" }\n";
@@ -26,6 +34,13 @@ fn run(repo: &Path, args: &[&str]) -> Output {
         .env_remove("ONTOMARK_INSTRUMENT")
         .output()
         .expect("the ontomark binary runs")
+}
+
+/// `run` for the stamped verbs (`edit`, `memory ...`), which take `--now` in debug builds.
+fn runw(repo: &Path, args: &[&str]) -> Output {
+    let mut all: Vec<&str> = args.to_vec();
+    all.extend(now_args());
+    run(repo, &all)
 }
 
 fn json(o: &Output) -> serde_json::Value {
@@ -55,12 +70,12 @@ fn edit_is_lossless_and_keeps_its_contract() {
     let page = repo.join("knowledge/Alpha.md");
     // Without --expect: refused, exit 1, nothing written.
     let before = std::fs::read_to_string(&page).unwrap();
-    let o = run(&repo, &["edit", "Alpha", "--set", "status=stable"]);
+    let o = runw(&repo, &["edit", "Alpha", "--set", "status=stable"]);
     assert_eq!(o.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&o.stderr).contains("--expect must declare docs and blocks"));
     assert_eq!(std::fs::read_to_string(&page).unwrap(), before);
     // A wrong blast radius: refused.
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "edit",
@@ -74,7 +89,7 @@ fn edit_is_lossless_and_keeps_its_contract() {
     assert_eq!(o.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&o.stderr).contains("--expect blocks=2"));
     // Dry run writes nothing but reports the same outcome shape.
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "edit",
@@ -95,7 +110,7 @@ fn edit_is_lossless_and_keeps_its_contract() {
     assert!(v["changes"]["status"].is_array());
     assert_eq!(std::fs::read_to_string(&page).unwrap(), before);
     // The real edit: only the status line changes; comment, odd flow map, body stay.
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "edit",
@@ -112,7 +127,7 @@ fn edit_is_lossless_and_keeps_its_contract() {
         before.replace("status: draft", "status: stable")
     );
     // A no-op edit declares zero and writes nothing.
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "edit",
@@ -125,7 +140,7 @@ fn edit_is_lossless_and_keeps_its_contract() {
     );
     assert!(o.status.success());
     // Append and unset.
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "edit",
@@ -157,7 +172,7 @@ fn v3_repo() -> (tempfile::TempDir, std::path::PathBuf) {
 fn a_v3_working_edit_is_stamped_and_the_stamps_do_not_count_toward_blocks() {
     let (_d, repo) = v3_repo();
     let page = repo.join("working/Note One.md");
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "edit",
@@ -176,7 +191,7 @@ fn a_v3_working_edit_is_stamped_and_the_stamps_do_not_count_toward_blocks() {
         "an unstamped v3 working write is refused"
     );
     assert!(String::from_utf8_lossy(&o.stderr).contains("must name its principal"));
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "edit",
@@ -189,8 +204,6 @@ fn a_v3_working_edit_is_stamped_and_the_stamps_do_not_count_toward_blocks() {
             "docs=1,blocks=1",
             "--by",
             HUMAN,
-            "--now",
-            NOW,
         ],
     );
     assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
@@ -201,7 +214,7 @@ fn a_v3_working_edit_is_stamped_and_the_stamps_do_not_count_toward_blocks() {
     );
     assert!(text.contains("tags:"));
     // An engine-owned key is refused.
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "edit",
@@ -240,11 +253,9 @@ fn memory_create_approve_and_the_refusals_exit_two() {
             "Tea first.\n",
             "--by",
             HUMAN,
-            "--now",
-            NOW,
         ];
         a.extend_from_slice(extra);
-        run(&repo, &a)
+        runw(&repo, &a)
     };
     let o = create(&["--dry-run"]);
     assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
@@ -262,7 +273,7 @@ fn memory_create_approve_and_the_refusals_exit_two() {
     assert_eq!(o.status.code(), Some(2));
     assert_eq!(json(&o)["code"], "EXISTS");
     // An approval through an instrument is refused.
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "memory",
@@ -272,25 +283,12 @@ fn memory_create_approve_and_the_refusals_exit_two() {
             HUMAN,
             "--via",
             "agent:claude/1",
-            "--now",
-            NOW,
         ],
     );
     assert_eq!(o.status.code(), Some(2));
     assert_eq!(json(&o)["code"], "APPROVER");
     // The principal approves.
-    let o = run(
-        &repo,
-        &[
-            "memory",
-            "approve",
-            "beliefs/Tea",
-            "--by",
-            HUMAN,
-            "--now",
-            NOW,
-        ],
-    );
+    let o = runw(&repo, &["memory", "approve", "beliefs/Tea", "--by", HUMAN]);
     assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
     let text = std::fs::read_to_string(repo.join("working/beliefs/Tea.md")).unwrap();
     assert!(
@@ -298,18 +296,7 @@ fn memory_create_approve_and_the_refusals_exit_two() {
         "{text}"
     );
     // approved -> approved is a confirmation, not an approval.
-    let o = run(
-        &repo,
-        &[
-            "memory",
-            "approve",
-            "beliefs/Tea",
-            "--by",
-            HUMAN,
-            "--now",
-            NOW,
-        ],
-    );
+    let o = runw(&repo, &["memory", "approve", "beliefs/Tea", "--by", HUMAN]);
     assert_eq!(o.status.code(), Some(2));
     assert_eq!(json(&o)["code"], "ILLEGAL_TRANSITION");
     // The validator is satisfied with what the engine wrote.
@@ -340,7 +327,7 @@ fn memory_supersede_writes_both_pages_and_nothing_else() {
             "disputes:\n  - { page: urn:visionflow:page:old1, detected: '2026-11-10T00:00:00Z' }\n",
         ),
     );
-    let o = run(
+    let o = runw(
         &repo,
         &[
             "memory",
@@ -350,8 +337,6 @@ fn memory_supersede_writes_both_pages_and_nothing_else() {
             "urn:visionflow:page:old1=world-changed",
             "--by",
             HUMAN,
-            "--now",
-            NOW,
         ],
     );
     assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
