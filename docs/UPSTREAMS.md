@@ -374,3 +374,14 @@ Audit date: 2026-10-11. This addendum does not alter the rc1 assets or the engin
 ## Dot Triples (interop and the in-note SPARQL surface; recorded 2026-10-13)
 
 [dot-triples](https://github.com/cristianvasquez/dot-triples) (reviewed at `99d74c8`) and the [Dot Triples Obsidian plugin](https://github.com/cristianvasquez/dot-triples-plugin) (reviewed at `2c17b41`, release 2.0.0) are by Cristian Vasquez, MIT. Ontomark adopted two ideas from them, recorded in [ADR-OM-006](adr/ADR-OM-006-dot-triples-interop.md): the in-note SPARQL block that rewrites `__THIS__` and `[[Note]]` before running (the plugin's `ontomark-sparql` fence), and Web Annotation selectors as the vocabulary for evidence locations if they are ever exported. Ontomark also publishes `bridges/dot-triples/`, a SPARQL CONSTRUCT that lifts dot-triples output into the engine's vocabulary. No source code from either project is included; the implementations are independent. The bridge fixture `bridges/dot-triples/fixtures/zoo.nt` is the unedited output of `triplifier-md` 0.3.0 over five notes written here, and is kept so the test's input is real.
+
+## Native CLI 0.10.0 addition
+
+| Native CLI package | Version | Declared licence | Repository | In engine graph |
+| --- | --- | --- | --- | --- |
+| bech32 | 0.11.1 | `MIT` | [Upstream](https://github.com/rust-bitcoin/rust-bech32) | No |
+
+Added for Nostr `npub` to hex key conversion in `ontomark-compile`. The rc1
+inventory above is a dated audit and was not regenerated with `cargo-about` for
+0.10.0; this table records the one package added since. Its licence text is in
+`THIRD-PARTY-NOTICES.md`.

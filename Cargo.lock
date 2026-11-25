@@ -985,7 +985,7 @@ checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
 name = "ontomark"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1004,7 +1004,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-compile"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "bech32",
@@ -1035,7 +1035,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-ingest"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "criterion",
  "indexmap 2.14.2",
@@ -1090,7 +1090,7 @@ version = "0.1.0"
 
 [[package]]
 name = "ontomark-parse"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "indexmap 2.14.2",
  "serde",
@@ -1101,7 +1101,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-profile-estate"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "ontomark-compile",
 ]
@@ -1134,7 +1134,7 @@ dependencies = [
 
 [[package]]
 name = "ontomark-wasm"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "getrandom 0.3.4",
  "ontomark-ingest",

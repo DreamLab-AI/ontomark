@@ -22,3 +22,13 @@ The project relicensing grant above does not replace these upstream terms.
 The released engine also includes third-party libraries, including MPL-licensed
 im, bitmaps and sized-chunks. See THIRD-PARTY-NOTICES.md for their licence texts
 and source availability, and docs/UPSTREAMS.md for the audited dependency scope.
+
+## Vocabulary terms used by reference
+
+The temporal contract in `conformance/temporal/` and vocabulary 3 emission use
+four terms from memory-ontology by eljeffeg
+(https://github.com/eljeffeg/memory-ontology, CC BY 4.0) by IRI: the properties
+`temporal:validFrom` and `temporal:recordedFrom` (emission also uses
+`temporal:validUntil`) and the concepts `memory:ValidTime` and
+`memory:RecordedTime`. No text or axioms are copied, and no conformance to
+memory-ontology's shapes is claimed.
