@@ -163,9 +163,12 @@ pub(crate) fn check_page(report: &mut Report, page: &Page, vocab: &Vocabulary, c
             if rel == "evidence" && locator.is_some() {
                 evidence_with_locator = true;
             }
-            let target = Wikilink::parse(&resource).and_then(|_| ctx.resolve(&resource));
+            // A wikilink and a `urn:visionflow:page:` id name a page alike
+            // (S1); any other IRI resolves only if it is a page's `resource`.
+            let link = Wikilink::parse(&resource).is_some();
+            let page_urn = resource.trim().starts_with(super::temporal::PAGE_URN);
+            let target = ctx.resolve(&resource);
             if RESOLVING.contains(&rel.as_str()) {
-                let link = Wikilink::parse(&resource).is_some();
                 if !link && !is_iri(&resource) {
                     err(
                         report,
@@ -175,7 +178,7 @@ pub(crate) fn check_page(report: &mut Report, page: &Page, vocab: &Vocabulary, c
                             "`{field}`: `rel: {rel}` needs a wikilink, URL or IRI, not free text"
                         ),
                     );
-                } else if link
+                } else if (link || page_urn)
                     && target.is_none()
                     && ctx.sees(VaultKind::Knowledge)
                     && ctx.sees(VaultKind::Working)
@@ -311,7 +314,7 @@ fn kind_rules(
     // `about-kind` is optional (ADR-VG-010 §6): listed here only to be
     // value-checked below.
     for key in required.iter().filter(|k| **k != "about-kind") {
-        if !fm.has(key) {
+        if !super::state::has_value(fm, key) {
             err(
                 report,
                 path,
@@ -438,6 +441,100 @@ mod tests {
             let r = w(&[("Digest", brief), ("B", &belief(&src))]);
             assert_eq!(has(&r, "BRIEF_AS_EVIDENCE"), flagged, "{rel}");
         }
+    }
+
+    /// S1: a `urn:visionflow:page:` id names a page exactly as a wikilink does,
+    /// so it gets the same BRIEF_AS_EVIDENCE, locator and DANGLING checks.
+    #[test]
+    fn citing_by_page_urn_gets_the_same_checks_as_a_wikilink() {
+        let brief = "---\ntype: Brief\nstatus: draft\nscope: topic\npage_resource: urn:visionflow:page:b1\n---\nbody\n";
+        let ledger = LEDGER.replacen(
+            "status: approved\n",
+            "status: approved\npage_resource: urn:visionflow:page:e1\n",
+            1,
+        );
+        let cite = |rel: &str, urn: &str, extra: &str| {
+            belief(&format!(
+                "  - {{ id: a, resource: '{urn}', rel: {rel}{extra} }}\n"
+            ))
+        };
+        for rel in ["evidence", "origin"] {
+            let r = w(&[
+                ("Digest", brief),
+                (
+                    "B",
+                    &cite(rel, "urn:visionflow:page:b1", ", locator: 'fp:aa'"),
+                ),
+            ]);
+            assert!(has(&r, "BRIEF_AS_EVIDENCE"), "{rel}: {:?}", codes(&r));
+        }
+        let derived = w(&[
+            ("Digest", brief),
+            ("B", &cite("derived-from", "urn:visionflow:page:b1", "")),
+        ]);
+        assert!(!has(&derived, "BRIEF_AS_EVIDENCE"));
+        let no_locator = w(&[
+            ("L", &ledger),
+            ("B", &cite("evidence", "urn:visionflow:page:e1", "")),
+        ]);
+        assert!(
+            has(&no_locator, "MISSING_LOCATOR"),
+            "{:?}",
+            codes(&no_locator)
+        );
+        let bad_fp = w(&[
+            ("L", &ledger),
+            (
+                "B",
+                &cite(
+                    "evidence",
+                    "urn:visionflow:page:e1",
+                    ", locator: 'fp:0000000000000000'",
+                ),
+            ),
+        ]);
+        assert!(has(&bad_fp, "DANGLING_LOCATOR"), "{:?}", codes(&bad_fp));
+        let good = w(&[
+            ("L", &ledger),
+            (
+                "B",
+                &cite(
+                    "evidence",
+                    "urn:visionflow:page:e1",
+                    ", locator: 'fp:db4adc4ad5eafef4'",
+                ),
+            ),
+        ]);
+        assert!(
+            !has(&good, "MISSING_LOCATOR") && !has(&good, "DANGLING_LOCATOR"),
+            "{:?}",
+            codes(&good)
+        );
+        // A page urn that names no page dangles (with both vaults loaded); an
+        // external IRI does not.
+        let know = vault_of(&[("K", "---\ntype: Class\n---\n")], VaultKind::Knowledge);
+        let both = |src: &str| {
+            let work = vault_of(&[("B", src)], VaultKind::Working);
+            run_with(
+                &work,
+                &vocab(3, ""),
+                &super::super::Siblings {
+                    vaults: vec![&know],
+                    roster: None,
+                },
+            )
+        };
+        let dangling = both(&cite("origin", "urn:visionflow:page:nope", ""));
+        assert!(
+            dangling
+                .errors()
+                .iter()
+                .any(|i| i.code == "DANGLING_SOURCE"),
+            "{:?}",
+            codes(&dangling)
+        );
+        let external = both(&cite("origin", "https://x.example/e", ""));
+        assert!(!has(&external, "DANGLING_SOURCE"));
     }
 
     #[test]

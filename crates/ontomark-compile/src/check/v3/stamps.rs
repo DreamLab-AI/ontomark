@@ -51,7 +51,7 @@ pub(crate) const STAMP: Shape = Shape {
 
 /// Version 2: report what the tool silently dropped.
 pub(crate) fn legacy_warnings(report: &mut Report, page: &Page) {
-    for (field, value) in stamp_values(page) {
+    for (field, value) in stamp_values(page, false) {
         if Stamp::from_yaml(value).is_none() {
             report.push(
                 &page.id,
@@ -69,7 +69,8 @@ pub(crate) fn legacy_warnings(report: &mut Report, page: &Page) {
 /// Version 3: every stamp on the page follows the v3 grammar.
 pub(crate) fn check_page(report: &mut Report, page: &Page, ctx: &Context<'_>) {
     let roster = ctx.roster();
-    for (field, value) in stamp_values(page) {
+    let working = ctx.vault.kind == crate::input::page::VaultKind::Working;
+    for (field, value) in stamp_values(page, working) {
         let verified = field.starts_with("verified");
         check_value(
             report,
@@ -95,10 +96,16 @@ pub(crate) fn check_page(report: &mut Report, page: &Page, ctx: &Context<'_>) {
 }
 
 /// The `generated` and `verified[]` values of a page, named for messages.
-/// Null values (a bare `verified:`) are an absent key, not a stamp.
-fn stamp_values(page: &Page) -> Vec<(String, &Yaml)> {
+/// A null `verified` (a bare `verified:`) is an absent key, not a stamp. A null
+/// `generated` is kept when `keep_null_generated` (vocabulary 3): the page
+/// claims a stamp and carries none, which is INVALID_STAMP, not silence.
+fn stamp_values(page: &Page, keep_null_generated: bool) -> Vec<(String, &Yaml)> {
     let mut out = Vec::new();
-    if let Some(v) = page.frontmatter.get("generated").filter(|v| !v.is_null()) {
+    if let Some(v) = page
+        .frontmatter
+        .get("generated")
+        .filter(|v| keep_null_generated || !v.is_null())
+    {
         out.push(("generated".to_owned(), v));
     }
     match page.frontmatter.get("verified") {
@@ -550,6 +557,56 @@ mod tests {
         let c = Certification::from_verified_with(Some(&scoped), &|a| roster.is_human_actor(a));
         assert_eq!(c.state(), "partial");
         assert_eq!(c.keys, ["is-a"]);
+    }
+
+    const SWARM: &str =
+        "did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0";
+
+    /// B1: a process key filed under a human principal is an instrument, not a
+    /// person. It does not certify, `verified` by it is an error, and the
+    /// page-level checks agree with the stamp-level one.
+    #[test]
+    fn an_instrument_key_filed_under_a_human_is_not_human() {
+        use crate::input::okf::Certification;
+        let roster = Roster::from_yaml_str(&format!(
+            "principals:\n  - did: {B4}\n    label: jjohare\n    kind: human\n    also: [{D5}]\ngenerators:\n  - did: {SWARM}\n    label: enrichment-swarm\n    kind: process\n    principal: {B4}\n"
+        ));
+        let r = run_k(
+            &format!("verified: [{{ by: {SWARM}, at: '2026-11-04T00:00:00Z' }}]\n"),
+            3,
+            Some(&roster),
+        );
+        assert!(has(&r, "VERIFIED_NOT_HUMAN"), "{:?}", codes(&r));
+        assert!(!r.errors().is_empty());
+        let stamp: serde_norway::Value =
+            serde_norway::from_str(&format!("[{{ by: {SWARM}, at: '2026-11-04T00:00:00Z' }}]"))
+                .unwrap();
+        let c = Certification::from_verified_with(Some(&stamp), &|a| roster.is_human_actor(a));
+        assert!(!c.whole_page);
+        assert_eq!(c.state(), "pending");
+        // The operator's own keys still certify (Fungible Token's stamp).
+        let own = run_k(
+            &format!("verified: [{{ by: {B4}, at: '2026-11-04T00:00:00Z' }}]\n"),
+            3,
+            Some(&roster),
+        );
+        assert!(!has(&own, "VERIFIED_NOT_HUMAN"), "{:?}", codes(&own));
+        let src = format!(
+            "---\ntype: Class\nresource: urn:ngm:class:a\nstatus: stable\npublic: true\nverified:\n  - by: {SWARM}\n    at: '2026-11-04T00:00:00Z'\n---\n"
+        );
+        let page = crate::input::page::Page::parse(
+            std::path::Path::new("/v/A.md"),
+            "A.md",
+            "A".to_owned(),
+            &src,
+        )
+        .unwrap();
+        assert_eq!(
+            Certification::for_page_with(&page, Some(&roster)).state(),
+            "pending"
+        );
+        let okf = crate::input::okf::OkfBlock::from_frontmatter(&page.frontmatter);
+        assert!(!okf.is_human_verified_with(Some(&roster)));
     }
 
     /// The page API's certification (`for_page_with`, the parse crate's

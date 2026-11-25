@@ -581,13 +581,9 @@ fn statements_of(
         .collect()
 }
 
-/// An IRI that can be written between `<` and `>` in Turtle unescaped: a
-/// scheme, then no whitespace, control character or delimiter.
+/// An IRI that can be written between `<` and `>` in Turtle unescaped.
 fn is_safe_iri(s: &str) -> bool {
     crate::check::v3::temporal::is_iri(s)
-        && !s
-            .chars()
-            .any(|c| c.is_whitespace() || c.is_control() || "<>\"{}|\\^`".contains(c))
 }
 
 impl Corpus {

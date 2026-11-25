@@ -67,8 +67,15 @@ pub(crate) fn superseded_by(page: &Page) -> Vec<String> {
     page.frontmatter.strings("superseded-by")
 }
 
+/// A scheme, then something, with no whitespace, control character or Turtle
+/// delimiter anywhere: what can be written between `<` and `>` unescaped.
 pub(crate) fn is_iri(s: &str) -> bool {
     let s = s.trim();
+    if s.chars()
+        .any(|c| c.is_whitespace() || c.is_control() || "<>\"{}|\\^`".contains(c))
+    {
+        return false;
+    }
     s.split_once(':').is_some_and(|(scheme, rest)| {
         !rest.is_empty()
             && scheme
@@ -624,6 +631,23 @@ mod tests {
 
     fn n(r: &Report, code: &str) -> usize {
         r.issues.iter().filter(|i| i.code == code).count()
+    }
+
+    #[test]
+    fn an_iri_has_no_whitespace_or_turtle_delimiters() {
+        use super::super::temporal::is_iri;
+        assert!(is_iri("urn:visionflow:page:0a1b"));
+        assert!(is_iri("https://x.example/a?b=c#d"));
+        for bad in [
+            "urn:a b",
+            "https://x.example/<a>",
+            "urn:a\tb",
+            "urn:a{b}",
+            "no-scheme",
+            "urn:",
+        ] {
+            assert!(!is_iri(bad), "{bad:?}");
+        }
     }
 
     #[test]
