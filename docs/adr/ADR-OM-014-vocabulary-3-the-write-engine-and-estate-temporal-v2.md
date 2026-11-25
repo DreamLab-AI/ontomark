@@ -8,13 +8,13 @@ activation_status: staged
 supersedes: []
 superseded_by: []
 amends: [ADR-OM-012]
-verified_commit: 32b3aacdd9531d06c8c7b256828601364dd34034
+verified_commit: 313a989d1cfcf4a8a24be6385e5e351c9c06c388
 verified_paths: [crates/ontomark-compile/src/input/vocabulary.rs, crates/ontomark-compile/src/input/time.rs, crates/ontomark-compile/src/input/principal.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-compile/src/check/v3, crates/ontomark-compile/src/check/validate.rs, crates/ontomark-compile/src/build/attribution.rs, crates/ontomark-compile/src/build/turtle.rs, crates/ontomark-compile/src/build/okf.rs, crates/ontomark-compile/src/build/page_api.rs, crates/ontomark-compile/src/build/redact.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/ir/model.rs, crates/ontomark-compile/src/migrate, crates/ontomark-write, crates/ontomark-cli/src/main.rs, crates/ontomark-cli/src/memory_cmd.rs, crates/ontomark-cli/tests/vocab_v3.rs, crates/ontomark-cli/tests/vocab-v3-vault, crates/ontomark-cli/tests/conformance.rs, crates/ontomark-wasm/Cargo.toml, conformance/fixtures/estate-small.golden, conformance/temporal/vectors.json, conformance/temporal/vectors-v2.json, crates/ontomark-reason/tests/temporal_contract.rs]
 owner: jjohare
 review_trigger: the owner tags 0.10.0 or a consumer pins it; the Obsidian plugin is wired to ontomark-write; a vault other than visionGraph adopts vocabulary 3; VisionClaw adopts estate-temporal-v2 or the last consumer of v1 moves; memory-ontology changes an IRI used here
 repo: ontomark
 evidence_class: source+test
-acceptance_boundary: implemented on release/v3 at 32b3aac with manifests at 0.10.0; not tagged, released or published; no consumer pins it; no real vault runs vocabulary 3 yet; the Obsidian plugin is not wired to the write engine
+acceptance_boundary: implemented on release/v3 (verified at 313a989, after the human: and journal fixes; the rest as at 32b3aac) with manifests at 0.10.0; not tagged, released or published; no consumer pins it; no real vault runs vocabulary 3 yet; the Obsidian plugin is not wired to the write engine
 ---
 
 # ADR-OM-014 — Vocabulary 3 behind a version switch, one validated write path for the CLI, and estate-temporal-v2

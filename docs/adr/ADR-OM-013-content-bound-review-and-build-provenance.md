@@ -8,7 +8,7 @@ activation_status: staged
 supersedes: []
 superseded_by: []
 amends: [ADR-OM-012]
-verified_commit: 32b3aacdd9531d06c8c7b256828601364dd34034
+verified_commit: 313a989d1cfcf4a8a24be6385e5e351c9c06c388
 verified_paths: [crates/ontomark-parse/src/certification.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-ingest/src/certification.rs]
 owner: jjohare
 review_trigger: Digest encoding changes, consumer trust interpretation changes, or a new provenance role is introduced

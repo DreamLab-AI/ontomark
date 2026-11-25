@@ -7,7 +7,7 @@ implementation_status: complete
 activation_status: live
 supersedes: []
 superseded_by: []
-verified_commit: 32b3aacdd9531d06c8c7b256828601364dd34034
+verified_commit: 313a989d1cfcf4a8a24be6385e5e351c9c06c388
 verified_paths: [crates/ontomark-ingest/src/certification.rs, crates/ontomark-ingest/src/accept.rs, crates/ontomark-ingest/src/judge.rs, crates/ontomark-ingest/src/coverage.rs, crates/ontomark-ingest/tests/certification.rs, crates/ontomark-ingest/tests/coverage.rs, crates/ontomark-cli/src/ground_cmd.rs, crates/ontomark-cli/tests/conformance.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-compile/src/ir/model.rs, crates/ontomark-compile/src/build/page_api.rs, crates/ontomark-compile/src/build/okf.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/write/edit.rs, conformance/fixtures/estate-small.golden/MANIFEST, crates/ontomark-compile/src/build/attribution.rs, crates/ontomark-parse/src/certification.rs, crates/ontomark-cli/src/ingest_cmd.rs, crates/ontomark-compile/src/ir/projection.rs, crates/ontomark-ingest/src/lib.rs, crates/ontomark-compile/src/check/v3/stamps.rs, crates/ontomark-write/src/actor.rs]
 owner: jjohare
 review_trigger: the first `verified` stamp written with `keys`; a release that the visionGraph publisher pins; a second actor kind admitted as human; a page API consumer that cannot take the added `certification` field
