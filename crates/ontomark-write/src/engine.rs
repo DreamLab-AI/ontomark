@@ -39,6 +39,16 @@ pub struct Engine {
     baseline_knowledge: OnceCell<BTreeSet<ErrorKey>>,
 }
 
+/// A page as a host holds it: an id (its vault-relative path without `.md`,
+/// a journal being `journals/YYYY-MM-DD`) and its exact text.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PageText {
+    /// The page id.
+    pub id: String,
+    /// The page's exact text.
+    pub text: String,
+}
+
 /// A page the operation will replace or add, after the change.
 pub(crate) struct Replacement {
     pub kind: VaultKind,
@@ -64,6 +74,83 @@ impl Engine {
             baseline_working: OnceCell::new(),
             baseline_knowledge: OnceCell::new(),
         }
+    }
+
+    /// Build an engine from texts alone, for a host with no file system (the
+    /// Obsidian plugin's wasm worker).
+    ///
+    /// `vocabulary_yaml` is required: without it the engine cannot tell
+    /// version 2 from version 3, and guessing would silently downgrade a
+    /// version 3 vault to unvalidated patches. `profile_yaml` is a corpus
+    /// profile (`None` for the generic one); `roster_yaml` is
+    /// `ontology/attribution.yaml`.
+    ///
+    /// ```
+    /// use ontomark_write::{code, Engine, PageText};
+    /// let page = PageText { id: "n/N".into(), text: "---\ntype: Note\n---\nx\n".into() };
+    /// assert_eq!(
+    ///     Engine::from_texts(None, "", None, &[page.clone()], &[]).err().unwrap().code,
+    ///     code::NO_VOCABULARY
+    /// );
+    /// let e = Engine::from_texts(None, "version: 3\nworking_types:\n  Note: {}\n", None, &[page], &[]).unwrap();
+    /// assert!(e.is_v3());
+    /// ```
+    ///
+    /// # Errors
+    /// [`code::NO_VOCABULARY`] when `vocabulary_yaml` is blank, and
+    /// [`code::INVALID_REQUEST`] when a text does not parse.
+    pub fn from_texts(
+        profile_yaml: Option<&str>,
+        vocabulary_yaml: &str,
+        roster_yaml: Option<&str>,
+        working: &[PageText],
+        knowledge: &[PageText],
+    ) -> Result<Self> {
+        if vocabulary_yaml.trim().is_empty() {
+            return Err(Refusal::new(
+                code::NO_VOCABULARY,
+                "the host supplied no vocabulary; the engine will not guess its version",
+            ));
+        }
+        let invalid = |what: &str, e: &dyn std::fmt::Display| {
+            Refusal::new(code::INVALID_REQUEST, format!("{what} does not parse: {e}"))
+        };
+        let vocab = Vocabulary::from_yaml_str(vocabulary_yaml)
+            .map_err(|e| invalid("the vocabulary", &e))?;
+        let profile = match profile_yaml {
+            Some(y) => Profile::from_yaml(y).map_err(|e| invalid("the profile", &e))?,
+            None => Profile::default(),
+        };
+        let roster = roster_yaml.map(Roster::from_yaml_str);
+        let vault = |kind: VaultKind, pages: &[PageText]| -> Result<Vault> {
+            let root = PathBuf::from(kind.role_name());
+            let mut v = Vault {
+                root: root.clone(),
+                kind,
+                pages: Vec::new(),
+                journals: Vec::new(),
+                skipped: Vec::new(),
+            };
+            for p in pages {
+                let rel = PathBuf::from(format!("{}.md", p.id));
+                confine(&rel)?;
+                let page = Page::parse(root.join(&rel), rel, p.id.clone(), &p.text)
+                    .map_err(|e| invalid(&format!("page `{}`", p.id), &e))?;
+                if p.id.starts_with("journals/") {
+                    v.journals.push(page);
+                } else {
+                    v.pages.push(page);
+                }
+            }
+            Ok(v)
+        };
+        let working = vault(VaultKind::Working, working)?;
+        let knowledge = if knowledge.is_empty() {
+            None
+        } else {
+            Some(vault(VaultKind::Knowledge, knowledge)?)
+        };
+        Ok(Self::new(profile, vocab, roster, working, knowledge))
     }
 
     /// The vocabulary the engine enforces.

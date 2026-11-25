@@ -91,7 +91,7 @@ pub mod system;
 pub mod wire;
 
 pub use actor::{check_timestamp, Actor, Writer};
-pub use engine::Engine;
+pub use engine::{Engine, PageText};
 pub use error::{code, IssueRecord, Refusal};
 #[cfg(feature = "fs")]
 pub use fs::FsStore;
