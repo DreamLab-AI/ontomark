@@ -731,7 +731,7 @@ pub fn run_with(
     let v3_roster = vocab
         .is_v3()
         .then(|| attribution::Roster::discover(&options.repo_root))
-        .filter(|r| !r.is_empty());
+        .filter(|r| !(r.is_empty() && r.principals().is_empty()));
     let v3_siblings = validate::Siblings {
         vaults: working.iter().chain(other_vault.iter()).collect(),
         roster: v3_roster.as_ref(),

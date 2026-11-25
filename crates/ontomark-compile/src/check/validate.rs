@@ -481,7 +481,7 @@ pub fn validate_with(
     let private_ids: HashSet<&str> = vault
         .pages
         .iter()
-        .filter(|p| !p.is_public())
+        .filter(|p| !crate::check::v3::state::is_public_under(p, vault.kind, vocab))
         .map(|p| p.id.as_str())
         .collect();
 
@@ -888,7 +888,16 @@ fn validate_okf(
         None => {}
     }
 
+    // Under version 3 a memory kind has its own lifecycle, checked by
+    // `check::v3::state`; the draft/stable/deprecated rules do not apply.
+    let own_status = !knowledge
+        && vocab.is_v3()
+        && okf.type_name.as_deref().is_some_and(|t| {
+            let def = vocab.working_type(t);
+            def.memory || !def.status.is_empty()
+        });
     match (&okf.status_raw, okf.status) {
+        _ if own_status => {}
         (Some(raw), None) => report.push(
             path,
             Severity::Error,
@@ -904,7 +913,7 @@ fn validate_okf(
         _ => {}
     }
 
-    if okf.status == Some(Status::Stable) && !okf.is_human_verified() {
+    if !own_status && okf.status == Some(Status::Stable) && !okf.is_human_verified() {
         report.push(
             path,
             Severity::Warning,

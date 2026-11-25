@@ -389,7 +389,7 @@ impl Corpus {
                     .filter(|l| !l.trim().is_empty())
                     .unwrap_or_else(|| title.clone()),
                 title,
-                public: page.is_public(),
+                public: crate::check::v3::state::is_public_under(page, vault.kind, vocab),
                 page_iri: fm
                     .text("page_resource")
                     .unwrap_or_else(|| resources[i].clone()),

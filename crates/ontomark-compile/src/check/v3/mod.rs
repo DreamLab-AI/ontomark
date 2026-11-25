@@ -11,6 +11,7 @@
 //! | this one | S0 | the version switch, validation context, closed working enums |
 //! | [`stamps`] | S1 | principal `by`, instrument `via`, human-only `verified` |
 //! | [`temporal`] | S2 | `valid-from`/`valid-to`, supersession, statements |
+//! | [`state`] | S4 | working-memory shape: visibility, `page_resource`, status sets, review state, `about`, recall |
 //! | [`sources`] | S3 | typed sources, locators, pins, the memory kinds' own keys |
 //!
 //! Each rule reports through `Report::push` under a stable code; the codes
@@ -20,6 +21,7 @@ use std::collections::HashMap;
 
 pub mod sources;
 pub mod stamps;
+pub mod state;
 pub mod temporal;
 
 use crate::build::attribution::Roster;
@@ -137,11 +139,13 @@ pub fn page_checks(report: &mut Report, page: &Page, vocab: &Vocabulary, ctx: &C
     stamps::check_page(report, page, ctx);
     temporal::check_page(report, page, vocab, ctx);
     sources::check_page(report, page, vocab, ctx);
+    state::check_page(report, page, vocab, ctx);
 }
 
 /// Rules that need the whole vault (cycles, targets): run after every page.
 pub fn corpus_checks(report: &mut Report, vault: &Vault, vocab: &Vocabulary, ctx: &Context<'_>) {
     temporal::check_corpus(report, vault, vocab, ctx);
+    state::check_corpus(report, vault);
 }
 
 /// `working_extensions` enums are closed under version 3 (ADR-VG-010 §6

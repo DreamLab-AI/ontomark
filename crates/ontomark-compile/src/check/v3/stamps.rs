@@ -492,4 +492,21 @@ mod tests {
         );
         assert_eq!(count(&bad, "INVALID_STAMP"), 2);
     }
+
+    /// Documents a known gap, to be closed before migration m0002: certification
+    /// still counts only `human:` stamps, so a `verified` entry rewritten to the
+    /// `did:nostr:` form (ruling B8) would read as pending. Ignored on purpose:
+    /// this task does not change certification's human test.
+    #[test]
+    #[ignore = "known gap: Certification::from_verified ignores did:nostr stamps (needed before m0002)"]
+    fn certification_should_count_a_verified_did_stamp_by_a_human_principal() {
+        let yaml: serde_norway::Value =
+            serde_norway::from_str(&format!("[{{ by: {B4}, at: '2026-11-04T00:00:00Z' }}]"))
+                .unwrap();
+        let cert = crate::input::okf::Certification::from_verified(Some(&yaml));
+        assert!(
+            cert.whole_page,
+            "a did:nostr verified stamp should certify the page"
+        );
+    }
 }

@@ -36,13 +36,13 @@ pub const PAGE_URN: &str = "urn:visionflow:page:";
 
 /// A `supersedes` entry that names a reason, read tolerantly.
 #[derive(Debug)]
-struct Entry {
-    resource: Option<String>,
-    reason: Option<String>,
+pub(crate) struct Entry {
+    pub(crate) resource: Option<String>,
+    pub(crate) reason: Option<String>,
 }
 
 /// The `supersedes` entries of a page that are mappings.
-fn entries(page: &Page) -> Vec<Entry> {
+pub(crate) fn entries(page: &Page) -> Vec<Entry> {
     let Some(Yaml::Sequence(items)) = page.frontmatter.get("supersedes") else {
         return Vec::new();
     };
@@ -63,7 +63,7 @@ fn text(m: &Mapping, key: &str) -> Option<String> {
 }
 
 /// The `superseded-by` references of a page.
-fn superseded_by(page: &Page) -> Vec<String> {
+pub(crate) fn superseded_by(page: &Page) -> Vec<String> {
     page.frontmatter.strings("superseded-by")
 }
 

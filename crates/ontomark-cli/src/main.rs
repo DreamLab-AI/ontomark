@@ -610,7 +610,7 @@ impl V3Context {
             .flatten()
             .collect();
         Self {
-            roster: (!roster.is_empty()).then_some(roster),
+            roster: (!(roster.is_empty() && roster.principals().is_empty())).then_some(roster),
             extra,
         }
     }
