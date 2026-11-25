@@ -155,6 +155,46 @@ fn sources_reach_the_published_ontology_and_page_api_without_leaking_a_private_t
     }
 }
 
+/// S1: a citation by `urn:visionflow:page:` is redacted by the same rule as the
+/// same citation by wikilink: a private target is withheld whatever the
+/// `rel`, a public one survives, and nothing private reaches any output file.
+#[test]
+fn a_page_urn_citation_is_redacted_exactly_like_a_wikilink() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = repo(dir.path());
+    write(
+        &root,
+        "knowledge/Cites By Urn.md",
+        &format!(
+            "---\ntype: Class\ntitle: Cites By Urn\nresource: urn:ngm:class:cites-by-urn\npublic: true\nstatus: stable\ngenerated:\n  by: {B4}\n  at: 2026-11-01T00:00:00Z\nsources:\n- {{ id: a, resource: 'urn:visionflow:page:0be7a11c0de0', rel: origin }}\n- {{ id: b, resource: '{SECRET_URN}', rel: origin, locator: 'fp:32ebb74ef2751e32' }}\n- {{ id: c, resource: '{SECRET_URN}', rel: derived-from, locator: 'sha256-v1:{PIN}' }}\n- {{ id: d, resource: 'urn:visionflow:page:b21ef0000001', rel: derived-from, locator: 'sha256-v1:{PIN}' }}\n---\nBody.\n"
+        ),
+    );
+    let out = dir.path().join("out");
+    run_build(&root, &out);
+    let page: serde_json::Value =
+        serde_json::from_slice(&fs::read(out.join("api/v3/pages/cites-by-urn.json")).unwrap())
+            .unwrap();
+    let ids: Vec<&str> = page["sources"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| s["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        ids,
+        ["a", "d"],
+        "public urns survive, private ones do not: {page}"
+    );
+    let mut all = Vec::new();
+    files(&out, &mut all);
+    for path in all {
+        let text = String::from_utf8_lossy(&fs::read(&path).unwrap()).into_owned();
+        for needle in [SECRET_TITLE, "5ec2e7c0ffee", "zebra-hush-ledger"] {
+            assert!(!text.contains(needle), "{} leaks {needle}", path.display());
+        }
+    }
+}
+
 /// A public class with one open and one closed statement.
 fn statements_repo(dir: &Path) -> PathBuf {
     let root = dir.join("repo");

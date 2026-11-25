@@ -180,6 +180,11 @@ pub struct Plan {
     pub status: PlanStatus,
     /// Why the plan is refused.
     pub reasons: Vec<String>,
+    /// SHA-256 of an input the migration reads from outside the repository,
+    /// when it has one ([`Migration::external_input_digest`]). Apply refuses
+    /// to run with a different one. Absent from the JSON otherwise.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub external_input: Option<String>,
     /// The classified diff: how many files each change class touches, for a
     /// migration that names its classes ([`Migration::classify`]). Empty,
     /// and absent from the JSON, otherwise.
@@ -596,7 +601,8 @@ pub fn plan(
             *classes.entry(class).or_insert(0) += 1;
         }
     }
-    if let Some(external) = migration.external_input_digest() {
+    let external_input = migration.external_input_digest();
+    if let Some(external) = &external_input {
         let _ = writeln!(digest_input, "external-input\0{external}");
     }
     let input_digest = sha256_hex(digest_input.as_bytes());
@@ -687,6 +693,7 @@ pub fn plan(
             PlanStatus::Refused
         },
         reasons,
+        external_input,
         classes,
         pages,
         deltas,

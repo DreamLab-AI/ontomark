@@ -69,8 +69,7 @@ pub(crate) fn legacy_warnings(report: &mut Report, page: &Page) {
 /// Version 3: every stamp on the page follows the v3 grammar.
 pub(crate) fn check_page(report: &mut Report, page: &Page, ctx: &Context<'_>) {
     let roster = ctx.roster();
-    let working = ctx.vault.kind == crate::input::page::VaultKind::Working;
-    for (field, value) in stamp_values(page, working) {
+    for (field, value) in stamp_values(page, true) {
         let verified = field.starts_with("verified");
         check_value(
             report,
@@ -607,6 +606,17 @@ mod tests {
         );
         let okf = crate::input::okf::OkfBlock::from_frontmatter(&page.frontmatter);
         assert!(!okf.is_human_verified_with(Some(&roster)));
+    }
+
+    /// S12 on a knowledge page: an empty `generated:` is as invalid there as on
+    /// a working page.
+    #[test]
+    fn an_empty_generated_is_invalid_on_a_knowledge_page_too() {
+        let r = run_k("generated:\n", 3, None);
+        assert!(has(&r, "INVALID_STAMP"), "{:?}", codes(&r));
+        assert!(!r.errors().is_empty());
+        // Version 2 keeps ignoring it.
+        assert!(!has(&run_k("generated:\n", 2, None), "INVALID_STAMP"));
     }
 
     /// The page API's certification (`for_page_with`, the parse crate's
