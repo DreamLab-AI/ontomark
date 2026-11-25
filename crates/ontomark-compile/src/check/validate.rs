@@ -700,7 +700,11 @@ pub fn validate_with(
     for journal in &vault.journals {
         page_level_checks(&mut report, &journal.id, journal, vocab, false);
         match &v3 {
-            Some(ctx) => crate::check::v3::stamps::check_page(&mut report, journal, ctx),
+            Some(ctx) => {
+                crate::check::v3::stamps::check_page(&mut report, journal, ctx);
+                // Ruling 8: a journal carries the same required working keys.
+                crate::check::v3::state::check_page(&mut report, journal, vocab, ctx);
+            }
             None => crate::check::v3::stamps::legacy_warnings(&mut report, journal),
         }
         // The identity of a journal page is its date. A stem that is not one is

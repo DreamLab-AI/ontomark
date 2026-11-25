@@ -5,7 +5,7 @@
 //! |---|---|---|
 //! | `INVALID_SOURCE` | error | a `sources` entry without `id`, a resolving `rel` without `resource`, or an unknown `rel` |
 //! | `INVALID_SOURCE_RESOURCE` | error | `origin`, `episode`, `evidence` or `derived-from` whose `resource` is free text |
-//! | `DANGLING_SOURCE` | warning | such a wikilink names no page, when both vaults are loaded |
+//! | `DANGLING_SOURCE` | error | such a wikilink names no page, when both vaults are loaded |
 //! | `BRIEF_AS_EVIDENCE` | error | `rel: evidence` or `origin` pointing at a `Brief` |
 //! | `MISSING_LOCATOR` | error | `rel: evidence` to an `Episode` ledger without a `locator` |
 //! | `DANGLING_LOCATOR` | error | a `fp:` fingerprint absent from the ledger it cites |
@@ -182,7 +182,7 @@ pub(crate) fn check_page(report: &mut Report, page: &Page, vocab: &Vocabulary, c
                 {
                     report.push(
                         path,
-                        Severity::Warning,
+                        Severity::Error,
                         "DANGLING_SOURCE",
                         format!("`{field}`: `{resource}` names no page"),
                     );
@@ -516,7 +516,12 @@ mod tests {
                 roster: None,
             },
         );
-        assert!(has(&r, "DANGLING_SOURCE"), "{:?}", codes(&r));
+        // Ruling 10: an error under vocabulary 3.
+        assert!(
+            r.errors().iter().any(|i| i.code == "DANGLING_SOURCE"),
+            "{:?}",
+            codes(&r)
+        );
     }
 
     #[test]

@@ -5,7 +5,7 @@
 //! |---|---|---|
 //! | `MISSING_WORKING_KEY` | error | a working page without a key `working_required` (default `page_resource`, `visibility`, `generated`) or its type's `required` asks for |
 //! | `INVALID_VISIBILITY` | error | `visibility` outside `private`, `shared`, `public` |
-//! | `PRIVATE_UNSUPPORTED` | warning | `visibility: private`, which has no store yet (ADR-VG-012 §5) |
+//! | `PRIVATE_UNSUPPORTED` | error | `visibility: private`, which has no store yet (ADR-VG-012 §5) |
 //! | `INVALID_PAGE_RESOURCE` | error | `page_resource` not of the form `urn:visionflow:page:<id>` |
 //! | `DUPLICATE_PAGE_RESOURCE` | error | two working pages minted the same `page_resource` |
 //! | `MEMORY_STATUS` | error | a memory page without `status`, or outside its set |
@@ -22,7 +22,7 @@
 //! `validate`'s: it needs the previous version of the page.
 //!
 //! Pages with no frontmatter at all are private scratch (they are never
-//! public) and are skipped, as are journals.
+//! public) and are skipped. Journals are held to the same required keys.
 
 use std::collections::{HashMap, HashSet};
 
@@ -137,7 +137,7 @@ pub(crate) fn check_page(report: &mut Report, page: &Page, vocab: &Vocabulary, c
         match v.as_str() {
             Some("private") => report.push(
                 path,
-                Severity::Warning,
+                Severity::Error,
                 "PRIVATE_UNSUPPORTED",
                 "`visibility: private` has no store yet; no page may be marked private (ADR-VG-012 §5)",
             ),
@@ -432,7 +432,60 @@ mod tests {
         };
         assert!(!has(&w(&[("N", &page("public"))]), "INVALID_VISIBILITY"));
         assert!(has(&w(&[("N", &page("everyone"))]), "INVALID_VISIBILITY"));
-        assert!(has(&w(&[("N", &page("private"))]), "PRIVATE_UNSUPPORTED"));
+        let private = w(&[("N", &page("private"))]);
+        assert!(has(&private, "PRIVATE_UNSUPPORTED"));
+        // Ruling 11: an error under vocabulary 3, not a warning.
+        assert!(
+            private
+                .errors()
+                .iter()
+                .any(|i| i.code == "PRIVATE_UNSUPPORTED"),
+            "{:?}",
+            codes(&private)
+        );
+    }
+
+    /// Ruling 8: a journal is held to the same required working keys as a page.
+    #[test]
+    fn a_journal_is_held_to_the_required_working_keys() {
+        let v3 = vocab(3, "");
+        let run_journal = |text: &str| {
+            let page = crate::input::page::Page::parse(
+                "/v/journals/2026-11-25.md",
+                "journals/2026-11-25.md",
+                "2026-11-25",
+                text,
+            )
+            .unwrap();
+            let vault = crate::input::page::Vault {
+                root: std::path::PathBuf::from("/v"),
+                kind: VaultKind::Working,
+                pages: Vec::new(),
+                journals: vec![page],
+                skipped: Vec::new(),
+            };
+            let corpus = crate::ir::model::Corpus::build(&vault, &v3);
+            crate::check::validate::validate(
+                &crate::profile::Profile::generic(),
+                &vault,
+                &corpus,
+                &v3,
+            )
+        };
+        let bare = run_journal("---\ntype: Journal\nstatus: draft\n---\n- a\n");
+        assert_eq!(
+            bare.errors()
+                .iter()
+                .filter(|i| i.code == "MISSING_WORKING_KEY")
+                .count(),
+            3,
+            "{:?}",
+            codes(&bare)
+        );
+        let whole = run_journal(&head("Journal", "draft", ""));
+        assert!(!has(&whole, "MISSING_WORKING_KEY"), "{:?}", codes(&whole));
+        // A journal with no header at all is still private scratch.
+        assert!(!has(&run_journal("- a\n"), "MISSING_WORKING_KEY"));
     }
 
     #[test]

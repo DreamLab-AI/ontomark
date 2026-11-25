@@ -11,7 +11,7 @@
 //!   without a word.
 //! * **Version 3.** The same defect is an error, and the stamp must also follow
 //!   the v3 grammar: `by` names a principal (a `did:nostr:` with a 64 lowercase
-//!   hex body, or a `human:` whose `npub` decodes), `via` names an
+//!   hex body; the `human:` spelling of vocabulary 2 is an error, ruling 2), `via` names an
 //!   `agent:` or `process:` instrument, and `verified` entries are by humans
 //!   according to the roster's principal `kind`.
 //!
@@ -215,6 +215,20 @@ fn check_principal(
     shape: Shape,
     roster: Option<&Roster>,
 ) {
+    // Ruling 2 (LOCKED-PLAN, after S6): under vocabulary 3 `by` is the
+    // principal's did:nostr, never the legacy `human:` spelling; m0002 rewrites
+    // every such stamp.
+    if let Actor::Human(name) = actor {
+        invalid(
+            report,
+            path,
+            field,
+            format!(
+                "`by: human:{name}` is the vocabulary 2 spelling; name the principal as did:nostr:<64 hex> (ontomark migrate m0002-vocabulary-v3 rewrites it)"
+            ),
+        );
+        return;
+    }
     let Some(did) = actor.principal_did() else {
         match actor {
             Actor::Human(name) => invalid(
@@ -367,13 +381,17 @@ mod tests {
                 codes(&r)
             );
         }
-        // The legacy spelling is read under v3 too; the principal is the same key.
-        let r = run_k(
-            &format!("generated: {{ by: 'human:{D5_NPUB}', at: '2026-09-22T00:00:00Z' }}\n"),
-            3,
-            None,
+        // The vocabulary 2 spelling is read under v2 only (ruling 2): under v3
+        // it is an error naming the migration.
+        let legacy =
+            format!("generated: {{ by: 'human:{D5_NPUB}', at: '2026-09-22T00:00:00Z' }}\n");
+        assert!(!has(&run_k(&legacy, 2, None), "INVALID_STAMP"));
+        let r = run_k(&legacy, 3, None);
+        assert!(
+            has(&r, "INVALID_STAMP") && !r.errors().is_empty(),
+            "{:?}",
+            codes(&r)
         );
-        assert!(!has(&r, "INVALID_STAMP"), "{:?}", codes(&r));
     }
 
     #[test]
@@ -465,7 +483,8 @@ mod tests {
             3,
             Some(&roster),
         );
-        assert!(has(&npub, "NON_CANONICAL_PRINCIPAL"));
+        // Ruling 2: the vocabulary 2 spelling is an error under v3, not a warning.
+        assert!(has(&npub, "INVALID_STAMP") && !npub.errors().is_empty());
         let canonical = run_k(
             &format!("generated: {{ by: {B4}, at: '2026-09-22T00:00:00Z' }}\n"),
             3,
