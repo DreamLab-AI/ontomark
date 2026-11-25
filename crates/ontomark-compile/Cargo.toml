@@ -82,6 +82,10 @@ name = "machine_scope"
 required-features = ["whelk-el"]
 
 [[test]]
+name = "m0002"
+required-features = ["whelk-el"]
+
+[[test]]
 name = "register_sev1"
 required-features = ["whelk-el"]
 

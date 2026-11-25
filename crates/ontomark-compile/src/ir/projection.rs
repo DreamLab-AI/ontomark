@@ -624,9 +624,35 @@ pub fn project_vault_with_links(
     extra_private: &HashSet<String>,
     links: &crate::build::redact::PrivateLinks,
 ) -> Result<(Corpus, ProseRedactor), PublicationBlocked> {
-    project(profile, &Corpus::build(vault, vocab), extra_private)?;
+    project_vault_with_links_attributed(profile, vault, vocab, extra_private, links, None)
+}
+
+/// [`project_vault_with_links`] reading certification against `roster`, so a
+/// `verified` stamp by a human principal's `did:nostr:` key still reads
+/// `certified` in the published page API (vocabulary 3). `None` is
+/// [`project_vault_with_links`].
+///
+/// # Errors
+/// [`PublicationBlocked::Collision`] for conflicting publication identities.
+pub fn project_vault_with_links_attributed(
+    profile: &Profile,
+    vault: &Vault,
+    vocab: &Vocabulary,
+    extra_private: &HashSet<String>,
+    links: &crate::build::redact::PrivateLinks,
+    roster: Option<&crate::build::attribution::Roster>,
+) -> Result<(Corpus, ProseRedactor), PublicationBlocked> {
+    project(
+        profile,
+        &Corpus::build_with(vault, vocab, roster),
+        extra_private,
+    )?;
     let cleaned = clean_vault(vault, links, vocab);
-    project_with_redactor(profile, &Corpus::build(&cleaned, vocab), extra_private)
+    project_with_redactor(
+        profile,
+        &Corpus::build_with(&cleaned, vocab, roster),
+        extra_private,
+    )
 }
 
 /// `vault` as the public surfaces may see it: held pages forced private, and
@@ -772,10 +798,43 @@ pub fn project_machine(
     extra_private: &HashSet<String>,
     links: &crate::build::redact::PrivateLinks,
 ) -> Result<MachineProjection, PublicationBlocked> {
+    project_machine_attributed(
+        profile,
+        knowledge,
+        working,
+        vocab,
+        extra_private,
+        links,
+        None,
+    )
+}
+
+/// [`project_machine`] reading certification against `roster`; see
+/// [`project_vault_with_links_attributed`].
+///
+/// # Errors
+/// [`PublicationBlocked::Collision`] or [`PublicationBlocked::Redactor`], as
+/// [`project_vault_with_links`].
+#[allow(clippy::too_many_arguments)]
+pub fn project_machine_attributed(
+    profile: &Profile,
+    knowledge: &Vault,
+    working: &Vault,
+    vocab: &Vocabulary,
+    extra_private: &HashSet<String>,
+    links: &crate::build::redact::PrivateLinks,
+    roster: Option<&crate::build::attribution::Roster>,
+) -> Result<MachineProjection, PublicationBlocked> {
     use crate::input::page::VaultKind;
 
-    let (knowledge_corpus, redactor) =
-        project_vault_with_links(profile, knowledge, vocab, extra_private, links)?;
+    let (knowledge_corpus, redactor) = project_vault_with_links_attributed(
+        profile,
+        knowledge,
+        vocab,
+        extra_private,
+        links,
+        roster,
+    )?;
 
     // The union's extra identities: the held pages of both vaults.
     let mut union_extra = extra_private.clone();
@@ -787,7 +846,7 @@ pub fn project_machine(
     // is published) and yields silently; a PUBLIC working page beside a
     // PRIVATE page of either vault would expose the private identity through
     // its own, and is refused.
-    let knowledge_raw = Corpus::build(knowledge, vocab).records;
+    let knowledge_raw = Corpus::build_with(knowledge, vocab, roster).records;
     let public_knowledge: HashSet<String> = knowledge_raw
         .iter()
         .filter(|r| r.public)
@@ -795,16 +854,17 @@ pub fn project_machine(
         .collect();
     let mut raw = knowledge_raw;
     raw.extend(
-        Corpus::build(&hold_back(working), vocab)
+        Corpus::build_with(&hold_back(working), vocab, roster)
             .records
             .into_iter()
             .map(|r| strip_shared_public_identity(r, &public_knowledge)),
     );
     Split::checked(&raw, &union_extra)?;
 
-    let cleaned_knowledge = Corpus::build(&clean_vault(knowledge, links, vocab), vocab);
+    let cleaned_knowledge =
+        Corpus::build_with(&clean_vault(knowledge, links, vocab), vocab, roster);
     let cleaned_working = clean_vault(working, links, vocab);
-    let mut working_corpus = Corpus::build(&cleaned_working, vocab);
+    let mut working_corpus = Corpus::build_with(&cleaned_working, vocab, roster);
 
     // A public working page whose identity a public knowledge page already
     // holds yields to it (knowledge wins, as in `VisionClaw`'s merge). Decided

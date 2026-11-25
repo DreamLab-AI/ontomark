@@ -776,8 +776,15 @@ pub fn run_with(
     let mut machine_summary = None;
     let (corpus, prose_redactor) =
         if let (true, Some(links), Some(working)) = (machine, &private_links, &working) {
-            let projected =
-                projection::project_machine(profile, &vault, working, vocab, &excluded, links)?;
+            let projected = projection::project_machine_attributed(
+                profile,
+                &vault,
+                working,
+                vocab,
+                &excluded,
+                links,
+                v3_roster.as_ref(),
+            )?;
             merged = Some(projected.merged());
             machine_summary = Some(MachineSummary {
                 working_records: projected.plain.len(),
@@ -785,7 +792,14 @@ pub fn run_with(
             });
             (projected.knowledge, projected.redactor)
         } else if let Some(links) = &private_links {
-            projection::project_vault_with_links(profile, &vault, vocab, &excluded, links)?
+            projection::project_vault_with_links_attributed(
+                profile,
+                &vault,
+                vocab,
+                &excluded,
+                links,
+                v3_roster.as_ref(),
+            )?
         } else {
             // Explicit compatibility mode retains the legacy projection bytes.
             projection::project_with_redactor(profile, &raw, &excluded)?

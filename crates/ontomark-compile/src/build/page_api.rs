@@ -102,6 +102,16 @@ pub fn build_v3_at(
                 "unbound": record.certification.unbound,
             });
             if let Some(facts) = record.v3.as_deref() {
+                // The instrument, in the v3 documents only: their context (v4)
+                // has the term, and the legacy page API keeps its keys.
+                if let (Some(via), Some(provenance)) = (
+                    &facts.via,
+                    doc.value
+                        .get_mut("provenance")
+                        .and_then(Value::as_object_mut),
+                ) {
+                    provenance.insert("via".into(), json!(via));
+                }
                 if let Some(from) = &facts.valid_from {
                     doc.value["validFrom"] = json!(from);
                 }
@@ -151,6 +161,24 @@ pub fn build_attributed(
                     json!({
                         "wasAttributedTo": gen.did,
                         "label": gen.label,
+                        "actor": record.generated_by.as_ref().map(|a| a.as_string()),
+                    }),
+                );
+            } else if let Some(principal) = record.v3.as_deref().and_then(|f| f.principal.as_ref())
+            {
+                // Vocabulary 3: `by` names a principal, which is not a roster
+                // generator. The block keeps its keys; `label` is the roster's
+                // name for the principal, else the DID.
+                let label = roster
+                    .principals()
+                    .iter()
+                    .find(|p| &p.did == principal)
+                    .map_or(principal.as_str(), |p| p.label.as_str());
+                entry.insert(
+                    "provenance".into(),
+                    json!({
+                        "wasAttributedTo": principal,
+                        "label": label,
                         "actor": record.generated_by.as_ref().map(|a| a.as_string()),
                     }),
                 );

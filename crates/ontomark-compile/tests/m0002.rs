@@ -542,3 +542,70 @@ fn a_crlf_page_is_migrated_with_its_line_endings() {
     );
     assert!(!t.replace("\r\n", "").contains('\n'), "no bare LF: {t:?}");
 }
+
+/// The published page API after the migration: Fungible Token is still
+/// certified and every page still names who answers for it. (`validate` reading
+/// the roster is not enough: the page API reads the record's certification,
+/// built through the link-redaction projection.)
+#[test]
+fn the_published_page_api_keeps_certification_and_provenance_after_the_migration() {
+    use ontomark_compile::build::{self, Scope};
+    use ontomark_compile::input::vocabulary::Vocabulary;
+    use ontomark_compile::whelk::WhelkEl;
+
+    fn build_api(root: &Path, out: &Path) {
+        let vocab = Vocabulary::load(root.join("ontology/vocabulary.yaml")).unwrap();
+        let opts = build::Options {
+            vault_root: root.join("knowledge"),
+            out: out.to_path_buf(),
+            repo_root: root.to_path_buf(),
+            with_markdown_mirror: false,
+            generated_at: Some("2026-11-25T10:00:00+00:00".to_owned()),
+            source: Some(("0".repeat(40), false)),
+            with_working_publish: false,
+            redact_private_links: Some(true),
+            publish_out: None,
+            stale_after: None,
+            scope: Scope::Public,
+            certificate_out: None,
+        };
+        build::run(&opts, &profile(), &vocab, &WhelkEl).unwrap();
+    }
+    fn doc(out: &Path, rel: &str) -> serde_json::Value {
+        serde_json::from_slice(&fs::read(out.join(rel)).unwrap()).unwrap()
+    }
+
+    let (dir, root) = seeded();
+    let before = dir.path().join("before");
+    build_api(&root, &before);
+    assert_eq!(
+        doc(&before, "api/pages/fungible-token.json")["certification"]["state"],
+        "certified"
+    );
+
+    let plan = plan_of(&root);
+    run_apply(&root, &plan, &accept()).unwrap();
+    let after = dir.path().join("after");
+    build_api(&root, &after);
+
+    let ft = doc(&after, "api/pages/fungible-token.json");
+    assert_eq!(ft["certification"]["state"], "certified", "{ft}");
+    assert_eq!(ft["provenance"]["wasAttributedTo"], B4, "{ft}");
+    let ft3 = doc(&after, "api/v3/pages/fungible-token.json");
+    assert_eq!(ft3["certification"]["state"], "certified");
+
+    // The instrument is named in the v3 documents only (their context, v4,
+    // has the term); the legacy page API keeps its keys.
+    let alpha = doc(&after, "api/pages/alpha.json");
+    assert_eq!(alpha["provenance"]["wasAttributedTo"], B4, "{alpha}");
+    assert!(alpha["provenance"].get("via").is_none(), "{alpha}");
+    let alpha3 = doc(&after, "api/v3/pages/alpha.json");
+    assert_eq!(
+        alpha3["provenance"]["via"], "agent:enrichment-swarm/6",
+        "{alpha3}"
+    );
+    let ctx = doc(&after, "context/v4.jsonld");
+    assert!(ctx["@context"]["provenance"]["@context"]
+        .get("via")
+        .is_some());
+}

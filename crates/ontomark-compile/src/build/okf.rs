@@ -208,6 +208,7 @@ pub fn context_v4(profile: &Profile, vocab: &Vocabulary) -> Value {
         json!({ "@id": "temporal:validFrom", "@type": "xsd:dateTimeStamp" });
     context["@context"]["validUntil"] =
         json!({ "@id": "temporal:validUntil", "@type": "xsd:dateTimeStamp" });
+    context["@context"]["provenance"]["@context"]["via"] = json!(format!("{vc}:via"));
     context["@context"]["recallable"] =
         json!({ "@id": format!("{vc}:recallable"), "@type": "xsd:boolean" });
     context
