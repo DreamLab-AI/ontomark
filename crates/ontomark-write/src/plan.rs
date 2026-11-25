@@ -107,9 +107,12 @@ impl Plan {
         self.writes.iter().all(PlannedWrite::is_noop)
     }
 
-    /// Apply the plan to `store`: every file or none.
+    /// Apply the plan to `store`: every file, or the earlier ones restored.
     ///
-    /// Each target is first re-read and compared with the text the plan was
+    /// This is ordered, not crash-atomic: each file is replaced atomically,
+    /// but a kill between two files leaves a partial plan on disk (for an
+    /// approve-then-supersede, `PENDING_SUPERSESSION`, finished by
+    /// `complete_supersession`). Each target is first re-read and compared with the text the plan was
     /// made against; a stale file refuses the whole plan before anything is
     /// written. Writes then happen in order, and when one fails the earlier
     /// ones are restored.

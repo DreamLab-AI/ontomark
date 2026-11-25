@@ -1,4 +1,5 @@
-//! Where a [`Plan`](crate::Plan) lands, and the atomic commit across files.
+//! Where a [`Plan`](crate::Plan) lands, and the ordered commit across files
+//! (each file atomic; the set is not crash-atomic).
 //!
 //! The engine never touches a disk itself: it hands a [`Store`] the bytes.
 //! [`MemStore`] is the in-memory store hosts and tests use;

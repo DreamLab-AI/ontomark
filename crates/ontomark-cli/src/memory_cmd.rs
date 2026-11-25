@@ -90,6 +90,18 @@ pub enum MemoryCommand {
     Dispute(DisputeArgs),
     /// Finish an approve-then-supersede that was interrupted.
     Complete(IdArgs),
+    /// Print the deterministic `page_resource` of a working page id, the one
+    /// m0002 mints and a journal is adopted with: a template or hook asks the
+    /// binary instead of hashing anything itself. Needs no vault.
+    Resource(ResourceArgs),
+}
+
+/// A page id whose deterministic `page_resource` is wanted.
+#[derive(Debug, Args)]
+pub struct ResourceArgs {
+    /// The working page id: its path without `.md`, for a journal
+    /// `journals/YYYY-MM-DD`.
+    pub id: String,
 }
 
 /// The page every verb acts on.
@@ -563,6 +575,17 @@ pub fn run(
     vocab: &Vocabulary,
     json_out: bool,
 ) -> anyhow::Result<ExitCode> {
+    if let MemoryCommand::Resource(a) = command {
+        let id = a.id.trim().trim_end_matches(".md");
+        anyhow::ensure!(!id.is_empty(), "a page id is required");
+        let urn = ontomark_compile::check::v3::state::derived_page_resource(id);
+        if json_out {
+            println!("{}", serde_json::json!({ "id": id, "page_resource": urn }));
+        } else {
+            println!("{urn}");
+        }
+        return Ok(ExitCode::SUCCESS);
+    }
     let (engine, mut store) = build(root, profile, vocab)?;
     let transition =
         |id: &str, mv: Move, w: &WriterArgs| -> anyhow::Result<Result<Plan, Refusal>> {
@@ -688,5 +711,7 @@ pub fn run(
                 a.dry_run,
             )
         }
+        // Answered above, before any vault is read.
+        MemoryCommand::Resource(_) => Ok(ExitCode::SUCCESS),
     }
 }

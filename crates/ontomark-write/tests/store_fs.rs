@@ -49,6 +49,33 @@ fn replace_is_atomic_and_leaves_no_temporary_file() {
     assert!(leftovers(d.path()).is_empty());
 }
 
+/// A rewritten page keeps its mode (a temporary file is born 0600), and a new
+/// page is born 0644 so other readers on the box keep working.
+#[test]
+fn replace_keeps_the_mode_and_a_new_page_is_world_readable() {
+    let d = tmp();
+    fs::write(d.path().join("a.md"), "old").unwrap();
+    fs::set_permissions(d.path().join("a.md"), fs::Permissions::from_mode(0o640)).unwrap();
+    let mut s = FsStore::new(Some(d.path()), None).unwrap();
+    s.write(
+        VaultKind::Working,
+        Path::new("a.md"),
+        b"new",
+        WriteMode::Replace,
+    )
+    .unwrap();
+    let mode = |p: &str| fs::metadata(d.path().join(p)).unwrap().permissions().mode() & 0o777;
+    assert_eq!(mode("a.md"), 0o640);
+    s.write(
+        VaultKind::Working,
+        Path::new("b.md"),
+        b"x",
+        WriteMode::CreateNew,
+    )
+    .unwrap();
+    assert_eq!(mode("b.md"), 0o644);
+}
+
 #[test]
 fn create_new_is_exclusive_and_makes_missing_directories() {
     let d = tmp();

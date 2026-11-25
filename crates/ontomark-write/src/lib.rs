@@ -5,7 +5,8 @@
 //! operation takes a snapshot of the vault, plans the write, validates the
 //! result with the same validator `ontomark validate` runs, and returns a
 //! [`Plan`]; nothing is written until [`Plan::commit`] applies it to a
-//! [`Store`], atomically across every file the operation touches.
+//! [`Store`]: in order across every file the operation touches, each file
+//! atomically (see "What is and is not guaranteed").
 //!
 //! | operation | what it does |
 //! |---|---|
@@ -19,6 +20,32 @@
 //! Approving a disputed draft is one operation over several pages: the draft
 //! is written first (`approved`), then each page it replaces (`superseded`),
 //! and [`Plan::commit`] writes all of them or none.
+//!
+//! # What is and is not guaranteed
+//!
+//! * **Per file**, a write is atomic: a temporary file in the same directory is
+//!   renamed into place, so a reader sees the old page or the new one.
+//! * **Across files** a plan is *ordered*, not crash-atomic. Files are written
+//!   in order, and when one write fails the earlier ones are restored in
+//!   process. A kill or power loss between two writes leaves a half-done
+//!   supersession; no journal backs it. The state is detectable
+//!   (`PENDING_SUPERSESSION`) and [`Engine::complete_supersession`] finishes
+//!   it, which is the recovery path.
+//! * **Who writes is asserted, not proved.** `--by` / `ONTOMARK_PRINCIPAL`
+//!   accept any principal key, and with no roster [`Actor::may_approve`]
+//!   permits anyone. "Only humans approve" is therefore advisory until
+//!   receipts exist (ADR-VG-011 stamps are `asserted`). What the engine does
+//!   enforce: an approval carries no `via`, and the key must resolve to a
+//!   `kind: human` principal itself; an instrument's key (a swarm, generator
+//!   or process) is refused even when the roster files it under a human.
+//! * **One write path, with named exceptions.** `edit`, `create`, `apply` and
+//!   the `memory` verbs go through the engine. `repair bodies|fences` rewrite
+//!   working pages in place (no `content-updated`, no `contributors`),
+//!   `migrate apply` has its own journal, and `ingest` writes bundles outside
+//!   the vaults; `ontomark_compile`'s `create::write` remains public. A
+//!   `repair` of a working memory page therefore bypasses the audit trail.
+//! * **`contributors` is one entry per write**, oldest first (ADR-VG-012
+//!   section 6, ADR-VG-013 section 7).
 //!
 //! # Vocabulary versions
 //!
@@ -102,7 +129,6 @@ pub use ops::disputes::{DisputeInput, RecordDisputesRequest};
 pub use ops::patch::{BodyEdit, Change, PatchRequest};
 pub use ops::supersede::{CompleteRequest, Pending, Resolution, SupersedeReason};
 pub use ops::transition::{Move, TransitionRequest, Withdrawal};
-pub use ops::CONTRIBUTORS_ONE_PER_WRITER;
 pub use plan::{DisputeRef, Plan, PlannedWrite, ReviewEvent, ReviewEventKind};
 pub use store::{CommitError, CommitReport, MemStore, Store, WriteMode};
 

@@ -2,7 +2,7 @@
 //!
 //! | move | from | to | notes |
 //! |---|---|---|---|
-//! | [`Move::Approve`] | draft | approved | no `via`; sets `last-reviewed`; a disputed draft supersedes what it disputed, atomically |
+//! | [`Move::Approve`] | draft | approved | no `via`; sets `last-reviewed`; a disputed draft supersedes what it disputed, in one ordered plan |
 //! | [`Move::Reject`] | draft | invalidated | withdrawal entry |
 //! | [`Move::Confirm`] | approved | approved | no `via`; only `last-reviewed` moves |
 //! | [`Move::SendBack`] | approved | draft | needs disputes, a `status-reason`, or both |

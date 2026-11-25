@@ -859,7 +859,12 @@ fn a_creation_never_overwrites_at_commit_time() {
 fn adopt_mints_identity_for_a_journal_and_leaves_complete_pages_alone() {
     let journal = "---\ntags: [daily]\n---\nToday I wrote tests.\n";
     let complete = belief("c1", "draft", "");
-    let e = engine(&[("journals/2026-11-20", journal), ("b/C", &complete)]);
+    let note = "---\ntype: Note\nstatus: draft\n---\nx\n";
+    let e = engine(&[
+        ("journals/2026-11-20", journal),
+        ("b/C", &complete),
+        ("n/N", note),
+    ]);
     let req = |id: &str| ontomark_write::AdoptRequest {
         id: id.into(),
         expect: None,
@@ -869,8 +874,25 @@ fn adopt_mints_identity_for_a_journal_and_leaves_complete_pages_alone() {
     };
     let plan = e.adopt(&req("journals/2026-11-20")).unwrap();
     let a = Document::parse(&plan.writes[0].text);
+    // A journal's identity is its own date: the same urn whatever the entropy
+    // or the day it is adopted (what m0002 mints, via `derived_page_resource`).
     assert_eq!(
         a.value("page_resource"),
+        Some(&Value::string(
+            ontomark_compile::check::v3::state::derived_page_resource("journals/2026-11-20")
+        ))
+    );
+    let mut other = req("journals/2026-11-20");
+    other.entropy = [9; 32];
+    other.now = "2026-12-31T00:00:00Z".into();
+    assert_eq!(
+        Document::parse(&e.adopt(&other).unwrap().writes[0].text).value("page_resource"),
+        a.value("page_resource")
+    );
+    // Any other page is minted from the caller's entropy.
+    let n = e.adopt(&req("n/N")).unwrap();
+    assert_eq!(
+        Document::parse(&n.writes[0].text).value("page_resource"),
         Some(&Value::string(format!(
             "urn:visionflow:page:{}",
             "05".repeat(32)
@@ -892,4 +914,43 @@ fn adopt_mints_identity_for_a_journal_and_leaves_complete_pages_alone() {
         "nothing missing, nothing written"
     );
     assert_eq!(e.adopt(&req("nope")).unwrap_err().code, code::NOT_FOUND);
+}
+
+/// B1: an instrument's own key never approves, even when the roster files it
+/// under the operator; the refusal writes nothing, so the approval is not
+/// re-stamped as the operator's.
+#[test]
+fn a_swarm_key_filed_under_the_operator_cannot_approve_or_confirm() {
+    let draft = belief("p1", "draft", "");
+    let approved = belief("p2", "approved", "");
+    let e = engine(&[("b/D", &draft), ("b/A", &approved)]);
+    let mut r = tr(
+        "b/D",
+        Move::Approve {
+            resolutions: vec![],
+        },
+    );
+    r.writer = ontomark_write::Writer::new(SWARM);
+    assert_eq!(e.transition(&r).unwrap_err().code, code::APPROVER);
+    let mut r = tr("b/A", Move::Confirm);
+    r.writer = ontomark_write::Writer::new(SWARM);
+    assert_eq!(e.transition(&r).unwrap_err().code, code::APPROVER);
+    // Not even with a `via` that would be stripped: still the swarm's key.
+    let mut r = tr(
+        "b/D",
+        Move::Approve {
+            resolutions: vec![],
+        },
+    );
+    r.writer = ontomark_write::Writer::new(SWARM).via(AGENT);
+    assert_eq!(e.transition(&r).unwrap_err().code, code::APPROVER);
+    // The operator's own `also` key still may.
+    let mut r = tr(
+        "b/D",
+        Move::Approve {
+            resolutions: vec![],
+        },
+    );
+    r.writer = ontomark_write::Writer::new(HUMAN_ALSO);
+    assert!(e.transition(&r).is_ok());
 }

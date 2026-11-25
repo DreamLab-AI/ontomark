@@ -364,3 +364,27 @@ fn memory_supersede_writes_both_pages_and_nothing_else() {
         String::from_utf8_lossy(&val.stderr)
     );
 }
+
+/// A template or hook asks the binary for a page's deterministic
+/// `page_resource` instead of hashing a date itself: the urn belongs to the
+/// journal's own id, not to the day it is made.
+#[test]
+fn memory_resource_prints_the_deterministic_urn_of_a_page_id() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo = dir.path().join("repo");
+    write(&repo.join("ontology/vocabulary.yaml"), VOCAB_V3);
+    write(&repo.join("working/Placeholder.md"), "scratch\n");
+    write(&repo.join("knowledge/K.md"), "scratch\n");
+    let o = run(&repo, &["memory", "resource", "journals/2026-11-02"]);
+    assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
+    let v = json(&o);
+    assert_eq!(
+        v["page_resource"],
+        "urn:visionflow:page:0a1570b85452e83ef479367c63feb81aa2399f5ec45e25e2f87314ee089fc0f1"
+    );
+    // The `.md` suffix does not change the identity.
+    let o2 = run(&repo, &["memory", "resource", "journals/2026-11-02.md"]);
+    assert_eq!(json(&o2)["page_resource"], v["page_resource"]);
+    let o3 = run(&repo, &["memory", "resource", "journals/2026-11-03"]);
+    assert_ne!(json(&o3)["page_resource"], v["page_resource"]);
+}

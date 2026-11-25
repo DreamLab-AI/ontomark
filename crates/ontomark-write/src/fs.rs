@@ -1,7 +1,9 @@
 //! A file [`Store`] confined to two vault roots.
 //!
 //! Every write goes to a temporary file in the target's own directory and is
-//! renamed into place, so a reader sees the old file or the new one. Nothing
+//! renamed into place, so a reader sees the old file or the new one. That is
+//! atomic per file only: a plan of several files is written in order, and a
+//! crash between two of them is not rolled back (see [`crate::Plan::commit`]). Nothing
 //! follows a symlink: a target, or any directory on the way to it, that is a
 //! symlink is refused, and the resolved parent must lie inside the vault root.
 //! `working/assets` is such a symlink in the estate, which is why.
@@ -109,6 +111,17 @@ impl Store for FsStore {
             .suffix(".tmp")
             .tempfile_in(dir)?;
         tmp.write_all(bytes)?;
+        // A temporary file is born 0600; give the page the mode it had (or
+        // 0644 when new) so rewriting it does not change who can read it.
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let permissions = match mode {
+                WriteMode::Replace => fs::metadata(&path)?.permissions(),
+                WriteMode::CreateNew => fs::Permissions::from_mode(0o644),
+            };
+            tmp.as_file().set_permissions(permissions)?;
+        }
         tmp.as_file().sync_all()?;
         match mode {
             WriteMode::Replace => {

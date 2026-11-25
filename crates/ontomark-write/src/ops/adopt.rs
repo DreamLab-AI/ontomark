@@ -3,7 +3,8 @@
 //! A daily note Obsidian made, or a page written before vocabulary 3, has no
 //! `page_resource`, `visibility` or `generated`. `adopt` adds exactly the
 //! missing ones: the first `generated` stamp (which, once present, no write
-//! may change), a minted `page_resource` (journals included, ruling B4) and
+//! may change), a `page_resource` (minted from the caller's entropy; a journal's is derived
+//! from its own date, ruling B4) and
 //! `visibility: shared`. A page that has all three is left alone.
 
 use ontomark_compile::input::page::VaultKind;
@@ -31,7 +32,8 @@ pub struct AdoptRequest {
     pub writer: Writer,
     /// When.
     pub now: String,
-    /// Entropy for the identity, as for [`crate::CreateRequest`].
+    /// Entropy for the identity, as for [`crate::CreateRequest`]. Ignored for
+    /// a journal, whose identity is derived from its own date.
     #[serde(with = "crate::wire::hex32")]
     pub entropy: [u8; 32],
 }
@@ -54,7 +56,14 @@ impl Engine {
         let has = |k: &str| page.frontmatter.get(k).is_some();
         let mut added = Vec::new();
         if !has("page_resource") {
-            let urn = format!("{PAGE_URN}{}", hex::encode(req.entropy));
+            // A journal's identity is its date (`journals/YYYY-MM-DD`), so it
+            // always gets the deterministic urn; any other page is minted
+            // from the caller's entropy.
+            let urn = if req.id.starts_with("journals/") {
+                ontomark_compile::check::v3::state::derived_page_resource(&req.id)
+            } else {
+                format!("{PAGE_URN}{}", hex::encode(req.entropy))
+            };
             if self.find_resource(&urn).is_some() {
                 return Err(Refusal::new(
                     code::EXISTS,

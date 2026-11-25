@@ -5,7 +5,7 @@ use ontomark_compile::input::page::{Page, VaultKind};
 use ontomark_parse::{Document, SourceDigest, Value};
 
 use crate::actor::{check_timestamp, Actor};
-use crate::edit::{map_text, maps, text, Edit};
+use crate::edit::{map_text, text, Edit};
 use crate::engine::Engine;
 use crate::error::{code, Refusal, Result};
 
@@ -16,29 +16,19 @@ pub mod patch;
 pub mod supersede;
 pub mod transition;
 
-/// `true` when switching the contributor rule from "one entry per writer" to
-/// "one entry per write" is wanted; see the report's open rulings.
-pub const CONTRIBUTORS_ONE_PER_WRITER: bool = true;
-
-/// Append the writer to `contributors`, once (ADR-VG-012 section 6).
-///
-/// With [`CONTRIBUTORS_ONE_PER_WRITER`] an entry whose `by` and `via` equal
-/// the writer's is not added again; otherwise only an entry identical in `at`
-/// as well is skipped.
+/// Append one `contributors` entry for this write (ADR-VG-012 section 6:
+/// "every change, oldest first"; ADR-VG-013 section 7: `contributors` is the
+/// audit trail). One entry per WRITE, never per writer: with a single
+/// principal for the whole estate, a per-writer rule would record nothing after
+/// the first write. A write is a stale-guarded commit, so a replay cannot add
+/// the entry twice.
 pub(crate) fn append_contributor(edit: &mut Edit, actor: &Actor, now: &str) {
     let mut list: Vec<Value> = match edit.doc().value("contributors") {
         Some(Value::Seq(items)) => items.clone(),
         _ => Vec::new(),
     };
-    let dup = maps(edit.doc(), "contributors").iter().any(|m| {
-        map_text(m, "by").as_deref() == Some(actor.did.as_str())
-            && map_text(m, "via") == actor.via
-            && (CONTRIBUTORS_ONE_PER_WRITER || map_text(m, "at").as_deref() == Some(now))
-    });
-    if !dup {
-        list.push(actor.stamp(now, true));
-        edit.set("contributors", Value::Seq(list));
-    }
+    list.push(actor.stamp(now, true));
+    edit.set("contributors", Value::Seq(list));
 }
 
 /// The status of a page as text.

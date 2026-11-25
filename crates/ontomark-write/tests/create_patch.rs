@@ -558,8 +558,10 @@ fn missing_page_is_not_found() {
     );
 }
 
+/// ADR-VG-012 section 6 ("every change, oldest first") and ADR-VG-013 section 7
+/// ("`contributors` is the audit trail"): one entry per WRITE, not per writer.
 #[test]
-fn contributors_gain_the_writer_once() {
+fn contributors_gain_one_entry_per_write_oldest_first() {
     let src = belief("b1", "draft", "");
     let e = engine(&[("b/B1", &src)]);
     let first = e
@@ -568,23 +570,53 @@ fn contributors_gain_the_writer_once() {
             vec![set("confidence", Value::Float("0.6".into()))],
         ))
         .unwrap();
-    // Same writer again: contributors does not grow.
+    let entries = |text: &str| -> Vec<(String, Option<String>, String)> {
+        Document::parse(text)
+            .value("contributors")
+            .unwrap()
+            .as_seq()
+            .unwrap()
+            .iter()
+            .map(|v| {
+                let m = v.as_map().unwrap();
+                let get = |k: &str| {
+                    m.iter()
+                        .find(|(key, _)| key.as_str() == k)
+                        .and_then(|(_, v)| v.as_str().map(str::to_owned))
+                };
+                (get("by").unwrap(), get("via"), get("at").unwrap())
+            })
+            .collect()
+    };
+    assert_eq!(entries(&first.writes[0].text).len(), 1);
+    // The same writer again: the trail grows.
     let pages = applied(&[("b/B1".into(), src.clone())], &first);
     let e2 = engine(&refs(&pages));
     let mut r = patch("b/B1", vec![set("confidence", Value::Float("0.7".into()))]);
     r.now = Some("2026-11-21T00:00:00Z".into());
     let second = e2.patch(&r).unwrap();
-    let a = Document::parse(&second.writes[0].text);
-    assert_eq!(a.value("contributors").unwrap().as_seq().unwrap().len(), 1);
-    // A different writer (the agent under the same principal) is added.
+    assert_eq!(entries(&second.writes[0].text).len(), 2);
+    // The same writer in the same second is still a second write.
     let pages = applied(&refs_owned(&pages), &second);
     let e3 = engine(&refs(&pages));
+    let mut r = patch("b/B1", vec![set("confidence", Value::Float("0.75".into()))]);
+    r.now = Some("2026-11-21T00:00:00Z".into());
+    let third = e3.patch(&r).unwrap();
+    assert_eq!(entries(&third.writes[0].text).len(), 3);
+    // A different writer (the agent under the same principal) is added too.
+    let pages = applied(&refs_owned(&pages), &third);
+    let e4 = engine(&refs(&pages));
     let mut r = patch("b/B1", vec![set("confidence", Value::Float("0.8".into()))]);
     r.writer = Some(agent());
     r.now = Some("2026-11-22T00:00:00Z".into());
-    let third = e3.patch(&r).unwrap();
-    let a = Document::parse(&third.writes[0].text);
-    assert_eq!(a.value("contributors").unwrap().as_seq().unwrap().len(), 2);
+    let fourth = e4.patch(&r).unwrap();
+    let all = entries(&fourth.writes[0].text);
+    assert_eq!(all.len(), 4);
+    let ats: Vec<&str> = all.iter().map(|e| e.2.as_str()).collect();
+    let mut sorted = ats.clone();
+    sorted.sort_unstable();
+    assert_eq!(ats, sorted, "oldest first");
+    assert!(all[3].1.is_some(), "the agent's entry carries its via");
 }
 
 fn refs_owned(p: &[(String, String)]) -> Vec<(String, String)> {

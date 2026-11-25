@@ -13,6 +13,9 @@ pub const HUMAN: &str =
 pub const HUMAN_ALSO: &str =
     "did:nostr:d598abc6edefc37e10523aec4c00f8d9674a93791aa34a1db03bfa9b60b9f246";
 pub const ORG: &str = "did:nostr:ea3d03d62a8eb3ce6364c0dd02f239a16fa22956a9f31626619f330361be9c00";
+/// A process swarm's own key, filed under the human principal in the roster.
+pub const SWARM: &str =
+    "did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0";
 pub const AGENT: &str = "agent:claude/1";
 pub const T0: &str = "2026-11-01T00:00:00Z";
 pub const T1: &str = "2026-11-10T09:00:00Z";
@@ -52,6 +55,11 @@ pub const ROSTER: &str = "principals:
   - did: did:nostr:ea3d03d62a8eb3ce6364c0dd02f239a16fa22956a9f31626619f330361be9c00
     label: acme
     kind: organisation
+generators:
+  - did: did:nostr:94773a699927da1ef879b90843890b1fe0e671ae898163f4337dcbe5f96992c0
+    label: enrichment-swarm
+    kind: process
+    principal: did:nostr:b41654017f6850b13857d19d8ae0e3f88f1365600cab0321e8101c9e92682f7a
 ";
 
 pub fn vault(kind: VaultKind, pages: &[(&str, &str)]) -> Vault {
