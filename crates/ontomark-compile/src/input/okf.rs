@@ -216,41 +216,112 @@ impl Stamp {
 }
 
 /// A `sources:` entry — the provenance link that absorbed `elevatedFrom`.
+///
+/// Version 3 (ADR-VG-010 §5) adds the optional [`rel`](Self::rel),
+/// [`at`](Self::at) and [`locator`](Self::locator). Any other field is kept in
+/// [`extensions`](Self::extensions) and written back by
+/// [`to_yaml`](Self::to_yaml), so a read-modify-write never drops a field this
+/// type does not model.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Source {
     /// A short local identifier, e.g. `origin`.
     pub id: String,
     /// The source, usually a wikilink into `working/`.
     pub resource: String,
+    /// The relation type (`origin`, `episode`, `evidence`, `derived-from`,
+    /// `standard`, `reference`), as written. Absent reads as `reference`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rel: Option<String>,
+    /// The claim or publication date, as written.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub at: Option<String>,
+    /// What inside the target is cited, as written.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub locator: Option<String>,
+    /// Every other field, preserved verbatim.
+    #[serde(flatten)]
+    pub extensions: std::collections::BTreeMap<String, Yaml>,
 }
 
 impl Source {
+    /// Build a source with the two original fields and nothing else.
+    #[must_use]
+    pub fn new(id: impl Into<String>, resource: impl Into<String>) -> Self {
+        Self {
+            id: id.into(),
+            resource: resource.into(),
+            rel: None,
+            at: None,
+            locator: None,
+            extensions: Default::default(),
+        }
+    }
+
     /// The wikilink target, when `resource` is a `[[…]]` reference.
     #[must_use]
     pub fn link(&self) -> Option<Wikilink> {
         Wikilink::parse(&self.resource)
     }
 
-    /// Render as a YAML mapping.
+    /// Render as a YAML mapping: `id`, `resource`, then `rel`, `at`,
+    /// `locator` when present, then every preserved extension.
     #[must_use]
     pub fn to_yaml(&self) -> Yaml {
         let mut m = serde_norway::Mapping::new();
-        m.insert(Yaml::String("id".into()), Yaml::String(self.id.clone()));
-        m.insert(
-            Yaml::String("resource".into()),
-            Yaml::String(self.resource.clone()),
-        );
+        let mut put = |key: &str, value: &str| {
+            m.insert(Yaml::String(key.into()), Yaml::String(value.to_owned()));
+        };
+        put("id", &self.id);
+        put("resource", &self.resource);
+        for (key, value) in [
+            ("rel", &self.rel),
+            ("at", &self.at),
+            ("locator", &self.locator),
+        ] {
+            if let Some(value) = value {
+                put(key, value);
+            }
+        }
+        for (key, value) in &self.extensions {
+            if !matches!(key.as_str(), "id" | "resource" | "rel" | "at" | "locator") {
+                m.insert(Yaml::String(key.clone()), value.clone());
+            }
+        }
         Yaml::Mapping(m)
     }
 
-    /// Read a source from a YAML mapping.
+    /// Read a source from a YAML mapping. Needs `id` and `resource` as
+    /// strings; every other field is kept.
     #[must_use]
     pub fn from_yaml(v: &Yaml) -> Option<Self> {
         let m = v.as_mapping()?;
+        let text = |key: &str| m.get(Yaml::String(key.into())).and_then(scalar_text);
+        let extensions = m
+            .iter()
+            .filter_map(|(key, value)| {
+                let key = key.as_str()?;
+                (!matches!(key, "id" | "resource" | "rel" | "at" | "locator"))
+                    .then(|| (key.to_owned(), value.clone()))
+            })
+            .collect();
         Some(Self {
             id: m.get(Yaml::String("id".into()))?.as_str()?.to_owned(),
             resource: m.get(Yaml::String("resource".into()))?.as_str()?.to_owned(),
+            rel: text("rel"),
+            at: text("at"),
+            locator: text("locator"),
+            extensions,
         })
+    }
+}
+
+/// A YAML scalar rendered as text (strings, numbers and booleans).
+fn scalar_text(v: &Yaml) -> Option<String> {
+    match v {
+        Yaml::String(s) => Some(s.clone()),
+        Yaml::Number(n) => Some(n.to_string()),
+        Yaml::Bool(b) => Some(b.to_string()),
+        _ => None,
     }
 }
 

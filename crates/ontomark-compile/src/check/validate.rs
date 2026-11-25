@@ -15,6 +15,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 
+pub use crate::check::v3::Siblings;
 use crate::input::code::CodeMap;
 use crate::input::okf::{OkfBlock, Status};
 use crate::input::page::{Page, Vault, VaultKind};
@@ -175,7 +176,13 @@ impl Report {
         s
     }
 
-    fn push(&mut self, path: &str, severity: Severity, code: &str, message: impl Into<String>) {
+    pub(crate) fn push(
+        &mut self,
+        path: &str,
+        severity: Severity,
+        code: &str,
+        message: impl Into<String>,
+    ) {
         self.issues.push(Issue {
             path: path.to_owned(),
             severity,
@@ -369,9 +376,27 @@ fn page_level_checks(
 }
 
 /// Validate a loaded vault against its vocabulary.
+///
+/// Cross-vault and roster rules of vocabulary version 3 need to see beyond
+/// `vault`; this entry point gives them nothing to see, so they skip. Use
+/// [`validate_with`] to supply the sibling vault and the roster.
+#[must_use]
+pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocabulary) -> Report {
+    validate_with(profile, vault, corpus, vocab, &Siblings::default())
+}
+
+/// [`validate`] with the context vocabulary-version-3 rules resolve against:
+/// the other loaded vaults and the attribution roster. Under a version 2
+/// vocabulary `siblings` is never read and the result equals [`validate`]'s.
 #[must_use]
 #[allow(clippy::too_many_lines)] // One check per rule; splitting hides the list.
-pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocabulary) -> Report {
+pub fn validate_with(
+    profile: &Profile,
+    vault: &Vault,
+    corpus: &Corpus,
+    vocab: &Vocabulary,
+    siblings: &Siblings<'_>,
+) -> Report {
     let mut report = Report {
         total_pages: vault.pages.len(),
         total_journals: vault.journals.len(),
@@ -430,6 +455,12 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
             )
         }
     };
+
+    // Version 3 rules: nothing below is built, and nothing runs, under a
+    // version 2 vocabulary.
+    let v3 = vocab
+        .is_v3()
+        .then(|| crate::check::v3::Context::build(vault, vocab, siblings));
 
     let page_ids: HashSet<&str> = vault.pages.iter().map(|p| p.id.as_str()).collect();
     let alias_targets: HashSet<String> = vault
@@ -518,6 +549,9 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
         // --- OKF conformance -------------------------------------------------
         let okf = OkfBlock::from_frontmatter(&page.frontmatter);
         validate_okf(&mut report, path, &okf, rules, vocab, record);
+        if let Some(ctx) = &v3 {
+            crate::check::v3::page_checks(&mut report, page, vocab, ctx);
+        }
 
         if !record.has_ontology {
             continue;
@@ -622,6 +656,10 @@ pub fn validate(profile: &Profile, vault: &Vault, corpus: &Corpus, vocab: &Vocab
                 }
             }
         }
+    }
+
+    if let Some(ctx) = &v3 {
+        crate::check::v3::corpus_checks(&mut report, vault, vocab, ctx);
     }
 
     let mut duplicates: Vec<(&&str, &Vec<&str>)> =
