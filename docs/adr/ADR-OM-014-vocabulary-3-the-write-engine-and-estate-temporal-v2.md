@@ -8,7 +8,7 @@ activation_status: staged
 supersedes: []
 superseded_by: []
 amends: [ADR-OM-012]
-verified_commit: a641b815d4aee8757c1535e7942c0a42b86c4217
+verified_commit: d186bfa5fc631d0fef7a55359f6d129946222009
 verified_paths: [crates/ontomark-compile/src/input/vocabulary.rs, crates/ontomark-compile/src/input/time.rs, crates/ontomark-compile/src/input/principal.rs, crates/ontomark-compile/src/input/okf.rs, crates/ontomark-compile/src/check/v3, crates/ontomark-compile/src/check/validate.rs, crates/ontomark-compile/src/build/attribution.rs, crates/ontomark-compile/src/build/turtle.rs, crates/ontomark-compile/src/build/okf.rs, crates/ontomark-compile/src/build/page_api.rs, crates/ontomark-compile/src/build/redact.rs, crates/ontomark-compile/src/build/mod.rs, crates/ontomark-compile/src/ir/model.rs, crates/ontomark-compile/src/migrate, crates/ontomark-write, crates/ontomark-cli/src/main.rs, crates/ontomark-cli/src/memory_cmd.rs, crates/ontomark-cli/tests/vocab_v3.rs, crates/ontomark-cli/tests/vocab-v3-vault, crates/ontomark-cli/tests/conformance.rs, crates/ontomark-wasm/Cargo.toml, conformance/fixtures/estate-small.golden, conformance/temporal/vectors.json, conformance/temporal/vectors-v2.json, crates/ontomark-reason/tests/temporal_contract.rs]
 owner: jjohare
 review_trigger: the owner tags 0.10.0 or a consumer pins it; the Obsidian plugin is wired to ontomark-write; a vault other than visionGraph adopts vocabulary 3; VisionClaw adopts estate-temporal-v2 or the last consumer of v1 moves; memory-ontology changes an IRI used here
