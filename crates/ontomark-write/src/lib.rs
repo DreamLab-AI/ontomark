@@ -42,7 +42,7 @@
 //! use ontomark_write::{CreateRequest, Engine, MemStore, Writer};
 //!
 //! let vocab = Vocabulary::from_yaml_str(
-//!     "version: 3\nworking_types:\n  Belief: { memory: true, required: [about] }\n",
+//!     "version: 3\nworking_types:\n  Note: {}\n",
 //! )
 //! .unwrap();
 //! let working = Vault {
@@ -56,12 +56,9 @@
 //!
 //! let plan = engine
 //!     .create(&CreateRequest {
-//!         id: "beliefs/Tea first".into(),
-//!         page_type: "Belief".into(),
-//!         fields: vec![
-//!             ("about".into(), ontomark_parse::Value::string("https://example.org/tea")),
-//!             ("confidence".into(), ontomark_parse::Value::Float("0.7".into())),
-//!         ],
+//!         id: "notes/Tea first".into(),
+//!         page_type: "Note".into(),
+//!         fields: vec![("tags".into(), ontomark_parse::Value::strings(["drinks"]))],
 //!         body: "Tea before coffee.\n".into(),
 //!         visibility: None,
 //!         writer: Writer::new(
@@ -73,7 +70,7 @@
 //!     .unwrap();
 //! let mut store = MemStore::default();
 //! plan.commit(&mut store).unwrap();
-//! let text = store.text(VaultKind::Working, "beliefs/Tea first.md").unwrap();
+//! let text = store.text(VaultKind::Working, "notes/Tea first.md").unwrap();
 //! assert!(text.contains("status: draft"));
 //! assert!(text.contains("page_resource: urn:visionflow:page:0707"));
 //! assert!(text.ends_with("Tea before coffee.\n"));
