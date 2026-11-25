@@ -409,7 +409,7 @@ impl Certification {
     /// [`Certification::from_verified`] with the caller's test for "this
     /// actor is a human". With an attribution roster the test also accepts a
     /// `did:nostr:` principal the roster lists as `kind: human`
-    /// ([`Roster::is_human_actor`]); `is_human` alone is a prefix test and
+    /// ([`crate::build::attribution::Roster::is_human_actor`]); `is_human` alone is a prefix test and
     /// cannot see that a DID is a person (ADR-VG-011 §4).
     #[must_use]
     pub fn from_verified_with(verified: Option<&Yaml>, is_human: &dyn Fn(&Actor) -> bool) -> Self {
