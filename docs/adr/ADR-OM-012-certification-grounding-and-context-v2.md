@@ -223,10 +223,14 @@ against `git diff 59e3099..32b3aac` over the governed paths, claim by claim.
      not for `UNVERIFIED_STABLE`, not in the roster's own test, and, through
      the CLI, not for ingest. The write engine never read the prefix: a
      `human:<npub>` writer is an alias for that key, judged by the roster like
-     any other (`ontomark-write/src/actor.rs`). Three places still apply the
-     vocabulary 2 rule because they take no vocabulary: ingest's public
-     `is_human_actor(&str)`, the WASM `review_binding` freshness counts, and
-     `input/promotion.rs`.
+     any other (`ontomark-write/src/actor.rs`). Every entry point that takes no
+     vocabulary still applies the vocabulary 2 rule: `Certification::from_verified`,
+     `for_page` and `for_page_with`, `OkfBlock::is_human_verified` and
+     `is_human_verified_with`, parse's `assess`, ingest's `Certification::of`,
+     `of_with` and `is_human_actor(&str)`, the WASM `review_binding` freshness
+     counts, and `input/promotion.rs`. No non-test caller on a version 3 path
+     uses one (grep at this revision); a downstream reader must call the
+     `_under` forms.
    - `ingest_and_compile_agree_on_human_actors`
      (`crates/ontomark-cli/tests/conformance.rs:356`) pins only the prefix rule.
      Roster humanness is pinned by `attribution.rs`'s unit tests and by

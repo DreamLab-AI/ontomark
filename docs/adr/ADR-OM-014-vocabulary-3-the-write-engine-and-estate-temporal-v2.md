@@ -167,7 +167,8 @@ leaves.
 - A journal is never public. Under version 3 the staged copy of a public page
   drops a whole `sources` entry (its `id`, `rel`, `at` and `locator` as well as
   the `resource`) when the target is private or names no page the build can
-  see, and `ontology.ttl`, the page API, `history.ttl` and the context omit it
+  see, and removes that `id` from every `statements[].sources` list (the list
+  goes when it empties). `ontology.ttl`, the page API, `history.ttl` and the context omit it
   (`build/redact.rs`, `PrivateLinks::source_withheld`;
   `v3_sources.rs::a_public_page_citing_a_journal_publishes_none_of_it`).
 - `BRIEF_AS_EVIDENCE` is an error for `rel: evidence` or `origin` pointing at a
@@ -366,8 +367,13 @@ Negative tests show the evaluator can fail (`the_check_can_fail`,
 - Ingest's vocabulary 3 inputs (`human_dids`, `legacy_human_prefix`) are set
   only by the CLI. A host that embeds `ontomark-ingest` or the WASM engine and
   does not pass them keeps the vocabulary 2 rule (ADR-OM-012 re-verification).
-  Ingest's public `is_human_actor(&str)`, the WASM `review_binding` counts and
-  `input/promotion.rs` take no vocabulary and keep the prefix rule too.
+  Every entry point that takes no vocabulary keeps the prefix rule too:
+  `Certification::from_verified`, `for_page`, `for_page_with`,
+  `OkfBlock::is_human_verified` and `is_human_verified_with` (the readings
+  VisionClaw's oracle called, which is why the vocabulary-aware `_under` forms
+  exist), parse's `assess`, ingest's `Certification::of`, `of_with` and
+  `is_human_actor(&str)`, the WASM `review_binding` counts and
+  `input/promotion.rs`. No non-test caller on a version 3 path uses one.
 - The source IRIs differ between surfaces: `context/v4.jsonld` maps `sources`
   to `vc:source*`, while `ontology.ttl` uses `dcterms:source`,
   `prov:wasDerivedFrom` and `prov:hadPrimarySource`.
