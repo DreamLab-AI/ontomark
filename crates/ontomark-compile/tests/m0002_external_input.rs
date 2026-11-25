@@ -101,6 +101,34 @@ fn the_input_may_live_outside_the_tree_and_its_digest_binds_the_plan_and_inside_
     assert_ne!(d1, d2);
     assert_ne!(d1, d0);
 
+    // Apply re-reads the context: a different input, or none, than the plan
+    // was made with must not write anything.
+    let root4 = dir.path().join("repo4");
+    seeded(&root4);
+    std::env::set_var(VAR, &input);
+    let plan4 = plan(&root4, &BOTH, m.as_ref(), &profile()).unwrap();
+    let accept = ApplyOptions {
+        accept_semantic: true,
+        ..ApplyOptions::default()
+    };
+    let before = fs::read_to_string(root4.join("knowledge/Alpha.md")).unwrap();
+    std::env::remove_var(VAR);
+    let unset = apply_with(&root4, &plan4, m.as_ref(), &accept);
+    assert!(unset.is_err(), "apply without the input must refuse");
+    std::env::set_var(VAR, &other);
+    let changed = apply_with(&root4, &plan4, m.as_ref(), &accept);
+    assert!(changed.is_err(), "apply with a different input must refuse");
+    std::env::remove_var(VAR);
+    assert_eq!(
+        fs::read_to_string(root4.join("knowledge/Alpha.md")).unwrap(),
+        before,
+        "nothing was written"
+    );
+    // ... and with the same input it applies.
+    std::env::set_var(VAR, &input);
+    apply_with(&root4, &plan4, m.as_ref(), &accept).unwrap();
+    std::env::remove_var(VAR);
+
     // An input inside the tree, or one that is missing, is refused.
     let root = dir.path().join("repo3");
     seeded(&root);

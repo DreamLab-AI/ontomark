@@ -137,6 +137,13 @@ pub fn apply_with(
     if plan.status == PlanStatus::Refused {
         return Err(MigrateError::PlanRefused(plan.reasons.clone()));
     }
+    // An input kept outside the tree is not among the files apply re-checks,
+    // so its digest is: a different (or missing) input would write other pages.
+    if migration.external_input_digest() != plan.external_input {
+        return Err(MigrateError::Input(
+            "the migration's external input is not the one the plan was made with: set the same file (m0002: ONTOMARK_M0002_SUPERSESSIONS) or re-plan".to_owned(),
+        ));
+    }
     if migration.kind() == Kind::Semantic && !opts.accept_semantic {
         return Err(MigrateError::SemanticNotAccepted(migration.id().to_owned()));
     }

@@ -125,3 +125,26 @@ fn the_same_vault_under_version_2_reports_none_of_them() {
         .collect();
     assert!(leaked.is_empty(), "v3 codes under version 2: {leaked:?}");
 }
+
+/// B1 and S12 on the fixture: the swarm key does not certify, the operator's own
+/// key does, and an empty `generated:` is an error on a knowledge page.
+#[test]
+fn an_instrument_key_does_not_certify_and_an_empty_stamp_is_an_error() {
+    let out = Command::new(env!("CARGO_BIN_EXE_ontomark"))
+        .arg("--repo")
+        .arg(fixture())
+        .args(["validate", "--vault", "knowledge", "--json"])
+        .output()
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    let on = |page: &str, code: &str| {
+        json["knowledge"]["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|i| i["path"].as_str().is_some_and(|p| p.contains(page)) && i["code"] == code)
+    };
+    assert!(on("SwarmVerified", "VERIFIED_NOT_HUMAN"));
+    assert!(!on("OperatorVerified", "VERIFIED_NOT_HUMAN"));
+    assert!(on("EmptyStamp", "INVALID_STAMP"));
+}
