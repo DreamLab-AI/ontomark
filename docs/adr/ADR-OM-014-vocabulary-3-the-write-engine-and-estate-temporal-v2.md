@@ -395,6 +395,19 @@ Negative tests show the evaluator can fail (`the_check_can_fail`,
 - memory-ontology changes an IRI;
 - VisionClaw moves to v2.
 
+### Pending upstream move of the memory-ontology IRIs (noted 2026-11-26)
+
+The `temporal:` and `memory:` IRIs used in emission and in the temporal
+contract are under `http://nova.dev/`. memory-ontology's author has said that
+namespace is a placeholder he does not own, and that he will register one under
+w3id.org. His open change (eljeffeg/memory-ontology#5, not merged as of this
+note) also moves the two clock concepts from `memory:` to `temporal:`, makes a
+closing record the source of an end, and accepts classic reification in its
+shapes. When the namespace is registered, the IRIs in emission, in
+`context/v4.jsonld` and in `conformance/temporal/README.md` change together, in
+one release. Until then they stay as they are, and nothing published under them
+resolves.
+
 ## Rejected alternatives
 
 - **Leaving certification prefix-only and treating any `Did` as human.**
